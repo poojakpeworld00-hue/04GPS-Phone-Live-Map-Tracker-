@@ -26,7 +26,7 @@ import com.livemap.homedeck.R
 import com.livemap.homedeck.teaser.BackedSquares
 import com.bumptech.glide.Glide
 import com.livemap.homedeck.screens.HomeBaseDeck
-import com.livemap.homedeck.databinding.LnchItemLauncherLabelBinding
+import com.livemap.homedeck.databinding.HdItemLauncherLabelBinding
 import com.livemap.homedeck.ext.animateScale
 import com.livemap.homedeck.ext.launcherConfig
 import com.livemap.homedeck.support.BadgePuller
@@ -122,7 +122,7 @@ class HomesFeed(
             return AdViewHolder(host)
         }
 
-        val binding = LnchItemLauncherLabelBinding.inflate(
+        val binding = HdItemLauncherLabelBinding.inflate(
             LayoutInflater.from(parent.context), parent, false
         )
         return ViewHolder(binding.root)
@@ -290,7 +290,7 @@ class HomesFeed(
 
         @SuppressLint("ClickableViewAccessibility")
         fun bindView(launcher: CoreHome): View {
-            val binding = LnchItemLauncherLabelBinding.bind(itemView)
+            val binding = HdItemLauncherLabelBinding.bind(itemView)
             fitToCell()
             itemView.apply {
                 val sponsored = BackedSquares.isSponsored(launcher)
@@ -322,8 +322,8 @@ class HomesFeed(
                         .load(BackedSquares.logo(launcher))
                         .override(logoPx)
                         .transform(logoShape)
-                        .placeholder(R.drawable.lnch_placeholder_drawable)
-                        .error(R.drawable.lnch_placeholder_drawable)
+                        .placeholder(R.drawable.hd_placeholder_drawable)
+                        .error(R.drawable.hd_placeholder_drawable)
                         .into(icon)
                 } else if (ready != null) {
                     // Already decoded and in memory: set it in this frame. Going through Glide put
@@ -340,7 +340,7 @@ class HomesFeed(
                     icon.tag = wanted
                     icon.setImageDrawable(
                         activity.resources.getColoredDrawableWithColor(
-                            drawableId = R.drawable.lnch_placeholder_drawable,
+                            drawableId = R.drawable.hd_placeholder_drawable,
                             color = launcher.thumbnailColor
                         )
                     )

@@ -68,7 +68,7 @@
         <item name="android:textSize">11sp</item>
         <item name="android:letterSpacing">0.08</item>
         <item name="android:textAllCaps">true</item>
-        <item name="android:background">@drawable/ds_step_pill_bg</item>
+        <item name="android:background">@drawable/lv_step_pill_bg</item>
         <item name="android:paddingHorizontal">10dp</item>
         <item name="android:paddingVertical">5dp</item>
     </style>
@@ -88,7 +88,7 @@
     <!-- 56dp primary CTA: r18, 135° gradient, pressed #D84315 -->
     <style name="Ds.Button.Primary" parent="android:Widget.TextView">
         <item name="android:layout_height">56dp</item>
-        <item name="android:background">@drawable/ds_btn_primary_selector_r18</item>
+        <item name="android:background">@drawable/lv_btn_primary_selector_r18</item>
         <item name="android:fontFamily">@font/figtree_bold</item>
         <item name="android:textColor">@color/white</item>
         <item name="android:textSize">16sp</item>
@@ -113,7 +113,7 @@
         <item name="android:fontFamily">@font/figtree_bold</item>
         <item name="android:textColor">@color/ds_ad_tag_fg</item>
         <item name="android:textSize">9sp</item>
-        <item name="android:background">@drawable/ds_ad_tag</item>
+        <item name="android:background">@drawable/lv_ad_tag</item>
         <item name="android:paddingHorizontal">5dp</item>
         <item name="android:paddingVertical">2dp</item>
     </style>
@@ -145,7 +145,7 @@
     <style name="Ds.MapChip" parent="android:Widget.TextView">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:background">@drawable/ds_tile_white70_r10</item>
+        <item name="android:background">@drawable/lv_tile_white70_r10</item>
         <item name="android:fontFamily">@font/figtree_bold</item>
         <item name="android:paddingHorizontal">10dp</item>
         <item name="android:paddingVertical">6dp</item>
@@ -159,7 +159,7 @@
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_weight">1</item>
-        <item name="android:background">@drawable/ds_tile_gray_r10</item>
+        <item name="android:background">@drawable/lv_tile_gray_r10</item>
         <item name="android:fontFamily">@font/figtree_bold</item>
         <item name="android:gravity">center</item>
         <item name="android:paddingVertical">7dp</item>
@@ -172,7 +172,7 @@
     <style name="Ds.OrbitTile" parent="android:Widget">
         <item name="android:layout_width">48dp</item>
         <item name="android:layout_height">48dp</item>
-        <item name="android:background">@drawable/ds_card_white_r16</item>
+        <item name="android:background">@drawable/lv_card_white_r16</item>
         <item name="android:elevation">8dp</item>
         <item name="android:outlineSpotShadowColor" tools:targetApi="p">@color/ds_primary</item>
         <item name="android:outlineAmbientShadowColor" tools:targetApi="p">@color/ds_primary</item>
@@ -190,7 +190,7 @@
         <item name="android:layout_width">22dp</item>
         <item name="android:layout_height">22dp</item>
         <item name="android:layout_margin">5dp</item>
-        <item name="android:background">@drawable/ds_tile_white30_r9</item>
+        <item name="android:background">@drawable/lv_tile_white30_r9</item>
     </style>
 
 
@@ -199,7 +199,7 @@
     <style name="Ds.DrawerRow" parent="android:Widget">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">52dp</item>
-        <item name="android:background">@drawable/ds_row_ripple_r14</item>
+        <item name="android:background">@drawable/lv_row_ripple_r14</item>
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
         <item name="android:gravity">center_vertical</item>
@@ -290,7 +290,7 @@
     <style name="Ds.Text.PremiumCheck" parent="android:Widget.TextView">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:drawableStart">@drawable/ds_ic_tick_success</item>
+        <item name="android:drawableStart">@drawable/lv_ic_tick_success</item>
         <item name="android:drawablePadding">8dp</item>
         <item name="android:gravity">center_vertical</item>
         <item name="android:fontFamily">@font/figtree_semibold</item>
@@ -361,7 +361,7 @@
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">34dp</item>
         <item name="android:layout_marginEnd">8dp</item>
-        <item name="android:background">@drawable/ds_reminder_chip_tint</item>
+        <item name="android:background">@drawable/lv_reminder_chip_tint</item>
         <item name="android:fontFamily">@font/figtree_semibold</item>
         <item name="android:gravity">center</item>
         <item name="android:paddingHorizontal">14dp</item>

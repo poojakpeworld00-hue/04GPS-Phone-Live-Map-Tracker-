@@ -19,8 +19,8 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.CoreOpenSpotBook
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.store.chip.MineChipNums
-import com.find.phone.gps.live.location.tracker.databinding.TileCarrierCodeBinding
-import com.find.phone.gps.live.location.tracker.databinding.ViewCarrierCodesBinding
+import com.find.phone.gps.live.location.tracker.databinding.CellCarrierCodeBinding
+import com.find.phone.gps.live.location.tracker.databinding.ScreenCarrierCodesBinding
 import com.find.phone.gps.live.location.tracker.helpers.isNightMode
 
 /**
@@ -28,9 +28,9 @@ import com.find.phone.gps.live.location.tracker.helpers.isNightMode
  * by section; tapping one opens the dialer (ACTION_DIAL) with the code filled in — never dials
  * automatically. A carrier tab per SIM when two are present.
  */
-class FrameDialsActivity : StageActivity<ViewCarrierCodesBinding>() {
+class FrameDialsActivity : StageActivity<ScreenCarrierCodesBinding>() {
 
-    override val layoutId: Int = R.layout.view_carrier_codes
+    override val layoutId: Int = R.layout.screen_carrier_codes
 
     private data class SimTab(val slot: Int, val carrier: String)
 
@@ -82,7 +82,7 @@ class FrameDialsActivity : StageActivity<ViewCarrierCodesBinding>() {
             val on = i == selected
             tab.setTextColor(ContextCompat.getColor(this, if (on) R.color.ds_primary else R.color.ds_muted))
             tab.typeface = ResourcesCompat.getFont(this, if (on) R.font.figtree_bold else R.font.figtree_semibold)
-            tab.background = if (on) ContextCompat.getDrawable(this, R.drawable.ds_seg_thumb_r10) else null
+            tab.background = if (on) ContextCompat.getDrawable(this, R.drawable.lv_seg_thumb_r10) else null
             tab.elevation = if (on) dp(2).toFloat() else 0f
         }
     }
@@ -106,7 +106,7 @@ class FrameDialsActivity : StageActivity<ViewCarrierCodesBinding>() {
             binding.sections.addView(sectionLabel(section.title, index == 0))
             val card = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
-                setBackgroundResource(R.drawable.ds_card_border_r20)
+                setBackgroundResource(R.drawable.lv_card_border_r20)
             }
             section.codes.forEachIndexed { i, code ->
                 if (i > 0) card.addView(divider())
@@ -134,7 +134,7 @@ class FrameDialsActivity : StageActivity<ViewCarrierCodesBinding>() {
     }
 
     private fun codeRow(inflater: LayoutInflater, parent: LinearLayout, code: FrameDials.Code): View =
-        TileCarrierCodeBinding.inflate(inflater, parent, false).apply {
+        CellCarrierCodeBinding.inflate(inflater, parent, false).apply {
             tvTitle.text = code.title
             tvSubtitle.text = code.subtitle
             tvCode.text = code.code

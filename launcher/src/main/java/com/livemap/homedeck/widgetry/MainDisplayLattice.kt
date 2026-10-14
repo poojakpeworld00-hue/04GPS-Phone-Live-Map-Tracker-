@@ -58,7 +58,7 @@ import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.isSPlus
 import com.livemap.homedeck.R
 import com.livemap.homedeck.screens.HomeDeck
-import com.livemap.homedeck.databinding.LnchHomeScreenGridBinding
+import com.livemap.homedeck.databinding.HdHomeScreenGridBinding
 import com.livemap.homedeck.ext.launcherConfig
 import com.livemap.homedeck.ext.getDrawableForPackageName
 import com.livemap.homedeck.ext.homeScreenGridItemsDB
@@ -87,7 +87,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
     RelativeLayout(context, attrs, defStyle) {
     constructor(context: Context, attrs: AttributeSet) : this(context, attrs, 0)
 
-    private lateinit var binding: LnchHomeScreenGridBinding
+    private lateinit var binding: HdHomeScreenGridBinding
     private var columnCount = context.launcherConfig.homeColumnCount
     private var dockSlotCount = context.launcherConfig.dockColumnCount
     // Dock cells are narrowed when there are more slots than columns; icons in them shrink to match.
@@ -309,7 +309,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
 
     override fun onFinishInflate() {
         super.onFinishInflate()
-        binding = LnchHomeScreenGridBinding.bind(this)
+        binding = HdHomeScreenGridBinding.bind(this)
     }
 
     fun fetchGridItems() {
@@ -1286,10 +1286,10 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
 
     // pseudo widgets are inflated by us, there is no provider to look up or bind to
     private fun MainDisplayLatticeElement.pseudoWidgetLayout() = when (className) {
-        PSEUDO_WIDGET_CLOCK -> R.layout.lnch_pseudo_widget_digital_clock
-        PSEUDO_WIDGET_SEARCH -> R.layout.lnch_pseudo_widget_search_bar
-        PSEUDO_WIDGET_TIME -> R.layout.lnch_pseudo_widget_time
-        PSEUDO_WIDGET_GOOGLE_SEARCH -> R.layout.lnch_pseudo_widget_google_search
+        PSEUDO_WIDGET_CLOCK -> R.layout.hd_pseudo_widget_digital_clock
+        PSEUDO_WIDGET_SEARCH -> R.layout.hd_pseudo_widget_search_bar
+        PSEUDO_WIDGET_TIME -> R.layout.hd_pseudo_widget_time
+        PSEUDO_WIDGET_GOOGLE_SEARCH -> R.layout.hd_pseudo_widget_google_search
         else -> null
     }
 

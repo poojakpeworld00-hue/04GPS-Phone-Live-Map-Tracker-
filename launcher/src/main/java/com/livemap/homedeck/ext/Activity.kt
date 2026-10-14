@@ -219,7 +219,7 @@ fun Activity.handleGridItemPopupMenu(
         if ((isIcon || gridItem.type == ITEM_TYPE_FOLDER) && !isOnAllAppsFragment) {
             add(ElementMovesBasket.Action(org.fossify.commons.R.drawable.ic_rename_vector, org.fossify.commons.R.string.rename) { listener.rename(gridItem) })
         }
-        if (gridItem.type == ITEM_TYPE_WIDGET) add(ElementMovesBasket.Action(R.drawable.lnch_ic_resize_vector, org.fossify.commons.R.string.resize) { listener.resize(gridItem) })
+        if (gridItem.type == ITEM_TYPE_WIDGET) add(ElementMovesBasket.Action(R.drawable.hd_ic_resize_vector, org.fossify.commons.R.string.resize) { listener.resize(gridItem) })
         if (!isOnAllAppsFragment) add(ElementMovesBasket.Action(org.fossify.commons.R.drawable.ic_cross_vector, org.fossify.commons.R.string.remove) { listener.remove(gridItem) })
         // Our own icon: the system Uninstall only when the host says it has no uninstall flow of
         // its own to run instead - see HomeGateway.allowUninstallingHostIcon.

@@ -4,14 +4,14 @@ import android.app.Activity
 import android.app.AlertDialog
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.ensureBackgroundThread
-import com.livemap.homedeck.databinding.LnchDialogRenameItemBinding
+import com.livemap.homedeck.databinding.HdDialogRenameItemBinding
 import com.livemap.homedeck.ext.homeScreenGridItemsDB
 import com.livemap.homedeck.entities.MainDisplayLatticeElement
 
 class RetitleElementBasket(val activity: Activity, val item: MainDisplayLatticeElement, val callback: () -> Unit) {
 
     init {
-        val binding = LnchDialogRenameItemBinding.inflate(activity.layoutInflater)
+        val binding = HdDialogRenameItemBinding.inflate(activity.layoutInflater)
         val view = binding.root
         binding.renameItemEdittextUi.setText(item.title)
 

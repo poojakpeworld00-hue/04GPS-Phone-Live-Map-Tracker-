@@ -9,9 +9,9 @@ import com.bumptech.glide.Glide
 import org.fossify.commons.extensions.getProperTextColor
 import com.livemap.homedeck.R
 import com.livemap.homedeck.screens.HomeBaseDeck
-import com.livemap.homedeck.databinding.LnchItemWidgetListItemsHolderBinding
-import com.livemap.homedeck.databinding.LnchItemWidgetListSectionBinding
-import com.livemap.homedeck.databinding.LnchItemWidgetPreviewBinding
+import com.livemap.homedeck.databinding.HdItemWidgetListItemsHolderBinding
+import com.livemap.homedeck.databinding.HdItemWidgetListSectionBinding
+import com.livemap.homedeck.databinding.HdItemWidgetPreviewBinding
 import com.livemap.homedeck.support.WIDGET_LIST_ITEMS_HOLDER
 import com.livemap.homedeck.support.WIDGET_LIST_SECTION
 import com.livemap.homedeck.ports.AppletsFragmentObserver
@@ -31,8 +31,8 @@ class AppletsFeed(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         val binding = when (viewType) {
-            WIDGET_LIST_SECTION -> LnchItemWidgetListSectionBinding.inflate(inflater, parent, false)
-            else -> LnchItemWidgetListItemsHolderBinding.inflate(inflater, parent, false)
+            WIDGET_LIST_SECTION -> HdItemWidgetListSectionBinding.inflate(inflater, parent, false)
+            else -> HdItemWidgetListItemsHolderBinding.inflate(inflater, parent, false)
         }
 
         return ViewHolder(binding.root)
@@ -56,7 +56,7 @@ class AppletsFeed(
     }
 
     private fun setupListSection(view: View, section: AppletsListSegment) {
-        LnchItemWidgetListSectionBinding.bind(view).apply {
+        HdItemWidgetListSectionBinding.bind(view).apply {
             widgetAppTitleUi.text = section.appTitle
             widgetAppTitleUi.setTextColor(textColor)
             widgetAppIconUi.setImageDrawable(section.appIcon)
@@ -64,12 +64,12 @@ class AppletsFeed(
     }
 
     private fun setupListItemsHolder(view: View, listItem: AppletsListElementsKeeper) {
-        val binding = LnchItemWidgetListItemsHolderBinding.bind(view)
+        val binding = HdItemWidgetListItemsHolderBinding.bind(view)
         binding.widgetListItemsHolderUi.removeAllViews()
         binding.widgetListItemsScrollViewUi.scrollX = 0
         listItem.widgets.forEachIndexed { index, widget ->
             val imageSize = activity.resources.getDimension(R.dimen.launcher_widget_preview_size).toInt()
-            val widgetPreview = LnchItemWidgetPreviewBinding.inflate(LayoutInflater.from(activity))
+            val widgetPreview = HdItemWidgetPreviewBinding.inflate(LayoutInflater.from(activity))
             binding.widgetListItemsHolderUi.addView(widgetPreview.root)
 
             val endMargin = if (index == listItem.widgets.size - 1) {

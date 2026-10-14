@@ -16,7 +16,7 @@ import org.fossify.commons.helpers.isTiramisuPlus
 import org.fossify.commons.models.RadioItem
 import com.livemap.homedeck.R
 import com.livemap.homedeck.support.QnaRouteWarden
-import com.livemap.homedeck.databinding.LnchActivitySettingsBinding
+import com.livemap.homedeck.databinding.HdActivitySettingsBinding
 import com.livemap.homedeck.preset.SliderWay
 import com.livemap.homedeck.ext.launcherConfig
 import com.livemap.homedeck.support.MAX_COLUMN_COUNT
@@ -32,7 +32,7 @@ private const val DRAWER_STYLE_PAGED = 1
 
 class HomePrefsDeck : HomeBaseDeck() {
 
-    private val binding by viewBinding(LnchActivitySettingsBinding::inflate)
+    private val binding by viewBinding(HdActivitySettingsBinding::inflate)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)

@@ -27,8 +27,8 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.BonusProfile
 import com.find.phone.gps.live.location.tracker.monetize.logic.BonusPause
 import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverStandard
-import com.find.phone.gps.live.location.tracker.databinding.DialogRewardRetryBinding
-import com.find.phone.gps.live.location.tracker.databinding.DialogRewardWaitBinding
+import com.find.phone.gps.live.location.tracker.databinding.DlgRewardRetryBinding
+import com.find.phone.gps.live.location.tracker.databinding.DlgRewardWaitBinding
 
 /**
  * Preload-and-show pattern for Google AdMob Rewarded ads.
@@ -251,9 +251,9 @@ class BonusTeaser {
         }
     }
 
-    private fun dialogFor(activity: Activity): Pair<Dialog, DialogRewardRetryBinding> {
+    private fun dialogFor(activity: Activity): Pair<Dialog, DlgRewardRetryBinding> {
         val themed = ContextThemeWrapper(activity, R.style.Theme_GpsTracker)
-        val view = DialogRewardRetryBinding.inflate(LayoutInflater.from(themed))
+        val view = DlgRewardRetryBinding.inflate(LayoutInflater.from(themed))
         val dialog = Dialog(themed)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         dialog.setContentView(view.root)
@@ -291,7 +291,7 @@ class BonusTeaser {
     private fun askWait(activity: Activity, onDone: (Result) -> Unit) {
         if (activity.isFinishing || activity.isDestroyed) return onDone(Result.CANCELED)
         val themed = ContextThemeWrapper(activity, R.style.Theme_GpsTracker)
-        val view = DialogRewardWaitBinding.inflate(LayoutInflater.from(themed))
+        val view = DlgRewardWaitBinding.inflate(LayoutInflater.from(themed))
         val dialog = Dialog(themed)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         dialog.setContentView(view.root)

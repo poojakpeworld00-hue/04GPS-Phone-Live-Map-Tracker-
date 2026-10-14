@@ -31,24 +31,24 @@ enum class DrawerFolio(
         "notification",
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) arrayOf(Manifest.permission.POST_NOTIFICATIONS) else emptyArray(),
         R.string.ps_notif_name, R.string.ps_notif_title, R.string.ps_notif_body,
-        R.layout.ps_ill_notifications,
+        R.layout.pmt_ill_notifications,
     ),
     SIM(
         "phone_state", MineChipNums.PERMISSIONS,
         R.string.ps_sim_name, R.string.ps_sim_title, R.string.ps_sim_body,
-        R.layout.ps_ill_sim,
+        R.layout.pmt_ill_sim,
     ),
     CONTACTS(
         "contacts", arrayOf(Manifest.permission.READ_CONTACTS),
         R.string.ps_contacts_name, R.string.ps_contacts_title, R.string.ps_contacts_body,
-        R.layout.ps_ill_contacts,
+        R.layout.pmt_ill_contacts,
     ),
     LOCATION(
         "location",
         // Both, so Android 12+ offers the precise/approximate choice; approximate is enough.
         arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
         R.string.ps_location_name, R.string.ps_location_title, R.string.ps_location_body,
-        R.layout.ps_ill_location,
+        R.layout.pmt_ill_location,
     );
 
     /** The permission whose grant counts as "this page is done". */

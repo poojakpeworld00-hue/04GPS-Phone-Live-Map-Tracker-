@@ -44,7 +44,7 @@ class DriftPortalActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.view_overlay_permission)
+        setContentView(R.layout.screen_overlay_permission)
 
         // Tutorial is shown only once, ever.
         if (prefs.isOverlayTutorialShown) {

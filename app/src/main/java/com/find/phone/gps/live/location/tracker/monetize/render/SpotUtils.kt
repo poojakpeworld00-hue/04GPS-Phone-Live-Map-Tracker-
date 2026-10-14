@@ -21,7 +21,7 @@ import androidx.viewbinding.ViewBinding
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverStandard
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.databinding.ModalAppRedirectBinding
+import com.find.phone.gps.live.location.tracker.databinding.PopupAppRedirectBinding
 import kotlin.apply
 import kotlin.let
 import kotlin.text.isNullOrEmpty
@@ -97,7 +97,7 @@ fun Activity.showAppRedirectPopup(onDismiss: (() -> Unit)? = null) {
     val appUrl = SpotsLocker(this).getString("In_App_Update_Link")
     if (appUrl.isNullOrEmpty()) return
 
-    val dialogBinding = ModalAppRedirectBinding.inflate(layoutInflater)
+    val dialogBinding = PopupAppRedirectBinding.inflate(layoutInflater)
 
     val dialog = showDialog(
         activity = this,

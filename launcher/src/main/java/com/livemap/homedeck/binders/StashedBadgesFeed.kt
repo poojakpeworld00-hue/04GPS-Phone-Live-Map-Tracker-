@@ -15,7 +15,7 @@ import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.interfaces.RefreshRecyclerViewListener
 import org.fossify.commons.views.MyRecyclerView
 import com.livemap.homedeck.R
-import com.livemap.homedeck.databinding.LnchItemHiddenIconBinding
+import com.livemap.homedeck.databinding.HdItemHiddenIconBinding
 import com.livemap.homedeck.ext.hiddenIconsDB
 import com.livemap.homedeck.entities.StashedBadge
 
@@ -34,7 +34,7 @@ class StashedBadgesFeed(
         setupDragListener(true)
     }
 
-    override fun getActionMenuId() = R.menu.lnch_cab_hidden_icons
+    override fun getActionMenuId() = R.menu.hd_cab_hidden_icons
 
     override fun prepareActionMode(menu: Menu) {}
 
@@ -57,7 +57,7 @@ class StashedBadgesFeed(
     override fun onActionModeDestroyed() {}
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        return createViewHolder(LnchItemHiddenIconBinding.inflate(layoutInflater, parent, false).root)
+        return createViewHolder(HdItemHiddenIconBinding.inflate(layoutInflater, parent, false).root)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -103,7 +103,7 @@ class StashedBadgesFeed(
     }
 
     private fun setupView(view: View, icon: StashedBadge) {
-        LnchItemHiddenIconBinding.bind(view).apply {
+        HdItemHiddenIconBinding.bind(view).apply {
             hiddenIconHolderUi.isSelected = selectedKeys.contains(icon.hashCode())
             hiddenIconLabelUi.text = icon.title
             hiddenIconLabelUi.setTextColor(textColor)

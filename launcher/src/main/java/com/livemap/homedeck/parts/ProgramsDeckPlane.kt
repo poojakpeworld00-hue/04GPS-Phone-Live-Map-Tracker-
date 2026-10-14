@@ -16,7 +16,7 @@ import org.fossify.commons.extensions.normalizeString
 import com.livemap.homedeck.R
 import com.livemap.homedeck.screens.HomeDeck
 import com.livemap.homedeck.binders.DeckProgramsFeed
-import com.livemap.homedeck.databinding.LnchLeftPanelFragmentBinding
+import com.livemap.homedeck.databinding.HdLeftPanelFragmentBinding
 import com.livemap.homedeck.ext.launchApp
 import com.livemap.homedeck.entities.CoreHome
 import com.livemap.homedeck.teaser.HomeSpotsProfile
@@ -30,7 +30,7 @@ import kotlin.math.abs
 class ProgramsDeckPlane(
     context: Context,
     attributeSet: AttributeSet,
-) : HomePlane<LnchLeftPanelFragmentBinding>(context, attributeSet) {
+) : HomePlane<HdLeftPanelFragmentBinding>(context, attributeSet) {
 
     private var launchers = emptyList<CoreHome>()
     private var resultsCap = COLLAPSED_RESULTS
@@ -59,12 +59,12 @@ class ProgramsDeckPlane(
 
     override fun setupFragment(activity: HomeDeck) {
         this.activity = activity
-        this.binding = LnchLeftPanelFragmentBinding.bind(this)
+        this.binding = HdLeftPanelFragmentBinding.bind(this)
 
-        suggestedAdapter = DeckProgramsFeed(R.layout.lnch_item_panel_grid_app, ::launchLauncher)
-        recentAdapter = DeckProgramsFeed(R.layout.lnch_item_panel_grid_app, ::launchLauncher)
-        resultsAdapter = DeckProgramsFeed(R.layout.lnch_item_panel_result, ::launchLauncher)
-        searchInAdapter = DeckProgramsFeed(R.layout.lnch_item_panel_search_in, ::searchInApp)
+        suggestedAdapter = DeckProgramsFeed(R.layout.hd_item_panel_grid_app, ::launchLauncher)
+        recentAdapter = DeckProgramsFeed(R.layout.hd_item_panel_grid_app, ::launchLauncher)
+        resultsAdapter = DeckProgramsFeed(R.layout.hd_item_panel_result, ::launchLauncher)
+        searchInAdapter = DeckProgramsFeed(R.layout.hd_item_panel_search_in, ::searchInApp)
 
         binding.panelSuggestedGridUi.adapter = suggestedAdapter
         binding.panelRecentGridUi.adapter = recentAdapter

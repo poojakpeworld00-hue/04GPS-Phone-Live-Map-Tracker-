@@ -82,10 +82,10 @@ class BespokeSpotsBook {
         val ad = ads.random()
 
         val layoutId = when (type) {
-            CustomAdType.BIG_NATIVE -> R.layout.custom_native_ads1
-            CustomAdType.MID_NATIVE -> R.layout.custom_native_ads2
-            CustomAdType.BANNER -> R.layout.banner_custom_ads
-            CustomAdType.FULLSCREEN_NATIVE -> R.layout.custom_native_full_screen_ads1
+            CustomAdType.BIG_NATIVE -> R.layout.bespoke_native_ads1
+            CustomAdType.MID_NATIVE -> R.layout.bespoke_native_ads2
+            CustomAdType.BANNER -> R.layout.strip_custom_ads
+            CustomAdType.FULLSCREEN_NATIVE -> R.layout.bespoke_native_full_screen_ads1
         }
         val view = try {
             LayoutInflater.from(container.context).inflate(layoutId, container, false)

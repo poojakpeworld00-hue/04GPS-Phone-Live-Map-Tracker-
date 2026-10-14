@@ -22,12 +22,12 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.DisplayTeaserProfile
 import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
 import com.find.phone.gps.live.location.tracker.BuildConfig
-import com.find.phone.gps.live.location.tracker.databinding.FbMidNativeBinding
-import com.find.phone.gps.live.location.tracker.databinding.FbNativeBinding
-import com.find.phone.gps.live.location.tracker.databinding.GooglebignativeBinding
-import com.find.phone.gps.live.location.tracker.databinding.GooglebignativetopBinding
-import com.find.phone.gps.live.location.tracker.databinding.Googlemidnative2Binding
-import com.find.phone.gps.live.location.tracker.databinding.GooglemidnativeBinding
+import com.find.phone.gps.live.location.tracker.databinding.MetaMidNativeBinding
+import com.find.phone.gps.live.location.tracker.databinding.MetaNativeBinding
+import com.find.phone.gps.live.location.tracker.databinding.GmsBignativeBinding
+import com.find.phone.gps.live.location.tracker.databinding.GmsBignativetopBinding
+import com.find.phone.gps.live.location.tracker.databinding.GmsMidnative2Binding
+import com.find.phone.gps.live.location.tracker.databinding.GmsMidnativeBinding
 import com.facebook.ads.Ad
 import com.facebook.ads.AdError
 import com.facebook.ads.AdOptionsView
@@ -265,13 +265,13 @@ class EmbeddedTeaser() {
 
                             val rootView: View = if (isButtonTop == true) {
                                 val binding =
-                                    GooglebignativetopBinding.inflate(context.layoutInflater)
+                                    GmsBignativetopBinding.inflate(context.layoutInflater)
 
                                 bigNativeTemplateTop(nativeAd!!, binding, context)
                                 binding.root
                             } else {
                                 val binding =
-                                    GooglebignativeBinding.inflate(context.layoutInflater)
+                                    GmsBignativeBinding.inflate(context.layoutInflater)
 
                                 bigNativeTemplate(nativeAd!!, binding, context)
                                 binding.root
@@ -341,7 +341,7 @@ class EmbeddedTeaser() {
 
     private fun bigNativeTemplate(
         nativeAd: NativeAd,
-        binding: GooglebignativeBinding,
+        binding: GmsBignativeBinding,
         context: Activity
     ) {
         binding.apply {
@@ -381,7 +381,7 @@ class EmbeddedTeaser() {
 
     private fun bigNativeTemplateTop(
         nativeAd: NativeAd,
-        binding: GooglebignativetopBinding,
+        binding: GmsBignativetopBinding,
         context: Activity
     ) {
         binding.apply {
@@ -499,7 +499,7 @@ class EmbeddedTeaser() {
         nativeAd.unregisterView()
 
         // ✅ Inflate layout with ViewBinding
-        val binding = FbNativeBinding.inflate(LayoutInflater.from(activity), viewGroup, false)
+        val binding = MetaNativeBinding.inflate(LayoutInflater.from(activity), viewGroup, false)
 
         // Clear old views and add new ad view
         viewGroup.removeAllViews()
@@ -603,7 +603,7 @@ class EmbeddedTeaser() {
                     try {
                         if (context.isFinishing || context.isDestroyed) return@post
                         if (nativeAd != null) {
-                            val binding = GooglemidnativeBinding.inflate(context.layoutInflater)
+                            val binding = GmsMidnativeBinding.inflate(context.layoutInflater)
                             MidNativeTemplate(
                                 nativeAd!!,
                                 binding,
@@ -747,7 +747,7 @@ class EmbeddedTeaser() {
         nativeAd.unregisterView()
 
         // ✅ Inflate layout with ViewBinding
-        val binding = FbMidNativeBinding.inflate(LayoutInflater.from(activity), viewGroup, false)
+        val binding = MetaMidNativeBinding.inflate(LayoutInflater.from(activity), viewGroup, false)
 
         // Clear old views and add new ad view
         viewGroup.removeAllViews()
@@ -801,7 +801,7 @@ class EmbeddedTeaser() {
 
     private fun MidNativeTemplate(
         nativeAd: NativeAd,
-        binding: GooglemidnativeBinding,
+        binding: GmsMidnativeBinding,
         context: Activity
     ) {
         binding.apply {
@@ -905,7 +905,7 @@ class EmbeddedTeaser() {
                     try {
                         if (context.isFinishing || context.isDestroyed) return@post
                         if (Companion.nativeAd != null) {
-                            val binding = Googlemidnative2Binding.inflate(context.layoutInflater)
+                            val binding = GmsMidnative2Binding.inflate(context.layoutInflater)
                             MidNativeTemplate2(
                                 Companion.nativeAd!!,
                                 binding,
@@ -968,7 +968,7 @@ class EmbeddedTeaser() {
 
     private fun MidNativeTemplate2(
         nativeAd: NativeAd,
-        binding: Googlemidnative2Binding,
+        binding: GmsMidnative2Binding,
         context: Activity
     ) {
         binding.apply {

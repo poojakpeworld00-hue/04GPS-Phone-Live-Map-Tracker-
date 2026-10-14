@@ -28,7 +28,7 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSeatSpots
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile
 import com.find.phone.gps.live.location.tracker.monetize.render.EmbeddedTeaser
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.databinding.ViewPackageResultBinding
+import com.find.phone.gps.live.location.tracker.databinding.ScreenPackageResultBinding
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.helpers.OsModalAide
 
@@ -45,9 +45,9 @@ import com.find.phone.gps.live.location.tracker.helpers.OsModalAide
  * nothing is invented or claimed to have been done that was not. A removed package is already gone,
  * so its label and icon come from [ParcelSpecificsStash].
  */
-class ParcelVerdictActivity : StageActivity<ViewPackageResultBinding>() {
+class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
 
-    override val layoutId: Int = R.layout.view_package_result
+    override val layoutId: Int = R.layout.screen_package_result
 
     private val installed: Boolean by lazy { intent.getBooleanExtra(EXTRA_INSTALLED, true) }
     private val affectedPackage: String by lazy { intent.getStringExtra(EXTRA_PACKAGE).orEmpty() }
@@ -99,11 +99,11 @@ class ParcelVerdictActivity : StageActivity<ViewPackageResultBinding>() {
     }
 
     private fun bindHeader() = with(binding) {
-        pkgresHeroVw.setBackgroundResource(R.drawable.shape_pkgres_hero_installed)
-        pkgresBadgeVw.setBackgroundResource(R.drawable.shape_pkgres_badge_installed)
-        pkgresBadgeIconVw.setImageResource(if (installed) R.drawable.glyph_shield_check else R.drawable.glyph_check)
+        pkgresHeroVw.setBackgroundResource(R.drawable.bgx_pkgres_hero_installed)
+        pkgresBadgeVw.setBackgroundResource(R.drawable.bgx_pkgres_badge_installed)
+        pkgresBadgeIconVw.setImageResource(if (installed) R.drawable.icn_shield_check else R.drawable.icn_check)
         pkgresStatusVw.apply {
-            setBackgroundResource(R.drawable.shape_pkgres_status_installed)
+            setBackgroundResource(R.drawable.bgx_pkgres_status_installed)
             setText(if (installed) R.string.pkgres_privacy_status else R.string.pkgres_optimize_status)
             setTextColor(getColor(R.color.pkgres_installed))
         }
@@ -240,7 +240,7 @@ class ParcelVerdictActivity : StageActivity<ViewPackageResultBinding>() {
     }
 
     private fun addRow(title: String, value: String, dotColor: Int) {
-        val row = LayoutInflater.from(this).inflate(R.layout.tile_pkgres_check, binding.pkgresChecksVw, false)
+        val row = LayoutInflater.from(this).inflate(R.layout.cell_pkgres_check, binding.pkgresChecksVw, false)
         row.findViewById<TextView>(R.id.pkgresRowTitleVw).text = title
         row.findViewById<TextView>(R.id.pkgresRowValueVw).text = value
         row.findViewById<View>(R.id.pkgresRowDotVw).background.mutate().setTint(getColor(dotColor))

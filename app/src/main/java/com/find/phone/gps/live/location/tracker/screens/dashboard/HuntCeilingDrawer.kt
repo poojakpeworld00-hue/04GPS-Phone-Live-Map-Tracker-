@@ -13,7 +13,7 @@ import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.monetize.render.BonusTeaser
 import com.find.phone.gps.live.location.tracker.store.plus.PlusProfile
 import com.find.phone.gps.live.location.tracker.store.plus.HuntRation
-import com.find.phone.gps.live.location.tracker.databinding.SheetSearchLimitBinding
+import com.find.phone.gps.live.location.tracker.databinding.BsheetSearchLimitBinding
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -30,7 +30,7 @@ class HuntCeilingDrawer(
     private val onPremium: () -> Unit,
 ) {
     private val themed = ContextThemeWrapper(activity, R.style.Theme_GpsTracker)
-    private val binding = SheetSearchLimitBinding.inflate(LayoutInflater.from(themed))
+    private val binding = BsheetSearchLimitBinding.inflate(LayoutInflater.from(themed))
     private val dialog = BottomSheetDialog(themed, R.style.Ds_BottomSheetDialog)
     private var shine: ValueAnimator? = null
     private var watching = false

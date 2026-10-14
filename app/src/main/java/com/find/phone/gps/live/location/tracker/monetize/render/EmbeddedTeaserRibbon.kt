@@ -19,8 +19,8 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.DisplayTeaserProf
 import com.find.phone.gps.live.location.tracker.monetize.logic.TAG_EVENT
 import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
 import com.find.phone.gps.live.location.tracker.BuildConfig
-import com.find.phone.gps.live.location.tracker.databinding.FacebookNativeBannerBinding
-import com.find.phone.gps.live.location.tracker.databinding.GooglenativebannerBinding
+import com.find.phone.gps.live.location.tracker.databinding.MetaNativeBannerBinding
+import com.find.phone.gps.live.location.tracker.databinding.GmsNativebannerBinding
 import com.facebook.ads.Ad
 import com.facebook.ads.AdError
 import com.facebook.ads.AdOptionsView
@@ -138,7 +138,7 @@ class EmbeddedTeaserRibbon {
                     try {
                         if (context.isFinishing || context.isDestroyed) return@post
                         if (nativeAdBanner != null) {
-                            val binding = GooglenativebannerBinding.inflate(context.layoutInflater)
+                            val binding = GmsNativebannerBinding.inflate(context.layoutInflater)
                             bindGoogleNativeAd(nativeAdBanner!!, binding, context)
 
                             layout.removeAllViews()
@@ -194,7 +194,7 @@ class EmbeddedTeaserRibbon {
     }
 
     private fun bindGoogleNativeAd(
-        nativeAd: NativeAd, binding: GooglenativebannerBinding, context: Activity
+        nativeAd: NativeAd, binding: GmsNativebannerBinding, context: Activity
     ) {
         // Log load
         context.logKeyEvent("NativeBanner_Show_Google")
@@ -315,7 +315,7 @@ class EmbeddedTeaserRibbon {
 
         // ✅ Inflate layout with ViewBinding
         val binding =
-            FacebookNativeBannerBinding.inflate(LayoutInflater.from(activity), viewGroup, false)
+            MetaNativeBannerBinding.inflate(LayoutInflater.from(activity), viewGroup, false)
 
         // Clear old views and add new ad view
         viewGroup.removeAllViews()

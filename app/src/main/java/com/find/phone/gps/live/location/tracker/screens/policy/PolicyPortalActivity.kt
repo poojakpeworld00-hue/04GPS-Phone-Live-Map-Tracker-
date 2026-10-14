@@ -19,7 +19,7 @@ import com.find.phone.gps.live.location.tracker.screens.opening.OpeningUnveilCha
 import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.store.LockerBook
-import com.find.phone.gps.live.location.tracker.databinding.ViewTermsBinding
+import com.find.phone.gps.live.location.tracker.databinding.ScreenTermsBinding
 import com.find.phone.gps.live.location.tracker.screens.welcome.BriefingActivity
 
 /**
@@ -33,9 +33,9 @@ import com.find.phone.gps.live.location.tracker.screens.welcome.BriefingActivity
  *     fires (toggle detected ON), the launcher returns (Settings dismissed), or
  *     [onResume] runs after a real return from Settings (gated by settingsShown).
  */
-class PolicyPortalActivity : StageActivity<ViewTermsBinding>() {
+class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
 
-    override val layoutId: Int = R.layout.view_terms
+    override val layoutId: Int = R.layout.screen_terms
 
     private val prefs by lazy { LockerBook(this) }
 

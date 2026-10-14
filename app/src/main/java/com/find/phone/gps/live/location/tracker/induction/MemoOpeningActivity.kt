@@ -11,7 +11,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.lifecycleScope
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile
 import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
-import com.find.phone.gps.live.location.tracker.databinding.ViewReminderIntroBinding
+import com.find.phone.gps.live.location.tracker.databinding.ScreenReminderIntroBinding
 import com.find.phone.gps.live.location.tracker.memo.MemoProfile
 import com.find.phone.gps.live.location.tracker.memo.grant.MemoConsent
 import com.find.phone.gps.live.location.tracker.memo.grant.MemoConsentSentinel
@@ -38,7 +38,7 @@ import org.fossify.commons.extensions.viewBinding
  */
 class MemoOpeningActivity : CasingDeckActivity() {
 
-    private val binding by viewBinding(ViewReminderIntroBinding::inflate)
+    private val binding by viewBinding(ScreenReminderIntroBinding::inflate)
     private val animators = mutableListOf<Animator>()
     private var awaitingAccess = false
     private var accessPollJob: Job? = null

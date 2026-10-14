@@ -34,7 +34,7 @@ object CoreStartPuller {
             dialog = Dialog(activity).apply {
                 requestWindowFeature(Window.FEATURE_NO_TITLE)
                 setCancelable(false)
-                setContentView(R.layout.piece_app_launch_loader)
+                setContentView(R.layout.part_app_launch_loader)
                 window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
                 window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
 

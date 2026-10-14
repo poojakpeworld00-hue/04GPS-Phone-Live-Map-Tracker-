@@ -27,7 +27,7 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.DisplayTeaserProf
 import com.find.phone.gps.live.location.tracker.monetize.render.EmbeddedTeaserRibbon
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.store.LockerBook
-import com.find.phone.gps.live.location.tracker.databinding.ViewContactPickerBinding
+import com.find.phone.gps.live.location.tracker.databinding.ScreenContactPickerBinding
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
 import com.find.phone.gps.live.location.tracker.screens.craft.KitFlyout
 import kotlinx.coroutines.Dispatchers
@@ -43,9 +43,9 @@ import java.util.Locale
  * Opened from Home as a picker: Locate hands the number back as [EXTRA_NUMBER]. Without the
  * Contacts permission the 8b state asks for it in place.
  */
-class BuddyChooserActivity : StageActivity<ViewContactPickerBinding>() {
+class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
 
-    override val layoutId: Int = R.layout.view_contact_picker
+    override val layoutId: Int = R.layout.screen_contact_picker
 
     private val adapter = BuddyAdapter(onLocate = { pick(it) }, onCall = { dial(it) })
     private val favorites = PinnedAdapter { pick(it) }
@@ -191,7 +191,7 @@ class BuddyChooserActivity : StageActivity<ViewContactPickerBinding>() {
         val popup = KitFlyout(this)
         popup.add(
             label = getString(R.string.ds_contacts_all_accounts),
-            icon = R.drawable.ds_ic_contact_card,
+            icon = R.drawable.lv_ic_contact_card,
             badge = people.size.toString(),
             selected = account == null,
         ) { selectAccount(null) }
@@ -199,9 +199,9 @@ class BuddyChooserActivity : StageActivity<ViewContactPickerBinding>() {
             popup.add(
                 label = name,
                 icon = when (name) {
-                    BuddyNum.ACCOUNT_PHONE -> R.drawable.ds_ic_phone
-                    BuddyNum.ACCOUNT_SIM -> R.drawable.ds_ic_contact_card
-                    else -> R.drawable.ds_ic_globe
+                    BuddyNum.ACCOUNT_PHONE -> R.drawable.lv_ic_phone
+                    BuddyNum.ACCOUNT_SIM -> R.drawable.lv_ic_contact_card
+                    else -> R.drawable.lv_ic_globe
                 },
                 badge = counts.getValue(name).toString(),
                 selected = account == name,
@@ -221,9 +221,9 @@ class BuddyChooserActivity : StageActivity<ViewContactPickerBinding>() {
         KitFlyout(this)
             .add(
                 label = getString(if (descending) R.string.ds_contacts_sort_az else R.string.ds_contacts_sort_za),
-                icon = R.drawable.ds_ic_grid,
+                icon = R.drawable.lv_ic_grid,
             ) { descending = !descending; applyFilter() }
-            .add(label = getString(R.string.ds_contacts_refresh), icon = R.drawable.ds_ic_history) { load() }
+            .add(label = getString(R.string.ds_contacts_refresh), icon = R.drawable.lv_ic_history) { load() }
             .show(binding.btnTools, Gravity.END)
     }
 

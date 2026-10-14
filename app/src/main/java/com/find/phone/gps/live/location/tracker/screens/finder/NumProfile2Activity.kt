@@ -28,10 +28,10 @@ import com.find.phone.gps.live.location.tracker.store.inquiry.NumInquiry
 import com.find.phone.gps.live.location.tracker.store.inquiry.NumDigest
 import com.find.phone.gps.live.location.tracker.store.inquiry.ExposedTitles
 import com.find.phone.gps.live.location.tracker.store.plus.PlusCheckout
-import com.find.phone.gps.live.location.tracker.databinding.TileDetailActionBinding
-import com.find.phone.gps.live.location.tracker.databinding.TileDetailCellBinding
-import com.find.phone.gps.live.location.tracker.databinding.TileDetailNameBinding
-import com.find.phone.gps.live.location.tracker.databinding.ViewNumberDetailBinding
+import com.find.phone.gps.live.location.tracker.databinding.CellDetailActionBinding
+import com.find.phone.gps.live.location.tracker.databinding.CellDetailCellBinding
+import com.find.phone.gps.live.location.tracker.databinding.CellDetailNameBinding
+import com.find.phone.gps.live.location.tracker.databinding.ScreenNumberDetailBinding
 import com.find.phone.gps.live.location.tracker.screens.people.BuddyAdapter
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
 import kotlinx.coroutines.launch
@@ -45,9 +45,9 @@ import kotlin.math.roundToInt
  * revealed by the unlock and each other one behind its own rewarded ad (Premium: all shown).
  * When the lookup server couldn't be reached a note offers Retry, which re-runs it in place.
  */
-class NumProfile2Activity : StageActivity<ViewNumberDetailBinding>() {
+class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
 
-    override val layoutId: Int = R.layout.view_number_detail
+    override val layoutId: Int = R.layout.screen_number_detail
 
     private lateinit var report: NumDigest
     private var overlay: SectorThrobVeil? = null
@@ -94,10 +94,10 @@ class NumProfile2Activity : StageActivity<ViewNumberDetailBinding>() {
         CraftMovement.pressScale(binding.btnFullMap)
         binding.identityCard.clipToOutline = false
 
-        action(binding.actCall, R.drawable.ds_ic_call, R.string.ds_act_call, lead = true) { placeCall(report.e164) }
-        action(binding.actSms, R.drawable.ds_ic_message, R.string.ds_act_sms) { sendSms() }
-        action(binding.actMap, R.drawable.ds_ic_navigation, R.string.ds_act_map) { openFullMap() }
-        action(binding.actCopy, R.drawable.ds_ic_copy, R.string.ds_act_copy) { copyNumber() }
+        action(binding.actCall, R.drawable.lv_ic_call, R.string.ds_act_call, lead = true) { placeCall(report.e164) }
+        action(binding.actSms, R.drawable.lv_ic_message, R.string.ds_act_sms) { sendSms() }
+        action(binding.actMap, R.drawable.lv_ic_navigation, R.string.ds_act_map) { openFullMap() }
+        action(binding.actCopy, R.drawable.lv_ic_copy, R.string.ds_act_copy) { copyNumber() }
 
         StreetCharts.style(binding.mapView, interactive = false)
         bind()
@@ -114,9 +114,9 @@ class NumProfile2Activity : StageActivity<ViewNumberDetailBinding>() {
         binding.tvMapPlace.text = binding.tvPlace.text
 
         when {
-            r.spam -> chip(R.string.ds_verdict_spam, R.drawable.ds_pill_danger, R.color.ds_danger)
-            r.valid -> chip(R.string.ds_result_valid_short, R.drawable.ds_pill_success_soft, R.color.ds_success)
-            else -> chip(R.string.ds_verdict_unverified, R.drawable.ds_pill_warn, R.color.ds_warn)
+            r.spam -> chip(R.string.ds_verdict_spam, R.drawable.lv_pill_danger, R.color.ds_danger)
+            r.valid -> chip(R.string.ds_result_valid_short, R.drawable.lv_pill_success_soft, R.color.ds_success)
+            else -> chip(R.string.ds_verdict_unverified, R.drawable.lv_pill_warn, R.color.ds_warn)
         }
         val line = r.lineType.label(this)
         binding.chipLine.text = line
@@ -137,18 +137,18 @@ class NumProfile2Activity : StageActivity<ViewNumberDetailBinding>() {
         binding.chipVerdict.setTextColor(ContextCompat.getColor(this, color))
     }
 
-    private fun cell(cell: TileDetailCellBinding, @StringRes label: Int, value: String?) {
+    private fun cell(cell: CellDetailCellBinding, @StringRes label: Int, value: String?) {
         cell.tvLabel.setText(label)
         val known = !value.isNullOrBlank()
         cell.tvValue.text = if (known) value else getString(R.string.ds_not_available)
         cell.tvValue.setTextColor(ContextCompat.getColor(this, if (known) R.color.ds_ink else R.color.ds_muted))
     }
 
-    private fun action(tile: TileDetailActionBinding, @DrawableRes icon: Int, @StringRes label: Int, lead: Boolean = false, onClick: () -> Unit) {
+    private fun action(tile: CellDetailActionBinding, @DrawableRes icon: Int, @StringRes label: Int, lead: Boolean = false, onClick: () -> Unit) {
         tile.ivIcon.setImageResource(icon)
         tile.tvLabel.setText(label)
         if (lead) {
-            tile.iconBox.setBackgroundResource(R.drawable.ds_tile_primary_r16)
+            tile.iconBox.setBackgroundResource(R.drawable.lv_tile_primary_r16)
             tile.ivIcon.setColorFilter(ContextCompat.getColor(this, R.color.white))
         }
         CraftMovement.pressScale(tile.actionRoot)
@@ -175,7 +175,7 @@ class NumProfile2Activity : StageActivity<ViewNumberDetailBinding>() {
             bindNames()
         }
         shown.forEachIndexed { i, name ->
-            val item = TileDetailNameBinding.inflate(LayoutInflater.from(this), binding.namesList, true)
+            val item = CellDetailNameBinding.inflate(LayoutInflater.from(this), binding.namesList, true)
             item.tvName.text = name
             item.nameDivider.isVisible = i < shown.lastIndex
             showName(item, name, isRevealed(i, name))
@@ -185,7 +185,7 @@ class NumProfile2Activity : StageActivity<ViewNumberDetailBinding>() {
         if (all.indices.any { !isRevealed(it, all[it]) }) BonusTeaser.preload(this)
     }
 
-    private fun showName(item: TileDetailNameBinding, name: String, revealed: Boolean) {
+    private fun showName(item: CellDetailNameBinding, name: String, revealed: Boolean) {
         item.tvName.setBlurred(!revealed)
         item.tvRevealed.isVisible = revealed
         item.btnReveal.isVisible = !revealed
@@ -194,7 +194,7 @@ class NumProfile2Activity : StageActivity<ViewNumberDetailBinding>() {
             item.tvAvatar.setBackgroundResource(BuddyAdapter.AVATARS[abs(name.hashCode()) % BuddyAdapter.AVATARS.size])
         } else {
             item.tvAvatar.text = ""
-            item.tvAvatar.setBackgroundResource(R.drawable.ds_circle_track)
+            item.tvAvatar.setBackgroundResource(R.drawable.lv_circle_track)
         }
     }
 
@@ -211,7 +211,7 @@ class NumProfile2Activity : StageActivity<ViewNumberDetailBinding>() {
     }
 
     /** One rewarded ad reveals one name (remembered); closing the ad early keeps it hidden. */
-    private fun revealName(item: TileDetailNameBinding, name: String) {
+    private fun revealName(item: CellDetailNameBinding, name: String) {
         if (revealing) return
         revealing = true
         item.tvReveal.isInvisible = true

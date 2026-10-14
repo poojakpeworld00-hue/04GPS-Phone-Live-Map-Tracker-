@@ -77,7 +77,7 @@ class MemoLaborer(context: Context, params: WorkerParameters) : Worker(context, 
 
         val text = item.note.ifBlank { item.number }.ifBlank { ctx.getString(R.string.rem_notification_text) }
         val builder = NotificationCompat.Builder(ctx, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_reminder)
+            .setSmallIcon(R.drawable.icon_stat_reminder)
             .setColor(ContextCompat.getColor(ctx, R.color.ds_primary))
             .setContentTitle(item.title)
             .setContentText(text)

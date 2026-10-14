@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_pressed="true" android:drawable="@drawable/ds_btn_pressed_r12" />
-    <item android:drawable="@drawable/ds_btn_primary_r12" />
-</selector>

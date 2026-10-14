@@ -11,7 +11,7 @@ import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.interfaces.RefreshRecyclerViewListener
 import org.fossify.commons.views.MyGridLayoutManager
 import com.livemap.homedeck.binders.StashedBadgesFeed
-import com.livemap.homedeck.databinding.LnchActivityHiddenIconsBinding
+import com.livemap.homedeck.databinding.HdActivityHiddenIconsBinding
 import com.livemap.homedeck.ext.launcherConfig
 import com.livemap.homedeck.support.BadgeMolder
 import com.livemap.homedeck.ext.getDrawableForPackageName
@@ -19,7 +19,7 @@ import com.livemap.homedeck.ext.hiddenIconsDB
 import com.livemap.homedeck.entities.StashedBadge
 
 class StashedBadgesDeck : HomeBaseDeck(), RefreshRecyclerViewListener {
-    private val binding by viewBinding(LnchActivityHiddenIconsBinding::inflate)
+    private val binding by viewBinding(HdActivityHiddenIconsBinding::inflate)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

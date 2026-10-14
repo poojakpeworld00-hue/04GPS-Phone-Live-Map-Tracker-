@@ -4,7 +4,7 @@ import android.app.Activity
 import android.view.LayoutInflater
 import androidx.appcompat.view.ContextThemeWrapper
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.databinding.SheetInvalidNumberBinding
+import com.find.phone.gps.live.location.tracker.databinding.BsheetInvalidNumberBinding
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -21,7 +21,7 @@ class BrokenNumDrawer(
     private val onChangeCountry: () -> Unit,
 ) {
     private val themed = ContextThemeWrapper(activity, R.style.Theme_GpsTracker)
-    private val binding = SheetInvalidNumberBinding.inflate(LayoutInflater.from(themed))
+    private val binding = BsheetInvalidNumberBinding.inflate(LayoutInflater.from(themed))
     private val dialog = BottomSheetDialog(themed, R.style.Ds_BottomSheetDialog)
 
     fun show() {

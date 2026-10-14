@@ -23,7 +23,7 @@ import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.CoreOpenSpotBook
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
-import com.find.phone.gps.live.location.tracker.databinding.ViewShareNumberBinding
+import com.find.phone.gps.live.location.tracker.databinding.ScreenShareNumberBinding
 import com.find.phone.gps.live.location.tracker.helpers.isNightMode
 import java.io.File
 import java.io.FileOutputStream
@@ -33,9 +33,9 @@ import java.io.FileOutputStream
  * Send-as selector (plain text / vCard contact card / the QR image), and Copy / Save QR / Share.
  * Generation only — no scanner, no extra permission (saving uses MediaStore on API 29+).
  */
-class SpreadNumActivity : StageActivity<ViewShareNumberBinding>() {
+class SpreadNumActivity : StageActivity<ScreenShareNumberBinding>() {
 
-    override val layoutId: Int = R.layout.view_share_number
+    override val layoutId: Int = R.layout.screen_share_number
 
     private enum class SendAs { TEXT, CONTACT, QR }
 
@@ -87,7 +87,7 @@ class SpreadNumActivity : StageActivity<ViewShareNumberBinding>() {
         val color = ContextCompat.getColor(this, if (on) R.color.ds_primary else R.color.ds_muted)
         view.setTextColor(color)
         view.typeface = ResourcesCompat.getFont(this, if (on) R.font.figtree_bold else R.font.figtree_semibold)
-        view.background = if (on) ContextCompat.getDrawable(this, R.drawable.ds_seg_thumb_r10) else null
+        view.background = if (on) ContextCompat.getDrawable(this, R.drawable.lv_seg_thumb_r10) else null
         view.elevation = if (on) 2f * resources.displayMetrics.density else 0f
     }
 

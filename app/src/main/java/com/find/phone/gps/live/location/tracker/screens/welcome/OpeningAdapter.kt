@@ -4,14 +4,14 @@ import android.animation.Animator
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.find.phone.gps.live.location.tracker.databinding.TileOnboardingBinding
+import com.find.phone.gps.live.location.tracker.databinding.CellOnboardingBinding
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
 
 class OpeningAdapter(
     private val pages: List<OpeningFolio>,
 ) : RecyclerView.Adapter<OpeningAdapter.VH>() {
 
-    inner class VH(val binding: TileOnboardingBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class VH(val binding: CellOnboardingBinding) : RecyclerView.ViewHolder(binding.root) {
 
         /** Looping animators of the current scene; cancelled on recycle. */
         private val anims = mutableListOf<Animator>()
@@ -32,7 +32,7 @@ class OpeningAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
-        VH(TileOnboardingBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+        VH(CellOnboardingBinding.inflate(LayoutInflater.from(parent.context), parent, false))
 
     override fun onBindViewHolder(holder: VH, position: Int) = holder.bind(pages[position])
 

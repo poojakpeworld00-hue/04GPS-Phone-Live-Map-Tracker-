@@ -9,7 +9,7 @@ import androidx.core.view.isVisible
 import androidx.core.widget.ImageViewCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.databinding.TileRecentSearchBinding
+import com.find.phone.gps.live.location.tracker.databinding.CellRecentSearchBinding
 import com.find.phone.gps.live.location.tracker.screens.finder.Realms
 import java.util.concurrent.TimeUnit
 
@@ -27,7 +27,7 @@ class FreshHuntAdapter(
         notifyDataSetChanged()
     }
 
-    inner class VH(val binding: TileRecentSearchBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class VH(val binding: CellRecentSearchBinding) : RecyclerView.ViewHolder(binding.root) {
         init {
             binding.row.setOnClickListener {
                 val position = bindingAdapterPosition
@@ -37,7 +37,7 @@ class FreshHuntAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
-        VH(TileRecentSearchBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+        VH(CellRecentSearchBinding.inflate(LayoutInflater.from(parent.context), parent, false))
 
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = items[position]
@@ -71,9 +71,9 @@ class FreshHuntAdapter(
 
     private companion object {
         val TILE_PALETTE = listOf(
-            R.drawable.ds_tile_tint_r14 to R.color.ds_primary,
-            R.drawable.ds_tile_green_r14 to R.color.ds_success,
-            R.drawable.ds_tile_purple_r14 to R.color.ds_purple,
+            R.drawable.lv_tile_tint_r14 to R.color.ds_primary,
+            R.drawable.lv_tile_green_r14 to R.color.ds_success,
+            R.drawable.lv_tile_purple_r14 to R.color.ds_purple,
         )
     }
 }

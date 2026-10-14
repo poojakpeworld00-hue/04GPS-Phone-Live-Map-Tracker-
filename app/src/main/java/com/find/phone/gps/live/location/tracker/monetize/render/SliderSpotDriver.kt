@@ -398,7 +398,7 @@ object SliderSpotDriver {
             val dialog = Dialog(activity, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
             dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
             val view = LayoutInflater.from(activity)
-                .inflate(R.layout.drawer_ad_fullscreen_native, null) as NativeAdView
+                .inflate(R.layout.tray_ad_fullscreen_native, null) as NativeAdView
             bindNative(view, ad)
             view.findViewById<ImageView>(R.id.drawer_native_close).setOnClickListener { dialog.dismiss() }
             dialog.setContentView(view, ViewGroup.LayoutParams(MATCH, MATCH))

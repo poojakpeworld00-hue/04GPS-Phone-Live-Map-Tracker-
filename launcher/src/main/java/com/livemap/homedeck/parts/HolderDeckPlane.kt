@@ -10,7 +10,7 @@ import com.livemap.homedeck.R
 import com.livemap.homedeck.screens.HomeDeck
 import com.livemap.homedeck.contract.HomeDeckMatter
 import com.livemap.homedeck.contract.HomeBook
-import com.livemap.homedeck.databinding.LnchHostPanelBinding
+import com.livemap.homedeck.databinding.HdHostPanelBinding
 import kotlin.math.abs
 
 /**
@@ -25,7 +25,7 @@ import kotlin.math.abs
 class HolderDeckPlane(
     context: Context,
     attributeSet: AttributeSet,
-) : HomePlane<LnchHostPanelBinding>(context, attributeSet) {
+) : HomePlane<HdHostPanelBinding>(context, attributeSet) {
 
     // the panel covers the whole screen while open, so HomeDeck never sees these events
     private val gestureDetector = GestureDetectorCompat(context, object : SimpleOnGestureListener() {
@@ -48,7 +48,7 @@ class HolderDeckPlane(
 
     override fun setupFragment(activity: HomeDeck) {
         this.activity = activity
-        this.binding = LnchHostPanelBinding.bind(this)
+        this.binding = HdHostPanelBinding.bind(this)
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {

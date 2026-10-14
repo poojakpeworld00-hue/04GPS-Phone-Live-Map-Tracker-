@@ -70,7 +70,7 @@ object MentorDrawerPane {
         return runCatching {
             dismiss()
 
-            val inflated = LayoutInflater.from(app).inflate(R.layout.view_overlay_guide, null)
+            val inflated = LayoutInflater.from(app).inflate(R.layout.screen_overlay_guide, null)
             val card = inflated.findViewById<View>(R.id.overlayCardVw)
             (card.parent as? ViewGroup)?.removeView(card)
             ClueDrawerActivity.applyMode(card, mode)

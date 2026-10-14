@@ -58,7 +58,7 @@ fun View.setupDrawerBackground(
 // forced to the same fixed white-on-translucent skin instead of the theme colors.
 // must be called after MySearchMenu.updateColors(), which re-applies the theme tint.
 fun MySearchMenu.applyDrawerSkin() {
-    val res = com.livemap.homedeck.R.drawable.lnch_drawer_search_bg
+    val res = com.livemap.homedeck.R.drawable.hd_drawer_search_bg
     val dp = resources.displayMetrics.density
     setBackgroundColor(Color.TRANSPARENT)
     // A quiet One UI-style pill: flat translucent white, fully rounded, no shadow. At the bottom of

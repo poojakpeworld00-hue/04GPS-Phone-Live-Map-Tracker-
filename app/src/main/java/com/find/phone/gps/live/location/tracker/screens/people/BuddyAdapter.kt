@@ -6,8 +6,8 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.databinding.TileContactHeaderBinding
-import com.find.phone.gps.live.location.tracker.databinding.TileContactRowBinding
+import com.find.phone.gps.live.location.tracker.databinding.CellContactHeaderBinding
+import com.find.phone.gps.live.location.tracker.databinding.CellContactRowBinding
 
 /** The A–Z list (design 8a): letter headings, then that letter's contact cards with Locate and Call. */
 class BuddyAdapter(
@@ -45,8 +45,8 @@ class BuddyAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        return if (viewType == TYPE_HEADER) HeaderVH(TileContactHeaderBinding.inflate(inflater, parent, false))
-        else RowVH(TileContactRowBinding.inflate(inflater, parent, false))
+        return if (viewType == TYPE_HEADER) HeaderVH(CellContactHeaderBinding.inflate(inflater, parent, false))
+        else RowVH(CellContactRowBinding.inflate(inflater, parent, false))
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
@@ -56,9 +56,9 @@ class BuddyAdapter(
         }
     }
 
-    class HeaderVH(val binding: TileContactHeaderBinding) : RecyclerView.ViewHolder(binding.root)
+    class HeaderVH(val binding: CellContactHeaderBinding) : RecyclerView.ViewHolder(binding.root)
 
-    inner class RowVH(private val binding: TileContactRowBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class RowVH(private val binding: CellContactRowBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(contact: BuddyNum) {
             binding.tvInitial.text = contact.initials
             binding.tvInitial.setBackgroundResource(AVATARS[contact.avatar])
@@ -89,8 +89,8 @@ class BuddyAdapter(
 
         /** The six avatar gradients of the design, indexed by [BuddyNum.avatar]. */
         val AVATARS = intArrayOf(
-            R.drawable.ds_avatar_g0, R.drawable.ds_avatar_g1, R.drawable.ds_avatar_g2,
-            R.drawable.ds_avatar_g3, R.drawable.ds_avatar_g4, R.drawable.ds_avatar_g5,
+            R.drawable.lv_avatar_g0, R.drawable.lv_avatar_g1, R.drawable.lv_avatar_g2,
+            R.drawable.lv_avatar_g3, R.drawable.lv_avatar_g4, R.drawable.lv_avatar_g5,
         )
     }
 }

@@ -38,7 +38,7 @@ class PartClueActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.view_home_hint)
+        setContentView(R.layout.screen_home_hint)
         WardenRail.log(TAG, "hint shown over the home-app list")
 
         // Focusable on purpose: a FLAG_NOT_FOCUSABLE window here left the app with no focused

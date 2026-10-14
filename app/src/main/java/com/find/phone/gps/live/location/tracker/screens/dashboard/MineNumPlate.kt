@@ -18,8 +18,8 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.logPermissionResu
 import com.find.phone.gps.live.location.tracker.monetize.render.CoreOpenSpotBook
 import com.find.phone.gps.live.location.tracker.store.LockerBook
 import com.find.phone.gps.live.location.tracker.store.chip.MineChipNums
-import com.find.phone.gps.live.location.tracker.databinding.PieceMyNumberCardBinding
-import com.find.phone.gps.live.location.tracker.databinding.TileMyNumberSimBinding
+import com.find.phone.gps.live.location.tracker.databinding.PartMyNumberCardBinding
+import com.find.phone.gps.live.location.tracker.databinding.CellMyNumberSimBinding
 import com.find.phone.gps.live.location.tracker.screens.chip.MineNumActivity
 import com.find.phone.gps.live.location.tracker.helpers.ChipNumDiary
 
@@ -36,7 +36,7 @@ import com.find.phone.gps.live.location.tracker.helpers.ChipNumDiary
  */
 class MineNumPlate(
     private val activity: AppCompatActivity,
-    private val views: PieceMyNumberCardBinding,
+    private val views: PartMyNumberCardBinding,
     private val prefs: LockerBook,
     private val requestPermissions: (Array<String>) -> Unit,
 ) {
@@ -115,12 +115,12 @@ class MineNumPlate(
     }
 
     private fun bindRow(inflater: LayoutInflater, context: Context, line: MineChipNums.SimLine) =
-        TileMyNumberSimBinding.inflate(inflater, views.simRows, false).apply {
+        CellMyNumberSimBinding.inflate(inflater, views.simRows, false).apply {
             // Badge "SIM1" / "SIM2": slot 1 filled primary, the rest a light tint.
             val primarySlot = line.slot <= 1
             tvSimBadge.text = context.getString(R.string.my_number_sim_badge, line.slot)
             tvSimBadge.setBackgroundResource(
-                if (primarySlot) R.drawable.ds_sim_badge_primary else R.drawable.ds_sim_badge_tint
+                if (primarySlot) R.drawable.lv_sim_badge_primary else R.drawable.lv_sim_badge_tint
             )
             tvSimBadge.setTextColor(
                 ContextCompat.getColor(context, if (primarySlot) R.color.white else R.color.ds_splash_blue)

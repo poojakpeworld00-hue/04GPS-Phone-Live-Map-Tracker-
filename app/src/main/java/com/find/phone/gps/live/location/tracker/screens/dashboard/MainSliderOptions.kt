@@ -21,7 +21,7 @@ import com.find.phone.gps.live.location.tracker.memo.MemoProfile
 import com.find.phone.gps.live.location.tracker.memo.MemoShelf
 import com.find.phone.gps.live.location.tracker.screens.memo.MemoListActivity
 import kotlinx.coroutines.launch
-import com.find.phone.gps.live.location.tracker.databinding.PieceHomeDrawerBinding
+import com.find.phone.gps.live.location.tracker.databinding.PartHomeDrawerBinding
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
 import com.find.phone.gps.live.location.tracker.screens.tongue.TongueSelectorActivity
 import com.find.phone.gps.live.location.tracker.screens.tongue.LiveLocales
@@ -39,7 +39,7 @@ import java.util.Locale
  */
 class MainSliderOptions(
     private val activity: AppCompatActivity,
-    private val binding: PieceHomeDrawerBinding,
+    private val binding: PartHomeDrawerBinding,
     private val requestPhonePermission: (Array<String>) -> Unit = {},
     private val onNavigate: () -> Unit,
 ) {
@@ -142,7 +142,7 @@ class MainSliderOptions(
         // The 14dp glyph the design uses, whatever the vector's intrinsic size.
         val icon = view.compoundDrawablesRelative[0]?.mutate()?.apply { setBounds(0, 0, dp(14), dp(14)) }
         view.setCompoundDrawablesRelative(icon, null, null, null)
-        view.background = if (selected) ContextCompat.getDrawable(activity, R.drawable.ds_seg_thumb_r10) else null
+        view.background = if (selected) ContextCompat.getDrawable(activity, R.drawable.lv_seg_thumb_r10) else null
         view.elevation = if (selected) dp(2).toFloat() else 0f
     }
 

@@ -10,8 +10,8 @@ import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.databinding.PiecePopupMenuBinding
-import com.find.phone.gps.live.location.tracker.databinding.TilePopupRowBinding
+import com.find.phone.gps.live.location.tracker.databinding.PartPopupMenuBinding
+import com.find.phone.gps.live.location.tracker.databinding.CellPopupRowBinding
 
 /**
  * A menu popup in the design system: an r16 surface card with a hairline border and shadow,
@@ -20,7 +20,7 @@ import com.find.phone.gps.live.location.tracker.databinding.TilePopupRowBinding
  */
 class KitFlyout(private val context: Context) {
 
-    private val binding = PiecePopupMenuBinding.inflate(LayoutInflater.from(context))
+    private val binding = PartPopupMenuBinding.inflate(LayoutInflater.from(context))
     private val window = PopupWindow(
         binding.root, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true,
     ).apply {
@@ -37,13 +37,13 @@ class KitFlyout(private val context: Context) {
         selected: Boolean = false,
         onClick: () -> Unit,
     ): KitFlyout {
-        val row = TilePopupRowBinding.inflate(LayoutInflater.from(context), binding.rows, false)
+        val row = CellPopupRowBinding.inflate(LayoutInflater.from(context), binding.rows, false)
         row.tvLabel.text = label
         row.ivIcon.setImageResource(icon)
         row.tvBadge.text = badge
         row.tvBadge.isVisible = !badge.isNullOrEmpty()
         row.ivCheck.isVisible = selected
-        row.iconTile.setBackgroundResource(if (selected) R.drawable.ds_tile_primary_r12 else R.drawable.ds_tile_tint_r12)
+        row.iconTile.setBackgroundResource(if (selected) R.drawable.lv_tile_primary_r12 else R.drawable.lv_tile_tint_r12)
         row.ivIcon.imageTintList = ContextCompat.getColorStateList(context, if (selected) R.color.white else R.color.ds_primary)
         row.root.setOnClickListener {
             window.dismiss()

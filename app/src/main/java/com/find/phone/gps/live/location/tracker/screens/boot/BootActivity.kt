@@ -22,7 +22,7 @@ import com.find.phone.gps.live.location.tracker.monetize.render.showAppRedirectP
 import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.store.LockerBook
-import com.find.phone.gps.live.location.tracker.databinding.ViewSplashBinding
+import com.find.phone.gps.live.location.tracker.databinding.ScreenSplashBinding
 import com.find.phone.gps.live.location.tracker.induction.HomeStream
 import com.find.phone.gps.live.location.tracker.induction.InductionMainOnward
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
@@ -40,9 +40,9 @@ import java.util.concurrent.atomic.AtomicBoolean
  * sequence or the home screen. The animation is owned by [IntroMovement]; navigation waits
  * for BOTH the data chain and one full animation cycle.
  */
-class BootActivity : StageActivity<ViewSplashBinding>() {
+class BootActivity : StageActivity<ScreenSplashBinding>() {
 
-    override val layoutId: Int = R.layout.view_splash
+    override val layoutId: Int = R.layout.screen_splash
     private val handler = Handler(Looper.getMainLooper())
     private var motion: IntroMovement? = null
 

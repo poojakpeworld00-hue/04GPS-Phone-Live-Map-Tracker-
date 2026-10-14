@@ -13,7 +13,7 @@ import androidx.core.view.WindowCompat
 import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.monetize.render.InCoreRefreshBook
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
-import com.find.phone.gps.live.location.tracker.databinding.ViewMainBinding
+import com.find.phone.gps.live.location.tracker.databinding.ScreenMainBinding
 import com.find.phone.gps.live.location.tracker.homeshell.HomeFlip
 import com.find.phone.gps.live.location.tracker.screens.dashboard.MainHubFragment
 import com.find.phone.gps.live.location.tracker.screens.dashboard.MainSliderOptions
@@ -30,9 +30,9 @@ import com.livemap.homedeck.screens.HomeDeck as LauncherHomeActivity
  * The Activity-bound flows (RC permission sheet, in-app update) live in [MainCasingDirector],
  * exactly as in the reference.
  */
-class CoreHubActivity : StageActivity<ViewMainBinding>(), MainCasingHolder, MainHubFragment.MenuHost {
+class CoreHubActivity : StageActivity<ScreenMainBinding>(), MainCasingHolder, MainHubFragment.MenuHost {
 
-    override val layoutId: Int = R.layout.view_main
+    override val layoutId: Int = R.layout.screen_main
 
     override val hostActivity: AppCompatActivity get() = this
 

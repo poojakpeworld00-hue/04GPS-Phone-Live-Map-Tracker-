@@ -27,7 +27,7 @@ import androidx.core.view.updatePadding
 import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.EmbeddedTeaser
-import com.find.phone.gps.live.location.tracker.databinding.ViewReminderAlertBinding
+import com.find.phone.gps.live.location.tracker.databinding.ScreenReminderAlertBinding
 import com.find.phone.gps.live.location.tracker.memo.MemoProfile
 import com.find.phone.gps.live.location.tracker.memo.MemoElement
 import com.find.phone.gps.live.location.tracker.memo.MemoTimer
@@ -54,7 +54,7 @@ import com.find.phone.gps.live.location.tracker.helpers.OsModalAide
  */
 class MemoSirenActivity : AppCompatActivity() {
 
-    private lateinit var binding: ViewReminderAlertBinding
+    private lateinit var binding: ScreenReminderAlertBinding
     private var item: MemoElement? = null
     private var snoozeMinutes = 0
     private val animators = mutableListOf<Animator>()
@@ -73,7 +73,7 @@ class MemoSirenActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         showOverLockScreen()
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        binding = ViewReminderAlertBinding.inflate(layoutInflater)
+        binding = ScreenReminderAlertBinding.inflate(layoutInflater)
         setContentView(binding.root)
         // The sheet sits on the navigation bar: its 22dp bottom padding plus the bar.
         val sheetBottom = binding.alertSheet.paddingBottom
@@ -125,7 +125,7 @@ class MemoSirenActivity : AppCompatActivity() {
 
         val call = reminder.number.isNotBlank()
         binding.btnPrimary.setText(if (call) R.string.rem_call_now else R.string.rem_open)
-        binding.btnPrimary.setIconResource(if (call) R.drawable.ds_ic_call else 0)
+        binding.btnPrimary.setIconResource(if (call) R.drawable.lv_ic_call else 0)
         binding.btnPrimary.backgroundTintList =
             ContextCompat.getColorStateList(this, if (call) R.color.ds_success else R.color.ds_primary)
         binding.btnPrimary.setOnClickListener { if (call) callBack(reminder) else openList() }
@@ -218,8 +218,8 @@ class MemoSirenActivity : AppCompatActivity() {
                     gravity = android.view.Gravity.CENTER
                     textSize = 15f
                     typeface = ResourcesCompat.getFont(context, R.font.figtree_bold)
-                    setTextColor(ContextCompat.getColorStateList(context, R.color.ds_reminder_option_text))
-                    setBackgroundResource(R.drawable.ds_reminder_option)
+                    setTextColor(ContextCompat.getColorStateList(context, R.color.lv_reminder_option_text))
+                    setBackgroundResource(R.drawable.lv_reminder_option)
                     isSelected = minutes == snoozeMinutes
                     setOnClickListener {
                         snoozeMinutes = minutes

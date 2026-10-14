@@ -14,7 +14,7 @@ import androidx.core.view.updatePadding
 import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.store.inquiry.NumDigest
-import com.find.phone.gps.live.location.tracker.databinding.ViewMapFullBinding
+import com.find.phone.gps.live.location.tracker.databinding.ScreenMapFullBinding
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
 import kotlin.math.roundToInt
 
@@ -23,9 +23,9 @@ import kotlin.math.roundToInt
  * a tap on the header map, or the Map action). The same OpenStreetMap and pulsing area as the
  * header, but interactive, with zoom, recenter and Directions (hands the place to a maps app).
  */
-class ChartWholeActivity : StageActivity<ViewMapFullBinding>() {
+class ChartWholeActivity : StageActivity<ScreenMapFullBinding>() {
 
-    override val layoutId: Int = R.layout.view_map_full
+    override val layoutId: Int = R.layout.screen_map_full
 
     private lateinit var report: NumDigest
     private var overlay: SectorThrobVeil? = null

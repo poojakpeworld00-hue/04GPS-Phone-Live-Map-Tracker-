@@ -26,9 +26,9 @@ import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.EmbeddedTeaser
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
-import com.find.phone.gps.live.location.tracker.databinding.DialogReminderDeleteBinding
-import com.find.phone.gps.live.location.tracker.databinding.TileReminderBinding
-import com.find.phone.gps.live.location.tracker.databinding.ViewReminderListBinding
+import com.find.phone.gps.live.location.tracker.databinding.DlgReminderDeleteBinding
+import com.find.phone.gps.live.location.tracker.databinding.CellReminderBinding
+import com.find.phone.gps.live.location.tracker.databinding.ScreenReminderListBinding
 import com.find.phone.gps.live.location.tracker.memo.CuePortal
 import com.find.phone.gps.live.location.tracker.memo.MemoElement
 import com.find.phone.gps.live.location.tracker.memo.MemoTimer
@@ -50,9 +50,9 @@ import kotlinx.coroutines.launch
  * the drawer. Also the host of the "Turn on reminders" prompt, which appears after the user saves
  * their first reminder (design 4), so the ask always comes with a reason.
  */
-class MemoListActivity : StageActivity<ViewReminderListBinding>() {
+class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
 
-    override val layoutId: Int = R.layout.view_reminder_list
+    override val layoutId: Int = R.layout.screen_reminder_list
 
     private var accessPollJob: Job? = null
     private var pendingNumber: ((String) -> Unit)? = null
@@ -134,7 +134,7 @@ class MemoListActivity : StageActivity<ViewReminderListBinding>() {
             .apply { setMargins(dp(4), dp(10), 0, dp(8)) }
     }
 
-    private fun card(item: MemoElement) = TileReminderBinding.inflate(LayoutInflater.from(this), binding.rvReminders, false).apply {
+    private fun card(item: MemoElement) = CellReminderBinding.inflate(LayoutInflater.from(this), binding.rvReminders, false).apply {
         tvTitle.text = item.title
         tvWhen.text = MemoShaper.dayAndTime(this@MemoListActivity, item.dateTime)
         tvNumber.text = item.number
@@ -143,8 +143,8 @@ class MemoListActivity : StageActivity<ViewReminderListBinding>() {
 
         // A number makes it a call-back (phone, purple); otherwise a plain reminder (bell, blue).
         val call = item.number.isNotBlank()
-        iconTile.setBackgroundResource(if (call) R.drawable.ds_tile_purple_r12 else R.drawable.ds_tile_tint_r12)
-        icon.setImageResource(if (call) R.drawable.ds_ic_call else R.drawable.ps_ic_bell)
+        iconTile.setBackgroundResource(if (call) R.drawable.lv_tile_purple_r12 else R.drawable.lv_tile_tint_r12)
+        icon.setImageResource(if (call) R.drawable.lv_ic_call else R.drawable.pmt_ic_bell)
         ImageViewCompat.setImageTintList(
             icon, ContextCompat.getColorStateList(this@MemoListActivity, if (call) R.color.ds_purple else R.color.ds_primary),
         )
@@ -245,7 +245,7 @@ class MemoListActivity : StageActivity<ViewReminderListBinding>() {
     private fun confirmDelete(item: MemoElement) {
         val dialog = Dialog(this)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        val view = DialogReminderDeleteBinding.inflate(layoutInflater)
+        val view = DlgReminderDeleteBinding.inflate(layoutInflater)
         dialog.setContentView(view.root)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.window?.setLayout((resources.displayMetrics.widthPixels * 0.88f).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)

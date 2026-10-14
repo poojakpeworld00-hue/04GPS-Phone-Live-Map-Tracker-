@@ -15,7 +15,7 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile
 import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.store.LockerBook
-import com.find.phone.gps.live.location.tracker.databinding.ViewOnboardingBinding
+import com.find.phone.gps.live.location.tracker.databinding.ScreenOnboardingBinding
 import com.find.phone.gps.live.location.tracker.induction.HomeStream
 import com.find.phone.gps.live.location.tracker.induction.MemoOpeningActivity
 import com.find.phone.gps.live.location.tracker.screens.plus.PlusActivity
@@ -30,9 +30,9 @@ import kotlin.math.abs
  * illustration parallaxes at 0.6× and the copy fades over ~200ms of the swipe. The native
  * banner slot (`launcher_ads.onboarding.intro.slot`) sits under the CTA on the third page.
  */
-class BriefingActivity : StageActivity<ViewOnboardingBinding>() {
+class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
 
-    override val layoutId: Int = R.layout.view_onboarding
+    override val layoutId: Int = R.layout.screen_onboarding
 
     private val prefs by lazy { LockerBook(this) }
     private val pages = OpeningLeaves.all
@@ -140,7 +140,7 @@ class BriefingActivity : StageActivity<ViewOnboardingBinding>() {
         val size = dp(6)
         dots.forEachIndexed { i, dot ->
             animateDotWidth(dot, if (i == active) activeWidth else size)
-            dot.setBackgroundResource(if (i == active) R.drawable.ds_dot_active else R.drawable.ds_dot)
+            dot.setBackgroundResource(if (i == active) R.drawable.lv_dot_active else R.drawable.lv_dot)
         }
         val last = active == pages.lastIndex
         binding.btnNextLabel.setText(if (last) R.string.ds_get_started else R.string.ds_next)

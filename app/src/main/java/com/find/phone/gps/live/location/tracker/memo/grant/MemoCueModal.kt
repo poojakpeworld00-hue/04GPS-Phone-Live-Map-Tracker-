@@ -38,7 +38,7 @@ object MemoCueModal {
 
         val dialog = Dialog(activity)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        val view = activity.layoutInflater.inflate(R.layout.dialog_reminder_prompt, null)
+        val view = activity.layoutInflater.inflate(R.layout.dlg_reminder_prompt, null)
         dialog.setContentView(view)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.window?.setLayout(

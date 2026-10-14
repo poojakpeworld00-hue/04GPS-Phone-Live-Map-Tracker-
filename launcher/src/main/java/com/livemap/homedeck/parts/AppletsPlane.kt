@@ -26,7 +26,7 @@ import org.fossify.commons.helpers.ensureBackgroundThread
 import com.livemap.homedeck.R
 import com.livemap.homedeck.screens.HomeDeck
 import com.livemap.homedeck.binders.AppletsFeed
-import com.livemap.homedeck.databinding.LnchWidgetsFragmentBinding
+import com.livemap.homedeck.databinding.HdWidgetsFragmentBinding
 import com.livemap.homedeck.ext.launcherConfig
 import com.livemap.homedeck.ext.getInitialCellSize
 import com.livemap.homedeck.ext.setupDrawerBackground
@@ -43,7 +43,7 @@ import com.livemap.homedeck.entities.AppletsListElementsKeeper
 import com.livemap.homedeck.entities.AppletsListSegment
 
 class AppletsPlane(context: Context, attributeSet: AttributeSet) :
-    HomePlane<LnchWidgetsFragmentBinding>(context, attributeSet), AppletsFragmentObserver {
+    HomePlane<HdWidgetsFragmentBinding>(context, attributeSet), AppletsFragmentObserver {
     private var lastTouchCoords = Pair(0f, 0f)
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     var touchDownY = -1
@@ -53,7 +53,7 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
     @SuppressLint("ClickableViewAccessibility")
     override fun setupFragment(activity: HomeDeck) {
         this.activity = activity
-        this.binding = LnchWidgetsFragmentBinding.bind(this)
+        this.binding = HdWidgetsFragmentBinding.bind(this)
         getAppWidgets()
 
         binding.widgetsListUi.setOnTouchListener { v, event ->

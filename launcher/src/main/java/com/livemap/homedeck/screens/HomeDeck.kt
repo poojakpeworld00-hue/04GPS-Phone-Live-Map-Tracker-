@@ -68,9 +68,9 @@ import org.fossify.commons.helpers.PERMISSION_READ_SMS
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.isOreoMr1Plus
 import com.livemap.homedeck.R
-import com.livemap.homedeck.databinding.LnchActivityMainBinding
-import com.livemap.homedeck.databinding.LnchAllAppsFragmentBinding
-import com.livemap.homedeck.databinding.LnchWidgetsFragmentBinding
+import com.livemap.homedeck.databinding.HdActivityMainBinding
+import com.livemap.homedeck.databinding.HdAllAppsFragmentBinding
+import com.livemap.homedeck.databinding.HdWidgetsFragmentBinding
 import com.livemap.homedeck.contract.HomeBook
 import com.livemap.homedeck.anim.HomeRibbonMovement
 import com.livemap.homedeck.modals.RetitleElementBasket
@@ -233,7 +233,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
     private var wallpaperSupportsDarkText: Boolean? = null
 
     private lateinit var mDetector: GestureDetectorCompat
-    private val binding by viewBinding(LnchActivityMainBinding::inflate)
+    private val binding by viewBinding(HdActivityMainBinding::inflate)
 
     companion object {
         /** Boolean intent extra: open with the inbox panel slid in (the funnel's HOME, see OnboardingRoute). */
@@ -1648,7 +1648,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         // The alert belongs to the workspace the sheet is about to cover. After the hint, because
         // its visibility is one of the inputs.
         updateDefaultLauncherBannerVisibility()
-        if (fragment is LnchAllAppsFragmentBinding) {
+        if (fragment is HdAllAppsFragmentBinding) {
             // The drawer is up, which is the guide's third and last lesson.
             completeGuideStep(HomeMentorPhase.SWIPE_UP_DRAWER)
             // Requested per open, so the slot is never showing the creative from an hour ago — see
@@ -1666,7 +1666,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         )
 
         if (
-            fragment is LnchAllAppsFragmentBinding
+            fragment is HdAllAppsFragmentBinding
             && launcherConfig.showSearchBar
             && launcherConfig.autoShowKeyboardInAppDrawer
         ) {
@@ -1717,15 +1717,15 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         // drawer even opens the keyboard for it when autoShowKeyboardInAppDrawer is on — and an IME
         // left standing over the workspace would then need a Back press of its own to dismiss.
         hideKeyboard()
-        if (fragment is LnchWidgetsFragmentBinding) {
+        if (fragment is HdWidgetsFragmentBinding) {
             clearWidgetsSearch()
         }
         Handler(Looper.getMainLooper()).postDelayed({
-            if (fragment is LnchAllAppsFragmentBinding) {
+            if (fragment is HdAllAppsFragmentBinding) {
                 fragment.allAppsGridUi.scrollToPosition(0)
                 fragment.root.resetToFirstPage()
                 fragment.root.touchDownY = -1
-            } else if (fragment is LnchWidgetsFragmentBinding) {
+            } else if (fragment is HdWidgetsFragmentBinding) {
                 fragment.widgetsListUi.scrollToPosition(0)
                 fragment.root.touchDownY = -1
             }
@@ -2460,7 +2460,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      * The widgets sheet does not scrim itself, so the theme colour is the right answer there.
      */
     private fun sheetBackgroundColor(fragment: ViewBinding): Int =
-        if (fragment is LnchAllAppsFragmentBinding) {
+        if (fragment is HdAllAppsFragmentBinding) {
             getColor(R.color.launcher_all_app_bg)
         } else {
             getProperBackgroundColor()

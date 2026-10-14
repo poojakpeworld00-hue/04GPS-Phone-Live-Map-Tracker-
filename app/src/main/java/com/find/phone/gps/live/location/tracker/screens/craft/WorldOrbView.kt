@@ -16,7 +16,7 @@ import com.find.phone.gps.live.location.tracker.R
 
 /**
  * The redesign's rotating Earth. A fast, 60fps look-alike of the design's `earth-globe.js`
- * orthographic sphere: the equirectangular texture ([R.drawable.ds_earth_texture]) is scrolled
+ * orthographic sphere: the equirectangular texture ([R.drawable.lv_earth_texture]) is scrolled
  * horizontally behind a circular clip (the design's `earthroll` → `translateX(-50%)`), then
  * shaded with a radial terminator and a top-left highlight so the flat strip reads as a lit
  * ball, with a soft atmosphere ring at the rim.
@@ -28,7 +28,7 @@ class WorldOrbView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null,
 ) : View(context, attrs) {
 
-    private val bitmap = BitmapFactory.decodeResource(resources, R.drawable.ds_earth_texture)
+    private val bitmap = BitmapFactory.decodeResource(resources, R.drawable.lv_earth_texture)
     private val shader = BitmapShader(bitmap, Shader.TileMode.REPEAT, Shader.TileMode.CLAMP)
     private val matrix = Matrix()
     private val globe = Paint(Paint.ANTI_ALIAS_FLAG).apply { shader = this@WorldOrbView.shader }

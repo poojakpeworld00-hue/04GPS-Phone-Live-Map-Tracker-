@@ -137,7 +137,7 @@ class ClueDrawerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.view_overlay_guide)
+        setContentView(R.layout.screen_overlay_guide)
 
         val root = findViewById<View>(R.id.llMain)
 

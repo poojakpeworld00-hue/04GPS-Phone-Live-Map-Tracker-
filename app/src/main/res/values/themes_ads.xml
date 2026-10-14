@@ -19,7 +19,7 @@
 
     <!-- The charge / discharge screen: dark, full bleed, drawn over the lock screen. -->
     <style name="Theme.Charging" parent="Theme.Material3.Dark.NoActionBar">
-        <item name="android:windowBackground">@drawable/shape_charging_screen</item>
+        <item name="android:windowBackground">@drawable/bgx_charging_screen</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>

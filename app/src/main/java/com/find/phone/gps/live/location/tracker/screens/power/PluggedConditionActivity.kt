@@ -60,7 +60,7 @@ class PluggedConditionActivity : AppCompatActivity() {
         lifecycle.addObserver(OsModalAide(this) { finishAndRemoveTask() })
         showOverLockAndWake()
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        setContentView(R.layout.view_charging_status)
+        setContentView(R.layout.screen_charging_status)
 
         // Content under the transparent status bar; pad the functional block down past it.
         val content = findViewById<View>(R.id.chargingFunctionalContent)

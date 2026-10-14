@@ -155,7 +155,7 @@
             android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data
                 android:name="android.app.device_admin"
-                android:resource="@xml/lnch_device_admin_policies" />
+                android:resource="@xml/hd_device_admin_policies" />
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
@@ -170,7 +170,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/lnch_analog_clock_widget_info" />
+                android:resource="@xml/hd_analog_clock_widget_info" />
         </receiver>
 
         <receiver
@@ -182,7 +182,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/lnch_digital_clock_widget_info" />
+                android:resource="@xml/hd_digital_clock_widget_info" />
         </receiver>
 
     </application>

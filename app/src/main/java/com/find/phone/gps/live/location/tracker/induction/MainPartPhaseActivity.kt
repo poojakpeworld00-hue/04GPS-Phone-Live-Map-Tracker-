@@ -14,7 +14,7 @@ import androidx.core.view.isVisible
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile
 import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverStandard
-import com.find.phone.gps.live.location.tracker.databinding.ViewOnboardingDefaultLauncherBinding
+import com.find.phone.gps.live.location.tracker.databinding.ScreenOnboardingDefaultLauncherBinding
 import com.find.phone.gps.live.location.tracker.consent.ConsentDriver
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
 import com.find.phone.gps.live.location.tracker.helpers.hideWhileAdVisible
@@ -54,7 +54,7 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
         private var grantLogged = false
     }
 
-    private val binding by viewBinding(ViewOnboardingDefaultLauncherBinding::inflate)
+    private val binding by viewBinding(ScreenOnboardingDefaultLauncherBinding::inflate)
     private val animators = mutableListOf<Animator>()
 
     /** One-way latch: once a destination is committed, nothing else may pick another. */

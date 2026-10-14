@@ -31,7 +31,7 @@ class DialTimeAppletSource : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetId: Int,
     ) {
-        val views = RemoteViews(context.packageName, R.layout.lnch_widget_analog_clock).apply {
+        val views = RemoteViews(context.packageName, R.layout.hd_widget_analog_clock).apply {
             setInt(
                 R.id.widget_holderUi,
                 "setBackgroundColor",
