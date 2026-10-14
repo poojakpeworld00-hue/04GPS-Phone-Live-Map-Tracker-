@@ -1,5 +1,8 @@
 package com.find.phone.gps.live.location.tracker.screens.dashboard
 
+import com.find.phone.gps.live.location.tracker.screens.chip.MineNumActivity
+import com.find.phone.gps.live.location.tracker.screens.chip.FrameDialsActivity
+import com.find.phone.gps.live.location.tracker.screens.chip.DoubleChipOverviewActivity
 import android.animation.Animator
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
@@ -68,7 +71,6 @@ class MainHubFragment : Fragment() {
 
     private lateinit var recentsListAdapter: FreshHuntAdapter
     private val liveAnims = mutableListOf<Animator>()
-    private var heroResize: ValueAnimator? = null
     private var searchGlow: Animator? = null
     private var chipShine: Animator? = null
 
@@ -166,7 +168,6 @@ class MainHubFragment : Fragment() {
 
     override fun onDestroyView() {
         chipShine = null
-        heroResize?.cancel()
         CraftMovement.abortAll(liveAnims)
         searchGlow = null
         _binding = null
@@ -192,6 +193,23 @@ class MainHubFragment : Fragment() {
         view.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ -> padForNavBar(v) }
     }
 
+    private fun bindToolChips() {
+        val ctx = requireContext()
+        binding.chipMyNumber.setOnClickListener {
+            ctx.recordKeyEvent("home_chip_my_number")
+            startActivity(MineNumActivity.intent(ctx))
+        }
+        binding.chipCarrier.setOnClickListener {
+            ctx.recordKeyEvent("home_chip_carrier_codes")
+            startActivity(FrameDialsActivity.intent(ctx, -1))
+        }
+        binding.chipDualSim.setOnClickListener {
+            ctx.recordKeyEvent("home_chip_dual_sim")
+            startActivity(DoubleChipOverviewActivity.intent(ctx))
+        }
+        listOf(binding.chipMyNumber, binding.chipCarrier, binding.chipDualSim).forEach(CraftMovement::pressScale)
+    }
+
     private fun openPaywall(event: String) {
         requireContext().recordKeyEvent(event)
         startActivity(PlusActivity.intent(requireContext()))
@@ -208,6 +226,7 @@ class MainHubFragment : Fragment() {
         binding.actHistory.setOnClickListener { historyLauncher.launch(LiveHistoryActivity.intent(requireContext())) }
 
         binding.actUnlimited.setOnClickListener { openPaywall("home_quota_unlimited") }
+        bindToolChips()
         refreshQuota()
 
         CraftMovement.pressScale(binding.actPro)
@@ -355,24 +374,11 @@ class MainHubFragment : Fragment() {
     }
 
     private fun toggleTypingLook(typing: Boolean) {
-        val fieldBg = if (typing) R.drawable.lv_field_focus_r16 else R.drawable.lv_field_rest_r16
+        val fieldBg = if (typing) R.drawable.home_field_focus else R.drawable.home_field_rest
         binding.lvPhoneField.setBackgroundResource(fieldBg)
         binding.lvFieldHalo.isInvisible = !typing
         binding.lvPillGps.isVisible = !typing
-        binding.txtHeadline.textSize = if (typing) 24f else 26f
-        val startH = binding.leadBox.layoutParams.height
-        val endH = px(if (typing) 230 else 300)
-        heroResize?.cancel()
-        val anim = ValueAnimator.ofInt(startH, endH)
-        anim.duration = 250L
-        anim.interpolator = CraftMovement.EASE_IN_OUT
-        anim.addUpdateListener { va ->
-            val b = _binding ?: return@addUpdateListener
-            b.leadBox.layoutParams.height = va.animatedValue as Int
-            b.leadBox.requestLayout()
-        }
-        anim.start()
-        heroResize = anim
+        binding.txtHeadline.textSize = if (typing) 22f else 24f
     }
 
     private fun placeCursorAtEnd() {
@@ -529,7 +535,7 @@ class MainHubFragment : Fragment() {
         if (unlimited) return
         val cap = HuntRation.limit(ctx)
         val remaining = HuntRation.remaining(ctx)
-        b.txtQuota.text = getString(R.string.ds_quota_left, remaining, cap)
+        b.txtQuota.text = getString(R.string.home_quota_fmt, remaining, cap)
         b.rationBar.progress = 100 * remaining.coerceAtMost(cap) / cap.coerceAtLeast(1)
     }
 

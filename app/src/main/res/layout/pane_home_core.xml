@@ -5,7 +5,7 @@
   android:id="@+id/deskRoot"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:background="@color/ds_canvas"
+  android:background="@color/home_canvas"
   android:clickable="true"
   android:focusable="true"
   tools:context=".screens.dashboard.MainHubFragment">
@@ -25,149 +25,108 @@
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:clipChildren="false">
+
       <FrameLayout
         android:id="@+id/leadBox"
         android:layout_width="0dp"
-        android:layout_height="300dp"
-        android:background="@drawable/lv_hero_gradient"
+        android:layout_height="0dp"
+        android:background="@drawable/home_header_bg"
         android:clipChildren="true"
+        android:clipToOutline="true"
+        app:layout_constraintBottom_toBottomOf="@id/headerEnd"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
-        <com.find.phone.gps.live.location.tracker.screens.craft.LatticeMotifView
-          android:layout_width="match_parent"
-          android:layout_height="match_parent"
-          app:gridColor="@color/ds_white07"
-          app:gridSize="28dp" />
-        <com.find.phone.gps.live.location.tracker.screens.craft.PathsView
-          android:id="@+id/leadRoads"
-          android:layout_width="match_parent"
-          android:layout_height="match_parent"
-          app:roadsVariant="homeHero" />
-        <FrameLayout
-          android:id="@+id/leadRadar"
-          android:layout_width="150dp"
-          android:layout_height="150dp"
+        <View
+          android:id="@+id/headerRings"
+          android:layout_width="240dp"
+          android:layout_height="240dp"
           android:layout_gravity="end|top"
-          android:layout_marginTop="75dp"
-          android:layout_marginEnd="-13dp"
-          android:clipChildren="false">
-          <View
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/lv_ring_white25" />
-          <com.find.phone.gps.live.location.tracker.screens.craft.SonarSwipeView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:sweepAngle="70"
-            app:sweepColor="@color/ds_white35"
-            app:sweepDuration="3000" />
-          <com.find.phone.gps.live.location.tracker.screens.craft.BlipLoopView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:pingColor="@color/ds_white70"
-            app:pingDuration="2400"
-            app:pingStrokeWidth="2dp" />
-          <com.find.phone.gps.live.location.tracker.screens.craft.TackContourView
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_gravity="center"
-            android:layout_marginBottom="42dp"
-            app:pinDotColor="@color/ds_primary"
-            app:pinDotSize="10dp"
-            app:pinEndColor="@color/white"
-            app:pinShadowColor="@color/ds_scrim45"
-            app:pinStartColor="@color/white" />
-        </FrameLayout>
+          android:layout_marginTop="-80dp"
+          android:layout_marginEnd="-70dp"
+          android:background="@drawable/home_header_rings"
+          android:importantForAccessibility="no" />
       </FrameLayout>
+
       <LinearLayout
         android:id="@+id/crest"
         android:layout_width="0dp"
         android:layout_height="56dp"
+        android:layout_marginTop="12dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingHorizontal="12dp"
+        android:paddingHorizontal="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
-        <LinearLayout
+        <ImageButton
           android:id="@+id/actMenu"
           android:layout_width="44dp"
           android:layout_height="44dp"
-          android:background="@drawable/lv_tile_white14_r14"
-          android:clickable="true"
+          android:background="@drawable/home_tile_on_brand"
           android:contentDescription="@string/ds_cd_menu"
-          android:focusable="true"
-          android:gravity="center_vertical"
-          android:orientation="vertical"
-          android:paddingStart="12dp"
-          android:paddingEnd="0dp">
-          <View
-            android:layout_width="18dp"
-            android:layout_height="2dp"
-            android:background="@drawable/lv_bar_white_r1" />
-          <View
-            android:layout_width="12dp"
-            android:layout_height="2dp"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/lv_bar_white_r1" />
-          <View
-            android:layout_width="18dp"
-            android:layout_height="2dp"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/lv_bar_white_r1" />
-        </LinearLayout>
-        <TextView
+          android:scaleType="center"
+          android:src="@drawable/home_ic_menu" />
+        <LinearLayout
           android:layout_width="0dp"
           android:layout_height="wrap_content"
-          android:layout_marginStart="8dp"
+          android:layout_marginStart="10dp"
           android:layout_weight="1"
-          android:fontFamily="@font/nunito_extrabold"
-          android:includeFontPadding="false"
-          android:letterSpacing="-0.02"
-          android:paddingStart="4dp"
-          android:paddingEnd="0dp"
-          android:text="@string/ds_home_title"
-          android:ellipsize="end"
-          android:lineSpacingMultiplier="0.95"
-          android:maxLines="2"
-          android:textColor="@color/white"
-          android:textSize="17sp" />
+          android:orientation="vertical">
+          <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="@font/nunito_extrabold"
+            android:includeFontPadding="false"
+            android:letterSpacing="-0.01"
+            android:maxLines="1"
+            android:text="@string/home_title_short"
+            android:textColor="@color/home_on_brand"
+            android:textSize="17sp" />
+          <LinearLayout
+            android:id="@+id/lv_pillGps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <View
+              android:id="@+id/liveDot"
+              android:layout_width="7dp"
+              android:layout_height="7dp"
+              android:background="@drawable/home_live_dot" />
+            <TextView
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_marginStart="6dp"
+              android:fontFamily="@font/figtree_semibold"
+              android:includeFontPadding="false"
+              android:text="@string/ds_chip_gps_ready"
+              android:textColor="@color/home_on_brand_soft"
+              android:textSize="12sp" />
+          </LinearLayout>
+        </LinearLayout>
         <FrameLayout
           android:id="@+id/actPro"
           android:layout_width="wrap_content"
           android:layout_height="36dp"
           android:layout_marginStart="8dp"
-          android:background="@drawable/lv_gold_r12"
+          android:background="@drawable/home_pro_pill"
           android:clickable="true"
           android:contentDescription="@string/ds_cd_pro"
-          android:elevation="4dp"
           android:focusable="true"
-          android:foreground="?attr/selectableItemBackground"
-          android:outlineSpotShadowColor="@color/ds_gold_end"
-          tools:targetApi="p">
-          <LinearLayout
+          android:foreground="?attr/selectableItemBackground">
+          <TextView
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="12dp">
-            <ImageView
-              android:layout_width="16dp"
-              android:layout_height="16dp"
-              android:contentDescription="@null"
-              android:src="@drawable/lv_ic_crown"
-              app:tint="@color/ds_gold_ink" />
-            <TextView
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:layout_marginStart="6dp"
-              android:fontFamily="@font/figtree_bold"
-              android:includeFontPadding="false"
-              android:text="@string/ds_pro"
-              android:textColor="@color/ds_gold_ink"
-              android:textSize="13sp" />
-          </LinearLayout>
+            android:fontFamily="@font/nunito_extrabold"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:paddingHorizontal="14dp"
+            android:text="@string/home_go_pro"
+            android:textColor="@color/home_gold_ink"
+            android:textSize="13sp" />
           <View
             android:id="@+id/lv_proShine"
             android:layout_width="18dp"
@@ -182,91 +141,61 @@
           android:layout_width="44dp"
           android:layout_height="44dp"
           android:layout_marginStart="8dp"
-          android:background="@drawable/lv_tile_white14_r14"
+          android:background="@drawable/home_tile_on_brand"
           android:contentDescription="@string/ds_cd_history"
           android:scaleType="center"
-          android:src="@drawable/lv_ic_history"
-          app:tint="@color/white" />
+          android:src="@drawable/home_ic_history" />
       </LinearLayout>
-      <LinearLayout
-        android:id="@+id/lv_pillGps"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="14dp"
-        android:background="@drawable/lv_pill_white20"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="10dp"
-        android:paddingVertical="5dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/crest">
-        <View
-          android:layout_width="6dp"
-          android:layout_height="6dp"
-          android:background="@drawable/lv_circle_success_glow" />
-        <TextView
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:layout_marginStart="6dp"
-          android:fontFamily="@font/figtree_bold"
-          android:text="@string/ds_chip_gps_ready"
-          android:textColor="@color/white"
-          android:textSize="11sp" />
-      </LinearLayout>
+
       <TextView
         android:id="@+id/txtHeadline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="8dp"
-        android:fontFamily="@font/nunito_extrabold"
-        android:includeFontPadding="false"
-        android:letterSpacing="-0.02"
-        android:lineSpacingMultiplier="1.15"
-        android:maxWidth="190dp"
-        android:text="@string/ds_home_headline"
-        android:textColor="@color/white"
-        android:textSize="26sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/lv_pillGps" />
-      <LinearLayout
-        android:id="@+id/huntCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/lv_card_white_r24"
-        android:clipChildren="false"
-        android:elevation="14dp"
-        android:orientation="vertical"
-        android:outlineAmbientShadowColor="@color/ds_ink"
-        android:outlineSpotShadowColor="@color/ds_ink"
-        android:padding="14dp"
+        android:layout_marginTop="18dp"
+        android:fontFamily="@font/nunito_extrabold"
+        android:includeFontPadding="false"
+        android:letterSpacing="-0.01"
+        android:lineSpacingMultiplier="1.1"
+        android:text="@string/ds_home_headline"
+        android:textColor="@color/home_on_brand"
+        android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/txtHeadline"
-        tools:targetApi="p">
+        app:layout_constraintTop_toBottomOf="@id/crest" />
+
+      <LinearLayout
+        android:id="@+id/huntCard"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="18dp"
+        android:clipChildren="false"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txtHeadline">
         <FrameLayout
-          android:layout_width="match_parent"
-          android:layout_height="54dp"
+          android:layout_width="0dp"
+          android:layout_height="match_parent"
+          android:layout_weight="1"
           android:clipChildren="false">
           <View
             android:id="@+id/lv_fieldHalo"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_margin="-4dp"
-            android:background="@drawable/lv_field_halo_r20"
+            android:background="@drawable/home_field_halo"
             android:visibility="invisible" />
           <LinearLayout
             android:id="@+id/lv_phoneField"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/lv_field_rest_r16"
+            android:background="@drawable/home_field_rest"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="12dp"
-            android:paddingEnd="8dp">
+            android:paddingEnd="6dp">
             <LinearLayout
               android:id="@+id/landChip"
               android:layout_width="wrap_content"
@@ -280,34 +209,23 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
-                android:textSize="18sp"
-                tools:text="🇺🇸" />
+                android:textSize="16sp"
+                tools:text="🇮🇳" />
               <TextView
                 android:id="@+id/txtDial"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:fontFamily="@font/figtree_bold"
-                android:textColor="@color/ds_ink"
-                android:textSize="14sp"
-                tools:text="+1" />
-              <ImageView
-                android:layout_width="14dp"
-                android:layout_height="14dp"
-                android:layout_marginStart="2dp"
-                android:contentDescription="@null"
-                android:src="@drawable/lv_ic_chevron_down"
-                app:tint="@color/ds_muted" />
+                android:layout_marginStart="4dp"
+                android:fontFamily="@font/nunito_extrabold"
+                android:textColor="@color/home_brand"
+                android:textSize="15sp"
+                tools:text="+91" />
             </LinearLayout>
-            <View
-              android:layout_width="1dp"
-              android:layout_height="24dp"
-              android:layout_marginHorizontal="10dp"
-              android:background="@color/ds_field_divider" />
             <EditText
               android:id="@+id/lv_phoneInput"
               android:layout_width="0dp"
               android:layout_height="match_parent"
+              android:layout_marginStart="8dp"
               android:layout_weight="1"
               android:background="@null"
               android:fontFamily="@font/figtree_semibold"
@@ -317,134 +235,178 @@
               android:importantForAutofill="no"
               android:inputType="phone"
               android:maxLines="1"
-              android:textColor="@color/ds_ink"
-              android:textColorHint="@color/ds_placeholder"
+              android:textColor="@color/home_ink"
+              android:textColorHint="@color/home_muted"
               android:textSize="16sp" />
             <ImageButton
               android:id="@+id/actContact"
-              android:layout_width="36dp"
-              android:layout_height="36dp"
+              android:layout_width="40dp"
+              android:layout_height="40dp"
               android:background="?attr/selectableItemBackgroundBorderless"
               android:contentDescription="@string/ds_cd_contacts"
               android:scaleType="center"
-              android:src="@drawable/lv_ic_contacts"
-              app:tint="@color/ds_primary" />
+              android:src="@drawable/home_ic_contact"
+              app:tint="@color/home_muted" />
             <ImageButton
               android:id="@+id/actClear"
-              android:layout_width="36dp"
-              android:layout_height="36dp"
+              android:layout_width="40dp"
+              android:layout_height="40dp"
               android:background="?attr/selectableItemBackgroundBorderless"
               android:contentDescription="@string/ds_cd_clear"
               android:scaleType="center"
               android:src="@drawable/lv_ic_close"
               android:visibility="gone"
-              app:tint="@color/ds_placeholder" />
+              app:tint="@color/home_muted" />
           </LinearLayout>
         </FrameLayout>
         <FrameLayout
-          android:layout_width="match_parent"
-          android:layout_height="54dp"
-          android:layout_marginTop="12dp"
+          android:layout_width="56dp"
+          android:layout_height="56dp"
+          android:layout_marginStart="8dp"
           android:clipChildren="false">
           <View
             android:id="@+id/huntGlow"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/lv_glow_radial"
+            android:layout_margin="-4dp"
+            android:background="@drawable/home_search_glow"
             android:visibility="invisible" />
           <LinearLayout
             android:id="@+id/actSearch"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/lv_btn_primary_selector_r16"
+            android:background="@drawable/home_search_btn"
             android:clickable="true"
-            android:elevation="6dp"
+            android:contentDescription="@string/home_cd_search"
             android:focusable="true"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:outlineAmbientShadowColor="@color/ds_primary"
-            android:outlineSpotShadowColor="@color/ds_primary"
-            tools:targetApi="p">
+            android:gravity="center">
             <ImageView
-              android:layout_width="20dp"
-              android:layout_height="20dp"
+              android:layout_width="22dp"
+              android:layout_height="22dp"
               android:contentDescription="@null"
-              android:src="@drawable/lv_ic_search_bold" />
-            <TextView
-              style="@style/Ds.Text.Button"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:layout_marginStart="10dp"
-              android:text="@string/ds_search_location" />
+              android:src="@drawable/home_ic_search" />
           </LinearLayout>
         </FrameLayout>
+      </LinearLayout>
+
+      <Space
+        android:id="@+id/headerEnd"
+        android:layout_width="0dp"
+        android:layout_height="26dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/huntCard" />
+
+      <LinearLayout
+        android:id="@+id/rationRow"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/home_card_r20"
+        android:elevation="6dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:outlineAmbientShadowColor="@color/home_ink"
+        android:outlineSpotShadowColor="@color/home_ink"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="14dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/headerEnd"
+        tools:targetApi="p">
+        <ProgressBar
+          android:id="@+id/rationBar"
+          style="?android:attr/progressBarStyleHorizontal"
+          android:layout_width="48dp"
+          android:layout_height="48dp"
+          android:importantForAccessibility="no"
+          android:indeterminate="false"
+          android:max="100"
+          android:progressDrawable="@drawable/home_quota_ring"
+          tools:progress="66" />
         <LinearLayout
-          android:id="@+id/rationRow"
-          android:layout_width="match_parent"
+          android:layout_width="0dp"
           android:layout_height="wrap_content"
-          android:layout_marginTop="12dp"
-          android:gravity="center_vertical"
-          android:orientation="horizontal"
-          android:paddingHorizontal="2dp">
-          <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-            <LinearLayout
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:orientation="horizontal">
-              <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:fontFamily="@font/figtree_semibold"
-                android:text="@string/ds_quota_label"
-                android:textColor="@color/ds_muted"
-                android:textSize="12sp" />
-              <TextView
-                android:id="@+id/txtQuota"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/figtree_bold"
-                android:textColor="@color/ds_ink"
-                android:textSize="12sp"
-                tools:text="2 of 3 left" />
-            </LinearLayout>
-            <ProgressBar
-              android:id="@+id/rationBar"
-              style="?android:attr/progressBarStyleHorizontal"
-              android:layout_width="match_parent"
-              android:layout_height="6dp"
-              android:layout_marginTop="6dp"
-              android:max="100"
-              android:progressDrawable="@drawable/lv_quota_bar"
-              tools:progress="66" />
-          </LinearLayout>
+          android:layout_marginStart="14dp"
+          android:layout_weight="1"
+          android:orientation="vertical">
           <TextView
-            android:id="@+id/actUnlimited"
-            android:layout_width="wrap_content"
+            android:id="@+id/txtQuota"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:background="@drawable/lv_btn_amber_soft_r10"
-            android:foreground="?attr/selectableItemBackground"
-            android:fontFamily="@font/figtree_bold"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="6dp"
-            android:text="@string/ds_quota_unlimited"
-            android:textColor="@color/ds_amber_ink"
+            android:fontFamily="@font/nunito_extrabold"
+            android:includeFontPadding="false"
+            android:textColor="@color/home_ink"
+            android:textSize="14sp"
+            tools:text="2 of 3 free searches left" />
+          <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:fontFamily="@font/figtree_medium"
+            android:text="@string/ds_quota_label"
+            android:textColor="@color/home_muted"
             android:textSize="12sp" />
         </LinearLayout>
+        <TextView
+          android:id="@+id/actUnlimited"
+          android:layout_width="wrap_content"
+          android:layout_height="44dp"
+          android:layout_marginStart="8dp"
+          android:background="?attr/selectableItemBackgroundBorderless"
+          android:fontFamily="@font/nunito_extrabold"
+          android:gravity="center"
+          android:paddingHorizontal="4dp"
+          android:text="@string/ds_quota_unlimited"
+          android:textColor="@color/home_brand"
+          android:textSize="13sp" />
       </LinearLayout>
+
+      <HorizontalScrollView
+        android:id="@+id/toolChips"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:paddingHorizontal="16dp"
+        android:scrollbars="none"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/rationRow">
+        <LinearLayout
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:orientation="horizontal">
+          <TextView
+            android:id="@+id/chipMyNumber"
+            style="@style/HomeChip"
+            android:drawableStart="@drawable/home_ic_phone_mobile"
+            android:text="@string/home_chip_my_number" />
+          <TextView
+            android:id="@+id/chipCarrier"
+            style="@style/HomeChip"
+            android:layout_marginStart="8dp"
+            android:drawableStart="@drawable/home_ic_dial"
+            android:text="@string/home_chip_carrier" />
+          <TextView
+            android:id="@+id/chipDualSim"
+            style="@style/HomeChip"
+            android:layout_marginStart="8dp"
+            android:drawableStart="@drawable/home_ic_sim"
+            android:text="@string/home_chip_dual_sim" />
+        </LinearLayout>
+      </HorizontalScrollView>
+
       <FrameLayout
         android:id="@+id/spotNativeCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/huntCard">
+        app:layout_constraintTop_toBottomOf="@id/toolChips">
         <FrameLayout
           android:id="@+id/spotNativeFrame"
           android:layout_width="match_parent"
@@ -458,41 +420,43 @@
           </com.facebook.shimmer.ShimmerFrameLayout>
         </FrameLayout>
       </FrameLayout>
+
       <TextView
         android:id="@+id/txtRecentTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="14dp"
-        android:fontFamily="@font/figtree_bold"
-        android:paddingBottom="8dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="22dp"
+        android:fontFamily="@font/nunito_extrabold"
+        android:paddingBottom="12dp"
         android:text="@string/ds_recent_searches"
-        android:textColor="@color/ds_ink"
-        android:textSize="16sp"
+        android:textColor="@color/home_ink"
+        android:textSize="17sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/spotNativeCard" />
       <TextView
         android:id="@+id/actClearAll"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="20dp"
+        android:layout_marginEnd="12dp"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:fontFamily="@font/figtree_semibold"
+        android:fontFamily="@font/figtree_bold"
         android:paddingHorizontal="4dp"
         android:paddingVertical="6dp"
         android:text="@string/ds_clear_all"
-        android:textColor="@color/ds_primary"
+        android:textColor="@color/home_brand"
         android:textSize="13sp"
         android:visibility="gone"
         app:layout_constraintBaseline_toBaselineOf="@id/txtRecentTitle"
         app:layout_constraintEnd_toEndOf="parent"
         tools:visibility="visible" />
+
       <LinearLayout
         android:id="@+id/blankState"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:background="@drawable/lv_dashed_card_r20"
+        android:background="@drawable/home_card_r20"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
@@ -501,16 +465,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/txtRecentTitle">
         <FrameLayout
-          android:layout_width="46dp"
-          android:layout_height="46dp"
-          android:background="@drawable/lv_tile_tint_r16">
+          android:layout_width="44dp"
+          android:layout_height="44dp"
+          android:background="@drawable/home_time_badge">
           <ImageView
             android:layout_width="22dp"
             android:layout_height="22dp"
             android:layout_gravity="center"
             android:contentDescription="@null"
             android:src="@drawable/lv_ic_pin"
-            app:tint="@color/ds_primary" />
+            app:tint="@color/home_brand" />
         </FrameLayout>
         <LinearLayout
           android:layout_width="0dp"
@@ -523,16 +487,16 @@
             android:layout_height="wrap_content"
             android:fontFamily="@font/figtree_bold"
             android:text="@string/ds_no_searches"
-            android:textColor="@color/ds_ink"
+            android:textColor="@color/home_ink"
             android:textSize="14sp" />
           <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:fontFamily="@font/figtree_medium"
-            android:lineSpacingMultiplier="1.4"
+            android:lineSpacingMultiplier="1.3"
             android:text="@string/ds_no_searches_sub"
-            android:textColor="@color/ds_muted"
+            android:textColor="@color/home_muted"
             android:textSize="13sp" />
         </LinearLayout>
       </LinearLayout>
@@ -541,13 +505,13 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:background="@drawable/lv_card_border_r20"
         android:nestedScrollingEnabled="false"
         android:overScrollMode="never"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/txtRecentTitle"
+        tools:listitem="@layout/cell_home_timeline"
         tools:visibility="visible" />
     </androidx.constraintlayout.widget.ConstraintLayout>
   </androidx.core.widget.NestedScrollView>

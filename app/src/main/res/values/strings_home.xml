@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_title_short">Live Map Tracker</string>
+    <string name="home_go_pro">Go PRO</string>
+    <string name="home_quota_fmt">%1$d of %2$d free searches left</string>
+    <string name="home_chip_my_number">My number</string>
+    <string name="home_chip_carrier">Carrier codes</string>
+    <string name="home_chip_dual_sim">Dual SIM</string>
+    <string name="home_cd_search">Search location</string>
+    <string name="home_recent_place" translatable="false">%1$s %2$s</string>
+</resources>

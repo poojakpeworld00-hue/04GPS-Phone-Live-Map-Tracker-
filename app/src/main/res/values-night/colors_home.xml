@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="home_brand">#2E54EA</color>
+  <color name="home_brand_pressed">#2446CC</color>
+  <color name="home_ink">#E8EDF7</color>
+  <color name="home_muted">#9AA6BD</color>
+  <color name="home_canvas">#0B1220</color>
+  <color name="home_surface">#151D2E</color>
+  <color name="home_tint">#1F2B4D</color>
+  <color name="home_chip_border">#273248</color>
+  <color name="home_timeline">#273248</color>
+  <color name="home_search_btn">#0A1022</color>
+  <color name="home_gold_ink">#0E1B3D</color>
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_title_short">Трекер живой карты</string>
+    <string name="home_go_pro">Стать PRO</string>
+    <string name="home_quota_fmt">Осталось %1$d из %2$d бесплатных поисков</string>
+    <string name="home_chip_my_number">Мой номер</string>
+    <string name="home_chip_carrier">Коды оператора</string>
+    <string name="home_chip_dual_sim">Две SIM</string>
+    <string name="home_cd_search">Найти местоположение</string>
+</resources>

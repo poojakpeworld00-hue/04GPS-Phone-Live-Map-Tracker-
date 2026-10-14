@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="home_brand">#315BFF</color>
+  <color name="home_brand_pressed">#2448E0</color>
+  <color name="home_on_brand">#FFFFFF</color>
+  <color name="home_on_brand_soft">#D6E0FF</color>
+  <color name="home_on_brand_tile">#2EFFFFFF</color>
+  <color name="home_ring_10">#1AFFFFFF</color>
+  <color name="home_ring_14">#24FFFFFF</color>
+  <color name="home_ring_18">#2EFFFFFF</color>
+  <color name="home_live">#7CF0B0</color>
+  <color name="home_gold">#FFD66B</color>
+  <color name="home_gold_ink">#0E1B3D</color>
+  <color name="home_ink">#0E1B3D</color>
+  <color name="home_muted">#5A6782</color>
+  <color name="home_canvas">#F2F5FC</color>
+  <color name="home_surface">#FFFFFF</color>
+  <color name="home_tint">#E8EDFF</color>
+  <color name="home_chip_border">#DCE3F2</color>
+  <color name="home_timeline">#DCE3F2</color>
+  <color name="home_search_btn">#0E1B3D</color>
+  <color name="home_card_shadow">#140E1B3D</color>
+</resources>
