@@ -10,7 +10,7 @@
     android:padding="20dp">
 
     <TextView
-        android:id="@+id/tvDeleteTitle"
+        android:id="@+id/txtDeleteTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/nunito_extrabold"
@@ -19,7 +19,7 @@
         android:textSize="18sp" />
 
     <TextView
-        android:id="@+id/tvDeleteBody"
+        android:id="@+id/txtDeleteBody"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
@@ -35,7 +35,7 @@
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCancel"
+            android:id="@+id/actCancel"
             style="@style/Widget.Material3.Button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -51,7 +51,7 @@
             app:cornerRadius="14dp" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnConfirmDelete"
+            android:id="@+id/actConfirmDelete"
             style="@style/Widget.Material3.Button"
             android:layout_width="0dp"
             android:layout_height="match_parent"

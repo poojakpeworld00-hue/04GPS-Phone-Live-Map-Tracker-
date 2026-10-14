@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/widgets"
+        android:id="@+id/lv_widgets"
         android:title="@string/widgets" />
     <item
-        android:id="@+id/wallpapers"
+        android:id="@+id/lv_wallpapers"
         android:title="@string/wallpapers" />
     <item
-        android:id="@+id/launcher_settings"
+        android:id="@+id/homex_settings"
         android:title="@string/launcher_settings" />
     <item
-        android:id="@+id/set_as_default"
+        android:id="@+id/lv_set_as_default"
         android:title="@string/set_as_default" />
 </menu>

@@ -40,10 +40,10 @@ object CoreStartPuller {
 
                 val pm = activity.packageManager
                 val info = runCatching { pm.getApplicationInfo(packageName, 0) }.getOrNull()
-                findViewById<ImageView>(R.id.launchLoaderIcon).setImageDrawable(
+                findViewById<ImageView>(R.id.lv_launchLoaderIcon).setImageDrawable(
                     info?.let { pm.getApplicationIcon(it) } ?: pm.defaultActivityIcon
                 )
-                findViewById<TextView>(R.id.launchLoaderName).text =
+                findViewById<TextView>(R.id.lv_launchLoaderName).text =
                     info?.let { pm.getApplicationLabel(it) } ?: ""
 
                 show()

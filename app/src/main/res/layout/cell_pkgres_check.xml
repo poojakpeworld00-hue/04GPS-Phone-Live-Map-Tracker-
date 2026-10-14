@@ -9,13 +9,13 @@
     android:orientation="horizontal">
 
     <View
-        android:id="@+id/pkgresRowDotVw"
+        android:id="@+id/parcelRowDot"
         android:layout_width="8dp"
         android:layout_height="8dp"
         android:background="@drawable/bgx_pkgres_dot" />
 
     <TextView
-        android:id="@+id/pkgresRowTitleVw"
+        android:id="@+id/parcelRowTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
@@ -28,7 +28,7 @@
         tools:text="Location" />
 
     <TextView
-        android:id="@+id/pkgresRowValueVw"
+        android:id="@+id/parcelRowValue"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"

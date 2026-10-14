@@ -51,7 +51,7 @@ class BuddyAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = getItem(position)) {
-            is Item.Header -> (holder as HeaderVH).binding.tvLetter.text = item.letter
+            is Item.Header -> (holder as HeaderVH).binding.txtLetter.text = item.letter
             is Item.Row -> (holder as RowVH).bind(item.contact)
         }
     }
@@ -60,15 +60,15 @@ class BuddyAdapter(
 
     inner class RowVH(private val binding: CellContactRowBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(contact: BuddyNum) {
-            binding.tvInitial.text = contact.initials
-            binding.tvInitial.setBackgroundResource(AVATARS[contact.avatar])
-            binding.tvName.text = contact.name
+            binding.txtInitial.text = contact.initials
+            binding.txtInitial.setBackgroundResource(AVATARS[contact.avatar])
+            binding.txtName.text = contact.name
             // A contact saved without a name already shows its number as the name.
             val number = contact.number.takeIf { it != contact.name }
-            binding.tvNumber.text = listOfNotNull(contact.label.takeIf { it.isNotBlank() }, number).joinToString(" · ")
-            binding.btnLocate.setOnClickListener { onLocate(contact) }
-            binding.btnCall.setOnClickListener { onCall(contact) }
-            binding.contactRow.setOnClickListener { onLocate(contact) }
+            binding.txtNumber.text = listOfNotNull(contact.label.takeIf { it.isNotBlank() }, number).joinToString(" · ")
+            binding.actLocate.setOnClickListener { onLocate(contact) }
+            binding.actCallVw.setOnClickListener { onCall(contact) }
+            binding.buddyRow.setOnClickListener { onLocate(contact) }
         }
     }
 

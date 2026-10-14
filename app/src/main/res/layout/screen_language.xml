@@ -11,7 +11,7 @@
     <data />
 
     <LinearLayout
-        android:id="@+id/languageRoot"
+        android:id="@+id/tongueRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
@@ -28,7 +28,7 @@
             android:paddingEnd="12dp">
 
             <TextView
-                android:id="@+id/tvTitle"
+                android:id="@+id/txtTitle"
                 style="@style/Ds.Text.Header"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -36,7 +36,7 @@
                 android:text="@string/ds_language_title" />
 
             <ImageButton
-                android:id="@+id/btnInfo"
+                android:id="@+id/actInfo"
                 style="@style/Ds.IconButton"
                 android:layout_marginStart="6dp"
                 android:contentDescription="@string/ds_cd_info"
@@ -44,7 +44,7 @@
                 app:tint="@color/ds_muted" />
 
             <LinearLayout
-                android:id="@+id/btnContinue"
+                android:id="@+id/actContinue"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
                 android:layout_marginStart="6dp"
@@ -77,7 +77,7 @@
         </LinearLayout>
 
         <include
-            android:id="@+id/onboarding_step_header"
+            android:id="@+id/induct_step_header"
             layout="@layout/part_onboarding_step_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -86,7 +86,7 @@
             android:layout_marginBottom="12dp" />
 
         <androidx.core.widget.NestedScrollView
-            android:id="@+id/scroll"
+            android:id="@+id/scrl"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
@@ -99,7 +99,7 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/tvSuggested"
+                    android:id="@+id/txtSuggested"
                     style="@style/Ds.Text.SectionNunito"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -109,7 +109,7 @@
                     android:text="@string/ds_suggested" />
 
                 <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvSuggested"
+                    android:id="@+id/listSuggested"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="16dp"
@@ -119,7 +119,7 @@
                     android:padding="4dp" />
 
                 <TextView
-                    android:id="@+id/tvAll"
+                    android:id="@+id/txtAll"
                     style="@style/Ds.Text.SectionNunito"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -129,7 +129,7 @@
                     android:text="@string/ds_all_languages" />
 
                 <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvLanguages"
+                    android:id="@+id/listLanguages"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="16dp"
@@ -141,18 +141,18 @@
         </androidx.core.widget.NestedScrollView>
 
         <View
-            android:id="@+id/adNativeDivider"
+            android:id="@+id/spotNativeDivider"
             style="@style/AdDivider"
             android:background="@color/ds_hairline12" />
 
         <FrameLayout
-            android:id="@+id/adNativeFrame"
+            android:id="@+id/spotNativeFrame"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/ds_surface">
 
             <com.facebook.shimmer.ShimmerFrameLayout
-                android:id="@+id/adShimmer"
+                android:id="@+id/spotShimmer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="#ccc">

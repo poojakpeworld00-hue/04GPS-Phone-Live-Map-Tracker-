@@ -54,7 +54,7 @@ class LingoAdapter(
         private var running: Animator? = null
 
         init {
-            binding.rowLanguage.setOnClickListener { view ->
+            binding.lineLanguage.setOnClickListener { view ->
                 val position = bindingAdapterPosition
                 if (position == RecyclerView.NO_POSITION) return@setOnClickListener
                 tapFeedback(view)
@@ -81,25 +81,25 @@ class LingoAdapter(
         fun cancelAnimations() {
             running?.cancel()
             running = null
-            binding.radio.scaleX = 1f
-            binding.radio.scaleY = 1f
+            binding.lvRadio.scaleX = 1f
+            binding.lvRadio.scaleY = 1f
         }
 
         fun bindSelection(selected: Boolean, animate: Boolean) {
             val ctx = binding.root.context
             cancelAnimations()
-            binding.rowLanguage.background = if (selected) {
+            binding.lineLanguage.background = if (selected) {
                 ContextCompat.getDrawable(ctx, R.drawable.lv_row_selected_r14)
             } else {
                 null
             }
-            binding.tvCode.setBackgroundResource(if (selected) R.drawable.lv_tile_primary_r12 else R.drawable.lv_tile_gray_r12)
-            binding.tvCode.setTextColor(ContextCompat.getColor(ctx, if (selected) R.color.white else R.color.ds_ink2))
-            binding.radio.setBackgroundResource(if (selected) R.drawable.lv_radio_on else R.drawable.lv_radio_off)
+            binding.txtCode.setBackgroundResource(if (selected) R.drawable.lv_tile_primary_r12 else R.drawable.lv_tile_gray_r12)
+            binding.txtCode.setTextColor(ContextCompat.getColor(ctx, if (selected) R.color.white else R.color.ds_ink2))
+            binding.lvRadio.setBackgroundResource(if (selected) R.drawable.lv_radio_on else R.drawable.lv_radio_off)
 
             if (!animate || !selected) return
             running = ObjectAnimator.ofPropertyValuesHolder(
-                binding.radio,
+                binding.lvRadio,
                 PropertyValuesHolder.ofFloat(View.SCALE_X, POP_FROM, 1f),
                 PropertyValuesHolder.ofFloat(View.SCALE_Y, POP_FROM, 1f),
             ).apply {
@@ -118,10 +118,10 @@ class LingoAdapter(
         with(holder.binding) {
             val ctx = root.context
             // The language's flag in the badge (the short code is gone: the name says it).
-            tvCode.text = item.flag
-            tvNative.text = item.nativeName
-            tvName.text = if (item.tag == currentTag) ctx.getString(R.string.ds_current_language) else item.name
-            rowDivider.isVisible = position < items.lastIndex
+            txtCode.text = item.flag
+            txtNative.text = item.nativeName
+            txtName.text = if (item.tag == currentTag) ctx.getString(R.string.ds_current_language) else item.name
+            lineDivider.isVisible = position < items.lastIndex
         }
         holder.bindSelection(item.tag == selectedTag, animate = false)
     }
@@ -137,9 +137,9 @@ class LingoAdapter(
     override fun onViewRecycled(holder: VH) {
         super.onViewRecycled(holder)
         holder.cancelAnimations()
-        holder.binding.rowLanguage.animate().cancel()
-        holder.binding.rowLanguage.scaleX = 1f
-        holder.binding.rowLanguage.scaleY = 1f
+        holder.binding.lineLanguage.animate().cancel()
+        holder.binding.lineLanguage.scaleX = 1f
+        holder.binding.lineLanguage.scaleY = 1f
     }
 
     override fun getItemCount(): Int = items.size

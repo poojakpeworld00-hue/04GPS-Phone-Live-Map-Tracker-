@@ -7,31 +7,31 @@
 -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/chargingRoot"
+    android:id="@+id/juiceRoot"
     android:background="@drawable/bgx_charging_screen"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/chargingContentBoundary"
+        android:id="@+id/juiceContentBoundary"
         android:orientation="horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintGuide_percent="0.55" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/chargingFunctionalContent"
+        android:id="@+id/juiceFunctionalContent"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:paddingStart="18dp"
         android:paddingEnd="18dp"
-        app:layout_constraintBottom_toTopOf="@+id/chargingContentBoundary"
+        app:layout_constraintBottom_toTopOf="@+id/juiceContentBoundary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
-            android:id="@+id/chargingModeChip"
+            android:id="@+id/juiceModeChip"
             android:background="@drawable/bgx_charging_mode_chip"
             android:gravity="center_vertical"
             android:orientation="horizontal"
@@ -44,13 +44,13 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <View
-                android:id="@+id/chargingLiveDot"
+                android:id="@+id/juiceLiveDot"
                 android:background="@drawable/bgx_charging_status_dot"
                 android:layout_width="7dp"
                 android:layout_height="7dp" />
 
             <TextView
-                android:id="@+id/chargingModeLabel"
+                android:id="@+id/juiceModeLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
@@ -64,7 +64,7 @@
         </LinearLayout>
 
         <ImageButton
-            android:id="@+id/btnCloseCharging"
+            android:id="@+id/actCloseCharging"
             android:background="@drawable/bgx_charging_close_button"
             android:padding="11dp"
             android:layout_width="40dp"
@@ -77,17 +77,17 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <com.find.phone.gps.live.location.tracker.screens.power.PluggedChargeView
-            android:id="@+id/chargingEnergyView"
+            android:id="@+id/juiceEnergyView"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginTop="6dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHeight_percent="0.43"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/chargingModeChip" />
+            app:layout_constraintTop_toBottomOf="@+id/juiceModeChip" />
 
         <TextView
-            android:id="@+id/chargingPercentage"
+            android:id="@+id/juicePercentage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -97,14 +97,14 @@
             android:includeFontPadding="false"
             android:fontFamily="sans-serif-medium"
             android:letterSpacing="-0.06"
-            app:layout_constraintBottom_toBottomOf="@+id/chargingEnergyView"
-            app:layout_constraintEnd_toEndOf="@+id/chargingEnergyView"
-            app:layout_constraintStart_toStartOf="@+id/chargingEnergyView"
-            app:layout_constraintTop_toTopOf="@+id/chargingEnergyView"
+            app:layout_constraintBottom_toBottomOf="@+id/juiceEnergyView"
+            app:layout_constraintEnd_toEndOf="@+id/juiceEnergyView"
+            app:layout_constraintStart_toStartOf="@+id/juiceEnergyView"
+            app:layout_constraintTop_toTopOf="@+id/juiceEnergyView"
             app:layout_constraintVertical_bias="0.5" />
 
         <LinearLayout
-            android:id="@+id/chargingDetailsGroup"
+            android:id="@+id/juiceDetailsGroup"
             android:gravity="center_horizontal"
             android:orientation="vertical"
             android:paddingTop="10dp"
@@ -113,10 +113,10 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/chargingEnergyView">
+            app:layout_constraintTop_toBottomOf="@+id/juiceEnergyView">
 
             <TextView
-                android:id="@+id/chargingTitle"
+                android:id="@+id/juiceTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
@@ -128,7 +128,7 @@
                 android:fontFamily="sans-serif-medium" />
 
             <TextView
-                android:id="@+id/chargingSubtitle"
+                android:id="@+id/juiceSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
@@ -140,7 +140,7 @@
                 android:includeFontPadding="false" />
 
             <LinearLayout
-                android:id="@+id/chargingInfoCard"
+                android:id="@+id/juiceInfoCard"
                 android:gravity="center"
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
@@ -157,7 +157,7 @@
                     android:layout_marginEnd="4dp">
 
                     <TextView
-                        android:id="@+id/chargingMetricLeftValue"
+                        android:id="@+id/juiceMetricLeftValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
@@ -168,7 +168,7 @@
                         android:fontFamily="sans-serif-medium" />
 
                     <TextView
-                        android:id="@+id/chargingMetricLeftLabel"
+                        android:id="@+id/juiceMetricLeftLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
@@ -190,7 +190,7 @@
                     android:layout_marginStart="4dp">
 
                     <TextView
-                        android:id="@+id/chargingMetricRightValue"
+                        android:id="@+id/juiceMetricRightValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
@@ -201,7 +201,7 @@
                         android:fontFamily="sans-serif-medium" />
 
                     <TextView
-                        android:id="@+id/chargingMetricRightLabel"
+                        android:id="@+id/juiceMetricRightLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
@@ -225,13 +225,13 @@
                 android:paddingEnd="12dp">
 
                 <View
-                    android:id="@+id/chargingStatusDot"
+                    android:id="@+id/juiceStatusDot"
                     android:background="@drawable/bgx_charging_status_dot"
                     android:layout_width="7dp"
                     android:layout_height="7dp" />
 
                 <TextView
-                    android:id="@+id/chargingStatusText"
+                    android:id="@+id/juiceStatusText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
@@ -244,7 +244,7 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <FrameLayout
-        android:id="@+id/chargingAdSlot"
+        android:id="@+id/juiceAdSlot"
         android:paddingTop="7dp"
         android:paddingBottom="10dp"
         android:visibility="gone"
@@ -256,5 +256,5 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/chargingContentBoundary" />
+        app:layout_constraintTop_toTopOf="@+id/juiceContentBoundary" />
 </androidx.constraintlayout.widget.ConstraintLayout>

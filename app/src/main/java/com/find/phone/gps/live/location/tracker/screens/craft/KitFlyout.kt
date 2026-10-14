@@ -37,19 +37,19 @@ class KitFlyout(private val context: Context) {
         selected: Boolean = false,
         onClick: () -> Unit,
     ): KitFlyout {
-        val row = CellPopupRowBinding.inflate(LayoutInflater.from(context), binding.rows, false)
-        row.tvLabel.text = label
-        row.ivIcon.setImageResource(icon)
-        row.tvBadge.text = badge
-        row.tvBadge.isVisible = !badge.isNullOrEmpty()
-        row.ivCheck.isVisible = selected
-        row.iconTile.setBackgroundResource(if (selected) R.drawable.lv_tile_primary_r12 else R.drawable.lv_tile_tint_r12)
-        row.ivIcon.imageTintList = ContextCompat.getColorStateList(context, if (selected) R.color.white else R.color.ds_primary)
+        val row = CellPopupRowBinding.inflate(LayoutInflater.from(context), binding.lvRows, false)
+        row.txtLabel.text = label
+        row.imgIcon.setImageResource(icon)
+        row.txtBadge.text = badge
+        row.txtBadge.isVisible = !badge.isNullOrEmpty()
+        row.imgCheckVw.isVisible = selected
+        row.badgeTile.setBackgroundResource(if (selected) R.drawable.lv_tile_primary_r12 else R.drawable.lv_tile_tint_r12)
+        row.imgIcon.imageTintList = ContextCompat.getColorStateList(context, if (selected) R.color.white else R.color.ds_primary)
         row.root.setOnClickListener {
             window.dismiss()
             onClick()
         }
-        binding.rows.addView(row.root)
+        binding.lvRows.addView(row.root)
         return this
     }
 

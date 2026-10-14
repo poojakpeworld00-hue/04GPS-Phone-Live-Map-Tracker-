@@ -50,21 +50,21 @@ class LandChooserDrawer : BottomSheetDialogFragment() {
         val currentIso = requireArguments().getString(ARG_ISO).orEmpty()
         val current = Realms.byIso(currentIso)
         if (current != null) {
-            binding.tvSuggestedFlag.text = Realms.flag(current.iso2)
-            binding.tvSuggestedName.text = current.name
-            binding.tvSuggestedDial.text = "+" + current.dial
-            binding.rowSuggested.setOnClickListener { pick(current) }
+            binding.txtSuggestedFlag.text = Realms.flag(current.iso2)
+            binding.txtSuggestedName.text = current.name
+            binding.txtSuggestedDial.text = "+" + current.dial
+            binding.lineSuggested.setOnClickListener { pick(current) }
         } else {
-            binding.tvSuggested.visibility = View.GONE
-            binding.rowSuggested.visibility = View.GONE
+            binding.txtSuggested.visibility = View.GONE
+            binding.lineSuggested.visibility = View.GONE
         }
 
         adapter = CountryAdapter(::pick)
-        binding.rvCountries.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvCountries.adapter = adapter
+        binding.listCountries.layoutManager = LinearLayoutManager(requireContext())
+        binding.listCountries.adapter = adapter
         adapter.submit(Realms.all.filter { it.iso2 != currentIso })
 
-        binding.searchInput.doAfterTextChanged { text ->
+        binding.huntInput.doAfterTextChanged { text ->
             val q = text?.toString()?.trim().orEmpty()
             adapter.submit(
                 Realms.all.filter { t ->
@@ -73,7 +73,7 @@ class LandChooserDrawer : BottomSheetDialogFragment() {
                 }
             )
         }
-        binding.btnClose.setOnClickListener { dismiss() }
+        binding.actClose.setOnClickListener { dismiss() }
     }
 
     private fun pick(territory: Realm) {
@@ -100,7 +100,7 @@ class LandChooserDrawer : BottomSheetDialogFragment() {
 
         inner class VH(val binding: CellCountryBinding) : RecyclerView.ViewHolder(binding.root) {
             init {
-                binding.row.setOnClickListener {
+                binding.line.setOnClickListener {
                     val p = bindingAdapterPosition
                     if (p != RecyclerView.NO_POSITION) onClick(items[p])
                 }
@@ -112,9 +112,9 @@ class LandChooserDrawer : BottomSheetDialogFragment() {
 
         override fun onBindViewHolder(holder: VH, position: Int) {
             val t = items[position]
-            holder.binding.tvFlag.text = Realms.flag(t.iso2)
-            holder.binding.tvName.text = t.name
-            holder.binding.tvDial.text = "+" + t.dial
+            holder.binding.txtFlag.text = Realms.flag(t.iso2)
+            holder.binding.txtName.text = t.name
+            holder.binding.txtDial.text = "+" + t.dial
         }
 
         override fun getItemCount(): Int = items.size

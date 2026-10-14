@@ -26,16 +26,16 @@ class StashedBadgesDeck : HomeBaseDeck(), RefreshRecyclerViewListener {
         setContentView(binding.root)
         updateIcons()
 
-        setupEdgeToEdge(padBottomSystem = listOf(binding.manageHiddenIconsListUi))
-        setupMaterialScrollListener(binding.manageHiddenIconsListUi, binding.manageHiddenIconsAppbarUi)
+        setupEdgeToEdge(padBottomSystem = listOf(binding.mngHiddenIconsListUi))
+        setupMaterialScrollListener(binding.mngHiddenIconsListUi, binding.mngHiddenIconsAppbarUi)
 
-        val layoutManager = binding.manageHiddenIconsListUi.layoutManager as MyGridLayoutManager
+        val layoutManager = binding.mngHiddenIconsListUi.layoutManager as MyGridLayoutManager
         layoutManager.spanCount = launcherConfig.drawerColumnCount
     }
 
     override fun onResume() {
         super.onResume()
-        setupTopAppBar(binding.manageHiddenIconsAppbarUi, NavigationIcon.Arrow)
+        setupTopAppBar(binding.mngHiddenIconsAppbarUi, NavigationIcon.Arrow)
     }
 
     private fun updateIcons() {
@@ -50,7 +50,7 @@ class StashedBadgesDeck : HomeBaseDeck(), RefreshRecyclerViewListener {
 
             val hiddenIconsEmpty = hiddenIcons.isEmpty()
             runOnUiThread {
-                binding.manageHiddenIconsPlaceholderUi.beVisibleIf(hiddenIconsEmpty)
+                binding.mngHiddenIconsPlaceholderUi.beVisibleIf(hiddenIconsEmpty)
             }
 
             if (hiddenIcons.isNotEmpty()) {
@@ -80,9 +80,9 @@ class StashedBadgesDeck : HomeBaseDeck(), RefreshRecyclerViewListener {
             }
 
             runOnUiThread {
-                StashedBadgesFeed(this, hiddenIcons, this, binding.manageHiddenIconsListUi) {
+                StashedBadgesFeed(this, hiddenIcons, this, binding.mngHiddenIconsListUi) {
                 }.apply {
-                    binding.manageHiddenIconsListUi.adapter = this
+                    binding.mngHiddenIconsListUi.adapter = this
                 }
             }
         }

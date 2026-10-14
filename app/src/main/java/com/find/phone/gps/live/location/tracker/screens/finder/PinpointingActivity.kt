@@ -101,24 +101,24 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         saved = IntentCompat.getSerializableExtra(intent, EXTRA_REPORT, NumDigest::class.java)
         alreadyUnlocked = intent.getBooleanExtra(EXTRA_UNLOCKED, false)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.locRoot) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.lvLocRoot) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(left = bars.left, top = bars.top, right = bars.right, bottom = bars.bottom)
             insets
         }
 
-        binding.tvSearchNumber.text = search.display
-        binding.btnBack.setOnClickListener { goBack() }
-        binding.btnNotNow.setOnClickListener { finish() }
-        CraftMovement.pressScale(binding.btnWatchAd)
-        binding.btnWatchAd.setOnClickListener { reveal() }
-        binding.btnSkipPro.setOnClickListener {
+        binding.txtSearchNumber.text = search.display
+        binding.actBack.setOnClickListener { goBack() }
+        binding.actNotNow.setOnClickListener { finish() }
+        CraftMovement.pressScale(binding.actWatchAd)
+        binding.actWatchAd.setOnClickListener { reveal() }
+        binding.actSkipPro.setOnClickListener {
             if (report == null) return@setOnClickListener
             logKeyEvent("result_skip_pro")
             premiumPage.launch(PlusActivity.intent(this))
         }
-        binding.mapCard.clipToOutline = true
-        StreetCharts.style(binding.bigMap, interactive = false)
+        binding.chartCard.clipToOutline = true
+        StreetCharts.style(binding.lvBigMap, interactive = false)
 
         val premium = PlusCheckout.isPremium(this)
         if (!premium) {
@@ -128,12 +128,12 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
 
         val given = saved
         if (given != null) {
-            binding.mapCard.updateLayoutParams { height = dp(MAP_RESULT_DP) }
+            binding.chartCard.updateLayoutParams { height = dp(MAP_RESULT_DP) }
             lifecycleScope.launch { placeArea(given, animate = false) }
             showResult(given)
         } else {
-            binding.chipCountry.text = Realms.byIso(search.iso2)?.name ?: search.iso2
-            binding.chipState.setText(R.string.ds_step_state)
+            binding.pillCountry.text = Realms.byIso(search.iso2)?.name ?: search.iso2
+            binding.pillState.setText(R.string.ds_step_state)
             locate(if (premium) MIN_SEARCH_PREMIUM_MS else MIN_SEARCH_MS)
         }
     }
@@ -148,9 +148,9 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
      */
     private fun bindSteps(current: Step) {
         val steps = listOf(
-            Triple(binding.stepCountry, binding.chipCountry, R.string.ds_step_country),
-            Triple(binding.stepState, binding.chipState, R.string.ds_step_state),
-            Triple(binding.stepArea, binding.chipArea, R.string.ds_step_area),
+            Triple(binding.lvStepCountry, binding.pillCountry, R.string.ds_step_country),
+            Triple(binding.lvStepState, binding.pillState, R.string.ds_step_state),
+            Triple(binding.lvStepArea, binding.pillArea, R.string.ds_step_area),
         )
         steps.forEachIndexed { index, (step, chip, label) ->
             val name = getString(label)
@@ -200,7 +200,7 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
      * its own and shows it once it lands — otherwise the slot would sit blank for the whole search.
      */
     private fun showNative() {
-        binding.adFrame.isVisible = true
+        binding.spotFrame.isVisible = true
         if (nativeReady()) return renderNative()
         if (compactNative) {
             EmbeddedTeaserRibbon().loadNativeBannerAds(this)
@@ -211,23 +211,23 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
             })
         }
         // A load already in flight elsewhere doesn't call back here: look again once it may have landed.
-        NATIVE_RECHECK_MS.forEach { binding.adFrame.postDelayed({ fillNativeIfEmpty() }, it) }
+        NATIVE_RECHECK_MS.forEach { binding.spotFrame.postDelayed({ fillNativeIfEmpty() }, it) }
     }
 
     private fun nativeReady(): Boolean =
         if (compactNative) EmbeddedTeaserRibbon.hasPreloadedNativeBanner() else EmbeddedTeaser.hasPreloadedNative()
 
     private fun fillNativeIfEmpty() {
-        if (isFinishing || isDestroyed || binding.adFrame.childCount > 0) return
+        if (isFinishing || isDestroyed || binding.spotFrame.childCount > 0) return
         if (nativeReady()) renderNative()
     }
 
     private fun renderNative() {
         when {
-            compactNative -> EmbeddedTeaserRibbon().showNativeBannerNative(this, binding.adFrame)
-            nativeType == "big" -> EmbeddedTeaser().showBigNative(this, binding.adFrame)
-            nativeType == "mid" -> EmbeddedTeaser().showMidNative(this, binding.adFrame)
-            else -> EmbeddedTeaser().showMidNative2(this, binding.adFrame)
+            compactNative -> EmbeddedTeaserRibbon().showNativeBannerNative(this, binding.spotFrame)
+            nativeType == "big" -> EmbeddedTeaser().showBigNative(this, binding.spotFrame)
+            nativeType == "mid" -> EmbeddedTeaser().showMidNative(this, binding.spotFrame)
+            else -> EmbeddedTeaser().showMidNative2(this, binding.spotFrame)
         }
     }
 
@@ -248,9 +248,9 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         stage(getString(R.string.ds_locating_country, countryName), toPercent = 30, overMs = minMs * 3 / 10, step = Step.COUNTRY)
         SectorPlaceCoder.locate(this@PinpointingActivity, null, null, null, countryName)?.let { pin ->
             val point = GeoPoint(pin.lat, pin.lng)
-            binding.bigMap.controller.setZoom(SectorExactness.COUNTRY.zoom - 2)
-            binding.bigMap.controller.setCenter(point)
-            binding.bigMap.controller.animateTo(point, SectorExactness.COUNTRY.zoom, FLY_MS)
+            binding.lvBigMap.controller.setZoom(SectorExactness.COUNTRY.zoom - 2)
+            binding.lvBigMap.controller.setCenter(point)
+            binding.lvBigMap.controller.animateTo(point, SectorExactness.COUNTRY.zoom, FLY_MS)
         }
         delay(at(minMs * 3 / 10))
 
@@ -262,9 +262,9 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         val state = result.state?.takeIf { it.isNotBlank() }
         val statePin = state?.let { SectorPlaceCoder.locate(this@PinpointingActivity, null, null, it, result.countryName) }
         if (state != null && statePin != null) {
-            binding.chipState.text = state
+            binding.pillState.text = state
             stage(getString(R.string.ds_locating_state, state), toPercent = 70, overMs = minMs * 4 / 10, step = Step.STATE)
-            binding.bigMap.controller.animateTo(GeoPoint(statePin.lat, statePin.lng), SectorExactness.STATE.zoom - 1, FLY_MS)
+            binding.lvBigMap.controller.animateTo(GeoPoint(statePin.lat, statePin.lng), SectorExactness.STATE.zoom - 1, FLY_MS)
             delay(at(minMs * 7 / 10))
         }
 
@@ -278,13 +278,13 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
 
     /** The stage line, the step chips at [step], and the progress bar running on to [toPercent] over [overMs]. */
     private fun stage(text: String, toPercent: Int, overMs: Long, step: Step) {
-        binding.tvStage.text = text
+        binding.txtStage.text = text
         bindSteps(step)
         progressAnim?.cancel()
-        progressAnim = ObjectAnimator.ofInt(binding.progress, "progress", binding.progress.progress, toPercent * 10).apply {
+        progressAnim = ObjectAnimator.ofInt(binding.prog, "progress", binding.prog.progress, toPercent * 10).apply {
             duration = overMs.coerceAtLeast(300L)
             interpolator = LinearInterpolator()
-            addUpdateListener { binding.tvPercent.text = getString(R.string.ds_locating_percent, binding.progress.progress / 10) }
+            addUpdateListener { binding.txtPercent.text = getString(R.string.ds_locating_percent, binding.prog.progress / 10) }
             start()
         }
         animators += progressAnim!!
@@ -310,12 +310,12 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         // cover the whole card; the card zoom keeps it a ring around the place.
         val zoom = StreetCharts.cardZoom(precision)
         if (animate) {
-            binding.bigMap.controller.animateTo(GeoPoint(pin.lat, pin.lng), zoom, FLY_MS)
+            binding.lvBigMap.controller.animateTo(GeoPoint(pin.lat, pin.lng), zoom, FLY_MS)
             delay(FLY_MS)
             if (isFinishing || isDestroyed) return
         }
-        overlay?.let { it.stop(); binding.bigMap.overlays.remove(it) }
-        overlay = StreetCharts.placeAt(binding.bigMap, pin, precision, zoom)
+        overlay?.let { it.stop(); binding.lvBigMap.overlays.remove(it) }
+        overlay = StreetCharts.placeAt(binding.lvBigMap, pin, precision, zoom)
     }
 
     /** The lookup answered: saved to Recents (locked, unless it was unlocked before). */
@@ -332,57 +332,57 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         if (alreadyUnlocked || PlusCheckout.isPremium(this)) return unlock(result)
 
         // Top bar: "Location found · Search complete · 100%", the Live pill gone.
-        binding.tvTitle.setText(R.string.ds_location_found)
-        binding.tvSearchNumber.setText(R.string.ds_locating_complete)
-        binding.tvSearchNumber.setTextColor(ContextCompat.getColor(this, R.color.ds_success))
-        binding.livePill.isVisible = false
+        binding.txtTitle.setText(R.string.ds_location_found)
+        binding.txtSearchNumber.setText(R.string.ds_locating_complete)
+        binding.txtSearchNumber.setTextColor(ContextCompat.getColor(this, R.color.ds_success))
+        binding.lvLivePill.isVisible = false
         // The map keeps only the area pin and its pill: the scan and the stage chips go.
-        binding.scanGroup.isVisible = false
-        binding.mapChips.isVisible = false
-        binding.searchingGroup.isVisible = false
-        binding.tvAreaPill.isVisible = true
+        binding.lvScanGroup.isVisible = false
+        binding.chartChips.isVisible = false
+        binding.lvSearchingGroup.isVisible = false
+        binding.txtAreaPill.isVisible = true
         shrinkMap()
 
-        binding.tvCountryTile.text = search.iso2.uppercase()
-        binding.nameRow.isVisible = !result.name.isNullOrBlank()
-        binding.tvName.text = result.name
-        binding.tvName.setBlurred(true)
-        binding.tvNumber.text = result.international
-        binding.tvRegion.text = listOfNotNull(result.state, result.countryName).distinct().joinToString(", ")
+        binding.txtCountryTile.text = search.iso2.uppercase()
+        binding.lvNameRow.isVisible = !result.name.isNullOrBlank()
+        binding.txtName.text = result.name
+        binding.txtName.setBlurred(true)
+        binding.txtNumber.text = result.international
+        binding.txtRegion.text = listOfNotNull(result.state, result.countryName).distinct().joinToString(", ")
         if (result.valid) {
-            binding.tvValidity.setText(R.string.ds_result_valid_short)
-            binding.tvValidity.setBackgroundResource(R.drawable.lv_pill_success_soft)
-            binding.tvValidity.setTextColor(ContextCompat.getColor(this, R.color.ds_success))
+            binding.txtValidity.setText(R.string.ds_result_valid_short)
+            binding.txtValidity.setBackgroundResource(R.drawable.lv_pill_success_soft)
+            binding.txtValidity.setTextColor(ContextCompat.getColor(this, R.color.ds_success))
         } else {
-            binding.tvValidity.setText(R.string.ds_verdict_unverified)
-            binding.tvValidity.setBackgroundResource(R.drawable.lv_pill_warn)
-            binding.tvValidity.setTextColor(ContextCompat.getColor(this, R.color.ds_warn))
+            binding.txtValidity.setText(R.string.ds_verdict_unverified)
+            binding.txtValidity.setBackgroundResource(R.drawable.lv_pill_warn)
+            binding.txtValidity.setTextColor(ContextCompat.getColor(this, R.color.ds_warn))
         }
 
-        cell(binding.cellCountry, R.string.ds_label_country, result.countryName, locked = false)
-        cell(binding.cellLine, R.string.ds_fact_line, result.lineType.label(this), locked = false)
-        cell(binding.cellCity, R.string.ds_label_city, result.city, locked = true)
-        cell(binding.cellCarrier, R.string.ds_fact_carrier, result.carrier, locked = true)
+        cell(binding.boxCountry, R.string.ds_label_country, result.countryName, locked = false)
+        cell(binding.boxLine, R.string.ds_fact_line, result.lineType.label(this), locked = false)
+        cell(binding.boxCity, R.string.ds_label_city, result.city, locked = true)
+        cell(binding.boxCarrier, R.string.ds_fact_carrier, result.carrier, locked = true)
 
-        binding.resultGroup.alpha = 0f
-        binding.resultGroup.translationY = dp(40).toFloat()
-        binding.resultGroup.isVisible = true
-        binding.resultGroup.animate().alpha(1f).translationY(0f).setDuration(450)
+        binding.verdictGroup.alpha = 0f
+        binding.verdictGroup.translationY = dp(40).toFloat()
+        binding.verdictGroup.isVisible = true
+        binding.verdictGroup.animate().alpha(1f).translationY(0f).setDuration(450)
             .setInterpolator(CraftMovement.EASE_IN_OUT).start()
     }
 
     /** The big search map settles into the result's area card; the area stays centred. */
     private fun shrinkMap() {
-        val from = binding.mapCard.height.takeIf { it > 0 } ?: return
+        val from = binding.chartCard.height.takeIf { it > 0 } ?: return
         val to = dp(MAP_RESULT_DP)
         if (from <= to) return
-        val center = binding.bigMap.mapCenter
+        val center = binding.lvBigMap.mapCenter
         ValueAnimator.ofInt(from, to).apply {
             duration = 400L
             interpolator = CraftMovement.EASE_IN_OUT
             addUpdateListener {
-                binding.mapCard.updateLayoutParams { height = it.animatedValue as Int }
-                binding.bigMap.controller.setCenter(center)
+                binding.chartCard.updateLayoutParams { height = it.animatedValue as Int }
+                binding.lvBigMap.controller.setCenter(center)
             }
             start()
         }.also { animators += it }
@@ -390,12 +390,12 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
 
     /** A fact cell; a locked one blurs its value, a missing value just says so (no lock). */
     private fun cell(cell: CellResultCellBinding, @StringRes label: Int, value: String?, locked: Boolean) {
-        cell.tvLabel.setText(label)
+        cell.txtLabel.setText(label)
         val known = !value.isNullOrBlank()
-        cell.tvValue.text = if (known) value else getString(R.string.ds_not_available)
-        cell.tvValue.setTextColor(ContextCompat.getColor(this, if (known) R.color.ds_ink else R.color.ds_muted))
-        cell.tvValue.setBlurred(locked && known)
-        cell.ivLock.isVisible = locked && known
+        cell.txtValue.text = if (known) value else getString(R.string.ds_not_available)
+        cell.txtValue.setTextColor(ContextCompat.getColor(this, if (known) R.color.ds_ink else R.color.ds_muted))
+        cell.txtValue.setBlurred(locked && known)
+        cell.imgLock.isVisible = locked && known
     }
 
     /**
@@ -406,12 +406,12 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         val result = report ?: return
         if (watching) return
         watching = true
-        binding.tvWatchAd.isInvisible = true
-        binding.pbWatchAd.isVisible = true
+        binding.txtWatchAd.isInvisible = true
+        binding.spinWatchAd.isVisible = true
         BonusTeaser().show(this) { outcome ->
             watching = false
-            binding.tvWatchAd.isInvisible = false
-            binding.pbWatchAd.isVisible = false
+            binding.txtWatchAd.isInvisible = false
+            binding.spinWatchAd.isVisible = false
             when (outcome) {
                 BonusTeaser.Result.EARNED -> unlock(result)
                 BonusTeaser.Result.NOT_EARNED ->
@@ -436,11 +436,11 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
 
     override fun onResume() {
         super.onResume()
-        if (::search.isInitialized) binding.bigMap.onResume()
+        if (::search.isInitialized) binding.lvBigMap.onResume()
     }
 
     override fun onPause() {
-        if (::search.isInitialized) binding.bigMap.onPause()
+        if (::search.isInitialized) binding.lvBigMap.onPause()
         super.onPause()
     }
 

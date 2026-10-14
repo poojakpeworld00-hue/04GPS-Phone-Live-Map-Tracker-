@@ -7,13 +7,13 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/alertRoot"
+    android:id="@+id/sirenRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#73000000">
 
     <LinearLayout
-        android:id="@+id/alertSheet"
+        android:id="@+id/sirenSheet"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
@@ -44,7 +44,7 @@
                 android:clipChildren="false">
 
                 <View
-                    android:id="@+id/alertRing"
+                    android:id="@+id/sirenRing"
                     android:layout_width="52dp"
                     android:layout_height="52dp"
                     android:layout_gravity="center"
@@ -57,7 +57,7 @@
                     android:background="@drawable/pmt_bg_gradient_oval">
 
                     <ImageView
-                        android:id="@+id/alertBell"
+                        android:id="@+id/sirenBell"
                         android:layout_width="26dp"
                         android:layout_height="26dp"
                         android:layout_gravity="center"
@@ -74,7 +74,7 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/alertTitle"
+                    android:id="@+id/sirenTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:accessibilityLiveRegion="assertive"
@@ -86,7 +86,7 @@
                     tools:text="Call back Rahul" />
 
                 <TextView
-                    android:id="@+id/alertNote"
+                    android:id="@+id/sirenNote"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
@@ -100,7 +100,7 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/alertNumber"
+            android:id="@+id/sirenNumber"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
@@ -118,7 +118,7 @@
             tools:text="+91 98765 43210" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnPrimary"
+            android:id="@+id/actPrimary"
             style="@style/Widget.Material3.Button"
             android:layout_width="match_parent"
             android:layout_height="50dp"
@@ -144,7 +144,7 @@
             android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSecondary"
+                android:id="@+id/actSecondary"
                 style="@style/Widget.Material3.Button"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -161,7 +161,7 @@
                 app:cornerRadius="16dp" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDone"
+                android:id="@+id/actDone"
                 style="@style/Widget.Material3.Button"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -180,7 +180,7 @@
 
         <!-- Mid native ad: only after unlock (see MemoSirenActivity.loadAdIfUnlocked). -->
         <FrameLayout
-            android:id="@+id/alertAdFrame"
+            android:id="@+id/sirenAdFrame"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
@@ -190,7 +190,7 @@
 
     <!-- Snooze panel (design 7): scrim + card with the Remote Config choices. -->
     <FrameLayout
-        android:id="@+id/snoozeOverlay"
+        android:id="@+id/lv_snoozeOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#59000000"
@@ -218,14 +218,14 @@
 
             <!-- Rows of two option tiles are added here by the activity. -->
             <LinearLayout
-                android:id="@+id/snoozeOptions"
+                android:id="@+id/lv_snoozeOptions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 android:orientation="vertical" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSnoozeConfirm"
+                android:id="@+id/actSnoozeConfirm"
                 style="@style/Widget.Material3.Button"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"

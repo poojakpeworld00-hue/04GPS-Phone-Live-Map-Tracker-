@@ -38,20 +38,20 @@ class HuntCeilingDrawer(
     fun show() {
         val limit = HuntRation.limit(activity)
         val used = HuntRation.used(activity).coerceAtMost(limit)
-        binding.tvUsed.text = "$used/$limit"
-        binding.ring.fraction = if (limit > 0) used.toFloat() / limit else 1f
+        binding.txtUsed.text = "$used/$limit"
+        binding.lvRing.fraction = if (limit > 0) used.toFloat() / limit else 1f
         // `rewarded_extra_searches` 0 (the default): Premium is the only way past the limit.
         val offersAd = PlusProfile.read(activity).rewardedExtraSearches > 0
-        binding.tvBody.text = themed.getString(
+        binding.txtBody.text = themed.getString(
             if (offersAd) R.string.ds_limit_body else R.string.ds_limit_body_premium, limit,
         )
-        binding.btnWatch.isVisible = offersAd
+        binding.actWatch.isVisible = offersAd
 
-        CraftMovement.pressScale(binding.btnWatch)
-        CraftMovement.pressScale(binding.btnPremium)
-        binding.btnWatch.setOnClickListener { watch() }
-        binding.btnPremium.clipToOutline = true
-        binding.btnPremium.setOnClickListener {
+        CraftMovement.pressScale(binding.actWatch)
+        CraftMovement.pressScale(binding.actPremium)
+        binding.actWatch.setOnClickListener { watch() }
+        binding.actPremium.clipToOutline = true
+        binding.actPremium.setOnClickListener {
             dialog.dismiss()
             onPremium()
         }
@@ -68,12 +68,12 @@ class HuntCeilingDrawer(
     private fun watch() {
         if (watching) return
         watching = true
-        binding.tvWatch.isInvisible = true
-        binding.pbWatch.isVisible = true
+        binding.txtWatch.isInvisible = true
+        binding.spinWatch.isVisible = true
         BonusTeaser().show(activity) { result ->
             watching = false
-            binding.tvWatch.isInvisible = false
-            binding.pbWatch.isVisible = false
+            binding.txtWatch.isInvisible = false
+            binding.spinWatch.isVisible = false
             when (result) {
                 BonusTeaser.Result.EARNED -> {
                     HuntRation.grantRewarded(activity)
@@ -90,12 +90,12 @@ class HuntCeilingDrawer(
     /** The light streak sweeping across the gold button (design `shine`). */
     private fun startShine() {
         if (CraftMovement.animationsDisabled(themed)) {
-            binding.shine.isVisible = false
+            binding.lvShine.isVisible = false
             return
         }
-        binding.btnPremium.post {
-            val w = binding.btnPremium.width.toFloat()
-            shine = ObjectAnimator.ofFloat(binding.shine, View.TRANSLATION_X, -0.3f * w, 1.1f * w).apply {
+        binding.actPremium.post {
+            val w = binding.actPremium.width.toFloat()
+            shine = ObjectAnimator.ofFloat(binding.lvShine, View.TRANSLATION_X, -0.3f * w, 1.1f * w).apply {
                 duration = 1_800L
                 startDelay = 600L
                 repeatCount = ValueAnimator.INFINITE

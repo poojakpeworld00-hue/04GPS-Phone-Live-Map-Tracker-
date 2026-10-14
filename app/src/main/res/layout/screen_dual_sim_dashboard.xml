@@ -9,14 +9,14 @@
     <data />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/dashRoot"
+        android:id="@+id/lv_dashRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
         tools:context=".screens.chip.DoubleChipOverviewActivity">
 
         <LinearLayout
-            android:id="@+id/topBar"
+            android:id="@+id/upperBar"
             android:layout_width="0dp"
             android:layout_height="56dp"
             android:gravity="center_vertical"
@@ -27,7 +27,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
-                android:id="@+id/btnBack"
+                android:id="@+id/actBack"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
@@ -58,7 +58,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/topBar">
+            app:layout_constraintTop_toBottomOf="@id/upperBar">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -67,7 +67,7 @@
 
                 <!-- SIM selector (segmented, filled in code) -->
                 <LinearLayout
-                    android:id="@+id/simSelector"
+                    android:id="@+id/chipcardSelector"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@drawable/lv_seg_track_r14"
@@ -99,7 +99,7 @@
                             android:textSize="13sp" />
 
                         <TextView
-                            android:id="@+id/tvLevel"
+                            android:id="@+id/txtLevel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/nunito_extrabold"
@@ -109,7 +109,7 @@
                     </LinearLayout>
 
                     <TextView
-                        android:id="@+id/tvDbm"
+                        android:id="@+id/txtDbm"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
@@ -120,14 +120,14 @@
                         tools:text="−87 dBm · live" />
 
                     <LinearLayout
-                        android:id="@+id/meter"
+                        android:id="@+id/lv_meter"
                         android:layout_width="match_parent"
                         android:layout_height="10dp"
                         android:layout_marginTop="14dp"
                         android:orientation="horizontal">
 
                         <View
-                            android:id="@+id/seg1"
+                            android:id="@+id/part1"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_marginEnd="4dp"
@@ -135,7 +135,7 @@
                             android:background="@drawable/lv_meter_seg" />
 
                         <View
-                            android:id="@+id/seg2"
+                            android:id="@+id/part2"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_marginHorizontal="2dp"
@@ -143,7 +143,7 @@
                             android:background="@drawable/lv_meter_seg" />
 
                         <View
-                            android:id="@+id/seg3"
+                            android:id="@+id/part3"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_marginHorizontal="2dp"
@@ -151,7 +151,7 @@
                             android:background="@drawable/lv_meter_seg" />
 
                         <View
-                            android:id="@+id/seg4"
+                            android:id="@+id/part4"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_marginStart="4dp"
@@ -183,22 +183,22 @@
 
                     <LinearLayout style="@style/Ds.DashRow">
                         <TextView style="@style/Ds.DashLabel" android:text="@string/dashboard_network" />
-                        <TextView android:id="@+id/tvNetwork" style="@style/Ds.DashValue" tools:text="5G" />
+                        <TextView android:id="@+id/txtNetwork" style="@style/Ds.DashValue" tools:text="5G" />
                     </LinearLayout>
 
                     <LinearLayout style="@style/Ds.DashRow" android:layout_marginTop="10dp">
                         <TextView style="@style/Ds.DashLabel" android:text="@string/dashboard_roaming" />
-                        <TextView android:id="@+id/tvRoaming" style="@style/Ds.DashValue" tools:text="Off" />
+                        <TextView android:id="@+id/txtRoaming" style="@style/Ds.DashValue" tools:text="Off" />
                     </LinearLayout>
 
                     <LinearLayout style="@style/Ds.DashRow" android:layout_marginTop="10dp">
                         <TextView style="@style/Ds.DashLabel" android:text="@string/dashboard_country" />
-                        <TextView android:id="@+id/tvCountry" style="@style/Ds.DashValue" tools:text="India" />
+                        <TextView android:id="@+id/txtCountry" style="@style/Ds.DashValue" tools:text="India" />
                     </LinearLayout>
 
                     <LinearLayout style="@style/Ds.DashRow" android:layout_marginTop="10dp">
                         <TextView style="@style/Ds.DashLabel" android:text="@string/dashboard_sim_state" />
-                        <TextView android:id="@+id/tvSimState" style="@style/Ds.DashValue" tools:text="Ready" />
+                        <TextView android:id="@+id/txtSimState" style="@style/Ds.DashValue" tools:text="Ready" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -225,17 +225,17 @@
 
                     <LinearLayout style="@style/Ds.DashRow">
                         <TextView style="@style/Ds.DashLabel" android:text="@string/dashboard_calls" />
-                        <TextView android:id="@+id/tvDefCalls" style="@style/Ds.DashValue" tools:text="SIM 1 · Jio" />
+                        <TextView android:id="@+id/txtDefCalls" style="@style/Ds.DashValue" tools:text="SIM 1 · Jio" />
                     </LinearLayout>
 
                     <LinearLayout style="@style/Ds.DashRow" android:layout_marginTop="10dp">
                         <TextView style="@style/Ds.DashLabel" android:text="@string/dashboard_data" />
-                        <TextView android:id="@+id/tvDefData" style="@style/Ds.DashValue" tools:text="SIM 1 · Jio" />
+                        <TextView android:id="@+id/txtDefData" style="@style/Ds.DashValue" tools:text="SIM 1 · Jio" />
                     </LinearLayout>
 
                     <LinearLayout style="@style/Ds.DashRow" android:layout_marginTop="10dp">
                         <TextView style="@style/Ds.DashLabel" android:text="@string/dashboard_sms" />
-                        <TextView android:id="@+id/tvDefSms" style="@style/Ds.DashValue" tools:text="SIM 2 · Airtel" />
+                        <TextView android:id="@+id/txtDefSms" style="@style/Ds.DashValue" tools:text="SIM 2 · Airtel" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>

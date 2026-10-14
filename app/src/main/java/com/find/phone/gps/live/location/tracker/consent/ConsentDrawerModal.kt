@@ -103,7 +103,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         current = pages.indices.firstOrNull { !pages[it].isGranted(ctx) } ?: 0
         pageViews = pages.map { buildPage(inflater, it) }
 
-        val pager = view.findViewById<ViewPager2>(R.id.pager)
+        val pager = view.findViewById<ViewPager2>(R.id.swiper)
         this.pager = pager
         pager.adapter = PagesAdapter(pageViews)
         pager.offscreenPageLimit = pages.size.coerceAtLeast(1)
@@ -114,12 +114,12 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         // Size the pager to its tallest page, so the sheet doesn't jump between pages.
         pager.post { fitPagerHeight() }
 
-        buildDots(view.findViewById(R.id.dots))
-        view.findViewById<View>(R.id.btnPrimary).apply {
+        buildDots(view.findViewById(R.id.marks))
+        view.findViewById<View>(R.id.actPrimary).apply {
             CraftMovement.pressScale(this)
             setOnClickListener { onPrimaryClicked() }
         }
-        view.findViewById<View>(R.id.btnSkip).setOnClickListener { onSkipClicked() }
+        view.findViewById<View>(R.id.actSkip).setOnClickListener { onSkipClicked() }
 
         // 22dp + the navigation bar under the sheet.
         val basePadding = view.paddingBottom
@@ -171,9 +171,9 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
     private fun buildPage(inflater: LayoutInflater, page: DrawerFolio): View {
         val v = inflater.inflate(R.layout.pmt_page, null, false)
         v.layoutParams = RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-        v.findViewById<TextView>(R.id.tvTitle).setText(page.title)
-        v.findViewById<TextView>(R.id.tvBody).setText(page.body)
-        val host = v.findViewById<FrameLayout>(R.id.illHost)
+        v.findViewById<TextView>(R.id.txtTitle).setText(page.title)
+        v.findViewById<TextView>(R.id.txtBody).setText(page.body)
+        val host = v.findViewById<FrameLayout>(R.id.lv_illHost)
         val ill = inflater.inflate(page.illustration, host, false)
         host.addView(ill, 0)
         // 24dp rounded illustration; everything inside is clipped to it.
@@ -328,7 +328,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         statuses[i] = if (granted) Status.ALLOWED else Status.DENIED
         if (i == current) {
             render(animate = true)
-            if (granted) popCheck(pageViews[i].findViewById(R.id.checkBadge))
+            if (granted) popCheck(pageViews[i].findViewById(R.id.lv_checkBadge))
         }
         // Show the answer for 600 ms, then on to the next permission.
         root?.removeCallbacks(continueSequence)
@@ -351,14 +351,14 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         val page = pages[i]
         val status = statuses[i]
 
-        view.findViewById<TextView>(R.id.tvCounterCurrent).text = (i + 1).toString()
-        view.findViewById<TextView>(R.id.tvCounterTotal).text = getString(R.string.ps_counter_total, pages.size)
-        view.findViewById<View>(R.id.btnSkip).visibility = if (sequenceRunning) View.INVISIBLE else View.VISIBLE
-        renderDots(view.findViewById(R.id.dots), animate)
+        view.findViewById<TextView>(R.id.txtCounterCurrent).text = (i + 1).toString()
+        view.findViewById<TextView>(R.id.txtCounterTotal).text = getString(R.string.ps_counter_total, pages.size)
+        view.findViewById<View>(R.id.actSkip).visibility = if (sequenceRunning) View.INVISIBLE else View.VISIBLE
+        renderDots(view.findViewById(R.id.marks), animate)
 
         // Check badge on the illustration: shown for allowed pages (popped by onGranted).
         pageViews.forEachIndexed { idx, pv ->
-            val badge = pv.findViewById<View>(R.id.checkBadge)
+            val badge = pv.findViewById<View>(R.id.lv_checkBadge)
             val show = statuses[idx] == Status.ALLOWED || statuses[idx] == Status.ALREADY
             if (!show) badge.visibility = View.INVISIBLE
             else if (badge.visibility != View.VISIBLE) { badge.visibility = View.VISIBLE; badge.scaleX = 1f; badge.scaleY = 1f }
@@ -391,15 +391,15 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
 
     private fun showChip(kind: Chip?, text: String? = null) {
         val view = root ?: return
-        val chip = view.findViewById<LinearLayout>(R.id.statusChip)
+        val chip = view.findViewById<LinearLayout>(R.id.condChip)
         if (kind == null || text == null) { chip.isVisible = false; return }
         val ctx = view.context
         chip.setBackgroundResource(kind.bg)
-        view.findViewById<ImageView>(R.id.ivStatus).apply {
+        view.findViewById<ImageView>(R.id.imgStatus).apply {
             setImageResource(kind.icon)
             imageTintList = ContextCompat.getColorStateList(ctx, kind.iconTint)
         }
-        view.findViewById<TextView>(R.id.tvStatus).apply {
+        view.findViewById<TextView>(R.id.txtStatus).apply {
             setTextColor(ContextCompat.getColor(ctx, kind.text))
             this.text = text
         }
@@ -415,12 +415,12 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
 
     private fun renderPrimary(label: String, spinner: Boolean, animate: Boolean) {
         val view = root ?: return
-        val btn = view.findViewById<View>(R.id.btnPrimary)
-        val content = view.findViewById<View>(R.id.primaryContent)
-        val tv = view.findViewById<TextView>(R.id.tvPrimary)
+        val btn = view.findViewById<View>(R.id.actPrimary)
+        val content = view.findViewById<View>(R.id.lv_primaryContent)
+        val tv = view.findViewById<TextView>(R.id.txtPrimary)
         val apply = {
             tv.text = label
-            view.findViewById<ProgressBar>(R.id.pbPrimary).isVisible = spinner
+            view.findViewById<ProgressBar>(R.id.spinPrimary).isVisible = spinner
         }
         // Spinner + dimmed while the Android prompt is open.
         btn.isEnabled = !spinner

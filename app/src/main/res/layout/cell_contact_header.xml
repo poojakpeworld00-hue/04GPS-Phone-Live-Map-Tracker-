@@ -2,7 +2,7 @@
 <!-- Letter heading of an A–Z group (design 8a): Nunito 800 13, primary, padding 12 4 6. -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/tvLetter"
+    android:id="@+id/txtLetter"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:fontFamily="@font/nunito_extrabold"

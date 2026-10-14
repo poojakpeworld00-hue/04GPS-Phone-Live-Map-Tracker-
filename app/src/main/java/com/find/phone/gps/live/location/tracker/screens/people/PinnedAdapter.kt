@@ -19,9 +19,9 @@ class PinnedAdapter(
 
     inner class VH(private val binding: CellContactFavBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(contact: BuddyNum) {
-            binding.tvInitials.text = contact.initials
-            binding.tvInitials.setBackgroundResource(BuddyAdapter.AVATARS[contact.avatar])
-            binding.tvFirstName.text = contact.firstName
+            binding.txtInitials.text = contact.initials
+            binding.txtInitials.setBackgroundResource(BuddyAdapter.AVATARS[contact.avatar])
+            binding.txtFirstName.text = contact.firstName
             binding.root.setOnClickListener { onLocate(contact) }
         }
     }

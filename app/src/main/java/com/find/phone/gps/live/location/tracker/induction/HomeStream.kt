@@ -191,16 +191,16 @@ object HomeStream {
      * steps cannot disagree on the count.
      */
     fun bindStepHeader(context: Context, screen: OnboardScreen, root: View) {
-        val header = root.findViewById<View>(R.id.onboarding_step_header) ?: return
+        val header = root.findViewById<View>(R.id.induct_step_header) ?: return
         val position = stepPosition(context, screen)
         if (position == null) {
             header.visibility = View.GONE
             return
         }
         header.visibility = View.VISIBLE
-        root.findViewById<TextView>(R.id.onboarding_step_pill).text =
+        root.findViewById<TextView>(R.id.induct_step_pill).text =
             context.getString(R.string.onboarding_step_counter, position.index, position.total)
-        root.findViewById<ProgressBar>(R.id.onboarding_step_progress).progress =
+        root.findViewById<ProgressBar>(R.id.induct_step_progress).progress =
             position.index * 100 / position.total
     }
 

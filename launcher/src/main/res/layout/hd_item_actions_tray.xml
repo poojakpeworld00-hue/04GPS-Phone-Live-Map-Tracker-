@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- ElementMovesBasket: the app's own shortcuts as rows, then the launcher's actions as a row of icons. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/trayCardUi"
+    android:id="@+id/lv_trayCardUi"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="@drawable/hd_tray_bg"
@@ -11,7 +11,7 @@
     android:paddingBottom="6dp">
 
     <LinearLayout
-        android:id="@+id/trayShortcutsUi"
+        android:id="@+id/lv_trayShortcutsUi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -19,7 +19,7 @@
         android:paddingEnd="6dp" />
 
     <View
-        android:id="@+id/trayDividerUi"
+        android:id="@+id/lv_trayDividerUi"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginStart="18dp"
@@ -29,7 +29,7 @@
         android:background="@color/lnch_tray_divider" />
 
     <LinearLayout
-        android:id="@+id/trayActionsUi"
+        android:id="@+id/lv_trayActionsUi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"

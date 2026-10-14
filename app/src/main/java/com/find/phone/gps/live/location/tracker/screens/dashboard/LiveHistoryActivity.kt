@@ -32,54 +32,54 @@ class LiveHistoryActivity : StageActivity<ScreenHistoryBinding>() {
     private val store by lazy { FreshHuntShelf(this) }
 
     override fun initView() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.historyRoot) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.pastRoot) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(left = bars.left, top = bars.top, right = bars.right, bottom = bars.bottom)
             insets
         }
-        binding.btnBack.setOnClickListener { goBack() }
-        binding.btnClearAll.setOnClickListener {
+        binding.actBack.setOnClickListener { goBack() }
+        binding.actClearAll.setOnClickListener {
             store.clear()
             render()
         }
-        CraftMovement.pressScale(binding.btnClearAll)
+        CraftMovement.pressScale(binding.actClearAll)
         render()
     }
 
     private fun render() {
         val all = store.all()
-        binding.sections.removeAllViews()
-        binding.emptyState.isVisible = all.isEmpty()
-        binding.btnClearAll.isVisible = all.isNotEmpty()
-        binding.tvCount.text = resources.getQuantityString(R.plurals.ds_history_count, all.size, all.size)
-        binding.tvCount.isVisible = all.isNotEmpty()
+        binding.lvSections.removeAllViews()
+        binding.blankState.isVisible = all.isEmpty()
+        binding.actClearAll.isVisible = all.isNotEmpty()
+        binding.txtCount.text = resources.getQuantityString(R.plurals.ds_history_count, all.size, all.size)
+        binding.txtCount.isVisible = all.isNotEmpty()
         if (all.isEmpty()) return
 
         val inflater = LayoutInflater.from(this)
         val groups = all.groupBy { bucket(it.searchedAt) }
         listOf(Bucket.TODAY, Bucket.YESTERDAY, Bucket.EARLIER).forEach { bucket ->
             val rows = groups[bucket] ?: return@forEach
-            val section = CellHistorySectionBinding.inflate(inflater, binding.sections, false)
-            section.tvSection.setText(bucket.label)
+            val section = CellHistorySectionBinding.inflate(inflater, binding.lvSections, false)
+            section.txtSection.setText(bucket.label)
             rows.forEachIndexed { i, recent ->
-                val row = CellRecentSearchBinding.inflate(inflater, section.rows, false)
+                val row = CellRecentSearchBinding.inflate(inflater, section.lvRows, false)
                 bindRow(row, recent, i, i < rows.lastIndex)
-                section.rows.addView(row.root)
+                section.lvRows.addView(row.root)
             }
-            binding.sections.addView(section.root)
+            binding.lvSections.addView(section.root)
         }
     }
 
     private fun bindRow(row: CellRecentSearchBinding, recent: FreshHunt, index: Int, divider: Boolean) {
         val (tile, tint) = TILE_PALETTE[index % TILE_PALETTE.size]
-        row.iconTile.setBackgroundResource(tile)
-        row.icon.imageTintList = ContextCompat.getColorStateList(this, tint)
-        row.tvNumber.text = recent.display
+        row.badgeTile.setBackgroundResource(tile)
+        row.badgeVw.imageTintList = ContextCompat.getColorStateList(this, tint)
+        row.txtNumber.text = recent.display
         val country = Realms.byIso(recent.iso2)?.name ?: recent.iso2
-        row.tvMeta.text = getString(R.string.ds_recent_meta, Realms.flag(recent.iso2), country, relativeTime(recent.searchedAt))
-        row.rowDivider.isVisible = divider
-        row.row.setOnClickListener { pick(recent) }
-        row.row.setOnLongClickListener {
+        row.txtMeta.text = getString(R.string.ds_recent_meta, Realms.flag(recent.iso2), country, relativeTime(recent.searchedAt))
+        row.lineDivider.isVisible = divider
+        row.line.setOnClickListener { pick(recent) }
+        row.line.setOnLongClickListener {
             remove(recent)
             true
         }
@@ -94,7 +94,7 @@ class LiveHistoryActivity : StageActivity<ScreenHistoryBinding>() {
     private fun remove(recent: FreshHunt) {
         store.remove(recent)
         render()
-        Snackbar.make(binding.historyRoot, R.string.ds_history_removed, Snackbar.LENGTH_LONG)
+        Snackbar.make(binding.pastRoot, R.string.ds_history_removed, Snackbar.LENGTH_LONG)
             .setBackgroundTint(ContextCompat.getColor(this, R.color.ds_snackbar_bg))
             .setTextColor(ContextCompat.getColor(this, R.color.white))
             .setActionTextColor(ContextCompat.getColor(this, R.color.ds_cyan))

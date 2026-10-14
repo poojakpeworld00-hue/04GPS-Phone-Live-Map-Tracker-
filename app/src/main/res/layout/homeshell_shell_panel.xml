@@ -10,20 +10,20 @@
     <data />
 
     <androidx.drawerlayout.widget.DrawerLayout
-        android:id="@+id/panelDrawer"
+        android:id="@+id/deckDrawer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_canvas">
 
         <FrameLayout
-            android:id="@+id/panelHolder"
+            android:id="@+id/deckHolder"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clickable="true"
             android:focusable="true">
 
             <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/panelContent"
+                android:id="@+id/deckContent"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 tools:layout="@layout/pane_home_core" />
@@ -31,7 +31,7 @@
 
         <!-- 3e: the same left drawer menu as the main page -->
         <include
-            android:id="@+id/drawerMenu"
+            android:id="@+id/sliderMenu"
             layout="@layout/part_home_drawer"
             android:layout_width="296dp"
             android:layout_height="match_parent"

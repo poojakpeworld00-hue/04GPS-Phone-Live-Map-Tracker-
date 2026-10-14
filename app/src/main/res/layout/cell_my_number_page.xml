@@ -39,7 +39,7 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/tvSimLabel"
+                android:id="@+id/txtSimLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
@@ -50,7 +50,7 @@
                 tools:text="SIM 1 · Jio" />
 
             <TextView
-                android:id="@+id/tvSimName"
+                android:id="@+id/txtSimName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
@@ -63,7 +63,7 @@
                 tools:visibility="visible" />
 
             <TextView
-                android:id="@+id/tvSimNumber"
+                android:id="@+id/txtSimNumber"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
@@ -79,7 +79,7 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/badgeDefault"
+            android:id="@+id/lv_badgeDefault"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -95,7 +95,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/infoGrid"
+        android:id="@+id/lv_infoGrid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
@@ -116,7 +116,7 @@
                 android:textSize="13sp" />
 
             <TextView
-                android:id="@+id/tvCarrier"
+                android:id="@+id/txtCarrier"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -130,7 +130,7 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/regionRow"
+            android:id="@+id/lv_regionRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
@@ -146,7 +146,7 @@
                 android:textSize="13sp" />
 
             <TextView
-                android:id="@+id/tvRegion"
+                android:id="@+id/txtRegion"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -161,7 +161,7 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/btnCopy"
+        android:id="@+id/actCopyVw"
         android:layout_width="match_parent"
         android:layout_height="44dp"
         android:layout_marginTop="14dp"

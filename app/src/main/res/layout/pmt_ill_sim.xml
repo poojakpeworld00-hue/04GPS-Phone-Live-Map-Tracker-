@@ -10,7 +10,7 @@
     android:clipChildren="false">
 
     <TextView
-        android:id="@+id/tvWithout"
+        android:id="@+id/txtWithout"
         style="@style/Ps.RevealLabel"
         android:layout_gravity="top|start"
         android:layout_marginStart="18dp"
@@ -18,7 +18,7 @@
         android:textColor="@color/ps_muted" />
 
     <TextView
-        android:id="@+id/tvWith"
+        android:id="@+id/txtWith"
         style="@style/Ps.RevealLabel"
         android:layout_gravity="top|end"
         android:layout_marginEnd="18dp"
@@ -26,7 +26,7 @@
         android:textColor="@color/ps_primary" />
 
     <com.find.phone.gps.live.location.tracker.consent.drawer.UnveilVersusArrange
-        android:id="@+id/reveal"
+        android:id="@+id/lv_reveal"
         android:layout_width="match_parent"
         android:layout_height="156dp"
         android:layout_marginHorizontal="18dp"
@@ -35,7 +35,7 @@
 
         <!-- Without access -->
         <LinearLayout
-            android:id="@+id/cardBase"
+            android:id="@+id/plateBase"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginVertical="8dp"
@@ -109,7 +109,7 @@
 
         <!-- With access: clipped from the start edge to the handle -->
         <FrameLayout
-            android:id="@+id/cardTop"
+            android:id="@+id/plateTop"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginVertical="8dp"
@@ -192,7 +192,7 @@
 
         <!-- The draggable divider: a 3dp line through a 34dp knob -->
         <FrameLayout
-            android:id="@+id/handle"
+            android:id="@+id/lv_handle"
             android:layout_width="34dp"
             android:layout_height="match_parent"
             android:elevation="6dp">
@@ -204,7 +204,7 @@
                 android:background="@drawable/pmt_bg_handle_line" />
 
             <TextView
-                android:id="@+id/knob"
+                android:id="@+id/lv_knob"
                 android:layout_width="34dp"
                 android:layout_height="34dp"
                 android:layout_gravity="center"

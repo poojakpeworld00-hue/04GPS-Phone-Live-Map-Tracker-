@@ -13,16 +13,16 @@ class RetitleElementBasket(val activity: Activity, val item: MainDisplayLatticeE
     init {
         val binding = HdDialogRenameItemBinding.inflate(activity.layoutInflater)
         val view = binding.root
-        binding.renameItemEdittextUi.setText(item.title)
+        binding.lvRenameItemEdittextUi.setText(item.title)
 
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok, null)
             .setNegativeButton(org.fossify.commons.R.string.cancel, null)
             .apply {
                 activity.setupDialogStuff(view, this, org.fossify.commons.R.string.rename) { alertDialog ->
-                    alertDialog.showKeyboard(binding.renameItemEdittextUi)
+                    alertDialog.showKeyboard(binding.lvRenameItemEdittextUi)
                     alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                        val newTitle = binding.renameItemEdittextUi.value
+                        val newTitle = binding.lvRenameItemEdittextUi.value
                         if (newTitle.isNotEmpty()) {
                             ensureBackgroundThread {
                                 val result = activity.homeScreenGridItemsDB.updateItemTitle(newTitle, item.id!!)

@@ -5,7 +5,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/sheetRoot"
+    android:id="@+id/lv_sheetRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/pmt_bg_sheet"
@@ -26,7 +26,7 @@
         android:layout_marginTop="14dp">
 
         <LinearLayout
-            android:id="@+id/counterPill"
+            android:id="@+id/lv_counterPill"
             android:layout_width="wrap_content"
             android:layout_height="26dp"
             android:layout_gravity="start|center_vertical"
@@ -36,7 +36,7 @@
             android:paddingHorizontal="10dp">
 
             <TextView
-                android:id="@+id/tvCounterCurrent"
+                android:id="@+id/txtCounterCurrent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/figtree_bold"
@@ -45,7 +45,7 @@
                 tools:text="1" />
 
             <TextView
-                android:id="@+id/tvCounterTotal"
+                android:id="@+id/txtCounterTotal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
@@ -56,7 +56,7 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/btnSkip"
+            android:id="@+id/actSkip"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="end|center_vertical"
@@ -70,13 +70,13 @@
     </FrameLayout>
 
     <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/pager"
+        android:id="@+id/swiper"
         android:layout_width="match_parent"
         android:layout_height="320dp"
         android:layout_marginTop="14dp" />
 
     <LinearLayout
-        android:id="@+id/statusChip"
+        android:id="@+id/condChip"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
@@ -89,7 +89,7 @@
         tools:visibility="visible">
 
         <ImageView
-            android:id="@+id/ivStatus"
+            android:id="@+id/imgStatus"
             android:layout_width="16dp"
             android:layout_height="16dp"
             android:importantForAccessibility="no"
@@ -97,7 +97,7 @@
             app:tint="@color/ps_success" />
 
         <TextView
-            android:id="@+id/tvStatus"
+            android:id="@+id/txtStatus"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -111,7 +111,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/dots"
+        android:id="@+id/marks"
         android:layout_width="wrap_content"
         android:layout_height="6dp"
         android:layout_gravity="center_horizontal"
@@ -125,7 +125,7 @@
         android:orientation="horizontal">
 
         <FrameLayout
-            android:id="@+id/btnPrimary"
+            android:id="@+id/actPrimary"
             android:layout_width="0dp"
             android:layout_height="52dp"
             android:layout_weight="1"
@@ -133,7 +133,7 @@
             android:foreground="?attr/selectableItemBackground">
 
             <LinearLayout
-                android:id="@+id/primaryContent"
+                android:id="@+id/lv_primaryContent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -141,7 +141,7 @@
                 android:orientation="horizontal">
 
                 <ProgressBar
-                    android:id="@+id/pbPrimary"
+                    android:id="@+id/spinPrimary"
                     android:layout_width="16dp"
                     android:layout_height="16dp"
                     android:layout_marginEnd="8dp"
@@ -149,7 +149,7 @@
                     android:visibility="gone" />
 
                 <TextView
-                    android:id="@+id/tvPrimary"
+                    android:id="@+id/txtPrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/figtree_bold"

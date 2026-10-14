@@ -8,14 +8,14 @@
     <data />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/codesRoot"
+        android:id="@+id/lv_codesRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
         tools:context=".screens.chip.FrameDialsActivity">
 
         <LinearLayout
-            android:id="@+id/topBar"
+            android:id="@+id/upperBar"
             android:layout_width="0dp"
             android:layout_height="56dp"
             android:gravity="center_vertical"
@@ -26,7 +26,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
-                android:id="@+id/btnBack"
+                android:id="@+id/actBack"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
@@ -47,7 +47,7 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/tvDetected"
+            android:id="@+id/txtDetected"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:paddingHorizontal="20dp"
@@ -56,7 +56,7 @@
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/topBar"
+            app:layout_constraintTop_toBottomOf="@id/upperBar"
             tools:text="Detected carrier: Jio · SIM 1" />
 
         <ScrollView
@@ -70,7 +70,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvDetected">
+            app:layout_constraintTop_toBottomOf="@id/txtDetected">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -79,7 +79,7 @@
 
                 <!-- carrier tabs (segmented, filled in code when 2+ SIMs) -->
                 <LinearLayout
-                    android:id="@+id/carrierTabs"
+                    android:id="@+id/lv_carrierTabs"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@drawable/lv_seg_track_r14"
@@ -88,7 +88,7 @@
 
                 <!-- sections + code rows, filled in code -->
                 <LinearLayout
-                    android:id="@+id/sections"
+                    android:id="@+id/lv_sections"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical" />

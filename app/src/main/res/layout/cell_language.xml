@@ -8,7 +8,7 @@
     android:orientation="vertical">
 
     <LinearLayout
-        android:id="@+id/rowLanguage"
+        android:id="@+id/lineLanguage"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:background="@drawable/lv_row_selected_r14"
@@ -19,7 +19,7 @@
         android:paddingHorizontal="10dp">
 
         <TextView
-            android:id="@+id/tvCode"
+            android:id="@+id/txtCode"
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:background="@drawable/lv_tile_gray_r12"
@@ -39,7 +39,7 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/tvNative"
+                android:id="@+id/txtNative"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
@@ -50,7 +50,7 @@
                 tools:text="English" />
 
             <TextView
-                android:id="@+id/tvName"
+                android:id="@+id/txtName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
@@ -62,7 +62,7 @@
         </LinearLayout>
 
         <View
-            android:id="@+id/radio"
+            android:id="@+id/lv_radio"
             android:layout_width="22dp"
             android:layout_height="22dp"
             android:layout_marginStart="12dp"
@@ -70,7 +70,7 @@
     </LinearLayout>
 
     <View
-        android:id="@+id/rowDivider"
+        android:id="@+id/lineDivider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@color/ds_divider" />

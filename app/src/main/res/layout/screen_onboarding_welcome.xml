@@ -6,7 +6,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/onboardingRoot"
+    android:id="@+id/inductRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/ds_canvas"
@@ -23,14 +23,14 @@
         android:paddingEnd="12dp">
 
         <include
-            android:id="@+id/onboarding_step_header"
+            android:id="@+id/induct_step_header"
             layout="@layout/part_onboarding_step_header"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1" />
 
         <TextView
-            android:id="@+id/onboarding_skip"
+            android:id="@+id/induct_skip"
             style="@style/Ds.Text.Skip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -53,7 +53,7 @@
 
             <!-- hero card 196dp -->
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/onboarding_hero"
+                android:id="@+id/induct_hero"
                 android:layout_width="match_parent"
                 android:layout_height="196dp"
                 android:layout_marginHorizontal="16dp"
@@ -95,7 +95,7 @@
                     app:pingStrokeWidth="2dp" />
 
                 <FrameLayout
-                    android:id="@+id/onboarding_shield"
+                    android:id="@+id/induct_shield"
                     android:layout_width="88dp"
                     android:layout_height="88dp"
                     android:background="@drawable/lv_signal_tile_r28"
@@ -118,15 +118,15 @@
 
                 <!-- verified badge: 28dp, +34/+22 from the composition centre -->
                 <FrameLayout
-                    android:id="@+id/onboarding_badge"
+                    android:id="@+id/induct_badge"
                     android:layout_width="28dp"
                     android:layout_height="28dp"
                     android:layout_marginStart="78dp"
                     android:layout_marginTop="66dp"
                     android:background="@drawable/lv_circle_success_badge"
                     android:elevation="13dp"
-                    app:layout_constraintStart_toStartOf="@id/onboarding_shield"
-                    app:layout_constraintTop_toTopOf="@id/onboarding_shield">
+                    app:layout_constraintStart_toStartOf="@id/induct_shield"
+                    app:layout_constraintTop_toTopOf="@id/induct_shield">
 
                     <ImageView
                         android:layout_width="14dp"
@@ -137,7 +137,7 @@
                 </FrameLayout>
 
                 <TextView
-                    android:id="@+id/chipDial"
+                    android:id="@+id/pillDial"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="22dp"
@@ -157,7 +157,7 @@
                     tools:targetApi="p" />
 
                 <LinearLayout
-                    android:id="@+id/chipGps"
+                    android:id="@+id/pillGpsVw"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="28dp"
@@ -192,7 +192,7 @@
 
     <!-- compact stand-in for the hero while a native ad is up (the reference app's 58dp tile) -->
     <FrameLayout
-        android:id="@+id/heroCompact"
+        android:id="@+id/leadCompact"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_gravity="center_horizontal"
@@ -211,7 +211,7 @@
 
 
             <TextView
-                android:id="@+id/onboarding_title"
+                android:id="@+id/induct_title"
                 style="@style/Ds.Text.Display"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -221,7 +221,7 @@
                 android:text="@string/ds_welcome_title" />
 
             <TextView
-                android:id="@+id/onboarding_lead"
+                android:id="@+id/induct_lead"
                 style="@style/Ds.Text.BodySmall"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -231,7 +231,7 @@
                 android:text="@string/ds_welcome_body" />
 
             <LinearLayout
-                android:id="@+id/onboarding_gestures"
+                android:id="@+id/induct_gestures"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:baselineAligned="false"
@@ -240,22 +240,14 @@
                 android:paddingTop="16dp">
 
                 <include
-                    android:id="@+id/tileSwipeUp"
+                    android:id="@+id/cellSwipeUp"
                     layout="@layout/cell_gesture_tile"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1" />
 
                 <include
-                    android:id="@+id/tileSwipeRight"
-                    layout="@layout/cell_gesture_tile"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1" />
-
-                <include
-                    android:id="@+id/tileSwipeDown"
+                    android:id="@+id/cellSwipeRight"
                     layout="@layout/cell_gesture_tile"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -263,7 +255,15 @@
                     android:layout_weight="1" />
 
                 <include
-                    android:id="@+id/tileSwipeLeft"
+                    android:id="@+id/cellSwipeDown"
+                    layout="@layout/cell_gesture_tile"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1" />
+
+                <include
+                    android:id="@+id/cellSwipeLeft"
                     layout="@layout/cell_gesture_tile"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -273,7 +273,7 @@
 
             <!-- CTA pinned to the bottom, under the ad -->
             <LinearLayout
-                android:id="@+id/onboarding_continue"
+                android:id="@+id/induct_continue"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginHorizontal="16dp"
@@ -305,19 +305,19 @@
 
             <!-- native slot (RC-chosen type) directly above the pinned CTA -->
             <View
-                android:id="@+id/ad_native_divider"
+                android:id="@+id/spot_native_divider"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:visibility="gone" />
 
             <FrameLayout
-                android:id="@+id/ad_native_frame"
+                android:id="@+id/spot_native_frame"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@color/ds_surface">
 
                 <com.facebook.shimmer.ShimmerFrameLayout
-                    android:id="@+id/ad_shimmer"
+                    android:id="@+id/spot_shimmer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="#ccc">

@@ -13,7 +13,7 @@
     android:paddingVertical="9dp">
 
     <TextView
-        android:id="@+id/tvSimBadge"
+        android:id="@+id/txtSimBadge"
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:background="@drawable/lv_sim_badge_primary"
@@ -31,7 +31,7 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/tvSimNumber"
+            android:id="@+id/txtSimNumber"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
@@ -43,7 +43,7 @@
             tools:text="+91 79906 56044" />
 
         <TextView
-            android:id="@+id/tvSimRegion"
+            android:id="@+id/txtSimRegion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="1dp"
@@ -56,7 +56,7 @@
     </LinearLayout>
 
     <ImageView
-        android:id="@+id/btnCopySim"
+        android:id="@+id/actCopySim"
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:layout_marginStart="8dp"

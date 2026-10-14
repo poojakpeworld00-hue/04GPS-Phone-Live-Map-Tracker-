@@ -9,14 +9,14 @@
     android:orientation="vertical">
 
     <ImageView
-        android:id="@+id/launchLoaderIcon"
+        android:id="@+id/lv_launchLoaderIcon"
         android:layout_width="@dimen/_64sdp"
         android:layout_height="@dimen/_64sdp"
         android:contentDescription="@null"
         android:scaleType="fitCenter" />
 
     <TextView
-        android:id="@+id/launchLoaderName"
+        android:id="@+id/lv_launchLoaderName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/_12sdp"

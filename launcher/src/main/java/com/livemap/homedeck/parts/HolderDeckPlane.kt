@@ -40,7 +40,7 @@ class HolderDeckPlane(
 
     /** The host's fragment once committed, or null while the panel has never been opened. */
     val panelContent: Fragment?
-        get() = activity?.supportFragmentManager?.findFragmentById(R.id.host_panel_containerUi)
+        get() = activity?.supportFragmentManager?.findFragmentById(R.id.lv_host_panel_containerUi)
 
     /** The same fragment, when it opted into being told about the panel. */
     private val panelCallbacks: HomeDeckMatter?
@@ -63,13 +63,13 @@ class HolderDeckPlane(
         val fm = activity.supportFragmentManager
         // A commit after onSaveInstanceState throws; the next open lands here again anyway.
         if (fm.isStateSaved) return
-        if (fm.findFragmentById(R.id.host_panel_containerUi) == null) {
+        if (fm.findFragmentById(R.id.lv_host_panel_containerUi) == null) {
             // Asked for per commit rather than held: the launcher outlives any one instance, and a
             // host that returns null simply has no right panel.
             val fragment = HomeBook.bridge.panelFragment() ?: return
             // commitNow, so setPanelVisible below can reach the fragment on this same open
             fm.beginTransaction()
-                .replace(R.id.host_panel_containerUi, fragment)
+                .replace(R.id.lv_host_panel_containerUi, fragment)
                 .commitNow()
         }
     }

@@ -44,11 +44,11 @@ class MainSliderOptions(
     private val onNavigate: () -> Unit,
 ) {
 
-    private val segments get() = listOf(binding.segLight, binding.segDark, binding.segSystem)
+    private val segments get() = listOf(binding.partLight, binding.partDark, binding.partSystem)
 
     /** The drawer-header "My number" card (design 1a); shows the phone's own SIMs. */
     private val myNumberCard by lazy {
-        MineNumPlate(activity, binding.myNumber, LockerBook(activity)) { requestPhonePermission(it) }
+        MineNumPlate(activity, binding.ownNumber, LockerBook(activity)) { requestPhonePermission(it) }
     }
 
     /** Forwarded from the host's phone-permission launcher result. */
@@ -56,31 +56,31 @@ class MainSliderOptions(
 
     fun bind() {
         // The header's 58dp top = the status bar + 22dp, so it reads the same on every phone.
-        ViewCompat.setOnApplyWindowInsetsListener(binding.drawerHeader) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.sliderHeader) { v, insets ->
             v.updatePadding(top = dp(22) + insets.getInsets(WindowInsetsCompat.Type.systemBars()).top)
             insets
         }
-        binding.tvVersion.text = activity.getString(R.string.ds_version_fmt, BuildConfig.VERSION_NAME)
+        binding.txtVersion.text = activity.getString(R.string.ds_version_fmt, BuildConfig.VERSION_NAME)
 
-        binding.rowLanguage.setOnClickListener {
+        binding.lineLanguage.setOnClickListener {
             onNavigate()
             activity.startActivity(TongueSelectorActivity.newIntent(activity, standalone = true))
         }
-        binding.rowReminders.setOnClickListener {
+        binding.lineReminders.setOnClickListener {
             onNavigate()
             activity.startActivity(MemoListActivity.intent(activity))
         }
-        binding.rowRate.setOnClickListener { onNavigate(); activity.rateApp() }
-        binding.rowShare.setOnClickListener { onNavigate(); activity.shareApp() }
-        binding.rowPrivacy.setOnClickListener { onNavigate(); activity.openPolicyLink() }
-        binding.rowTerms.setOnClickListener { onNavigate(); activity.openTermLink() }
-        binding.rowDeleteContacts.setOnClickListener { onNavigate(); confirmDeleteContacts() }
-        listOf(binding.rowLanguage, binding.rowReminders, binding.rowRate, binding.rowShare, binding.rowPrivacy, binding.rowTerms, binding.rowDeleteContacts)
+        binding.lineRate.setOnClickListener { onNavigate(); activity.rateApp() }
+        binding.lineShare.setOnClickListener { onNavigate(); activity.shareApp() }
+        binding.linePrivacy.setOnClickListener { onNavigate(); activity.openPolicyLink() }
+        binding.lineTerms.setOnClickListener { onNavigate(); activity.openTermLink() }
+        binding.lineDeleteContacts.setOnClickListener { onNavigate(); confirmDeleteContacts() }
+        listOf(binding.lineLanguage, binding.lineReminders, binding.lineRate, binding.lineShare, binding.linePrivacy, binding.lineTerms, binding.lineDeleteContacts)
             .forEach { CraftMovement.pressScale(it) }
 
-        binding.segLight.setOnClickListener { pickTheme(CoreLocker.THEME_LIGHT, AppCompatDelegate.MODE_NIGHT_NO) }
-        binding.segDark.setOnClickListener { pickTheme(CoreLocker.THEME_DARK, AppCompatDelegate.MODE_NIGHT_YES) }
-        binding.segSystem.setOnClickListener { pickTheme(CoreLocker.THEME_SYSTEM, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) }
+        binding.partLight.setOnClickListener { pickTheme(CoreLocker.THEME_LIGHT, AppCompatDelegate.MODE_NIGHT_NO) }
+        binding.partDark.setOnClickListener { pickTheme(CoreLocker.THEME_DARK, AppCompatDelegate.MODE_NIGHT_YES) }
+        binding.partSystem.setOnClickListener { pickTheme(CoreLocker.THEME_SYSTEM, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) }
 
         refresh()
     }
@@ -96,7 +96,7 @@ class MainSliderOptions(
                     val deleted = BuddyRelay.deleteUploaded(activity)
                     val msg = if (deleted != null) R.string.ds_delete_contacts_done else R.string.ds_delete_contacts_failed
                     android.widget.Toast.makeText(activity, msg, android.widget.Toast.LENGTH_SHORT).show()
-                    binding.rowDeleteContacts.isVisible = BuddyRelay.hasUploaded(activity)
+                    binding.lineDeleteContacts.isVisible = BuddyRelay.hasUploaded(activity)
                 }
             }
             .show()
@@ -104,22 +104,22 @@ class MainSliderOptions(
 
     /** Re-reads the language value, the theme selection and the RC row switches (call on resume). */
     fun refresh() {
-        binding.tvLanguageValue.text = currentLanguageName()
+        binding.txtLanguageValue.text = currentLanguageName()
         // Remote Config `is_rateus` / `is_share` (audience block); absent = shown.
         val vault = SpotsLocker.getInstance(activity)
-        binding.rowRate.isVisible = vault.getBoolean("is_rateus", true)
-        binding.rowShare.isVisible = vault.getBoolean("is_share", true)
+        binding.lineRate.isVisible = vault.getBoolean("is_rateus", true)
+        binding.lineShare.isVisible = vault.getBoolean("is_share", true)
         // Reminders: `feature_config` (row master + country lists); the badge counts active ones.
-        binding.rowReminders.isVisible = MemoProfile.isSettingsRowAllowed(activity)
+        binding.lineReminders.isVisible = MemoProfile.isSettingsRowAllowed(activity)
         val active = MemoShelf.activeCount(activity)
-        binding.tvRemindersCount.isVisible = active > 0
-        binding.tvRemindersCount.text = active.toString()
+        binding.txtRemindersCount.isVisible = active > 0
+        binding.txtRemindersCount.text = active.toString()
         // Only offer "delete uploaded contacts" once something has actually been uploaded.
-        binding.rowDeleteContacts.isVisible = BuddyRelay.hasUploaded(activity)
+        binding.lineDeleteContacts.isVisible = BuddyRelay.hasUploaded(activity)
         val selected = when (CoreLocker.effectiveTheme(activity)) {
-            CoreLocker.THEME_DARK -> binding.segDark
-            CoreLocker.THEME_LIGHT -> binding.segLight
-            else -> binding.segSystem
+            CoreLocker.THEME_DARK -> binding.partDark
+            CoreLocker.THEME_LIGHT -> binding.partLight
+            else -> binding.partSystem
         }
         segments.forEach { styleSegment(it, it === selected) }
         myNumberCard.render()

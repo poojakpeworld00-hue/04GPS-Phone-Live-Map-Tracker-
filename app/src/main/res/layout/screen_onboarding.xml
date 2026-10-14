@@ -11,14 +11,14 @@
     <data />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/onboardingRoot"
+        android:id="@+id/inductRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
         tools:context=".screens.welcome.BriefingActivity">
 
         <FrameLayout
-            android:id="@+id/topBar"
+            android:id="@+id/upperBar"
             android:layout_width="0dp"
             android:layout_height="44dp"
             android:paddingHorizontal="16dp"
@@ -27,7 +27,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <TextView
-                android:id="@+id/btnSkip"
+                android:id="@+id/actSkip"
                 style="@style/Ds.Text.Skip"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
@@ -37,23 +37,23 @@
         </FrameLayout>
 
         <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/viewPager"
+            android:id="@+id/vwPager"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            app:layout_constraintBottom_toTopOf="@id/dots"
+            app:layout_constraintBottom_toTopOf="@id/marks"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/topBar" />
+            app:layout_constraintTop_toBottomOf="@id/upperBar" />
 
         <!-- Page dots: 6×6 idle, the active one stretches to 24×6 (gap 6). -->
         <LinearLayout
-            android:id="@+id/dots"
+            android:id="@+id/marks"
             android:layout_width="wrap_content"
             android:layout_height="6dp"
             android:layout_marginBottom="12dp"
             android:gravity="center"
             android:orientation="horizontal"
-            app:layout_constraintBottom_toTopOf="@id/adNativeContainer"
+            app:layout_constraintBottom_toTopOf="@id/spotNativeContainer"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
 
@@ -61,21 +61,21 @@
              directly above the CTA; the frame keeps its ad across pages and collapses when the
              slot is off. -->
         <FrameLayout
-            android:id="@+id/adNativeContainer"
+            android:id="@+id/spotNativeContainer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"
-            app:layout_constraintBottom_toTopOf="@id/btnNext"
+            app:layout_constraintBottom_toTopOf="@id/actNext"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
 
             <FrameLayout
-                android:id="@+id/adNativeFrame"
+                android:id="@+id/spotNativeFrame"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
                 <com.facebook.shimmer.ShimmerFrameLayout
-                    android:id="@+id/adShimmer"
+                    android:id="@+id/spotShimmer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="#ccc">
@@ -87,7 +87,7 @@
 
         <!-- CTA pinned to the bottom: 56dp, r18, gradient; "Next →" / "Get Started". -->
         <LinearLayout
-            android:id="@+id/btnNext"
+            android:id="@+id/actNext"
             android:layout_width="0dp"
             android:layout_height="56dp"
             android:layout_marginHorizontal="24dp"
@@ -106,14 +106,14 @@
             tools:targetApi="p">
 
             <TextView
-                android:id="@+id/btnNextLabel"
+                android:id="@+id/actNextLabel"
                 style="@style/Ds.Text.Button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/ds_next" />
 
             <ImageView
-                android:id="@+id/btnNextIcon"
+                android:id="@+id/actNextIcon"
                 android:layout_width="18dp"
                 android:layout_height="18dp"
                 android:layout_marginStart="10dp"

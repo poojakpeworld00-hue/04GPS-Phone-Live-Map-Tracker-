@@ -111,17 +111,17 @@ class ElementMovesBasket(
     }
 
     private fun build() {
-        binding.trayShortcutsUi.removeAllViews()
-        shortcuts.forEach { binding.trayShortcutsUi.addView(shortcutRow(it)) }
+        binding.lvTrayShortcutsUi.removeAllViews()
+        shortcuts.forEach { binding.lvTrayShortcutsUi.addView(shortcutRow(it)) }
         val hasShortcuts = shortcuts.isNotEmpty()
-        binding.trayShortcutsUi.visibility = if (hasShortcuts) View.VISIBLE else View.GONE
-        binding.trayDividerUi.visibility = if (hasShortcuts && actions.isNotEmpty()) View.VISIBLE else View.GONE
+        binding.lvTrayShortcutsUi.visibility = if (hasShortcuts) View.VISIBLE else View.GONE
+        binding.lvTrayDividerUi.visibility = if (hasShortcuts && actions.isNotEmpty()) View.VISIBLE else View.GONE
 
-        binding.trayActionsUi.removeAllViews()
+        binding.lvTrayActionsUi.removeAllViews()
         actions.forEach {
-            binding.trayActionsUi.addView(actionButton(it), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            binding.lvTrayActionsUi.addView(actionButton(it), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         }
-        binding.trayActionsUi.visibility = if (actions.isEmpty()) View.GONE else View.VISIBLE
+        binding.lvTrayActionsUi.visibility = if (actions.isEmpty()) View.GONE else View.VISIBLE
     }
 
     private fun shortcutRow(shortcut: Shortcut): View = LinearLayout(activity).apply {

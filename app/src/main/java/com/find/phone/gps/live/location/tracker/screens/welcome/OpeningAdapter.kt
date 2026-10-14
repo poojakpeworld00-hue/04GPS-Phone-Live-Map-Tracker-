@@ -18,14 +18,14 @@ class OpeningAdapter(
 
         fun bind(page: OpeningFolio) {
             CraftMovement.cancelAll(anims)
-            val container = binding.artContainer
+            val container = binding.lvArtContainer
             container.removeAllViews()
             LayoutInflater.from(container.context).inflate(page.sceneRes, container, true)
             // The self-animating views (ping rings, roads, typing) start on attach; the
             // element loops that need ids (floaty, spin, fade-in, blink, glow) are wired here.
             anims += OpeningTweens.attach(container)
-            binding.tvTitle.setText(page.titleRes)
-            binding.tvDesc.setText(page.descRes)
+            binding.txtTitle.setText(page.titleRes)
+            binding.txtDesc.setText(page.descRes)
         }
 
         fun recycle() = CraftMovement.cancelAll(anims)

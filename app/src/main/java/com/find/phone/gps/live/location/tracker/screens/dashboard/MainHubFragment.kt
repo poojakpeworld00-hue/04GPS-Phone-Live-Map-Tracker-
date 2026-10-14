@@ -128,8 +128,8 @@ class MainHubFragment : Fragment() {
         }
         countryIso = recent.iso2
         bindCountry()
-        binding.phoneInput.setText(recent.digits)
-        binding.phoneInput.setSelection(recent.digits.length)
+        binding.lvPhoneInput.setText(recent.digits)
+        binding.lvPhoneInput.setSelection(recent.digits.length)
     }
 
     private val contactPicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -220,7 +220,7 @@ class MainHubFragment : Fragment() {
      * answered the search box is cleared. Premium bought from it shows here too.
      */
     private val locatingPage = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.data?.getBooleanExtra(PinpointingActivity.EXTRA_FOUND, false) == true) _binding?.phoneInput?.setText("")
+        if (result.data?.getBooleanExtra(PinpointingActivity.EXTRA_FOUND, false) == true) _binding?.lvPhoneInput?.setText("")
         refreshRecents()
         bindQuota()
         bindProChip()
@@ -238,8 +238,8 @@ class MainHubFragment : Fragment() {
         // padding, the root the sides and the bottom (the banner slot sits above the nav bar).
         ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            binding.header.updatePadding(top = bars.top)
-            binding.header.layoutParams.height = dp(56) + bars.top
+            binding.crest.updatePadding(top = bars.top)
+            binding.crest.layoutParams.height = dp(56) + bars.top
             navBarBottom = bars.bottom
             v.updatePadding(left = bars.left, right = bars.right)
             applyBottomInset(v)
@@ -256,26 +256,26 @@ class MainHubFragment : Fragment() {
 
         // The menu only exists where there is a drawer to open (the standalone home).
         val menuHost = (parentFragment as? MenuHost) ?: (activity as? MenuHost)
-        binding.btnMenu.isVisible = menuHost != null
-        binding.btnMenu.setOnClickListener { menuHost?.openHomeMenu() }
-        binding.btnHistory.setOnClickListener { historyPage.launch(LiveHistoryActivity.intent(requireContext())) }
+        binding.actMenu.isVisible = menuHost != null
+        binding.actMenu.setOnClickListener { menuHost?.openHomeMenu() }
+        binding.actHistory.setOnClickListener { historyPage.launch(LiveHistoryActivity.intent(requireContext())) }
 
         // Free searches today (design 9a); "Unlimited" → the Premium paywall.
-        binding.btnUnlimited.setOnClickListener {
+        binding.actUnlimited.setOnClickListener {
             requireContext().logKeyEvent("home_quota_unlimited")
             startActivity(PlusActivity.intent(requireContext()))
         }
         bindQuota()
 
         // PRO chip (design 9a) → the Premium paywall.
-        CraftMovement.pressScale(binding.btnPro)
-        binding.btnPro.clipToOutline = true
-        binding.btnPro.setOnClickListener {
+        CraftMovement.pressScale(binding.actPro)
+        binding.actPro.clipToOutline = true
+        binding.actPro.setOnClickListener {
             requireContext().logKeyEvent("home_pro_chip")
             startActivity(PlusActivity.intent(requireContext()))
         }
         bindProChip()
-        binding.countryChip.setOnClickListener {
+        binding.landChip.setOnClickListener {
             LandChooserDrawer.newInstance(countryIso).show(childFragmentManager, "country")
         }
         childFragmentManager.setFragmentResultListener(LandChooserDrawer.RESULT_KEY, viewLifecycleOwner) { _, bundle ->
@@ -286,21 +286,21 @@ class MainHubFragment : Fragment() {
         }
 
         // Field: rest → focus (white, 2dp primary, 4dp halo) and the hero shrinks (3b).
-        binding.phoneInput.setOnFocusChangeListener { _, focused -> setTypingState(focused) }
-        binding.phoneInput.doAfterTextChanged { updateInputState() }
-        binding.phoneInput.setOnEditorActionListener { _, action, _ ->
+        binding.lvPhoneInput.setOnFocusChangeListener { _, focused -> setTypingState(focused) }
+        binding.lvPhoneInput.doAfterTextChanged { updateInputState() }
+        binding.lvPhoneInput.setOnEditorActionListener { _, action, _ ->
             if (action == EditorInfo.IME_ACTION_SEARCH) { startSearch(); true } else false
         }
-        binding.btnContact.setOnClickListener { pickContact() }
-        binding.btnClear.setOnClickListener { binding.phoneInput.setText("") }
-        CraftMovement.pressScale(binding.btnSearch)
-        binding.btnSearch.setOnClickListener { startSearch() }
+        binding.actContact.setOnClickListener { pickContact() }
+        binding.actClear.setOnClickListener { binding.lvPhoneInput.setText("") }
+        CraftMovement.pressScale(binding.actSearch)
+        binding.actSearch.setOnClickListener { startSearch() }
         updateInputState()
 
         recentsAdapter = FreshHuntAdapter { openRecent(it) }
-        binding.rvRecents.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvRecents.adapter = recentsAdapter
-        binding.btnClearAll.setOnClickListener {
+        binding.listRecents.layoutManager = LinearLayoutManager(requireContext())
+        binding.listRecents.adapter = recentsAdapter
+        binding.actClearAll.setOnClickListener {
             store.clear()
             refreshRecents()
         }
@@ -309,8 +309,8 @@ class MainHubFragment : Fragment() {
         // The slot frame and the bottom banner are hidden until the content is on screen, so an
         // off-screen panel never requests an ad; the standalone home calls setOnScreen(true)
         // straight away. The ad layer shows the banner frame itself once a load starts.
-        binding.adNativeCard.isVisible = false
-        binding.root.findViewById<View>(R.id.bannerAdFrame)?.isVisible = false
+        binding.spotNativeCard.isVisible = false
+        binding.root.findViewById<View>(R.id.ribbonAdFrame)?.isVisible = false
         if (onScreen) renderAds()
     }
 
@@ -327,20 +327,20 @@ class MainHubFragment : Fragment() {
         val b = _binding ?: return
         val context = requireContext()
         val show = PlusProfile.read(context).enabled && !PlusCheckout.isPremium(context)
-        b.btnPro.isVisible = show
+        b.actPro.isVisible = show
         if (!show) {
             proShine?.cancel()
             proShine = null
             return
         }
         if (proShine != null || CraftMovement.animationsDisabled(context)) {
-            b.proShine.isVisible = proShine != null
+            b.lvProShine.isVisible = proShine != null
             return
         }
-        b.btnPro.post {
-            val chip = _binding?.btnPro ?: return@post
+        b.actPro.post {
+            val chip = _binding?.actPro ?: return@post
             val w = chip.width.toFloat()
-            proShine = ObjectAnimator.ofFloat(_binding?.proShine, View.TRANSLATION_X, -0.4f * w, 1.2f * w).apply {
+            proShine = ObjectAnimator.ofFloat(_binding?.lvProShine, View.TRANSLATION_X, -0.4f * w, 1.2f * w).apply {
                 duration = 1_800L
                 startDelay = 1_200L
                 repeatCount = ValueAnimator.INFINITE
@@ -373,15 +373,15 @@ class MainHubFragment : Fragment() {
         val activity = activity ?: return
         val slot = HomeSpotsProfile.rightPanelNativeSlot(activity)
         val adsOn = SpotsLocker.getInstance(activity).getBoolean("IsAdsON")
-        binding.adNativeCard.isVisible = adsOn && slot.visible
+        binding.spotNativeCard.isVisible = adsOn && slot.visible
         if (adsOn && slot.visible) {
             // `launcher_ads.right_panel.native`: requested once, then refreshed only when a
             // fresh native is actually in hand (see HomeSpotsProfile.refreshSlot).
             if (!nativeRequested) {
                 nativeRequested = true
-                HomeSpotsProfile.showSlot(activity, slot, binding.adNativeFrame, binding.adShimmer)
+                HomeSpotsProfile.showSlot(activity, slot, binding.spotNativeFrame, binding.spotShimmer)
             } else {
-                HomeSpotsProfile.refreshSlot(activity, slot, binding.adNativeFrame, binding.adShimmer)
+                HomeSpotsProfile.refreshSlot(activity, slot, binding.spotNativeFrame, binding.spotShimmer)
             }
         }
         renderBanner()
@@ -394,18 +394,18 @@ class MainHubFragment : Fragment() {
      */
     private fun renderBanner() {
         val activity = activity ?: return
-        val container = binding.root.findViewById<FrameLayout>(R.id.bannerAdFrame) ?: return
-        val shimmer = binding.root.findViewById<ShimmerFrameLayout>(R.id.bannerShimmer)
+        val container = binding.root.findViewById<FrameLayout>(R.id.ribbonAdFrame) ?: return
+        val shimmer = binding.root.findViewById<ShimmerFrameLayout>(R.id.ribbonShimmer)
         if (store.all().isEmpty()) return
         if (bannerRequested || bannerHoldsAd(container)) return
         bannerRequested = true
         DisplayTeaserProfile.showAd(BANNER_SCREEN_KEY, activity, container, shimmer)
-        binding.adBannerDivider.followAdContainer(container)
+        binding.spotBannerDivider.followAdContainer(container)
     }
 
     /** The shimmer skeleton is a child too; only a real ad view counts. */
     private fun bannerHoldsAd(container: FrameLayout): Boolean {
-        val shimmer = container.findViewById<View>(R.id.bannerShimmer)
+        val shimmer = container.findViewById<View>(R.id.ribbonShimmer)
         return (0 until container.childCount).any { container.getChildAt(it) !== shimmer }
     }
 
@@ -429,38 +429,38 @@ class MainHubFragment : Fragment() {
     }
 
     private fun bindCountry() {
-        binding.tvFlag.text = Realms.flag(countryIso)
-        binding.tvDial.text = "+" + (Realms.dialOf(countryIso) ?: "1")
-        formatter?.let { binding.phoneInput.removeTextChangedListener(it) }
+        binding.txtFlag.text = Realms.flag(countryIso)
+        binding.txtDial.text = "+" + (Realms.dialOf(countryIso) ?: "1")
+        formatter?.let { binding.lvPhoneInput.removeTextChangedListener(it) }
         formatter = PhoneNumberFormattingTextWatcher(countryIso).also {
-            binding.phoneInput.addTextChangedListener(it)
+            binding.lvPhoneInput.addTextChangedListener(it)
         }
     }
 
     /** Contacts ↔ clear swap on input; the Search button glows only when the number is valid. */
     private fun updateInputState() {
-        val digits = binding.phoneInput.text?.filter { it.isDigit() }?.length ?: 0
-        binding.btnContact.isVisible = digits == 0
-        binding.btnClear.isVisible = digits > 0
+        val digits = binding.lvPhoneInput.text?.filter { it.isDigit() }?.length ?: 0
+        binding.actContact.isVisible = digits == 0
+        binding.actClear.isVisible = digits > 0
         val valid = digits >= MIN_DIGITS
         if (valid && glowAnimator == null && !CraftMovement.animationsDisabled(requireContext())) {
-            binding.searchGlow.isInvisible = false
-            glowAnimator = CraftMovement.glow(binding.searchGlow, 2400L).also { animators += it }
+            binding.huntGlow.isInvisible = false
+            glowAnimator = CraftMovement.glow(binding.huntGlow, 2400L).also { animators += it }
         } else if (!valid && glowAnimator != null) {
             glowAnimator?.cancel()
             animators.remove(glowAnimator)
             glowAnimator = null
-            binding.searchGlow.isInvisible = true
+            binding.huntGlow.isInvisible = true
         }
     }
 
     /** 3a ↔ 3b: focus turns the field white with the primary ring and halo, hero 300 → 230dp. */
     private fun setTypingState(typing: Boolean) {
-        binding.phoneField.setBackgroundResource(if (typing) R.drawable.lv_field_focus_r16 else R.drawable.lv_field_rest_r16)
-        binding.fieldHalo.isInvisible = !typing
-        binding.pillGps.isVisible = !typing
-        binding.tvHeadline.textSize = if (typing) 24f else 26f
-        val from = binding.heroBox.layoutParams.height
+        binding.lvPhoneField.setBackgroundResource(if (typing) R.drawable.lv_field_focus_r16 else R.drawable.lv_field_rest_r16)
+        binding.lvFieldHalo.isInvisible = !typing
+        binding.lvPillGps.isVisible = !typing
+        binding.txtHeadline.textSize = if (typing) 24f else 26f
+        val from = binding.leadBox.layoutParams.height
         val to = dp(if (typing) 230 else 300)
         heroAnimator?.cancel()
         heroAnimator = ValueAnimator.ofInt(from, to).apply {
@@ -468,8 +468,8 @@ class MainHubFragment : Fragment() {
             interpolator = CraftMovement.EASE_IN_OUT
             addUpdateListener {
                 val b = _binding ?: return@addUpdateListener
-                b.heroBox.layoutParams.height = it.animatedValue as Int
-                b.heroBox.requestLayout()
+                b.leadBox.layoutParams.height = it.animatedValue as Int
+                b.leadBox.requestLayout()
             }
             start()
         }
@@ -517,14 +517,14 @@ class MainHubFragment : Fragment() {
             countryIso = iso
             bindCountry()
         }
-        binding.phoneInput.setText(digits)
-        binding.phoneInput.setSelection(binding.phoneInput.text?.length ?: 0)
+        binding.lvPhoneInput.setText(digits)
+        binding.lvPhoneInput.setSelection(binding.lvPhoneInput.text?.length ?: 0)
     }
 
     // ── Search ────────────────────────────────────────────────────────────
 
     private fun startSearch() {
-        val typed = binding.phoneInput.text?.filter { it.isDigit() }?.toString().orEmpty()
+        val typed = binding.lvPhoneInput.text?.filter { it.isDigit() }?.toString().orEmpty()
         if (typed.length < MIN_DIGITS || !NumNotesScanner.isValid(typed, countryIso)) {
             showInvalid(typed)
             return
@@ -586,26 +586,26 @@ class MainHubFragment : Fragment() {
         val b = _binding ?: return
         val context = requireContext()
         val unlimited = HuntRation.isUnlimited(context)
-        b.quotaRow.isVisible = !unlimited
+        b.rationRow.isVisible = !unlimited
         if (unlimited) return
         val limit = HuntRation.limit(context)
         val left = HuntRation.remaining(context)
-        b.tvQuota.text = getString(R.string.ds_quota_left, left, limit)
-        b.quotaBar.progress = (100 * left.coerceAtMost(limit) / limit.coerceAtLeast(1))
+        b.txtQuota.text = getString(R.string.ds_quota_left, left, limit)
+        b.rationBar.progress = (100 * left.coerceAtMost(limit) / limit.coerceAtLeast(1))
     }
 
     /** Design 11d: what's wrong with the number, with Edit number and Change country. */
     private fun showInvalid(digits: String) {
         val context = requireContext()
-        val shown = binding.phoneInput.text?.toString()?.trim().orEmpty().ifEmpty { digits }
+        val shown = binding.lvPhoneInput.text?.toString()?.trim().orEmpty().ifEmpty { digits }
         BrokenNumDrawer(
             requireActivity(),
             number = "+" + (Realms.dialOf(countryIso) ?: "") + " " + shown,
             country = Realms.byIso(countryIso)?.name ?: countryIso,
             onEdit = {
-                binding.phoneInput.requestFocus()
-                binding.phoneInput.setSelection(binding.phoneInput.text?.length ?: 0)
-                ViewCompat.getWindowInsetsController(binding.phoneInput)?.show(WindowInsetsCompat.Type.ime())
+                binding.lvPhoneInput.requestFocus()
+                binding.lvPhoneInput.setSelection(binding.lvPhoneInput.text?.length ?: 0)
+                ViewCompat.getWindowInsetsController(binding.lvPhoneInput)?.show(WindowInsetsCompat.Type.ime())
             },
             onChangeCountry = { LandChooserDrawer.newInstance(countryIso).show(childFragmentManager, "country") },
         ).show()
@@ -613,21 +613,21 @@ class MainHubFragment : Fragment() {
     }
 
     private fun hideKeyboard() {
-        binding.phoneInput.clearFocus()
-        ViewCompat.getWindowInsetsController(binding.phoneInput)?.hide(WindowInsetsCompat.Type.ime())
+        binding.lvPhoneInput.clearFocus()
+        ViewCompat.getWindowInsetsController(binding.lvPhoneInput)?.hide(WindowInsetsCompat.Type.ime())
     }
 
     private fun refreshRecents() {
         val b = _binding ?: return
         val recents = store.all()
         recentsAdapter.submitList(recents)
-        b.emptyState.isVisible = recents.isEmpty()
-        b.rvRecents.isVisible = recents.isNotEmpty()
-        b.btnClearAll.isVisible = recents.isNotEmpty()
+        b.blankState.isVisible = recents.isEmpty()
+        b.listRecents.isVisible = recents.isNotEmpty()
+        b.actClearAll.isVisible = recents.isNotEmpty()
         // Design 3b: the adaptive banner docks at the bottom once recents exist. The frame is only
         // forced on when it holds a real ad; otherwise the ad layer's own state stands (it hides
         // the frame when there is nothing to show, and forcing it on exposed the loading skeleton).
-        val banner = b.root.findViewById<FrameLayout>(R.id.bannerAdFrame)
+        val banner = b.root.findViewById<FrameLayout>(R.id.ribbonAdFrame)
         val holdsAd = banner != null && bannerHoldsAd(banner)
         if (recents.isEmpty()) {
             banner?.isVisible = false
@@ -635,7 +635,7 @@ class MainHubFragment : Fragment() {
         } else if (holdsAd) {
             banner?.isVisible = true
         }
-        b.adBannerDivider.isVisible = recents.isNotEmpty() && holdsAd && banner?.isVisible == true
+        b.spotBannerDivider.isVisible = recents.isNotEmpty() && holdsAd && banner?.isVisible == true
         if (recents.isNotEmpty() && onScreen) renderBanner()
     }
 

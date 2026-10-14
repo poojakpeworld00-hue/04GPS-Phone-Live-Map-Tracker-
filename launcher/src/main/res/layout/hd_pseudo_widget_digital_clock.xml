@@ -7,7 +7,7 @@
     android:orientation="vertical">
 
     <TextClock
-        android:id="@+id/widget_text_clockUi"
+        android:id="@+id/gadget_text_clockUi"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="3"
@@ -26,7 +26,7 @@
         app:autoSizeTextType="uniform" />
 
     <TextClock
-        android:id="@+id/widget_dateUi"
+        android:id="@+id/gadget_dateUi"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"

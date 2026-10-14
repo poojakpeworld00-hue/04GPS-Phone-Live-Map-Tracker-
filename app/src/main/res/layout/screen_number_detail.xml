@@ -12,7 +12,7 @@
     <data />
 
     <LinearLayout
-        android:id="@+id/detailRoot"
+        android:id="@+id/infoRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
@@ -20,7 +20,7 @@
         tools:context=".screens.finder.NumProfile2Activity">
 
         <androidx.core.widget.NestedScrollView
-            android:id="@+id/scroll"
+            android:id="@+id/scrl"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
@@ -34,19 +34,19 @@
 
                 <!-- ── map header ─────────────────────────────────── -->
                 <FrameLayout
-                    android:id="@+id/mapBox"
+                    android:id="@+id/chartBox"
                     android:layout_width="match_parent"
                     android:layout_height="190dp"
                     android:background="@color/ds_map_bg">
 
                     <org.osmdroid.views.MapView
-                        android:id="@+id/mapView"
+                        android:id="@+id/chartView"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent" />
 
                     <!-- the header map is a picture: a tap anywhere opens the full view -->
                     <View
-                        android:id="@+id/mapTap"
+                        android:id="@+id/chartTap"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:background="?attr/selectableItemBackground"
@@ -63,7 +63,7 @@
                         android:paddingHorizontal="12dp">
 
                         <TextView
-                            android:id="@+id/tvMapPlace"
+                            android:id="@+id/txtMapPlace"
                             android:layout_width="wrap_content"
                             android:layout_height="32dp"
                             android:background="@drawable/lv_title_pill_r14"
@@ -88,7 +88,7 @@
                             android:layout_weight="1" />
 
                         <TextView
-                            android:id="@+id/btnFullMap"
+                            android:id="@+id/actFullMap"
                             android:layout_width="wrap_content"
                             android:layout_height="32dp"
                             android:background="@drawable/lv_pill_primary"
@@ -107,7 +107,7 @@
                     </LinearLayout>
 
                     <LinearLayout
-                        android:id="@+id/mapTopBar"
+                        android:id="@+id/chartTopBar"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
@@ -116,7 +116,7 @@
                         android:paddingTop="6dp">
 
                         <ImageButton
-                            android:id="@+id/btnBack"
+                            android:id="@+id/actBack"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
                             android:background="@drawable/lv_tile_white_r14_shadowless"
@@ -139,7 +139,7 @@
                             android:textSize="17sp" />
 
                         <ImageButton
-                            android:id="@+id/btnShare"
+                            android:id="@+id/actShare"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
                             android:background="@drawable/lv_tile_white_r14_shadowless"
@@ -154,7 +154,7 @@
 
                 <!-- ── identity card ──────────────────────────────── -->
                 <LinearLayout
-                    android:id="@+id/identityCard"
+                    android:id="@+id/lv_identityCard"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="16dp"
@@ -171,7 +171,7 @@
                         android:orientation="horizontal">
 
                         <TextView
-                            android:id="@+id/tvIso"
+                            android:id="@+id/txtIso"
                             android:layout_width="52dp"
                             android:layout_height="52dp"
                             android:background="@drawable/lv_signal_tile_r18"
@@ -189,7 +189,7 @@
                             android:orientation="vertical">
 
                             <TextView
-                                android:id="@+id/tvNumber"
+                                android:id="@+id/txtNumber"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/nunito_extrabold"
@@ -200,7 +200,7 @@
                                 tools:text="+1 415 555 0134" />
 
                             <TextView
-                                android:id="@+id/tvPlace"
+                                android:id="@+id/txtPlace"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
@@ -218,14 +218,14 @@
                         android:orientation="horizontal">
 
                         <TextView
-                            android:id="@+id/chipVerdict"
+                            android:id="@+id/pillVerdict"
                             style="@style/Ds.Text.ResultChip"
                             android:background="@drawable/lv_pill_success_soft"
                             android:text="@string/ds_result_valid_short"
                             android:textColor="@color/ds_success" />
 
                         <TextView
-                            android:id="@+id/chipLine"
+                            android:id="@+id/pillLine"
                             style="@style/Ds.Text.ResultChip"
                             android:layout_marginStart="6dp"
                             android:background="@drawable/lv_pill_tint"
@@ -247,26 +247,26 @@
                         android:orientation="horizontal">
 
                         <include
-                            android:id="@+id/actCall"
+                            android:id="@+id/lv_actCall"
                             layout="@layout/cell_detail_action" />
 
                         <include
-                            android:id="@+id/actSms"
+                            android:id="@+id/lv_actSms"
                             layout="@layout/cell_detail_action" />
 
                         <include
-                            android:id="@+id/actMap"
+                            android:id="@+id/lv_actMap"
                             layout="@layout/cell_detail_action" />
 
                         <include
-                            android:id="@+id/actCopy"
+                            android:id="@+id/lv_actCopy"
                             layout="@layout/cell_detail_action" />
                     </LinearLayout>
                 </LinearLayout>
 
                 <!-- ── offline note ───────────────────────────────── -->
                 <LinearLayout
-                    android:id="@+id/offlineCard"
+                    android:id="@+id/lv_offlineCard"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="16dp"
@@ -296,7 +296,7 @@
                         android:textSize="13sp" />
 
                     <TextView
-                        android:id="@+id/btnRetry"
+                        android:id="@+id/actRetry"
                         android:layout_width="wrap_content"
                         android:layout_height="36dp"
                         android:layout_marginStart="10dp"
@@ -312,7 +312,7 @@
                         app:drawableTint="@color/ds_primary" />
 
                     <ProgressBar
-                        android:id="@+id/pbRetry"
+                        android:id="@+id/spinRetry"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_marginStart="10dp"
@@ -345,7 +345,7 @@
                         android:orientation="horizontal">
 
                         <include
-                            android:id="@+id/cellCountry"
+                            android:id="@+id/boxCountry"
                             layout="@layout/cell_detail_cell" />
 
                         <View
@@ -354,7 +354,7 @@
                             android:background="@color/ds_divider" />
 
                         <include
-                            android:id="@+id/cellPlace"
+                            android:id="@+id/boxPlace"
                             layout="@layout/cell_detail_cell" />
                     </LinearLayout>
 
@@ -369,7 +369,7 @@
                         android:orientation="horizontal">
 
                         <include
-                            android:id="@+id/cellCarrier"
+                            android:id="@+id/boxCarrier"
                             layout="@layout/cell_detail_cell" />
 
                         <View
@@ -378,14 +378,14 @@
                             android:background="@color/ds_divider" />
 
                         <include
-                            android:id="@+id/cellLine"
+                            android:id="@+id/boxLine"
                             layout="@layout/cell_detail_cell" />
                     </LinearLayout>
                 </LinearLayout>
 
                 <!-- ── also known as ──────────────────────────────── -->
                 <LinearLayout
-                    android:id="@+id/namesBlock"
+                    android:id="@+id/lv_namesBlock"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
@@ -411,7 +411,7 @@
                             android:textSize="15sp" />
 
                         <TextView
-                            android:id="@+id/tvRevealedCount"
+                            android:id="@+id/txtRevealedCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@drawable/lv_pill_tint"
@@ -424,7 +424,7 @@
                     </LinearLayout>
 
                     <LinearLayout
-                        android:id="@+id/namesList"
+                        android:id="@+id/lv_namesList"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="16dp"
@@ -434,7 +434,7 @@
                         android:paddingVertical="2dp" />
 
                     <TextView
-                        android:id="@+id/btnShowAllNames"
+                        android:id="@+id/actShowAllNames"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_horizontal"
@@ -449,7 +449,7 @@
                         tools:visibility="visible" />
 
                     <TextView
-                        android:id="@+id/tvNamesNote"
+                        android:id="@+id/txtNamesNote"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/figtree_medium"
@@ -464,7 +464,7 @@
 
         <!-- adaptive banner docked at the bottom, hairline above -->
         <View
-            android:id="@+id/adBannerDivider"
+            android:id="@+id/spotBannerDivider"
             style="@style/AdDivider"
             android:layout_width="match_parent"
             android:background="@color/ds_hairline12" />

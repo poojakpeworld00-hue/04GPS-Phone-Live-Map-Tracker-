@@ -47,14 +47,14 @@ object MemoCueModal {
         )
         dialog.setCancelable(true)
 
-        view.findViewById<TextView>(R.id.promptTitle).text = title
-        view.findViewById<TextView>(R.id.promptDesc).text = description
-        view.findViewById<TextView>(R.id.promptButtonLabel).text = buttonText
-        view.findViewById<View>(R.id.promptButton).apply {
+        view.findViewById<TextView>(R.id.cueTitle).text = title
+        view.findViewById<TextView>(R.id.cueDesc).text = description
+        view.findViewById<TextView>(R.id.cueButtonLabel).text = buttonText
+        view.findViewById<View>(R.id.cueButton).apply {
             CraftMovement.pressScale(this)
             setOnClickListener { onButton() }
         }
-        view.findViewById<View>(R.id.promptLater).setOnClickListener { runCatching { dialog.dismiss() } }
+        view.findViewById<View>(R.id.cueLater).setOnClickListener { runCatching { dialog.dismiss() } }
 
         animate(view)
         dialog.setOnDismissListener {
@@ -76,7 +76,7 @@ object MemoCueModal {
     private fun animate(root: View) {
         if (CraftMovement.animationsDisabled(root.context)) return
         val e = CraftMovement.EASE_OUT
-        listOf(R.id.promptRing1 to 1.55f, R.id.promptRing2 to 1.9f).forEachIndexed { i, (id, to) ->
+        listOf(R.id.cueRing1 to 1.55f, R.id.cueRing2 to 1.9f).forEachIndexed { i, (id, to) ->
             anims += loop(
                 root.findViewById(id), 2400L, i * 600L,
                 pvh(View.SCALE_X, e, 0f to 0.7f, 1f to to),
@@ -84,7 +84,7 @@ object MemoCueModal {
                 pvh(View.ALPHA, e, 0f to 0.6f, 0.7f to 0f, 1f to 0f),
             )
         }
-        val bell = root.findViewById<View>(R.id.promptIcon)
+        val bell = root.findViewById<View>(R.id.cueIcon)
         bell.post { bell.pivotX = bell.width / 2f; bell.pivotY = bell.height * 0.12f }
         anims += loop(
             bell, 3000L, 0L,

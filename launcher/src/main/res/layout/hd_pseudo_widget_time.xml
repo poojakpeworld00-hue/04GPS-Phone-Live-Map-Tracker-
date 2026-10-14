@@ -17,7 +17,7 @@
         android:orientation="vertical">
 
         <TextClock
-            android:id="@+id/widget_timeUi"
+            android:id="@+id/gadget_timeUi"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="sans-serif-light"
@@ -33,7 +33,7 @@
             android:textSize="@dimen/launcher_time_widget_time_size" />
 
         <TextClock
-            android:id="@+id/widget_time_dateUi"
+            android:id="@+id/gadget_time_dateUi"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/launcher_time_widget_date_gap"

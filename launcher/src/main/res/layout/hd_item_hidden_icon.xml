@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/hidden_icon_holderUi"
+    android:id="@+id/stash_icon_holderUi"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="?attr/selectableItemBackground"
@@ -13,16 +13,16 @@
     android:paddingBottom="@dimen/small_margin">
 
     <org.fossify.commons.views.MySquareImageView
-        android:id="@+id/hidden_iconUi"
+        android:id="@+id/stash_iconUi"
         android:layout_width="match_parent"
         android:layout_height="@dimen/launcher_launcher_icon_size"
         android:layout_gravity="center_horizontal|bottom" />
 
     <TextView
-        android:id="@+id/hidden_icon_labelUi"
+        android:id="@+id/stash_icon_labelUi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/hidden_iconUi"
+        android:layout_below="@+id/stash_iconUi"
         android:ellipsize="end"
         android:gravity="center_horizontal|top"
         android:maxLines="2"

@@ -15,19 +15,19 @@
     the TOP position hides it. Tapping anywhere closes the card, which also takes itself down.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/llMainUi"
+    android:id="@+id/stackMainUi"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
     <View
-        android:id="@+id/guideSpacerUi"
+        android:id="@+id/coachSpacerUi"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
 
     <LinearLayout
-        android:id="@+id/guideCardUi"
+        android:id="@+id/coachCardUi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -40,7 +40,7 @@
 
         <!-- ===== simple row: SMS chooser (words only) ===== -->
         <LinearLayout
-            android:id="@+id/guideRowUi"
+            android:id="@+id/coachRowUi"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
@@ -51,7 +51,7 @@
             android:paddingBottom="14dp">
 
             <ImageView
-                android:id="@+id/guideAppIconUi"
+                android:id="@+id/coachAppIconUi"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:contentDescription="@null"
@@ -66,7 +66,7 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/guideTitleUi"
+                    android:id="@+id/coachTitleUi"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/launcher_hint_overlay_title"
@@ -75,7 +75,7 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/guideDescriptionUi"
+                    android:id="@+id/coachDescriptionUi"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
@@ -89,7 +89,7 @@
 
         <!-- ===== default-home mock: the list behind, this app's row lifted out of it ===== -->
         <FrameLayout
-            android:id="@+id/guideHomeMockUi"
+            android:id="@+id/coachHomeMockUi"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clipChildren="false"
@@ -101,7 +101,7 @@
             android:visibility="gone">
 
             <LinearLayout
-                android:id="@+id/guideMockListUi"
+                android:id="@+id/coachMockListUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="40dp"
@@ -123,7 +123,7 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/guideMockAppRowUi"
+                android:id="@+id/coachMockAppRowUi"
                 android:layout_width="match_parent"
                 android:layout_height="72dp"
                 android:layout_gravity="center"
@@ -138,13 +138,13 @@
 
                 <!-- the mimic radio: ring tints and the dot grows on loop, never a real RadioButton -->
                 <FrameLayout
-                    android:id="@+id/guideRadioRingUi"
+                    android:id="@+id/coachRadioRingUi"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:background="@drawable/hd_permission_hint_radio_ring">
 
                     <View
-                        android:id="@+id/guideRadioDotUi"
+                        android:id="@+id/coachRadioDotUi"
                         android:layout_width="12dp"
                         android:layout_height="12dp"
                         android:layout_gravity="center"
@@ -161,7 +161,7 @@
                     android:outlineProvider="background">
 
                     <ImageView
-                        android:id="@+id/guideMockAppIconUi"
+                        android:id="@+id/coachMockAppIconUi"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:layout_gravity="center"
@@ -171,7 +171,7 @@
                 </FrameLayout>
 
                 <TextView
-                    android:id="@+id/guideMockAppLabelUi"
+                    android:id="@+id/coachMockAppLabelUi"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
@@ -189,7 +189,7 @@
 
         <!-- ===== overlay mock: the permission page behind, this app's switch row lifted out ===== -->
         <FrameLayout
-            android:id="@+id/guideOverlayMockUi"
+            android:id="@+id/coachOverlayMockUi"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clipChildren="false"
@@ -221,7 +221,7 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/guideMockOverlayRowUi"
+                android:id="@+id/coachMockOverlayRowUi"
                 android:layout_width="match_parent"
                 android:layout_height="72dp"
                 android:layout_gravity="center"
@@ -259,7 +259,7 @@
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/guideMockOverlayLabelUi"
+                        android:id="@+id/coachMockOverlayLabelUi"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
@@ -286,14 +286,14 @@
                     it must not look tappable, because the control that counts is the system's own.
                 -->
                 <FrameLayout
-                    android:id="@+id/guideSwitchTrackUi"
+                    android:id="@+id/coachSwitchTrackUi"
                     android:layout_width="52dp"
                     android:layout_height="32dp"
                     android:background="@drawable/hd_overlay_guide_switch_track"
                     android:duplicateParentState="false">
 
                     <View
-                        android:id="@+id/guideSwitchThumbUi"
+                        android:id="@+id/coachSwitchThumbUi"
                         android:layout_width="26dp"
                         android:layout_height="26dp"
                         android:layout_gravity="center_vertical|start"

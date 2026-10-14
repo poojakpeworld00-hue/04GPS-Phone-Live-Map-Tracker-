@@ -7,13 +7,13 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/llMain"
+    android:id="@+id/stackMain"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/ds_scrim70">
 
     <LinearLayout
-        android:id="@+id/overlayCardVw"
+        android:id="@+id/veilCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
@@ -47,7 +47,7 @@
             android:padding="6dp">
 
             <View
-                android:id="@+id/hintRowGlow"
+                android:id="@+id/clueRowGlow"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_margin="-6dp"
@@ -55,7 +55,7 @@
                 android:background="@drawable/lv_glow_ring_r24" />
 
             <LinearLayout
-                android:id="@+id/hintRow"
+                android:id="@+id/clueRow"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@drawable/lv_hint_row_r18"
@@ -69,7 +69,7 @@
                     android:background="@drawable/lv_signal_tile_r14">
 
                     <ImageView
-                        android:id="@+id/guideRowIconIv"
+                        android:id="@+id/coachRowIconIv"
                         android:layout_width="44dp"
                         android:layout_height="44dp"
                         android:layout_gravity="center"
@@ -85,7 +85,7 @@
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/guideRowNameTv"
+                        android:id="@+id/coachRowNameTv"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
@@ -96,7 +96,7 @@
                         android:textSize="15sp" />
 
                     <TextView
-                        android:id="@+id/guideRowHintTv"
+                        android:id="@+id/coachRowHintTv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
@@ -114,7 +114,7 @@
                     android:clipChildren="false">
 
                     <View
-                        android:id="@+id/hintRipple"
+                        android:id="@+id/clueRipple"
                         android:layout_width="28dp"
                         android:layout_height="28dp"
                         android:layout_marginStart="14dp"
@@ -123,7 +123,7 @@
                         android:background="@drawable/lv_circle_cyan35" />
 
                     <FrameLayout
-                        android:id="@+id/hintRadio"
+                        android:id="@+id/clueRadio"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_marginStart="16dp"
@@ -135,14 +135,14 @@
                             android:background="@drawable/lv_ring_gray_2_5" />
 
                         <View
-                            android:id="@+id/hintRadioRingOn"
+                            android:id="@+id/clueRadioRingOn"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:alpha="0"
                             android:background="@drawable/lv_ring_primary_2_5" />
 
                         <View
-                            android:id="@+id/hintRadioDot"
+                            android:id="@+id/clueRadioDot"
                             android:layout_width="12dp"
                             android:layout_height="12dp"
                             android:layout_gravity="center"
@@ -152,7 +152,7 @@
                     </FrameLayout>
 
                     <ImageView
-                        android:id="@+id/hintHand"
+                        android:id="@+id/clueHand"
                         android:layout_width="34dp"
                         android:layout_height="34dp"
                         android:layout_marginStart="24dp"

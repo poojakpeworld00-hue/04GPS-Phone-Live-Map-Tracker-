@@ -4,7 +4,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/actionRoot"
+    android:id="@+id/lv_actionRoot"
     android:layout_width="0dp"
     android:layout_height="wrap_content"
     android:layout_weight="1"
@@ -13,13 +13,13 @@
     android:orientation="vertical">
 
     <FrameLayout
-        android:id="@+id/iconBox"
+        android:id="@+id/badgeBox"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:background="@drawable/lv_tile_tint_r16">
 
         <ImageView
-            android:id="@+id/ivIcon"
+            android:id="@+id/imgIcon"
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:layout_gravity="center"
@@ -29,7 +29,7 @@
     </FrameLayout>
 
     <TextView
-        android:id="@+id/tvLabel"
+        android:id="@+id/txtLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"

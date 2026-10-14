@@ -55,7 +55,7 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
     override fun initView() {
         if (!standalone) OpeningUnveilCharter.markShown(this, OpeningUnveilProfile.LANGUAGE)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.languageRoot) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.tongueRoot) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             insets
@@ -68,15 +68,15 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
         HomeSpotsProfile.showSlot(
             activity = this,
             slot = HomeSpotsProfile.onboardingSlot(this, HomeSpotsProfile.OnboardScreen.LANGUAGE),
-            container = binding.adNativeFrame,
-            shimmer = binding.adShimmer,
+            container = binding.spotNativeFrame,
+            shimmer = binding.spotShimmer,
         )
-        binding.adNativeDivider.followAdContainer(binding.adNativeFrame)
+        binding.spotNativeDivider.followAdContainer(binding.spotNativeFrame)
 
         if (!standalone) {
             HomeStream.bindStepHeader(this, HomeSpotsProfile.OnboardScreen.LANGUAGE, binding.root)
         } else {
-            binding.root.findViewById<View>(R.id.onboarding_step_header).isVisible = false
+            binding.root.findViewById<View>(R.id.induct_step_header).isVisible = false
         }
 
         // Resolve the region FIRST, so the Suggested list is right on the very first frame.
@@ -85,14 +85,14 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
         val onPick: (LingoElement) -> Unit = { viewModel.select(it.tag) }
         suggestedAdapter = LingoAdapter(onPick).apply { setCurrent(current) }
         allAdapter = LingoAdapter(onPick).apply { setCurrent(current) }
-        binding.rvSuggested.layoutManager = LinearLayoutManager(this)
-        binding.rvSuggested.adapter = suggestedAdapter
-        binding.rvLanguages.layoutManager = LinearLayoutManager(this)
-        binding.rvLanguages.adapter = allAdapter
+        binding.listSuggested.layoutManager = LinearLayoutManager(this)
+        binding.listSuggested.adapter = suggestedAdapter
+        binding.listLanguages.layoutManager = LinearLayoutManager(this)
+        binding.listLanguages.adapter = allAdapter
 
-        binding.btnInfo.setOnClickListener { showInfoDialog() }
-        CraftMovement.pressScale(binding.btnContinue)
-        binding.btnContinue.setOnClickListener { onContinue() }
+        binding.actInfo.setOnClickListener { showInfoDialog() }
+        CraftMovement.pressScale(binding.actContinue)
+        binding.actContinue.setOnClickListener { onContinue() }
 
         // First-run flow: Back must not exit the app for paid users; it advances like Done.
         if (!standalone) {
@@ -118,13 +118,13 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
         }
         viewModel.suggested.observe(this) {
             suggestedAdapter.submitList(it)
-            binding.tvSuggested.isVisible = it.isNotEmpty()
-            binding.rvSuggested.isVisible = it.isNotEmpty()
+            binding.txtSuggested.isVisible = it.isNotEmpty()
+            binding.listSuggested.isVisible = it.isNotEmpty()
         }
         viewModel.others.observe(this) {
             allAdapter.submitList(it)
-            binding.tvAll.isVisible = it.isNotEmpty()
-            binding.rvLanguages.isVisible = it.isNotEmpty()
+            binding.txtAll.isVisible = it.isNotEmpty()
+            binding.listLanguages.isVisible = it.isNotEmpty()
         }
     }
 
@@ -156,10 +156,10 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
 
     /** Small spring on the Done pill each time the selection changes. */
     private fun popConfirm() {
-        binding.btnContinue.animate().cancel()
-        binding.btnContinue.scaleX = 0.8f
-        binding.btnContinue.scaleY = 0.8f
-        binding.btnContinue.animate()
+        binding.actContinue.animate().cancel()
+        binding.actContinue.scaleX = 0.8f
+        binding.actContinue.scaleY = 0.8f
+        binding.actContinue.animate()
             .scaleX(1f).scaleY(1f)
             .setInterpolator(OvershootInterpolator(3f))
             .setDuration(260L)
@@ -167,10 +167,10 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
     }
 
     private fun showInfoDialog() {
-        val view = layoutInflater.inflate(R.layout.popup_language_info, binding.languageRoot, false)
+        val view = layoutInflater.inflate(R.layout.popup_language_info, binding.tongueRoot, false)
         val dialog = MaterialAlertDialogBuilder(this).setView(view).create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        view.findViewById<View>(R.id.btnGotIt).setOnClickListener { dialog.dismiss() }
+        view.findViewById<View>(R.id.actGotIt).setOnClickListener { dialog.dismiss() }
         dialog.show()
         val width = (resources.displayMetrics.widthPixels * 0.85f).toInt()
         dialog.window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)

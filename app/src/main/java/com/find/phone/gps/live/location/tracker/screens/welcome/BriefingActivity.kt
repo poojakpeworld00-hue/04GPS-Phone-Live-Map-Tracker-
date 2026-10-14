@@ -48,7 +48,7 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
     override fun initView() {
         OpeningUnveilCharter.markShown(this, OpeningUnveilProfile.ONBOARDING)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.onboardingRoot) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.inductRoot) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             insets
@@ -58,36 +58,36 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
         HomeSpotsProfile.showSlot(
             activity = this,
             slot = HomeSpotsProfile.onboardingSlot(this, HomeSpotsProfile.OnboardScreen.INTRO),
-            container = binding.adNativeFrame,
-            shimmer = binding.adShimmer,
+            container = binding.spotNativeFrame,
+            shimmer = binding.spotShimmer,
         )
 
-        binding.viewPager.adapter = OpeningAdapter(pages)
-        binding.viewPager.offscreenPageLimit = 1
+        binding.vwPager.adapter = OpeningAdapter(pages)
+        binding.vwPager.offscreenPageLimit = 1
         buildDots()
         updateDots(0)
 
         // Swipe: the illustration moves at 0.6× the page (parallax), the copy fades out over
         // the first fifth of the swipe (≈200ms of a 1s page change).
-        binding.viewPager.setPageTransformer { page, position ->
+        binding.vwPager.setPageTransformer { page, position ->
             val w = page.width.toFloat()
-            page.findViewById<View?>(R.id.artContainer)?.translationX = position * w * 0.4f
-            page.findViewById<View?>(R.id.copy)?.alpha = (1f - abs(position) * 5f).coerceIn(0f, 1f)
+            page.findViewById<View?>(R.id.lv_artContainer)?.translationX = position * w * 0.4f
+            page.findViewById<View?>(R.id.lv_copy)?.alpha = (1f - abs(position) * 5f).coerceIn(0f, 1f)
         }
 
-        binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+        binding.vwPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) = updateDots(position)
         })
 
         val ui = HomeSpotsProfile.onboardingUi(this, HomeSpotsProfile.OnboardScreen.INTRO)
-        binding.btnSkip.isVisible = ui.skipEnabled
+        binding.actSkip.isVisible = ui.skipEnabled
 
-        CraftMovement.pressScale(binding.btnNext)
-        binding.btnSkip.setOnClickListener { finishOnboarding() }
-        binding.btnNext.setOnClickListener {
-            val current = binding.viewPager.currentItem
+        CraftMovement.pressScale(binding.actNext)
+        binding.actSkip.setOnClickListener { finishOnboarding() }
+        binding.actNext.setOnClickListener {
+            val current = binding.vwPager.currentItem
             if (current < pages.lastIndex) {
-                binding.viewPager.currentItem = current + 1
+                binding.vwPager.currentItem = current + 1
             } else {
                 finishOnboarding()
             }
@@ -98,10 +98,10 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
         // for the next screen straight away.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                val current = binding.viewPager.currentItem
+                val current = binding.vwPager.currentItem
                 if (!HomeStream.backMovesForward(this@BriefingActivity)) {
                     when {
-                        current > 0 -> binding.viewPager.setCurrentItem(current - 1, true)
+                        current > 0 -> binding.vwPager.setCurrentItem(current - 1, true)
                         // A later-launch intro (intro_display) has nothing behind it: land on Home
                         // instead of closing the app.
                         !HomeStream.isOnboardingActive(this@BriefingActivity) ->
@@ -111,7 +111,7 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
                     return
                 }
                 if (!ui.backAdvances && current < pages.lastIndex) {
-                    binding.viewPager.setCurrentItem(current + 1, true)
+                    binding.vwPager.setCurrentItem(current + 1, true)
                 } else if (!forwarding) {
                     forwarding = true
                     finishOnboarding()
@@ -130,7 +130,7 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
             dot.layoutParams = LinearLayout.LayoutParams(size, size).apply {
                 if (i < pages.lastIndex) marginEnd = gap
             }
-            binding.dots.addView(dot)
+            binding.marks.addView(dot)
             dots.add(dot)
         }
     }
@@ -143,8 +143,8 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
             dot.setBackgroundResource(if (i == active) R.drawable.lv_dot_active else R.drawable.lv_dot)
         }
         val last = active == pages.lastIndex
-        binding.btnNextLabel.setText(if (last) R.string.ds_get_started else R.string.ds_next)
-        binding.btnNextIcon.isVisible = !last
+        binding.actNextLabel.setText(if (last) R.string.ds_get_started else R.string.ds_next)
+        binding.actNextIcon.isVisible = !last
         if (last != wasLast) {
             wasLast = last
             popCta()
@@ -170,10 +170,10 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
 
     /** Scale spring when the CTA morphs between Next and Get Started. */
     private fun popCta() {
-        binding.btnNext.animate().cancel()
-        binding.btnNext.scaleX = 0.94f
-        binding.btnNext.scaleY = 0.94f
-        binding.btnNext.animate()
+        binding.actNext.animate().cancel()
+        binding.actNext.scaleX = 0.94f
+        binding.actNext.scaleY = 0.94f
+        binding.actNext.animate()
             .scaleX(1f).scaleY(1f)
             .setInterpolator(spring)
             .setDuration(340L)

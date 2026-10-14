@@ -8,7 +8,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/homeRoot"
+    android:id="@+id/deskRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/ds_canvas"
@@ -17,26 +17,26 @@
     tools:context=".screens.dashboard.MainHubFragment">
 
     <androidx.core.widget.NestedScrollView
-        android:id="@+id/scroll"
+        android:id="@+id/scrl"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:fillViewport="true"
         android:paddingBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@id/adBannerDivider"
+        app:layout_constraintBottom_toTopOf="@id/spotBannerDivider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/homeContent"
+            android:id="@+id/deskContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clipChildren="false">
 
             <!-- hero: 300dp gradient (230dp while typing), grid, roads and the radar -->
             <FrameLayout
-                android:id="@+id/heroBox"
+                android:id="@+id/leadBox"
                 android:layout_width="0dp"
                 android:layout_height="300dp"
                 android:background="@drawable/lv_hero_gradient"
@@ -52,14 +52,14 @@
                     app:gridSize="28dp" />
 
                 <com.find.phone.gps.live.location.tracker.screens.craft.PathsView
-                    android:id="@+id/heroRoads"
+                    android:id="@+id/leadRoads"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     app:roadsVariant="homeHero" />
 
                 <!-- radar centred at right 62 / top 150: 150dp ring, sweep, ping, white pin -->
                 <FrameLayout
-                    android:id="@+id/heroRadar"
+                    android:id="@+id/leadRadar"
                     android:layout_width="150dp"
                     android:layout_height="150dp"
                     android:layout_gravity="end|top"
@@ -101,7 +101,7 @@
 
             <!-- header: menu, title, history -->
             <LinearLayout
-                android:id="@+id/header"
+                android:id="@+id/crest"
                 android:layout_width="0dp"
                 android:layout_height="56dp"
                 android:gravity="center_vertical"
@@ -112,7 +112,7 @@
                 app:layout_constraintTop_toTopOf="parent">
 
                 <LinearLayout
-                    android:id="@+id/btnMenu"
+                    android:id="@+id/actMenu"
                     android:layout_width="44dp"
                     android:layout_height="44dp"
                     android:background="@drawable/lv_tile_white14_r14"
@@ -161,7 +161,7 @@
 
                 <!-- PRO chip (design 9a): opens the Premium paywall; hidden for Premium users -->
                 <FrameLayout
-                    android:id="@+id/btnPro"
+                    android:id="@+id/actPro"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
                     android:layout_marginStart="8dp"
@@ -200,7 +200,7 @@
                     </LinearLayout>
 
                     <View
-                        android:id="@+id/proShine"
+                        android:id="@+id/lv_proShine"
                         android:layout_width="18dp"
                         android:layout_height="match_parent"
                         android:alpha="0.8"
@@ -210,7 +210,7 @@
                 </FrameLayout>
 
                 <ImageButton
-                    android:id="@+id/btnHistory"
+                    android:id="@+id/actHistory"
                     android:layout_width="44dp"
                     android:layout_height="44dp"
                     android:layout_marginStart="8dp"
@@ -223,7 +223,7 @@
 
             <!-- "GPS ready" pill -->
             <LinearLayout
-                android:id="@+id/pillGps"
+                android:id="@+id/lv_pillGps"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="24dp"
@@ -234,7 +234,7 @@
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="5dp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/header">
+                app:layout_constraintTop_toBottomOf="@id/crest">
 
                 <View
                     android:layout_width="6dp"
@@ -252,7 +252,7 @@
             </LinearLayout>
 
             <TextView
-                android:id="@+id/tvHeadline"
+                android:id="@+id/txtHeadline"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="24dp"
@@ -266,11 +266,11 @@
                 android:textColor="@color/white"
                 android:textSize="26sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/pillGps" />
+                app:layout_constraintTop_toBottomOf="@id/lv_pillGps" />
 
             <!-- search card: r24 white, shadow, overlaps the hero -->
             <LinearLayout
-                android:id="@+id/searchCard"
+                android:id="@+id/huntCard"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
@@ -284,7 +284,7 @@
                 android:padding="14dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvHeadline"
+                app:layout_constraintTop_toBottomOf="@id/txtHeadline"
                 tools:targetApi="p">
 
                 <FrameLayout
@@ -294,7 +294,7 @@
 
                     <!-- focus halo: 4dp beyond the field, primary/12 -->
                     <View
-                        android:id="@+id/fieldHalo"
+                        android:id="@+id/lv_fieldHalo"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:layout_margin="-4dp"
@@ -302,7 +302,7 @@
                         android:visibility="invisible" />
 
                     <LinearLayout
-                        android:id="@+id/phoneField"
+                        android:id="@+id/lv_phoneField"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:background="@drawable/lv_field_rest_r16"
@@ -312,7 +312,7 @@
                         android:paddingEnd="8dp">
 
                         <LinearLayout
-                            android:id="@+id/countryChip"
+                            android:id="@+id/landChip"
                             android:layout_width="wrap_content"
                             android:layout_height="44dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
@@ -321,7 +321,7 @@
                             android:orientation="horizontal">
 
                             <TextView
-                                android:id="@+id/tvFlag"
+                                android:id="@+id/txtFlag"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:includeFontPadding="false"
@@ -329,7 +329,7 @@
                                 tools:text="🇺🇸" />
 
                             <TextView
-                                android:id="@+id/tvDial"
+                                android:id="@+id/txtDial"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="6dp"
@@ -354,7 +354,7 @@
                             android:background="@color/ds_field_divider" />
 
                         <EditText
-                            android:id="@+id/phoneInput"
+                            android:id="@+id/lv_phoneInput"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
@@ -371,7 +371,7 @@
                             android:textSize="16sp" />
 
                         <ImageButton
-                            android:id="@+id/btnContact"
+                            android:id="@+id/actContact"
                             android:layout_width="36dp"
                             android:layout_height="36dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
@@ -381,7 +381,7 @@
                             app:tint="@color/ds_primary" />
 
                         <ImageButton
-                            android:id="@+id/btnClear"
+                            android:id="@+id/actClear"
                             android:layout_width="36dp"
                             android:layout_height="36dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
@@ -400,14 +400,14 @@
                     android:clipChildren="false">
 
                     <View
-                        android:id="@+id/searchGlow"
+                        android:id="@+id/huntGlow"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:background="@drawable/lv_glow_radial"
                         android:visibility="invisible" />
 
                     <LinearLayout
-                        android:id="@+id/btnSearch"
+                        android:id="@+id/actSearch"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:background="@drawable/lv_btn_primary_selector_r16"
@@ -438,7 +438,7 @@
                 <!-- free searches today (design 9a): label + "2 of 3 left", the bar, and the
                      Unlimited chip into Premium. Hidden for Premium users. -->
                 <LinearLayout
-                    android:id="@+id/quotaRow"
+                    android:id="@+id/rationRow"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
@@ -467,7 +467,7 @@
                                 android:textSize="12sp" />
 
                             <TextView
-                                android:id="@+id/tvQuota"
+                                android:id="@+id/txtQuota"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/figtree_bold"
@@ -477,7 +477,7 @@
                         </LinearLayout>
 
                         <ProgressBar
-                            android:id="@+id/quotaBar"
+                            android:id="@+id/rationBar"
                             style="?android:attr/progressBarStyleHorizontal"
                             android:layout_width="match_parent"
                             android:layout_height="6dp"
@@ -488,7 +488,7 @@
                     </LinearLayout>
 
                     <TextView
-                        android:id="@+id/btnUnlimited"
+                        android:id="@+id/actUnlimited"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
@@ -507,21 +507,21 @@
                  card and 16dp margins (dimens_ads), so no background here: a second one
                  showed as a double card. -->
             <FrameLayout
-                android:id="@+id/adNativeCard"
+                android:id="@+id/spotNativeCard"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/searchCard">
+                app:layout_constraintTop_toBottomOf="@id/huntCard">
 
                 <FrameLayout
-                    android:id="@+id/adNativeFrame"
+                    android:id="@+id/spotNativeFrame"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
                     <com.facebook.shimmer.ShimmerFrameLayout
-                        android:id="@+id/adShimmer"
+                        android:id="@+id/spotShimmer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="#ccc">
@@ -533,7 +533,7 @@
 
             <!-- recent searches header -->
             <TextView
-                android:id="@+id/tvRecentTitle"
+                android:id="@+id/txtRecentTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
@@ -544,10 +544,10 @@
                 android:textColor="@color/ds_ink"
                 android:textSize="16sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/adNativeCard" />
+                app:layout_constraintTop_toBottomOf="@id/spotNativeCard" />
 
             <TextView
-                android:id="@+id/btnClearAll"
+                android:id="@+id/actClearAll"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="20dp"
@@ -559,13 +559,13 @@
                 android:textColor="@color/ds_primary"
                 android:textSize="13sp"
                 android:visibility="gone"
-                app:layout_constraintBaseline_toBaselineOf="@id/tvRecentTitle"
+                app:layout_constraintBaseline_toBaselineOf="@id/txtRecentTitle"
                 app:layout_constraintEnd_toEndOf="parent"
                 tools:visibility="visible" />
 
             <!-- empty state: dashed card -->
             <LinearLayout
-                android:id="@+id/emptyState"
+                android:id="@+id/blankState"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
@@ -576,7 +576,7 @@
                 android:paddingVertical="14dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvRecentTitle">
+                app:layout_constraintTop_toBottomOf="@id/txtRecentTitle">
 
                 <FrameLayout
                     android:layout_width="46dp"
@@ -621,7 +621,7 @@
 
             <!-- recents list card -->
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvRecents"
+                android:id="@+id/listRecents"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
@@ -631,7 +631,7 @@
                 android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvRecentTitle"
+                app:layout_constraintTop_toBottomOf="@id/txtRecentTitle"
                 tools:visibility="visible" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -639,11 +639,11 @@
 
     <!-- adaptive banner docked at the bottom (once recents exist), hairline above -->
     <View
-        android:id="@+id/adBannerDivider"
+        android:id="@+id/spotBannerDivider"
         style="@style/AdDivider"
         android:layout_width="0dp"
         android:background="@color/ds_hairline12"
-        app:layout_constraintBottom_toTopOf="@id/bannerAdFrame"
+        app:layout_constraintBottom_toTopOf="@id/ribbonAdFrame"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 

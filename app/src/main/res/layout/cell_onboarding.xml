@@ -15,11 +15,11 @@
     android:layout_height="match_parent">
 
     <FrameLayout
-        android:id="@+id/artContainer"
+        android:id="@+id/lv_artContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginHorizontal="16dp"
-        app:layout_constraintBottom_toTopOf="@id/copy"
+        app:layout_constraintBottom_toTopOf="@id/lv_copy"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_max="392dp"
         app:layout_constraintStart_toStartOf="parent"
@@ -28,7 +28,7 @@
         app:layout_constraintVertical_chainStyle="packed" />
 
     <LinearLayout
-        android:id="@+id/copy"
+        android:id="@+id/lv_copy"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -37,10 +37,10 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/artContainer">
+        app:layout_constraintTop_toBottomOf="@id/lv_artContainer">
 
         <TextView
-            android:id="@+id/tvTitle"
+            android:id="@+id/txtTitle"
             style="@style/Ds.Text.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -48,7 +48,7 @@
             tools:text="Find Any Phone" />
 
         <TextView
-            android:id="@+id/tvDesc"
+            android:id="@+id/txtDesc"
             style="@style/Ds.Text.Body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

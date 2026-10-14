@@ -25,13 +25,13 @@ class BrokenNumDrawer(
     private val dialog = BottomSheetDialog(themed, R.style.Ds_BottomSheetDialog)
 
     fun show() {
-        binding.tvBody.text = themed.getString(R.string.ds_invalid_body, number.trim(), country)
-        CraftMovement.pressScale(binding.btnEdit)
-        binding.btnEdit.setOnClickListener {
+        binding.txtBody.text = themed.getString(R.string.ds_invalid_body, number.trim(), country)
+        CraftMovement.pressScale(binding.actEdit)
+        binding.actEdit.setOnClickListener {
             dialog.dismiss()
             onEdit()
         }
-        binding.btnCountry.setOnClickListener {
+        binding.actCountry.setOnClickListener {
             dialog.dismiss()
             onChangeCountry()
         }

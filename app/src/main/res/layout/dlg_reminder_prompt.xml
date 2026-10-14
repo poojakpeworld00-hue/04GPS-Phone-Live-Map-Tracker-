@@ -18,14 +18,14 @@
         android:clipChildren="false">
 
         <View
-            android:id="@+id/promptRing2"
+            android:id="@+id/cueRing2"
             android:layout_width="96dp"
             android:layout_height="96dp"
             android:layout_gravity="center"
             android:background="@drawable/pmt_bg_ring_notif" />
 
         <View
-            android:id="@+id/promptRing1"
+            android:id="@+id/cueRing1"
             android:layout_width="96dp"
             android:layout_height="96dp"
             android:layout_gravity="center"
@@ -39,7 +39,7 @@
             android:elevation="6dp">
 
             <ImageView
-                android:id="@+id/promptIcon"
+                android:id="@+id/cueIcon"
                 android:layout_width="38dp"
                 android:layout_height="38dp"
                 android:layout_gravity="center"
@@ -49,7 +49,7 @@
     </FrameLayout>
 
     <TextView
-        android:id="@+id/promptTitle"
+        android:id="@+id/cueTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -61,7 +61,7 @@
         tools:text="Get your reminders on time" />
 
     <TextView
-        android:id="@+id/promptDesc"
+        android:id="@+id/cueDesc"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
@@ -73,7 +73,7 @@
         tools:text="Allow reminders so &quot;Call back Rahul&quot; reaches you at 6:30 PM, even when your phone is asleep." />
 
     <FrameLayout
-        android:id="@+id/promptButton"
+        android:id="@+id/cueButton"
         android:layout_width="match_parent"
         android:layout_height="52dp"
         android:layout_marginTop="20dp"
@@ -81,7 +81,7 @@
         android:foreground="?attr/selectableItemBackground">
 
         <TextView
-            android:id="@+id/promptButtonLabel"
+            android:id="@+id/cueButtonLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -92,7 +92,7 @@
     </FrameLayout>
 
     <TextView
-        android:id="@+id/promptLater"
+        android:id="@+id/cueLater"
         android:layout_width="match_parent"
         android:layout_height="44dp"
         android:background="?attr/selectableItemBackground"

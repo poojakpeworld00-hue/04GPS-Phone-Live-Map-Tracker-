@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.livemap.homedeck.parts.SliderPlane xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/all_apps_holderUi"
+    android:id="@+id/every_apps_holderUi"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
     <org.fossify.commons.views.MySearchMenu
-        android:id="@+id/search_barUi"
+        android:id="@+id/hunt_barUi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:elevation="@dimen/launcher_drawer_search_z"
@@ -18,10 +18,10 @@
         grid keeps recycling and HomeDeck's drag-to-close still reads a real scroll offset.
     -->
     <com.livemap.homedeck.widgetry.DimmingLatticeView
-        android:id="@+id/all_apps_gridUi"
+        android:id="@+id/every_apps_gridUi"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/search_barUi"
+        android:layout_below="@+id/hunt_barUi"
         android:layout_marginStart="@dimen/smaller_margin"
         android:layout_marginEnd="@dimen/smaller_margin"
         android:clipToPadding="false"
@@ -37,7 +37,7 @@
         the scrolling grid above when Config.drawerMode is PAGED - see SliderPlane.setupAdapter.
     -->
     <LinearLayout
-        android:id="@+id/all_apps_page_dotsUi"
+        android:id="@+id/every_apps_page_dotsUi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
@@ -48,11 +48,11 @@
         android:visibility="gone" />
 
     <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/all_apps_pagerUi"
+        android:id="@+id/every_apps_pagerUi"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/all_apps_page_dotsUi"
-        android:layout_below="@+id/search_barUi"
+        android:layout_above="@+id/every_apps_page_dotsUi"
+        android:layout_below="@+id/hunt_barUi"
         android:layout_marginStart="@dimen/smaller_margin"
         android:layout_marginEnd="@dimen/smaller_margin"
         android:visibility="gone" />
@@ -64,10 +64,10 @@
         against the search bar whichever edge it sits on (SliderPlane.applySearchPosition).
     -->
     <LinearLayout
-        android:id="@+id/search_panelUi"
+        android:id="@+id/hunt_panelUi"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/search_barUi"
+        android:layout_below="@+id/hunt_barUi"
         android:gravity="top"
         android:orientation="vertical"
         android:paddingStart="@dimen/normal_margin"
@@ -76,7 +76,7 @@
         android:visibility="gone">
 
         <LinearLayout
-            android:id="@+id/search_apps_cardUi"
+            android:id="@+id/hunt_apps_cardUi"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/hd_search_card_bg"
@@ -85,7 +85,7 @@
             android:paddingBottom="@dimen/launcher_search_card_padding_bottom">
 
             <org.fossify.commons.views.MyTextView
-                android:id="@+id/search_apps_titleUi"
+                android:id="@+id/hunt_apps_titleUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingStart="@dimen/activity_margin"
@@ -98,7 +98,7 @@
                 android:textSize="14sp" />
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/search_apps_gridUi"
+                android:id="@+id/hunt_apps_gridUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:clipToPadding="false"
@@ -108,7 +108,7 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/search_shortcuts_cardUi"
+            android:id="@+id/hunt_shortcuts_cardUi"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/normal_margin"
@@ -119,7 +119,7 @@
             android:visibility="gone">
 
             <org.fossify.commons.views.MyTextView
-                android:id="@+id/search_shortcuts_titleUi"
+                android:id="@+id/hunt_shortcuts_titleUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingStart="@dimen/activity_margin"
@@ -131,7 +131,7 @@
                 android:textSize="14sp" />
 
             <LinearLayout
-                android:id="@+id/search_shortcuts_listUi"
+                android:id="@+id/hunt_shortcuts_listUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
@@ -139,10 +139,10 @@
     </LinearLayout>
 
     <org.fossify.commons.views.MyTextView
-        android:id="@+id/no_results_placeholderUi"
+        android:id="@+id/lv_no_results_placeholderUi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/search_barUi"
+        android:layout_below="@+id/hunt_barUi"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="@dimen/bigger_margin"
         android:alpha="0.8"

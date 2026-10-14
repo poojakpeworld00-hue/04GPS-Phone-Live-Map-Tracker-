@@ -56,9 +56,9 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
         this.binding = HdWidgetsFragmentBinding.bind(this)
         getAppWidgets()
 
-        binding.widgetsListUi.setOnTouchListener { v, event ->
-            if (event.actionMasked == MotionEvent.ACTION_DOWN && binding.searchBarUi.hasFocus()) {
-                binding.searchBarUi.binding.topToolbarSearch.clearFocus()
+        binding.lvWidgetsListUi.setOnTouchListener { v, event ->
+            if (event.actionMasked == MotionEvent.ACTION_DOWN && binding.huntBarUi.hasFocus()) {
+                binding.huntBarUi.binding.topToolbarSearch.clearFocus()
                 activity?.hideKeyboard()
             }
 
@@ -72,7 +72,7 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
     }
 
     fun onConfigurationChanged() {
-        binding.widgetsListUi.scrollToPosition(0)
+        binding.lvWidgetsListUi.scrollToPosition(0)
         setupViews()
 
         if (widgets.isNotEmpty()) {
@@ -113,9 +113,9 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
         // has to clear the touch slop, otherwise the drift of a held finger cancels the long press on a widget
         if (touchDownY != -1) {
             shouldIntercept =
-                event.y.toInt() - touchDownY > touchSlop && binding.widgetsListUi.computeVerticalScrollOffset() == 0
+                event.y.toInt() - touchDownY > touchSlop && binding.lvWidgetsListUi.computeVerticalScrollOffset() == 0
             if (shouldIntercept) {
-                if (binding.searchBarUi.hasFocus()) {
+                if (binding.huntBarUi.hasFocus()) {
                     activity?.hideKeyboard()
                 }
                 activity?.startHandlingTouches(touchDownY)
@@ -156,7 +156,7 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
     }
 
     /** True once the widget list has been built at least once. */
-    fun hasWidgets() = binding.widgetsListUi.adapter != null
+    fun hasWidgets() = binding.lvWidgetsListUi.adapter != null
 
     @SuppressLint("WrongConstant")
     fun getAppWidgets() {
@@ -265,7 +265,7 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
     }
 
     private fun splitWidgetsByApps() {
-        val searchQuery = binding.searchBarUi.getCurrentQuery()
+        val searchQuery = binding.huntBarUi.getCurrentQuery()
         val filteredWidgets = if (searchQuery.isNotEmpty()) {
             widgets.filter { widget ->
                 widget.appTitle.normalizeString().contains(searchQuery.normalizeString(), ignoreCase = true) ||
@@ -302,14 +302,14 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
 
     private fun setupAdapter(widgetsListItems: ArrayList<AppletsListElement>) {
         activity?.runOnUiThread {
-            val currAdapter = binding.widgetsListUi.adapter
+            val currAdapter = binding.lvWidgetsListUi.adapter
             if (currAdapter == null) {
                 AppletsFeed(activity!!, widgetsListItems, this) {
                     context.toast(R.string.launcher_touch_hold_widget)
                     ignoreTouches = false
                     touchDownY = -1
                 }.apply {
-                    binding.widgetsListUi.adapter = this
+                    binding.lvWidgetsListUi.adapter = this
                 }
             } else {
                 (currAdapter as AppletsFeed).updateItems(widgetsListItems)
@@ -322,14 +322,14 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
             return
         }
 
-        binding.widgetsFastscrollerUi.updateColors(context.getProperPrimaryColor())
-        (binding.widgetsListUi.adapter as? AppletsFeed)?.updateTextColor(context.getProperTextColor())
+        binding.lvWidgetsFastscrollerUi.updateColors(context.getProperPrimaryColor())
+        (binding.lvWidgetsListUi.adapter as? AppletsFeed)?.updateTextColor(context.getProperTextColor())
         setupDrawerBackground()
 
-        binding.searchBarUi.requireToolbar().beGone()
-        binding.searchBarUi.updateColors()
-        binding.searchBarUi.setupMenu()
-        binding.searchBarUi.onSearchTextChangedListener = {
+        binding.huntBarUi.requireToolbar().beGone()
+        binding.huntBarUi.updateColors()
+        binding.huntBarUi.setupMenu()
+        binding.huntBarUi.onSearchTextChangedListener = {
             splitWidgetsByApps()
         }
     }

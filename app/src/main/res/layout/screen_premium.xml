@@ -11,7 +11,7 @@
     <data />
 
     <LinearLayout
-        android:id="@+id/premiumRoot"
+        android:id="@+id/plusRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_surface"
@@ -19,7 +19,7 @@
         tools:context=".screens.plus.PlusActivity">
 
         <androidx.core.widget.NestedScrollView
-            android:id="@+id/scroll"
+            android:id="@+id/scrl"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
@@ -33,7 +33,7 @@
 
                 <!-- map hero -->
                 <FrameLayout
-                    android:id="@+id/hero"
+                    android:id="@+id/lead"
                     android:layout_width="match_parent"
                     android:layout_height="300dp"
                     android:clipChildren="true">
@@ -54,7 +54,7 @@
                         android:background="@drawable/lv_premium_fade" />
 
                     <com.find.phone.gps.live.location.tracker.screens.plus.ShutTickerView
-                        android:id="@+id/btnClose"
+                        android:id="@+id/actClose"
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         android:layout_gravity="end|top"
@@ -114,7 +114,7 @@
                     android:paddingTop="10dp">
 
                     <include
-                        android:id="@+id/plan1"
+                        android:id="@+id/lv_plan1"
                         layout="@layout/cell_premium_plan" />
 
                     <Space
@@ -122,7 +122,7 @@
                         android:layout_height="0dp" />
 
                     <include
-                        android:id="@+id/plan2"
+                        android:id="@+id/lv_plan2"
                         layout="@layout/cell_premium_plan" />
 
                     <Space
@@ -130,7 +130,7 @@
                         android:layout_height="0dp" />
 
                     <include
-                        android:id="@+id/plan3"
+                        android:id="@+id/lv_plan3"
                         layout="@layout/cell_premium_plan" />
                 </LinearLayout>
 
@@ -144,12 +144,12 @@
                     android:paddingBottom="16dp">
 
                     <TextView
-                        android:id="@+id/tvFeature1"
+                        android:id="@+id/txtFeature1"
                         style="@style/Ds.Text.PremiumCheck"
                         android:text="@string/ds_premium_feature_1" />
 
                     <TextView
-                        android:id="@+id/tvFeature2"
+                        android:id="@+id/txtFeature2"
                         style="@style/Ds.Text.PremiumCheck"
                         android:layout_marginTop="8dp"
                         android:text="@string/ds_premium_feature_2" />
@@ -159,7 +159,7 @@
 
         <!-- bottom: CTA, note, links -->
         <LinearLayout
-            android:id="@+id/bottomBar"
+            android:id="@+id/lowerBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -168,7 +168,7 @@
             android:paddingBottom="18dp">
 
             <TextView
-                android:id="@+id/tvPriceLine"
+                android:id="@+id/txtPriceLine"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
@@ -179,14 +179,14 @@
                 tools:text="$9.99/week after FREE 3-day trial" />
 
             <FrameLayout
-                android:id="@+id/btnContinue"
+                android:id="@+id/actContinue"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:background="@drawable/lv_btn_primary_selector_r18"
                 android:elevation="6dp">
 
                 <View
-                    android:id="@+id/shine"
+                    android:id="@+id/lv_shine"
                     android:layout_width="26dp"
                     android:layout_height="match_parent"
                     android:background="@drawable/lv_shine"
@@ -194,7 +194,7 @@
                     android:scaleY="1.6" />
 
                 <TextView
-                    android:id="@+id/tvCta"
+                    android:id="@+id/txtCta"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -204,7 +204,7 @@
                     tools:text="Continue · $9.99 / week" />
 
                 <ProgressBar
-                    android:id="@+id/pbCta"
+                    android:id="@+id/spinCta"
                     android:layout_width="26dp"
                     android:layout_height="26dp"
                     android:layout_gravity="center"
@@ -215,7 +215,7 @@
             <!-- "Continue without Premium": leaves like the X, shown from the start (not tied to
                  close_delay_sec, which only paces the X). -->
             <TextView
-                android:id="@+id/btnContinueFree"
+                android:id="@+id/actContinueFree"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
@@ -228,7 +228,7 @@
                 android:textSize="13sp" />
 
             <TextView
-                android:id="@+id/tvNote"
+                android:id="@+id/txtNote"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -248,18 +248,18 @@
                 android:orientation="horizontal">
 
                 <TextView
-                    android:id="@+id/btnRestore"
+                    android:id="@+id/actRestore"
                     style="@style/Ds.Text.PremiumLink"
                     android:text="@string/ds_premium_restore" />
 
                 <TextView
-                    android:id="@+id/btnTerms"
+                    android:id="@+id/actTerms"
                     style="@style/Ds.Text.PremiumLink"
                     android:layout_marginStart="6dp"
                     android:text="@string/ds_premium_terms" />
 
                 <TextView
-                    android:id="@+id/btnPrivacy"
+                    android:id="@+id/actPrivacy"
                     style="@style/Ds.Text.PremiumLink"
                     android:layout_marginStart="6dp"
                     android:text="@string/ds_premium_privacy" />

@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.livemap.homedeck.widgetry.MainDisplayLattice xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/home_screen_gridUi"
+    android:id="@+id/desk_screen_gridUi"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <!-- Drawing area with Z translation so it is drawn over widgets -->
     <com.livemap.homedeck.widgetry.MainDisplayLatticePaintSector
-        android:id="@+id/drawing_areaUi"
+        android:id="@+id/lv_drawing_areaUi"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:translationZ="1dp" />
 
     <com.livemap.homedeck.widgetry.MineCoreAppletStretchBorder
-        android:id="@+id/resize_frameUi"
+        android:id="@+id/lv_resize_frameUi"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />

@@ -6,7 +6,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/onboardingRoot"
+    android:id="@+id/inductRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/ds_canvas"
@@ -22,14 +22,14 @@
         android:paddingEnd="12dp">
 
         <include
-            android:id="@+id/onboarding_step_header"
+            android:id="@+id/induct_step_header"
             layout="@layout/part_onboarding_step_header"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1" />
 
         <TextView
-            android:id="@+id/introSkip"
+            android:id="@+id/openSkip"
             style="@style/Ds.Text.Skip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -50,7 +50,7 @@
 
             <!-- Hero -->
             <FrameLayout
-                android:id="@+id/introHero"
+                android:id="@+id/openHero"
                 android:layout_width="match_parent"
                 android:layout_height="330dp"
                 android:layout_marginHorizontal="16dp"
@@ -60,7 +60,7 @@
 
                 <!-- The sleeping phone with a due reminder -->
                 <LinearLayout
-                    android:id="@+id/introPhone"
+                    android:id="@+id/openPhone"
                     android:layout_width="200dp"
                     android:layout_height="250dp"
                     android:layout_gravity="center_horizontal"
@@ -90,7 +90,7 @@
                         android:padding="12dp">
 
                         <FrameLayout
-                            android:id="@+id/introBell"
+                            android:id="@+id/openBell"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
                             android:background="@drawable/pmt_bg_gradient_oval">
@@ -136,7 +136,7 @@
                 </LinearLayout>
 
                 <TextView
-                    android:id="@+id/introChipTonight"
+                    android:id="@+id/openChipTonight"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="start|top"
@@ -152,7 +152,7 @@
                     android:textSize="12sp" />
 
                 <TextView
-                    android:id="@+id/introChipDone"
+                    android:id="@+id/openChipDone"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end|top"
@@ -169,7 +169,7 @@
             </FrameLayout>
 
             <TextView
-                android:id="@+id/introTitle"
+                android:id="@+id/openTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="24dp"
@@ -182,7 +182,7 @@
                 android:textSize="26sp" />
 
             <TextView
-                android:id="@+id/introDesc"
+                android:id="@+id/openDesc"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="24dp"
@@ -196,7 +196,7 @@
     </ScrollView>
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/introAllow"
+        android:id="@+id/openAllow"
         style="@style/Widget.Material3.Button"
         android:layout_width="match_parent"
         android:layout_height="56dp"
@@ -215,19 +215,19 @@
 
     <!-- Bottom mid native ad (shimmer placeholder until it loads). -->
     <View
-        android:id="@+id/ad_native_divider"
+        android:id="@+id/spot_native_divider"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:visibility="gone" />
 
     <FrameLayout
-        android:id="@+id/ad_native_frame"
+        android:id="@+id/spot_native_frame"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/ds_surface">
 
         <com.facebook.shimmer.ShimmerFrameLayout
-            android:id="@+id/ad_shimmer"
+            android:id="@+id/spot_shimmer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#ccc">

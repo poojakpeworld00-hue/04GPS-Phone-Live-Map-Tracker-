@@ -54,33 +54,33 @@ class SpreadNumActivity : StageActivity<ScreenShareNumberBinding>() {
 
         // Dark icons on the light canvas, light icons in dark mode.
         WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = !isNightMode(this)
-        ViewCompat.setOnApplyWindowInsetsListener(binding.shareRoot) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.spreadRoot) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(top = bars.top, bottom = bars.bottom)
             insets
         }
 
-        binding.tvNumber.text = display
-        binding.tvSubtitle.text = getString(R.string.share_number_scan_fmt, slot, carrier)
+        binding.txtNumber.text = display
+        binding.txtSubtitle.text = getString(R.string.share_number_scan_fmt, slot, carrier)
 
         qr = runCatching { MatrixMaker.encode("tel:$e164", QR_PX) }.getOrNull()
-        binding.imgQr.setImageBitmap(qr)
+        binding.picQr.setImageBitmap(qr)
 
-        binding.btnBack.setOnClickListener { goBack() }
-        binding.segText.setOnClickListener { pick(SendAs.TEXT) }
-        binding.segContact.setOnClickListener { pick(SendAs.CONTACT) }
-        binding.segQr.setOnClickListener { pick(SendAs.QR) }
-        binding.btnCopy.setOnClickListener { copy() }
-        binding.btnSaveQr.setOnClickListener { saveQr() }
-        binding.btnShare.setOnClickListener { share() }
+        binding.actBack.setOnClickListener { goBack() }
+        binding.partText.setOnClickListener { pick(SendAs.TEXT) }
+        binding.partContact.setOnClickListener { pick(SendAs.CONTACT) }
+        binding.partQr.setOnClickListener { pick(SendAs.QR) }
+        binding.actCopyVw.setOnClickListener { copy() }
+        binding.actSaveQr.setOnClickListener { saveQr() }
+        binding.actShare.setOnClickListener { share() }
         pick(SendAs.TEXT)
     }
 
     private fun pick(which: SendAs) {
         selected = which
-        style(binding.segText, which == SendAs.TEXT)
-        style(binding.segContact, which == SendAs.CONTACT)
-        style(binding.segQr, which == SendAs.QR)
+        style(binding.partText, which == SendAs.TEXT)
+        style(binding.partContact, which == SendAs.CONTACT)
+        style(binding.partQr, which == SendAs.QR)
     }
 
     private fun style(view: TextView, on: Boolean) {

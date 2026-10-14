@@ -11,7 +11,7 @@
     <data />
 
     <FrameLayout
-        android:id="@+id/contactsRoot"
+        android:id="@+id/lv_contactsRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
@@ -19,7 +19,7 @@
 
         <!-- ===== 8a ===== -->
         <LinearLayout
-            android:id="@+id/listGroup"
+            android:id="@+id/lv_listGroup"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
@@ -34,7 +34,7 @@
                 android:paddingTop="8dp">
 
                 <LinearLayout
-                    android:id="@+id/accountChip"
+                    android:id="@+id/lv_accountChip"
                     android:layout_width="wrap_content"
                     android:layout_height="40dp"
                     android:background="@drawable/lv_chip_surface_r14"
@@ -52,7 +52,7 @@
                         app:tint="@color/ds_primary" />
 
                     <TextView
-                        android:id="@+id/tvAccount"
+                        android:id="@+id/txtAccount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
@@ -65,7 +65,7 @@
                         android:textSize="14sp" />
 
                     <TextView
-                        android:id="@+id/tvAccountCount"
+                        android:id="@+id/txtAccountCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
@@ -92,7 +92,7 @@
                     android:layout_weight="1" />
 
                 <FrameLayout
-                    android:id="@+id/btnTools"
+                    android:id="@+id/actTools"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:background="@drawable/lv_tile_tint_r14"
@@ -113,7 +113,7 @@
 
             <!-- search -->
             <LinearLayout
-                android:id="@+id/searchBox"
+                android:id="@+id/huntBox"
                 android:layout_width="match_parent"
                 android:layout_height="46dp"
                 android:layout_marginHorizontal="16dp"
@@ -131,7 +131,7 @@
                     app:tint="@color/ds_placeholder" />
 
                 <EditText
-                    android:id="@+id/searchInput"
+                    android:id="@+id/huntInput"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="9dp"
@@ -148,7 +148,7 @@
                     android:textSize="14sp" />
 
                 <ImageView
-                    android:id="@+id/btnClearSearch"
+                    android:id="@+id/actClearSearch"
                     android:layout_width="26dp"
                     android:layout_height="26dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
@@ -162,7 +162,7 @@
 
             <!-- small native ad card -->
             <FrameLayout
-                android:id="@+id/adCard"
+                android:id="@+id/spotCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
@@ -171,12 +171,12 @@
                 tools:visibility="visible">
 
                 <FrameLayout
-                    android:id="@+id/adNativeFrame"
+                    android:id="@+id/spotNativeFrame"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
                     <com.facebook.shimmer.ShimmerFrameLayout
-                        android:id="@+id/adShimmer"
+                        android:id="@+id/spotShimmer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="#ccc">
@@ -188,7 +188,7 @@
 
             <!-- favorites -->
             <LinearLayout
-                android:id="@+id/favoritesGroup"
+                android:id="@+id/lv_favoritesGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
@@ -214,7 +214,7 @@
                         android:textSize="14sp" />
 
                     <TextView
-                        android:id="@+id/tvFavoritesCount"
+                        android:id="@+id/txtFavoritesCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="7dp"
@@ -228,7 +228,7 @@
                 </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvFavorites"
+                    android:id="@+id/listFavorites"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:clipToPadding="false"
@@ -245,7 +245,7 @@
                 android:layout_weight="1">
 
                 <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvContacts"
+                    android:id="@+id/listContacts"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:clipToPadding="false"
@@ -257,7 +257,7 @@
                     tools:listitem="@layout/cell_contact_row" />
 
                 <ProgressBar
-                    android:id="@+id/pbLoading"
+                    android:id="@+id/spinLoading"
                     android:layout_width="28dp"
                     android:layout_height="28dp"
                     android:layout_gravity="center"
@@ -266,7 +266,7 @@
 
                 <!-- no results -->
                 <LinearLayout
-                    android:id="@+id/emptyState"
+                    android:id="@+id/blankState"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="top"
@@ -292,7 +292,7 @@
                     </FrameLayout>
 
                     <TextView
-                        android:id="@+id/tvEmpty"
+                        android:id="@+id/txtEmpty"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
@@ -303,7 +303,7 @@
                         android:textSize="15sp" />
 
                     <TextView
-                        android:id="@+id/tvEmptyBody"
+                        android:id="@+id/txtEmptyBody"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
@@ -319,14 +319,14 @@
 
         <!-- letter rail: right 6dp, vertically centred over the list -->
         <FrameLayout
-            android:id="@+id/railBox"
+            android:id="@+id/lv_railBox"
             android:layout_width="24dp"
             android:layout_height="match_parent"
             android:layout_gravity="end"
             android:layout_marginEnd="6dp">
 
             <LinearLayout
-                android:id="@+id/rail"
+                android:id="@+id/lv_rail"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -336,7 +336,7 @@
 
         <!-- ===== 8b: permission state ===== -->
         <LinearLayout
-            android:id="@+id/permissionState"
+            android:id="@+id/grantState"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
@@ -420,7 +420,7 @@
                     android:textSize="15sp" />
 
                 <TextView
-                    android:id="@+id/btnAllow"
+                    android:id="@+id/actAllow"
                     android:layout_width="match_parent"
                     android:layout_height="54dp"
                     android:layout_marginTop="20dp"

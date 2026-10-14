@@ -74,19 +74,19 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
 
     override fun initView() {
         WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = !isNightMode(this)
-        ViewCompat.setOnApplyWindowInsetsListener(binding.remindersRoot) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.lvRemindersRoot) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(top = bars.top, bottom = bars.bottom)
             insets
         }
-        binding.btnBack.setOnClickListener { goBack() }
-        CraftMovement.pressScale(binding.btnNewReminder)
-        binding.btnNewReminder.setOnClickListener { openSheet(null) }
+        binding.actBack.setOnClickListener { goBack() }
+        CraftMovement.pressScale(binding.actNewReminder)
+        binding.actNewReminder.setOnClickListener { openSheet(null) }
         logKeyEvent("Reminders_Open")
 
         // Bottom mid native (ScreenAds["MemoListActivity"].show turns it off).
-        EmbeddedTeaser().showMidNative(this, binding.adNativeFrame, binding.adShimmer)
-        binding.adNativeDivider.followAdContainer(binding.adNativeFrame)
+        EmbeddedTeaser().showMidNative(this, binding.spotNativeFrame, binding.spotShimmer)
+        binding.spotNativeDivider.followAdContainer(binding.spotNativeFrame)
     }
 
     override fun onResume() {
@@ -106,13 +106,13 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
     // ───────────────────────────── list ─────────────────────────────
 
     private fun render() {
-        val container = binding.rvReminders
+        val container = binding.listReminders
         container.removeAllViews()
         val all = MemoShelf.load(this)
         val upcoming = all.filter { !it.done }.sortedBy { it.dateTime }
         val done = all.filter { it.done }.sortedByDescending { it.dateTime }
 
-        binding.emptyState.isVisible = all.isEmpty()
+        binding.blankState.isVisible = all.isEmpty()
         if (upcoming.isNotEmpty()) {
             container.addView(sectionLabel(R.string.rem_upcoming))
             upcoming.forEach { container.addView(card(it)) }
@@ -134,31 +134,31 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
             .apply { setMargins(dp(4), dp(10), 0, dp(8)) }
     }
 
-    private fun card(item: MemoElement) = CellReminderBinding.inflate(LayoutInflater.from(this), binding.rvReminders, false).apply {
-        tvTitle.text = item.title
-        tvWhen.text = MemoShaper.dayAndTime(this@MemoListActivity, item.dateTime)
-        tvNumber.text = item.number
-        tvNumber.isVisible = item.number.isNotBlank()
-        tvRepeat.text = MemoShaper.repeatLabel(this@MemoListActivity, item.repeatOrOnce)
+    private fun card(item: MemoElement) = CellReminderBinding.inflate(LayoutInflater.from(this), binding.listReminders, false).apply {
+        txtTitle.text = item.title
+        txtWhen.text = MemoShaper.dayAndTime(this@MemoListActivity, item.dateTime)
+        txtNumber.text = item.number
+        txtNumber.isVisible = item.number.isNotBlank()
+        txtRepeat.text = MemoShaper.repeatLabel(this@MemoListActivity, item.repeatOrOnce)
 
         // A number makes it a call-back (phone, purple); otherwise a plain reminder (bell, blue).
         val call = item.number.isNotBlank()
-        iconTile.setBackgroundResource(if (call) R.drawable.lv_tile_purple_r12 else R.drawable.lv_tile_tint_r12)
-        icon.setImageResource(if (call) R.drawable.lv_ic_call else R.drawable.pmt_ic_bell)
+        badgeTile.setBackgroundResource(if (call) R.drawable.lv_tile_purple_r12 else R.drawable.lv_tile_tint_r12)
+        badgeVw.setImageResource(if (call) R.drawable.lv_ic_call else R.drawable.pmt_ic_bell)
         ImageViewCompat.setImageTintList(
-            icon, ContextCompat.getColorStateList(this@MemoListActivity, if (call) R.color.ds_purple else R.color.ds_primary),
+            badgeVw, ContextCompat.getColorStateList(this@MemoListActivity, if (call) R.color.ds_purple else R.color.ds_primary),
         )
 
-        itemReminder.alpha = if (item.done) 0.6f else 1f
-        tvTitle.paintFlags = if (item.done) tvTitle.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-        else tvTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+        elemReminder.alpha = if (item.done) 0.6f else 1f
+        txtTitle.paintFlags = if (item.done) txtTitle.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+        else txtTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
 
-        swEnabled.setOnCheckedChangeListener(null)
-        swEnabled.isChecked = item.isActive
-        swEnabled.setOnCheckedChangeListener { _, checked -> onToggle(item, checked) }
+        lvSwEnabled.setOnCheckedChangeListener(null)
+        lvSwEnabled.isChecked = item.isActive
+        lvSwEnabled.setOnCheckedChangeListener { _, checked -> onToggle(item, checked) }
 
-        itemReminder.setOnClickListener { openSheet(item) }
-        itemReminder.setOnLongClickListener { confirmDelete(item); true }
+        elemReminder.setOnClickListener { openSheet(item) }
+        elemReminder.setOnLongClickListener { confirmDelete(item); true }
     }.root
 
     private fun onToggle(item: MemoElement, on: Boolean) {
@@ -249,9 +249,9 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
         dialog.setContentView(view.root)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.window?.setLayout((resources.displayMetrics.widthPixels * 0.88f).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
-        view.tvDeleteBody.text = getString(R.string.rem_delete_body, item.title)
-        view.btnCancel.setOnClickListener { dialog.dismiss() }
-        view.btnConfirmDelete.setOnClickListener {
+        view.txtDeleteBody.text = getString(R.string.rem_delete_body, item.title)
+        view.actCancel.setOnClickListener { dialog.dismiss() }
+        view.actConfirmDelete.setOnClickListener {
             dialog.dismiss()
             MemoTimer.delete(this, item.id)
             logKeyEvent("Reminder_Delete")

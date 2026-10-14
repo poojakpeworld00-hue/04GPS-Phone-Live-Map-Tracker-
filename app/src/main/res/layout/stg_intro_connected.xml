@@ -25,14 +25,14 @@
          the box. The card above must keep clipChildren="false" or the tiles are cut at the box;
          clipToOutline still keeps everything inside the card's rounded corners. -->
     <FrameLayout
-        android:id="@+id/obOrbit"
+        android:id="@+id/indOrbit"
         android:layout_width="236dp"
         android:layout_height="236dp"
         android:layout_gravity="center"
         android:clipChildren="false">
 
         <FrameLayout
-            android:id="@+id/obTile1"
+            android:id="@+id/indTile1"
             style="@style/Ds.OrbitTile"
             android:layout_gravity="top|center_horizontal"
             android:layout_marginTop="-24dp">
@@ -44,7 +44,7 @@
         </FrameLayout>
 
         <FrameLayout
-            android:id="@+id/obTile2"
+            android:id="@+id/indTile2"
             style="@style/Ds.OrbitTile"
             android:layout_gravity="end|center_vertical"
             android:layout_marginEnd="-24dp">
@@ -56,7 +56,7 @@
         </FrameLayout>
 
         <FrameLayout
-            android:id="@+id/obTile3"
+            android:id="@+id/indTile3"
             style="@style/Ds.OrbitTile"
             android:layout_gravity="bottom|center_horizontal"
             android:layout_marginBottom="-24dp">
@@ -68,7 +68,7 @@
         </FrameLayout>
 
         <FrameLayout
-            android:id="@+id/obTile4"
+            android:id="@+id/indTile4"
             style="@style/Ds.OrbitTile"
             android:layout_gravity="start|center_vertical"
             android:layout_marginStart="-24dp">

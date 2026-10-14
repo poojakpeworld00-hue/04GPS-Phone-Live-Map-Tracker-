@@ -9,14 +9,14 @@
     android:paddingVertical="@dimen/_12sdp">
 
     <ImageView
-        android:id="@+id/imgCheck"
+        android:id="@+id/picCheck"
         android:layout_width="@dimen/_20sdp"
         android:layout_height="@dimen/_20sdp"
         android:contentDescription="@null"
         android:src="@drawable/bgx_radio_unselected" />
 
     <TextView
-        android:id="@+id/tvOption"
+        android:id="@+id/txtOption"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/_12sdp"

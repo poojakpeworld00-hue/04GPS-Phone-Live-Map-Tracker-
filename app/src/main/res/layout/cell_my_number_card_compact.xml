@@ -4,7 +4,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/card"
+    android:id="@+id/plate"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:clickable="true"
@@ -20,7 +20,7 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/tvBadge"
+            android:id="@+id/txtBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/figtree_bold"
@@ -42,15 +42,15 @@
             android:gravity="bottom"
             android:orientation="horizontal">
 
-            <View android:id="@+id/bar1" android:layout_width="3dp" android:layout_height="5dp" android:layout_marginEnd="1.5dp" android:layout_gravity="bottom" android:background="@drawable/lv_signal_bar" />
-            <View android:id="@+id/bar2" android:layout_width="3dp" android:layout_height="8dp" android:layout_marginEnd="1.5dp" android:layout_gravity="bottom" android:background="@drawable/lv_signal_bar" />
-            <View android:id="@+id/bar3" android:layout_width="3dp" android:layout_height="11dp" android:layout_marginEnd="1.5dp" android:layout_gravity="bottom" android:background="@drawable/lv_signal_bar" />
-            <View android:id="@+id/bar4" android:layout_width="3dp" android:layout_height="14dp" android:layout_gravity="bottom" android:background="@drawable/lv_signal_bar" />
+            <View android:id="@+id/lv_bar1" android:layout_width="3dp" android:layout_height="5dp" android:layout_marginEnd="1.5dp" android:layout_gravity="bottom" android:background="@drawable/lv_signal_bar" />
+            <View android:id="@+id/lv_bar2" android:layout_width="3dp" android:layout_height="8dp" android:layout_marginEnd="1.5dp" android:layout_gravity="bottom" android:background="@drawable/lv_signal_bar" />
+            <View android:id="@+id/lv_bar3" android:layout_width="3dp" android:layout_height="11dp" android:layout_marginEnd="1.5dp" android:layout_gravity="bottom" android:background="@drawable/lv_signal_bar" />
+            <View android:id="@+id/lv_bar4" android:layout_width="3dp" android:layout_height="14dp" android:layout_gravity="bottom" android:background="@drawable/lv_signal_bar" />
         </LinearLayout>
     </LinearLayout>
 
     <TextView
-        android:id="@+id/tvCarrier"
+        android:id="@+id/txtCarrier"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
@@ -62,7 +62,7 @@
         tools:textColor="@color/white" />
 
     <TextView
-        android:id="@+id/tvRegion"
+        android:id="@+id/txtRegion"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ellipsize="end"
@@ -73,7 +73,7 @@
         tools:textColor="#CCFFFFFF" />
 
     <TextView
-        android:id="@+id/tvNumber"
+        android:id="@+id/txtNumber"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
@@ -93,7 +93,7 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/btnCopy"
+            android:id="@+id/actCopyVw"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawablePadding="5dp"
@@ -112,7 +112,7 @@
             android:layout_weight="1" />
 
         <TextView
-            android:id="@+id/badgeDefault"
+            android:id="@+id/lv_badgeDefault"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/figtree_bold"

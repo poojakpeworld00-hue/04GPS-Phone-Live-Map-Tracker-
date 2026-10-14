@@ -76,10 +76,10 @@ class MemoSirenActivity : AppCompatActivity() {
         binding = ScreenReminderAlertBinding.inflate(layoutInflater)
         setContentView(binding.root)
         // The sheet sits on the navigation bar: its 22dp bottom padding plus the bar.
-        val sheetBottom = binding.alertSheet.paddingBottom
-        ViewCompat.setOnApplyWindowInsetsListener(binding.alertRoot) { _, insets ->
+        val sheetBottom = binding.sirenSheet.paddingBottom
+        ViewCompat.setOnApplyWindowInsetsListener(binding.sirenRoot) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            binding.alertSheet.updatePadding(bottom = sheetBottom + bars.bottom)
+            binding.sirenSheet.updatePadding(bottom = sheetBottom + bars.bottom)
             insets
         }
         ContextCompat.registerReceiver(
@@ -88,7 +88,7 @@ class MemoSirenActivity : AppCompatActivity() {
         lifecycle.addObserver(systemDialogHelper)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (binding.snoozeOverlay.isVisible) binding.snoozeOverlay.isVisible = false else finishAndRemoveTask()
+                if (binding.lvSnoozeOverlay.isVisible) binding.lvSnoozeOverlay.isVisible = false else finishAndRemoveTask()
             }
         })
         bind(intent)
@@ -117,25 +117,25 @@ class MemoSirenActivity : AppCompatActivity() {
         item = reminder
         logKeyEvent("Reminder_Alert_Show")
 
-        binding.alertTitle.text = reminder.title
-        binding.alertNote.text = reminder.note
-        binding.alertNote.isVisible = reminder.note.isNotBlank()
-        binding.alertNumber.text = reminder.number
-        binding.alertNumber.isVisible = reminder.number.isNotBlank()
+        binding.sirenTitle.text = reminder.title
+        binding.sirenNote.text = reminder.note
+        binding.sirenNote.isVisible = reminder.note.isNotBlank()
+        binding.sirenNumber.text = reminder.number
+        binding.sirenNumber.isVisible = reminder.number.isNotBlank()
 
         val call = reminder.number.isNotBlank()
-        binding.btnPrimary.setText(if (call) R.string.rem_call_now else R.string.rem_open)
-        binding.btnPrimary.setIconResource(if (call) R.drawable.lv_ic_call else 0)
-        binding.btnPrimary.backgroundTintList =
+        binding.actPrimary.setText(if (call) R.string.rem_call_now else R.string.rem_open)
+        binding.actPrimary.setIconResource(if (call) R.drawable.lv_ic_call else 0)
+        binding.actPrimary.backgroundTintList =
             ContextCompat.getColorStateList(this, if (call) R.color.ds_success else R.color.ds_primary)
-        binding.btnPrimary.setOnClickListener { if (call) callBack(reminder) else openList() }
-        binding.btnSecondary.setOnClickListener { showSnooze() }
-        binding.btnDone.setOnClickListener {
+        binding.actPrimary.setOnClickListener { if (call) callBack(reminder) else openList() }
+        binding.actSecondary.setOnClickListener { showSnooze() }
+        binding.actDone.setOnClickListener {
             logKeyEvent("Reminder_Alert_Done")
             finishAndRemoveTask()
         }
-        listOf(binding.btnPrimary, binding.btnSecondary, binding.btnDone).forEach { CraftMovement.pressScale(it) }
-        binding.snoozeOverlay.isVisible = false
+        listOf(binding.actPrimary, binding.actSecondary, binding.actDone).forEach { CraftMovement.pressScale(it) }
+        binding.lvSnoozeOverlay.isVisible = false
         riseSheet()
         startMotion()
     }
@@ -151,24 +151,24 @@ class MemoSirenActivity : AppCompatActivity() {
         val km = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         if (km.isKeyguardLocked) return
         adRequested = true
-        binding.alertAdFrame.isVisible = true
-        EmbeddedTeaser().showMidNative(this, binding.alertAdFrame)
+        binding.sirenAdFrame.isVisible = true
+        EmbeddedTeaser().showMidNative(this, binding.sirenAdFrame)
         logKeyEvent("Reminder_Alert_Ad")
     }
 
     /** The sheet rises from below (300 ms, decelerate) while the dim fades in. */
     private fun riseSheet() {
         if (CraftMovement.animationsDisabled(this)) return
-        val sheet = binding.alertSheet
+        val sheet = binding.sirenSheet
         sheet.post {
             sheet.translationY = sheet.height.toFloat()
             sheet.animate().translationY(0f).setDuration(300L)
                 .setInterpolator(android.view.animation.DecelerateInterpolator(2f)).start()
         }
-        binding.alertRoot.background?.alpha = 0
+        binding.sirenRoot.background?.alpha = 0
         android.animation.ValueAnimator.ofInt(0, 255).apply {
             duration = 300L
-            addUpdateListener { binding.alertRoot.background?.alpha = it.animatedValue as Int }
+            addUpdateListener { binding.sirenRoot.background?.alpha = it.animatedValue as Int }
             start()
         }
     }
@@ -207,7 +207,7 @@ class MemoSirenActivity : AppCompatActivity() {
             .ifEmpty { listOf(5, 10, 30, 60) }
         snoozeMinutes = options.getOrElse(1) { options.first() }
 
-        val container = binding.snoozeOptions
+        val container = binding.lvSnoozeOptions
         container.removeAllViews()
         val tiles = mutableListOf<TextView>()
         options.chunked(2).forEach { pair ->
@@ -235,9 +235,9 @@ class MemoSirenActivity : AppCompatActivity() {
             container.addView(row, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
                 .apply { bottomMargin = dp(10) })
         }
-        binding.snoozeOverlay.setOnClickListener { binding.snoozeOverlay.isVisible = false }
-        binding.btnSnoozeConfirm.setOnClickListener { snooze() }
-        binding.snoozeOverlay.isVisible = true
+        binding.lvSnoozeOverlay.setOnClickListener { binding.lvSnoozeOverlay.isVisible = false }
+        binding.actSnoozeConfirm.setOnClickListener { snooze() }
+        binding.lvSnoozeOverlay.isVisible = true
     }
 
     private fun snooze() {
@@ -261,12 +261,12 @@ class MemoSirenActivity : AppCompatActivity() {
         if (CraftMovement.animationsDisabled(this)) return
         val e = CraftMovement.EASE_OUT
         animators += loop(
-            binding.alertRing, 2400L, 0L,
+            binding.sirenRing, 2400L, 0L,
             pvh(View.SCALE_X, e, 0f to 0.9f, 1f to 1.35f),
             pvh(View.SCALE_Y, e, 0f to 0.9f, 1f to 1.35f),
             pvh(View.ALPHA, e, 0f to 0.9f, 1f to 0f),
         )
-        val bell = binding.alertBell
+        val bell = binding.sirenBell
         bell.post { bell.pivotX = bell.width / 2f; bell.pivotY = bell.height * 0.12f }
         animators += loop(
             bell, 3000L, 0L,

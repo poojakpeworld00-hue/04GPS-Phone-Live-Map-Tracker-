@@ -66,21 +66,21 @@ class ProgramsDeckPlane(
         resultsAdapter = DeckProgramsFeed(R.layout.hd_item_panel_result, ::launchLauncher)
         searchInAdapter = DeckProgramsFeed(R.layout.hd_item_panel_search_in, ::searchInApp)
 
-        binding.panelSuggestedGridUi.adapter = suggestedAdapter
-        binding.panelRecentGridUi.adapter = recentAdapter
-        binding.panelResultsListUi.adapter = resultsAdapter
-        binding.panelSearchInListUi.adapter = searchInAdapter
+        binding.deckSuggestedGridUi.adapter = suggestedAdapter
+        binding.deckRecentGridUi.adapter = recentAdapter
+        binding.deckResultsListUi.adapter = resultsAdapter
+        binding.deckSearchInListUi.adapter = searchInAdapter
 
-        binding.panelSearchUi.doAfterTextChanged {
+        binding.deckSearchUi.doAfterTextChanged {
             resultsCap = COLLAPSED_RESULTS
             updateSections()
         }
 
-        binding.panelSearchClearUi.setOnClickListener {
-            binding.panelSearchUi.setText("")
+        binding.deckSearchClearUi.setOnClickListener {
+            binding.deckSearchUi.setText("")
         }
 
-        binding.panelSeeMoreUi.setOnClickListener {
+        binding.deckSeeMoreUi.setOnClickListener {
             resultsCap = if (resultsCap == COLLAPSED_RESULTS) {
                 EXPANDED_RESULTS
             } else {
@@ -113,7 +113,7 @@ class ProgramsDeckPlane(
      */
     fun onOpened() {
         val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-        binding.panelGreetingUi.setText(
+        binding.deckGreetingUi.setText(
             when {
                 hour < 12 -> R.string.launcher_greeting_morning
                 hour < 17 -> R.string.launcher_greeting_afternoon
@@ -122,25 +122,25 @@ class ProgramsDeckPlane(
         )
         val locale = java.util.Locale.getDefault()
         val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale, "EEEEdMMMM")
-        binding.panelDateUi.text = java.text.SimpleDateFormat(pattern, locale).format(java.util.Date())
+        binding.deckDateUi.text = java.text.SimpleDateFormat(pattern, locale).format(java.util.Date())
         com.livemap.homedeck.anim.InductionMovement.enter(
             null,
-            binding.panelHeaderUi,
-            binding.panelSearchHolderUi,
-            binding.panelSuggestedHeaderUi,
-            binding.panelSuggestedGridUi,
-            binding.panelRecentHeaderUi,
-            binding.panelRecentGridUi,
+            binding.deckHeaderUi,
+            binding.deckSearchHolderUi,
+            binding.deckSuggestedHeaderUi,
+            binding.deckSuggestedGridUi,
+            binding.deckRecentHeaderUi,
+            binding.deckRecentGridUi,
         )
     }
 
     fun refreshAds() {
         val activity = activity ?: return
         HomeBook.ads.bindNativeOnOpen(
-            activity, HomeSpotsProfile.KEY_PANEL_MIDDLE, binding.panelMidNativeFrameUi
+            activity, HomeSpotsProfile.KEY_PANEL_MIDDLE, binding.deckMidNativeFrameUi
         )
         HomeBook.ads.bindNativeOnOpen(
-            activity, HomeSpotsProfile.KEY_PANEL_BOTTOM, binding.panelNativeFrameUi
+            activity, HomeSpotsProfile.KEY_PANEL_BOTTOM, binding.deckNativeFrameUi
         )
     }
 
@@ -160,47 +160,47 @@ class ProgramsDeckPlane(
     fun hasQuery() = getQuery().isNotEmpty()
 
     fun resetSearch() {
-        binding.panelSearchUi.setText("")
-        binding.panelScrollUi.scrollTo(0, 0)
+        binding.deckSearchUi.setText("")
+        binding.deckScrollUi.scrollTo(0, 0)
     }
 
-    private fun getQuery() = binding.panelSearchUi.text.toString().trim()
+    private fun getQuery() = binding.deckSearchUi.text.toString().trim()
 
     private fun updateSections() {
         val query = getQuery()
         val hasQuery = query.isNotEmpty()
 
-        binding.panelSearchClearUi.beVisibleIf(hasQuery)
-        binding.panelSuggestedHeaderUi.beVisibleIf(!hasQuery)
-        binding.panelSuggestedGridUi.beVisibleIf(!hasQuery)
+        binding.deckSearchClearUi.beVisibleIf(hasQuery)
+        binding.deckSuggestedHeaderUi.beVisibleIf(!hasQuery)
+        binding.deckSuggestedGridUi.beVisibleIf(!hasQuery)
 
         if (hasQuery) {
             val results = launchers.filter {
                 it.title.normalizeString().contains(query.normalizeString(), ignoreCase = true)
             }
 
-            binding.panelRecentHeaderUi.beGone()
-            binding.panelRecentGridUi.beGone()
-            binding.panelResultsHeaderUi.beVisible()
-            binding.panelResultsListUi.beVisible()
-            binding.panelSeeMoreUi.beVisibleIf(results.size > COLLAPSED_RESULTS)
-            binding.panelSeeMoreUi.setText(
+            binding.deckRecentHeaderUi.beGone()
+            binding.deckRecentGridUi.beGone()
+            binding.deckResultsHeaderUi.beVisible()
+            binding.deckResultsListUi.beVisible()
+            binding.deckSeeMoreUi.beVisibleIf(results.size > COLLAPSED_RESULTS)
+            binding.deckSeeMoreUi.setText(
                 if (resultsCap == COLLAPSED_RESULTS) R.string.launcher_see_more else R.string.launcher_see_less
             )
             resultsAdapter.submitList(results.take(resultsCap))
 
             val searchTargets = launchers.filter { it.packageName in SEARCH_IN_PACKAGES }
-            binding.panelSearchInHeaderUi.beVisibleIf(searchTargets.isNotEmpty())
-            binding.panelSearchInListUi.beVisibleIf(searchTargets.isNotEmpty())
+            binding.deckSearchInHeaderUi.beVisibleIf(searchTargets.isNotEmpty())
+            binding.deckSearchInListUi.beVisibleIf(searchTargets.isNotEmpty())
             searchInAdapter.submitList(searchTargets)
         } else {
             val recent = launchers.drop(SUGGESTED_COUNT).take(RECENT_COUNT)
-            binding.panelResultsHeaderUi.beGone()
-            binding.panelResultsListUi.beGone()
-            binding.panelSearchInHeaderUi.beGone()
-            binding.panelSearchInListUi.beGone()
-            binding.panelRecentHeaderUi.beVisibleIf(recent.isNotEmpty())
-            binding.panelRecentGridUi.beVisibleIf(recent.isNotEmpty())
+            binding.deckResultsHeaderUi.beGone()
+            binding.deckResultsListUi.beGone()
+            binding.deckSearchInHeaderUi.beGone()
+            binding.deckSearchInListUi.beGone()
+            binding.deckRecentHeaderUi.beVisibleIf(recent.isNotEmpty())
+            binding.deckRecentGridUi.beVisibleIf(recent.isNotEmpty())
 
             suggestedAdapter.submitList(launchers.take(SUGGESTED_COUNT))
             recentAdapter.submitList(recent)

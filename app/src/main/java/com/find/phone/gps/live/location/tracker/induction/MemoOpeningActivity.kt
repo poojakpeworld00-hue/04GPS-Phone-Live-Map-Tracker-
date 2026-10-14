@@ -54,12 +54,12 @@ class MemoOpeningActivity : CasingDeckActivity() {
         excludeAppFromRecents()
 
         val cfg = MemoProfile.get(this)
-        cfg.introTitle.takeIf { it.isNotBlank() }?.let { binding.introTitle.text = it }
-        cfg.introDesc.takeIf { it.isNotBlank() }?.let { binding.introDesc.text = it }
+        cfg.introTitle.takeIf { it.isNotBlank() }?.let { binding.openTitle.text = it }
+        cfg.introDesc.takeIf { it.isNotBlank() }?.let { binding.openDesc.text = it }
 
-        CraftMovement.pressScale(binding.introAllow)
-        binding.introAllow.setOnClickListener { onAllow() }
-        binding.introSkip.setOnClickListener {
+        CraftMovement.pressScale(binding.openAllow)
+        binding.openAllow.setOnClickListener { onAllow() }
+        binding.openSkip.setOnClickListener {
             logKeyEvent("Reminder_Intro_Skip")
             goToNextStep()
         }
@@ -74,7 +74,7 @@ class MemoOpeningActivity : CasingDeckActivity() {
         if (HomeStream.isOnboardingActive(this)) {
             HomeStream.bindStepHeader(this, HomeSpotsProfile.OnboardScreen.REMINDERS, binding.root)
         } else {
-            binding.onboardingStepHeader.root.visibility = android.view.View.GONE
+            binding.inductStepHeader.root.visibility = android.view.View.GONE
         }
         OpeningUnveilCharter.markShown(this, OpeningUnveilProfile.REMINDERS_INTRO)
 
@@ -82,10 +82,10 @@ class MemoOpeningActivity : CasingDeckActivity() {
         HomeSpotsProfile.showSlot(
             activity = this,
             slot = HomeSpotsProfile.onboardingSlot(this, HomeSpotsProfile.OnboardScreen.REMINDERS),
-            container = binding.adNativeFrame,
-            shimmer = binding.adShimmer,
+            container = binding.spotNativeFrame,
+            shimmer = binding.spotShimmer,
         )
-        binding.adNativeDivider.followAdContainer(binding.adNativeFrame)
+        binding.spotNativeDivider.followAdContainer(binding.spotNativeFrame)
         logKeyEvent("Reminder_Intro_Show")
         playMotion()
     }
@@ -137,9 +137,9 @@ class MemoOpeningActivity : CasingDeckActivity() {
     /** The phone floats, the chips drift out of phase (the onboarding's `floaty`). */
     private fun playMotion() {
         if (CraftMovement.animationsDisabled(this)) return
-        animators += CraftMovement.floaty(binding.introPhone, amplitudeDp = 6f)
-        animators += CraftMovement.floaty(binding.introChipTonight, delayMs = 600L)
-        animators += CraftMovement.floaty(binding.introChipDone, delayMs = 1400L)
+        animators += CraftMovement.floaty(binding.openPhone, amplitudeDp = 6f)
+        animators += CraftMovement.floaty(binding.openChipTonight, delayMs = 600L)
+        animators += CraftMovement.floaty(binding.openChipDone, delayMs = 1400L)
     }
 
     private var leaving = false

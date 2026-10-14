@@ -40,7 +40,7 @@ class StashedBadgesFeed(
 
     override fun actionItemPressed(id: Int) {
         when (id) {
-            R.id.cab_unhide_iconUi -> unHideSelection()
+            R.id.lv_cab_unhide_iconUi -> unHideSelection()
         }
     }
 
@@ -104,10 +104,10 @@ class StashedBadgesFeed(
 
     private fun setupView(view: View, icon: StashedBadge) {
         HdItemHiddenIconBinding.bind(view).apply {
-            hiddenIconHolderUi.isSelected = selectedKeys.contains(icon.hashCode())
-            hiddenIconLabelUi.text = icon.title
-            hiddenIconLabelUi.setTextColor(textColor)
-            hiddenIconUi.setPadding(iconPadding, iconPadding, iconPadding, 0)
+            stashIconHolderUi.isSelected = selectedKeys.contains(icon.hashCode())
+            stashIconLabelUi.text = icon.title
+            stashIconLabelUi.setTextColor(textColor)
+            stashIconUi.setPadding(iconPadding, iconPadding, iconPadding, 0)
 
             val factory = DrawableCrossFadeFactory.Builder(150).setCrossFadeEnabled(true).build()
 
@@ -115,7 +115,7 @@ class StashedBadgesFeed(
                 .load(icon.drawable)
                 .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                 .transition(DrawableTransitionOptions.withCrossFade(factory))
-                .into(hiddenIconUi)
+                .into(stashIconUi)
         }
     }
 }

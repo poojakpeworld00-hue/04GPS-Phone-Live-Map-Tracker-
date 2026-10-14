@@ -43,7 +43,7 @@
 
     <!-- phone mock 158×300, floats; inner shows the app's search screen -->
     <FrameLayout
-        android:id="@+id/obPhoneMock"
+        android:id="@+id/indPhoneMock"
         android:layout_width="158dp"
         android:layout_height="300dp"
         android:layout_gravity="center_horizontal"
@@ -317,7 +317,7 @@
 
     <!-- dial chip, left 12 top 84 -->
     <LinearLayout
-        android:id="@+id/obChipDial"
+        android:id="@+id/indChipDial"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
@@ -362,7 +362,7 @@
 
     <!-- GPS ready pill, right 16 bottom 18 -->
     <LinearLayout
-        android:id="@+id/obChipGps"
+        android:id="@+id/indChipGps"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"
@@ -405,7 +405,7 @@
 
     <!-- search FAB, left 40 bottom 46 -->
     <FrameLayout
-        android:id="@+id/obSearchTile"
+        android:id="@+id/indSearchTile"
         android:layout_width="52dp"
         android:layout_height="52dp"
         android:layout_gravity="bottom|start"

@@ -4,12 +4,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="AppCompatResource,AlwaysShowAction">
     <item
-        android:id="@+id/aboutUi"
+        android:id="@+id/lv_aboutUi"
         android:icon="@drawable/ic_info_vector"
         android:title="@string/about"
         app:showAsAction="always" />
     <item
-        android:id="@+id/more_apps_from_usUi"
+        android:id="@+id/lv_more_apps_from_usUi"
         android:title="@string/more_fossify_apps"
         app:showAsAction="never" />
 </menu>

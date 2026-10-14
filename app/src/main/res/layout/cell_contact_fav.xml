@@ -20,7 +20,7 @@
         android:clipChildren="false">
 
         <TextView
-            android:id="@+id/tvInitials"
+            android:id="@+id/txtInitials"
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:layout_gravity="center"
@@ -49,7 +49,7 @@
     </FrameLayout>
 
     <TextView
-        android:id="@+id/tvFirstName"
+        android:id="@+id/txtFirstName"
         android:layout_width="64dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"

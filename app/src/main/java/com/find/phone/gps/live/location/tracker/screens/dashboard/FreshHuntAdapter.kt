@@ -29,7 +29,7 @@ class FreshHuntAdapter(
 
     inner class VH(val binding: CellRecentSearchBinding) : RecyclerView.ViewHolder(binding.root) {
         init {
-            binding.row.setOnClickListener {
+            binding.line.setOnClickListener {
                 val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) onClick(items[position])
             }
@@ -44,12 +44,12 @@ class FreshHuntAdapter(
         val ctx = holder.binding.root.context
         val (tile, tint) = TILE_PALETTE[position % TILE_PALETTE.size]
         with(holder.binding) {
-            iconTile.setBackgroundResource(tile)
-            ImageViewCompat.setImageTintList(icon, ContextCompat.getColorStateList(ctx, tint))
-            tvNumber.text = item.display
+            badgeTile.setBackgroundResource(tile)
+            ImageViewCompat.setImageTintList(badgeVw, ContextCompat.getColorStateList(ctx, tint))
+            txtNumber.text = item.display
             val country = Realms.byIso(item.iso2)?.name ?: item.iso2
-            tvMeta.text = ctx.getString(R.string.ds_recent_meta, Realms.flag(item.iso2), country, relativeTime(ctx, item.searchedAt))
-            rowDivider.isVisible = position < items.lastIndex
+            txtMeta.text = ctx.getString(R.string.ds_recent_meta, Realms.flag(item.iso2), country, relativeTime(ctx, item.searchedAt))
+            lineDivider.isVisible = position < items.lastIndex
         }
     }
 

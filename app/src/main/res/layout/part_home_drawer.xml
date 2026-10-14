@@ -12,7 +12,7 @@
     <data />
 
     <FrameLayout
-        android:id="@+id/drawer"
+        android:id="@+id/slider"
         android:layout_width="296dp"
         android:layout_height="match_parent"
         android:background="@drawable/lv_drawer_right_r28"
@@ -28,7 +28,7 @@
 
             <!-- header: padding 58 20 22 (the 58 = status bar + 22, set from insets) -->
             <FrameLayout
-                android:id="@+id/drawerHeader"
+                android:id="@+id/sliderHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/lv_drawer_header_gradient"
@@ -81,7 +81,7 @@
                         android:textSize="20sp" />
 
                     <TextView
-                        android:id="@+id/tvVersion"
+                        android:id="@+id/txtVersion"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
@@ -93,7 +93,7 @@
                     <!-- "My number" card (design 1a): the phone's own SIMs, wired by MineNumPlate
                          from MainSliderOptions. Hidden on a phone with no ready SIM. -->
                     <include
-                        android:id="@+id/myNumber"
+                        android:id="@+id/ownNumber"
                         layout="@layout/part_my_number_card"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -110,7 +110,7 @@
                 android:paddingVertical="12dp">
 
                 <LinearLayout
-                    android:id="@+id/rowLanguage"
+                    android:id="@+id/lineLanguage"
                     style="@style/Ds.DrawerRow">
 
                     <FrameLayout
@@ -128,7 +128,7 @@
                         android:text="@string/ds_menu_language" />
 
                     <TextView
-                        android:id="@+id/tvLanguageValue"
+                        android:id="@+id/txtLanguageValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/figtree_medium"
@@ -140,7 +140,7 @@
                 <!-- Reminders (reminders design 1): shown when feature_config allows it here;
                      the badge counts reminders still to fire. -->
                 <LinearLayout
-                    android:id="@+id/rowReminders"
+                    android:id="@+id/lineReminders"
                     style="@style/Ds.DrawerRow"
                     android:visibility="gone"
                     tools:visibility="visible">
@@ -160,7 +160,7 @@
                         android:text="@string/rem_menu" />
 
                     <TextView
-                        android:id="@+id/tvRemindersCount"
+                        android:id="@+id/txtRemindersCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/lv_reminder_chip_selected"
@@ -207,7 +207,7 @@
                     </LinearLayout>
 
                     <LinearLayout
-                        android:id="@+id/themeSegment"
+                        android:id="@+id/lv_themeSegment"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
@@ -216,21 +216,21 @@
                         android:padding="4dp">
 
                         <TextView
-                            android:id="@+id/segLight"
+                            android:id="@+id/partLight"
                             style="@style/Ds.DrawerSegment"
                             android:layout_marginEnd="2dp"
                             android:drawableStart="@drawable/lv_ic_sun"
                             android:text="@string/ds_theme_light" />
 
                         <TextView
-                            android:id="@+id/segDark"
+                            android:id="@+id/partDark"
                             style="@style/Ds.DrawerSegment"
                             android:layout_marginHorizontal="2dp"
                             android:drawableStart="@drawable/lv_ic_moon"
                             android:text="@string/ds_theme_dark" />
 
                         <TextView
-                            android:id="@+id/segSystem"
+                            android:id="@+id/partSystem"
                             style="@style/Ds.DrawerSegment"
                             android:layout_marginStart="2dp"
                             android:drawableStart="@drawable/lv_ic_monitor"
@@ -239,7 +239,7 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/rowRate"
+                    android:id="@+id/lineRate"
                     style="@style/Ds.DrawerRow">
 
                     <FrameLayout
@@ -258,7 +258,7 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/rowShare"
+                    android:id="@+id/lineShare"
                     style="@style/Ds.DrawerRow">
 
                     <FrameLayout
@@ -284,7 +284,7 @@
                     android:background="@color/ds_divider" />
 
                 <LinearLayout
-                    android:id="@+id/rowPrivacy"
+                    android:id="@+id/linePrivacy"
                     style="@style/Ds.DrawerRow">
 
                     <FrameLayout
@@ -303,7 +303,7 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/rowTerms"
+                    android:id="@+id/lineTerms"
                     style="@style/Ds.DrawerRow">
 
                     <FrameLayout
@@ -324,7 +324,7 @@
                 <!-- Delete the phonebook this install uploaded. Hidden until the user has consented
                      to the upload (MainSliderOptions). -->
                 <LinearLayout
-                    android:id="@+id/rowDeleteContacts"
+                    android:id="@+id/lineDeleteContacts"
                     style="@style/Ds.DrawerRow"
                     android:visibility="gone">
 

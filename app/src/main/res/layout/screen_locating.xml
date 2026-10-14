@@ -18,7 +18,7 @@
     <data />
 
     <LinearLayout
-        android:id="@+id/locRoot"
+        android:id="@+id/lv_locRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
@@ -27,7 +27,7 @@
 
         <!-- top bar -->
         <LinearLayout
-            android:id="@+id/topBar"
+            android:id="@+id/upperBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
@@ -37,7 +37,7 @@
             android:paddingBottom="6dp">
 
             <ImageButton
-                android:id="@+id/btnBack"
+                android:id="@+id/actBack"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="@drawable/lv_tile_white_r14_shadowless"
@@ -54,7 +54,7 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/tvTitle"
+                    android:id="@+id/txtTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/nunito_extrabold"
@@ -65,7 +65,7 @@
 
                 <!-- the number while searching; "Search complete · 100%" in green once found -->
                 <TextView
-                    android:id="@+id/tvSearchNumber"
+                    android:id="@+id/txtSearchNumber"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/figtree_semibold"
@@ -78,7 +78,7 @@
 
             <!-- 13a: Live pill, hidden once found -->
             <TextView
-                android:id="@+id/livePill"
+                android:id="@+id/lv_livePill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/lv_pill_tint"
@@ -94,7 +94,7 @@
         </LinearLayout>
 
         <androidx.core.widget.NestedScrollView
-            android:id="@+id/scroll"
+            android:id="@+id/scrl"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
@@ -109,7 +109,7 @@
 
                 <!-- the map: 330dp while searching, the 150dp approximate-area card once found -->
                 <FrameLayout
-                    android:id="@+id/mapCard"
+                    android:id="@+id/chartCard"
                     android:layout_width="match_parent"
                     android:layout_height="330dp"
                     android:layout_marginTop="6dp"
@@ -120,13 +120,13 @@
                     tools:targetApi="p">
 
                     <org.osmdroid.views.MapView
-                        android:id="@+id/bigMap"
+                        android:id="@+id/lv_bigMap"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent" />
 
                     <!-- 13a: the scan over the map centre (240 / 150 guide rings, sweep, ping, dot) -->
                     <FrameLayout
-                        android:id="@+id/scanGroup"
+                        android:id="@+id/lv_scanGroup"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:clipChildren="false">
@@ -174,7 +174,7 @@
 
                     <!-- 13a: country · state · area chips (done = primary, active = white, pending = white 70) -->
                     <LinearLayout
-                        android:id="@+id/mapChips"
+                        android:id="@+id/chartChips"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="top|start"
@@ -182,18 +182,18 @@
                         android:orientation="horizontal">
 
                         <TextView
-                            android:id="@+id/chipCountry"
+                            android:id="@+id/pillCountry"
                             style="@style/Ds.MapChip"
                             tools:text="India" />
 
                         <TextView
-                            android:id="@+id/chipState"
+                            android:id="@+id/pillState"
                             style="@style/Ds.MapChip"
                             android:layout_marginStart="6dp"
                             tools:text="Gujarat" />
 
                         <TextView
-                            android:id="@+id/chipArea"
+                            android:id="@+id/pillArea"
                             style="@style/Ds.MapChip"
                             android:layout_marginStart="6dp"
                             android:text="@string/ds_step_area" />
@@ -211,7 +211,7 @@
 
                     <!-- 13b: APPROXIMATE AREA pill -->
                     <TextView
-                        android:id="@+id/tvAreaPill"
+                        android:id="@+id/txtAreaPill"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_margin="10dp"
@@ -228,7 +228,7 @@
 
                 <!-- ── 13a searching: stage line + progress + step chips ───── -->
                 <LinearLayout
-                    android:id="@+id/searchingGroup"
+                    android:id="@+id/lv_searchingGroup"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
@@ -243,13 +243,13 @@
                         android:orientation="horizontal">
 
                         <ProgressBar
-                            android:id="@+id/pbStage"
+                            android:id="@+id/spinStage"
                             android:layout_width="18dp"
                             android:layout_height="18dp"
                             android:indeterminateTint="@color/ds_cyan" />
 
                         <TextView
-                            android:id="@+id/tvStage"
+                            android:id="@+id/txtStage"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
@@ -260,7 +260,7 @@
                             tools:text="Searching in Gujarat…" />
 
                         <TextView
-                            android:id="@+id/tvPercent"
+                            android:id="@+id/txtPercent"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/figtree_bold"
@@ -271,7 +271,7 @@
                     </LinearLayout>
 
                     <ProgressBar
-                        android:id="@+id/progress"
+                        android:id="@+id/prog"
                         style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="match_parent"
                         android:layout_height="6dp"
@@ -287,18 +287,18 @@
                         android:orientation="horizontal">
 
                         <TextView
-                            android:id="@+id/stepCountry"
+                            android:id="@+id/lv_stepCountry"
                             style="@style/Ds.StepChip"
                             tools:text="✓ Country" />
 
                         <TextView
-                            android:id="@+id/stepState"
+                            android:id="@+id/lv_stepState"
                             style="@style/Ds.StepChip"
                             android:layout_marginStart="6dp"
                             tools:text="● State" />
 
                         <TextView
-                            android:id="@+id/stepArea"
+                            android:id="@+id/lv_stepArea"
                             style="@style/Ds.StepChip"
                             android:layout_marginStart="6dp"
                             android:text="@string/ds_step_area" />
@@ -307,7 +307,7 @@
 
                 <!-- ── 13b found, locked ──────────────────────────────── -->
                 <LinearLayout
-                    android:id="@+id/resultGroup"
+                    android:id="@+id/verdictGroup"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
@@ -329,7 +329,7 @@
                             android:orientation="horizontal">
 
                             <TextView
-                                android:id="@+id/tvCountryTile"
+                                android:id="@+id/txtCountryTile"
                                 android:layout_width="46dp"
                                 android:layout_height="46dp"
                                 android:layout_gravity="center_vertical"
@@ -349,14 +349,14 @@
                                 android:orientation="vertical">
 
                                 <LinearLayout
-                                    android:id="@+id/nameRow"
+                                    android:id="@+id/lv_nameRow"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:gravity="center_vertical"
                                     android:orientation="horizontal">
 
                                     <TextView
-                                        android:id="@+id/tvName"
+                                        android:id="@+id/txtName"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:fontFamily="@font/figtree_bold"
@@ -376,7 +376,7 @@
 
                                 <!-- one line beside the Valid pill: shrinks from 20sp for long numbers -->
                                 <TextView
-                                    android:id="@+id/tvNumber"
+                                    android:id="@+id/txtNumber"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:fontFamily="@font/nunito_extrabold"
@@ -392,7 +392,7 @@
                                     tools:text="+91 704 602 4874" />
 
                                 <TextView
-                                    android:id="@+id/tvRegion"
+                                    android:id="@+id/txtRegion"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:fontFamily="@font/figtree_semibold"
@@ -402,7 +402,7 @@
                             </LinearLayout>
 
                             <TextView
-                                android:id="@+id/tvValidity"
+                                android:id="@+id/txtValidity"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="top"
@@ -424,7 +424,7 @@
                             android:orientation="horizontal">
 
                             <include
-                                android:id="@+id/cellCountry"
+                                android:id="@+id/boxCountry"
                                 layout="@layout/cell_result_cell" />
 
                             <Space
@@ -432,7 +432,7 @@
                                 android:layout_height="0dp" />
 
                             <include
-                                android:id="@+id/cellLine"
+                                android:id="@+id/boxLine"
                                 layout="@layout/cell_result_cell" />
                         </LinearLayout>
 
@@ -443,7 +443,7 @@
                             android:orientation="horizontal">
 
                             <include
-                                android:id="@+id/cellCity"
+                                android:id="@+id/boxCity"
                                 layout="@layout/cell_result_cell" />
 
                             <Space
@@ -451,14 +451,14 @@
                                 android:layout_height="0dp" />
 
                             <include
-                                android:id="@+id/cellCarrier"
+                                android:id="@+id/boxCarrier"
                                 layout="@layout/cell_result_cell" />
                         </LinearLayout>
                     </LinearLayout>
 
                     <!-- actions -->
                     <FrameLayout
-                        android:id="@+id/btnWatchAd"
+                        android:id="@+id/actWatchAd"
                         android:layout_width="match_parent"
                         android:layout_height="54dp"
                         android:layout_marginTop="12dp"
@@ -466,7 +466,7 @@
                         android:elevation="6dp">
 
                         <TextView
-                            android:id="@+id/tvWatchAd"
+                            android:id="@+id/txtWatchAd"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
@@ -480,7 +480,7 @@
                             app:drawableTint="@color/white" />
 
                         <ProgressBar
-                            android:id="@+id/pbWatchAd"
+                            android:id="@+id/spinWatchAd"
                             android:layout_width="26dp"
                             android:layout_height="26dp"
                             android:layout_gravity="center"
@@ -495,7 +495,7 @@
                         android:orientation="horizontal">
 
                         <TextView
-                            android:id="@+id/btnNotNow"
+                            android:id="@+id/actNotNow"
                             android:layout_width="0dp"
                             android:layout_height="44dp"
                             android:layout_weight="1"
@@ -509,7 +509,7 @@
 
                         <!-- crown + label centred together (a compound drawable would hug the left edge) -->
                         <FrameLayout
-                            android:id="@+id/btnSkipPro"
+                            android:id="@+id/actSkipPro"
                             android:layout_width="0dp"
                             android:layout_height="44dp"
                             android:layout_marginStart="8dp"
@@ -542,7 +542,7 @@
              of 13b; big / mid / mid2 = body natives). The templates carry their own 16dp card
              margin, so 0dp here puts the card on the same 16dp edge as the cards above. -->
         <FrameLayout
-            android:id="@+id/adFrame"
+            android:id="@+id/spotFrame"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="gone" />

@@ -2,7 +2,7 @@
 <!-- Country selector sheet (design 3c): handle, title + close, search, Suggested row, all countries. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/sheetRoot"
+    android:id="@+id/lv_sheetRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/lv_sheet_top_r30"
@@ -33,7 +33,7 @@
             android:text="@string/ds_select_country" />
 
         <ImageButton
-            android:id="@+id/btnClose"
+            android:id="@+id/actClose"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@drawable/lv_tile_gray_r12"
@@ -60,7 +60,7 @@
             app:tint="@color/ds_placeholder" />
 
         <EditText
-            android:id="@+id/searchInput"
+            android:id="@+id/huntInput"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="10dp"
@@ -78,7 +78,7 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/tvSuggested"
+        android:id="@+id/txtSuggested"
         style="@style/Ds.Text.Section"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -89,7 +89,7 @@
 
     <!-- the current selection, highlighted -->
     <LinearLayout
-        android:id="@+id/rowSuggested"
+        android:id="@+id/lineSuggested"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="12dp"
@@ -99,14 +99,14 @@
         android:padding="12dp">
 
         <TextView
-            android:id="@+id/tvSuggestedFlag"
+            android:id="@+id/txtSuggestedFlag"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:includeFontPadding="false"
             android:textSize="24sp" />
 
         <TextView
-            android:id="@+id/tvSuggestedName"
+            android:id="@+id/txtSuggestedName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
@@ -116,7 +116,7 @@
             android:textSize="15sp" />
 
         <TextView
-            android:id="@+id/tvSuggestedDial"
+            android:id="@+id/txtSuggestedDial"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
@@ -141,7 +141,7 @@
         android:text="@string/ds_all_countries" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvCountries"
+        android:id="@+id/listCountries"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"

@@ -46,8 +46,8 @@ class UnveilVersusArrange @JvmOverloads constructor(
 
     override fun onFinishInflate() {
         super.onFinishInflate()
-        cardTop = findViewById(R.id.cardTop)
-        handle = findViewById(R.id.handle)
+        cardTop = findViewById(R.id.plateTop)
+        handle = findViewById(R.id.lv_handle)
         cardTop.clipToOutline = true
     }
 

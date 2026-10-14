@@ -10,7 +10,7 @@
     <data />
 
     <androidx.drawerlayout.widget.DrawerLayout
-        android:id="@+id/main"
+        android:id="@+id/core"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
@@ -18,7 +18,7 @@
 
         <!-- the home content, shared with the launcher panel (see MainHubFragment) -->
         <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/homeContainer"
+            android:id="@+id/deskContainer"
             android:name="com.find.phone.gps.live.location.tracker.screens.dashboard.MainHubFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -26,7 +26,7 @@
 
         <!-- 3e: the left drawer menu (Language, Theme, Rate us, Share, Privacy, Terms) -->
         <include
-            android:id="@+id/drawerMenu"
+            android:id="@+id/sliderMenu"
             layout="@layout/part_home_drawer"
             android:layout_width="296dp"
             android:layout_height="match_parent"

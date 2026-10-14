@@ -38,18 +38,18 @@ class NumericTimeAppletSource : AppWidgetProvider() {
 
         val views = RemoteViews(context.packageName, R.layout.hd_widget_digital_clock).apply {
             setInt(
-                R.id.widget_holderUi,
+                R.id.gadget_holderUi,
                 "setBackgroundColor",
                 context.getWidgetBackgroundColor(appWidgetId)
             )
 
             // TextClock has no single "show 12/24 hours" switch, keep one of the two around
-            setViewVisibility(R.id.widget_text_clock_24Ui, if (is24Hours) View.VISIBLE else View.GONE)
-            setViewVisibility(R.id.widget_text_clock_12Ui, if (is24Hours) View.GONE else View.VISIBLE)
+            setViewVisibility(R.id.gadget_text_clock_24Ui, if (is24Hours) View.VISIBLE else View.GONE)
+            setViewVisibility(R.id.gadget_text_clock_12Ui, if (is24Hours) View.GONE else View.VISIBLE)
 
-            setTextColor(R.id.widget_text_clock_24Ui, textColor)
-            setTextColor(R.id.widget_text_clock_12Ui, textColor)
-            setTextColor(R.id.widget_dateUi, textColor)
+            setTextColor(R.id.gadget_text_clock_24Ui, textColor)
+            setTextColor(R.id.gadget_text_clock_12Ui, textColor)
+            setTextColor(R.id.gadget_dateUi, textColor)
         }
 
         appWidgetManager.updateAppWidget(appWidgetId, views)

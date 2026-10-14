@@ -27,7 +27,7 @@
         android:layout_marginTop="18dp">
 
         <com.find.phone.gps.live.location.tracker.screens.dashboard.RationLoopView
-            android:id="@+id/ring"
+            android:id="@+id/lv_ring"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
@@ -39,7 +39,7 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/tvUsed"
+                android:id="@+id/txtUsed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/nunito_extrabold"
@@ -71,7 +71,7 @@
         android:textSize="22sp" />
 
     <TextView
-        android:id="@+id/tvBody"
+        android:id="@+id/txtBody"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
@@ -83,7 +83,7 @@
         tools:text="You've used today's 3 free searches. Watch a short ad for one more, or go Premium for unlimited searches." />
 
     <FrameLayout
-        android:id="@+id/btnWatch"
+        android:id="@+id/actWatch"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginTop="16dp"
@@ -91,7 +91,7 @@
         android:elevation="6dp">
 
         <TextView
-            android:id="@+id/tvWatch"
+            android:id="@+id/txtWatch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -104,7 +104,7 @@
             app:drawableTint="@color/white" />
 
         <ProgressBar
-            android:id="@+id/pbWatch"
+            android:id="@+id/spinWatch"
             android:layout_width="26dp"
             android:layout_height="26dp"
             android:layout_gravity="center"
@@ -113,7 +113,7 @@
     </FrameLayout>
 
     <FrameLayout
-        android:id="@+id/btnPremium"
+        android:id="@+id/actPremium"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginTop="14dp"
@@ -124,7 +124,7 @@
         tools:targetApi="p">
 
         <View
-            android:id="@+id/shine"
+            android:id="@+id/lv_shine"
             android:layout_width="26dp"
             android:layout_height="match_parent"
             android:alpha="0.9"

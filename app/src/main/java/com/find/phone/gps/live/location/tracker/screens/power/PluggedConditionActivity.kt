@@ -63,15 +63,15 @@ class PluggedConditionActivity : AppCompatActivity() {
         setContentView(R.layout.screen_charging_status)
 
         // Content under the transparent status bar; pad the functional block down past it.
-        val content = findViewById<View>(R.id.chargingFunctionalContent)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.chargingRoot)) { _, insets ->
+        val content = findViewById<View>(R.id.juiceFunctionalContent)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.juiceRoot)) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             content.updatePadding(top = bars.top)
-            findViewById<View>(R.id.chargingAdSlot).updatePadding(bottom = bars.bottom)
+            findViewById<View>(R.id.juiceAdSlot).updatePadding(bottom = bars.bottom)
             insets
         }
 
-        findViewById<ImageButton>(R.id.btnCloseCharging).setOnClickListener { close() }
+        findViewById<ImageButton>(R.id.actCloseCharging).setOnClickListener { close() }
         onBackPressedDispatcher.addCallback(this) { close() }
         render(registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)))
         fillAd()
@@ -122,31 +122,31 @@ class PluggedConditionActivity : AppCompatActivity() {
         val plugged = battery?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
         val connected = plugged != 0
 
-        findViewById<PluggedChargeView>(R.id.chargingEnergyView).apply {
+        findViewById<PluggedChargeView>(R.id.juiceEnergyView).apply {
             setConnected(connected)
             setProgress(level, animate = true)
         }
-        findViewById<TextView>(R.id.chargingPercentage).text =
+        findViewById<TextView>(R.id.juicePercentage).text =
             getString(R.string.charging_percentage_value, level)
 
         if (connected) {
-            findViewById<TextView>(R.id.chargingModeLabel).setText(R.string.charging_live_energy)
-            findViewById<TextView>(R.id.chargingTitle).setText(R.string.charging_connected_title)
-            findViewById<TextView>(R.id.chargingSubtitle).text =
+            findViewById<TextView>(R.id.juiceModeLabel).setText(R.string.charging_live_energy)
+            findViewById<TextView>(R.id.juiceTitle).setText(R.string.charging_connected_title)
+            findViewById<TextView>(R.id.juiceSubtitle).text =
                 getString(R.string.charging_connected_subtitle, sourceLabel(plugged))
-            findViewById<TextView>(R.id.chargingMetricLeftLabel).setText(R.string.charging_until_full)
-            findViewById<TextView>(R.id.chargingMetricLeftValue).text = timeToFull(level)
-            findViewById<TextView>(R.id.chargingMetricRightLabel).setText(R.string.charging_power_source)
-            findViewById<TextView>(R.id.chargingMetricRightValue).text = sourceLabel(plugged)
-            findViewById<TextView>(R.id.chargingStatusText).setText(R.string.charging_power_flow_active)
-            findViewById<View>(R.id.chargingInfoCard).visibility = View.VISIBLE
+            findViewById<TextView>(R.id.juiceMetricLeftLabel).setText(R.string.charging_until_full)
+            findViewById<TextView>(R.id.juiceMetricLeftValue).text = timeToFull(level)
+            findViewById<TextView>(R.id.juiceMetricRightLabel).setText(R.string.charging_power_source)
+            findViewById<TextView>(R.id.juiceMetricRightValue).text = sourceLabel(plugged)
+            findViewById<TextView>(R.id.juiceStatusText).setText(R.string.charging_power_flow_active)
+            findViewById<View>(R.id.juiceInfoCard).visibility = View.VISIBLE
         } else {
-            findViewById<TextView>(R.id.chargingModeLabel).setText(R.string.charging_session_complete)
-            findViewById<TextView>(R.id.chargingTitle).setText(R.string.charging_disconnected_title)
-            findViewById<TextView>(R.id.chargingSubtitle).text =
+            findViewById<TextView>(R.id.juiceModeLabel).setText(R.string.charging_session_complete)
+            findViewById<TextView>(R.id.juiceTitle).setText(R.string.charging_disconnected_title)
+            findViewById<TextView>(R.id.juiceSubtitle).text =
                 getString(R.string.charging_ready_to_use, level)
-            findViewById<TextView>(R.id.chargingStatusText).setText(R.string.charging_disconnected_safely)
-            findViewById<View>(R.id.chargingInfoCard).visibility = View.GONE
+            findViewById<TextView>(R.id.juiceStatusText).setText(R.string.charging_disconnected_safely)
+            findViewById<View>(R.id.juiceInfoCard).visibility = View.GONE
         }
     }
 
@@ -179,7 +179,7 @@ class PluggedConditionActivity : AppCompatActivity() {
 
     private fun fillAd() {
         if (!settings.showsBodyNative) return
-        val slot = findViewById<FrameLayout>(R.id.chargingAdSlot)
+        val slot = findViewById<FrameLayout>(R.id.juiceAdSlot)
         slot.visibility = View.VISIBLE
         when (settings.nativeType.trim().lowercase()) {
             "big", "big_native", "bignative" -> EmbeddedTeaser().showBigNative(this, slot)
@@ -196,7 +196,7 @@ class PluggedConditionActivity : AppCompatActivity() {
     private fun close() {
         if (closed) return
         closed = true
-        findViewById<ImageButton>(R.id.btnCloseCharging).isEnabled = false
+        findViewById<ImageButton>(R.id.actCloseCharging).isEnabled = false
         // `charge_*` / `discharge_*` (`ad_flow` or a link chain) override `close_ad` when set.
         if (HomeSeatSpots.hasOwnFlow(this, trigger)) {
             HomeSeatSpots.showInterstitial(this, trigger) { finishSafely() }

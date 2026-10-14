@@ -8,14 +8,14 @@
     <data />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/shareRoot"
+        android:id="@+id/spreadRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
         tools:context=".screens.chip.SpreadNumActivity">
 
         <LinearLayout
-            android:id="@+id/topBar"
+            android:id="@+id/upperBar"
             android:layout_width="0dp"
             android:layout_height="56dp"
             android:gravity="center_vertical"
@@ -26,7 +26,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
-                android:id="@+id/btnBack"
+                android:id="@+id/actBack"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
@@ -57,7 +57,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/topBar">
+            app:layout_constraintTop_toBottomOf="@id/upperBar">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -80,14 +80,14 @@
                         android:padding="12dp">
 
                         <ImageView
-                            android:id="@+id/imgQr"
+                            android:id="@+id/picQr"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:contentDescription="@string/share_number_qr_desc" />
                     </FrameLayout>
 
                     <TextView
-                        android:id="@+id/tvNumber"
+                        android:id="@+id/txtNumber"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="18dp"
@@ -99,7 +99,7 @@
                         tools:text="+91 79906 56044" />
 
                     <TextView
-                        android:id="@+id/tvSubtitle"
+                        android:id="@+id/txtSubtitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
@@ -131,19 +131,19 @@
                     android:padding="4dp">
 
                     <TextView
-                        android:id="@+id/segText"
+                        android:id="@+id/partText"
                         style="@style/Ds.DrawerSegment"
                         android:layout_marginEnd="2dp"
                         android:text="@string/share_number_as_text" />
 
                     <TextView
-                        android:id="@+id/segContact"
+                        android:id="@+id/partContact"
                         style="@style/Ds.DrawerSegment"
                         android:layout_marginHorizontal="2dp"
                         android:text="@string/share_number_as_contact" />
 
                     <TextView
-                        android:id="@+id/segQr"
+                        android:id="@+id/partQr"
                         style="@style/Ds.DrawerSegment"
                         android:layout_marginStart="2dp"
                         android:text="@string/share_number_as_qr" />
@@ -156,7 +156,7 @@
                     android:orientation="horizontal">
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnCopy"
+                        android:id="@+id/actCopyVw"
                         style="@style/Widget.Material3.Button"
                         android:layout_width="0dp"
                         android:layout_height="52dp"
@@ -179,7 +179,7 @@
                         app:iconTint="@color/ds_ink" />
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSaveQr"
+                        android:id="@+id/actSaveQr"
                         style="@style/Widget.Material3.Button"
                         android:layout_width="0dp"
                         android:layout_height="52dp"
@@ -203,7 +203,7 @@
                 </LinearLayout>
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnShare"
+                    android:id="@+id/actShare"
                     style="@style/Widget.Material3.Button"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"

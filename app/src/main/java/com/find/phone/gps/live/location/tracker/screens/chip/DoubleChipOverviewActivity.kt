@@ -44,12 +44,12 @@ class DoubleChipOverviewActivity : StageActivity<ScreenDualSimDashboardBinding>(
     override fun initView() {
         // Dark icons on the light canvas, light icons in dark mode.
         WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = !isNightMode(this)
-        ViewCompat.setOnApplyWindowInsetsListener(binding.dashRoot) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.lvDashRoot) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(top = bars.top, bottom = bars.bottom)
             insets
         }
-        binding.btnBack.setOnClickListener { goBack() }
+        binding.actBack.setOnClickListener { goBack() }
         subs = activeSubs()
         buildSelector()
         renderDefaults()
@@ -75,9 +75,9 @@ class DoubleChipOverviewActivity : StageActivity<ScreenDualSimDashboardBinding>(
     }
 
     private fun buildSelector() {
-        binding.simSelector.removeAllViews()
+        binding.chipcardSelector.removeAllViews()
         if (subs.size < 2) {
-            binding.simSelector.visibility = View.GONE
+            binding.chipcardSelector.visibility = View.GONE
             return
         }
         subs.forEachIndexed { i, info ->
@@ -92,14 +92,14 @@ class DoubleChipOverviewActivity : StageActivity<ScreenDualSimDashboardBinding>(
                 text = getString(R.string.dashboard_sim_fmt, info.simSlotIndex + 1, info.carrierName)
                 setOnClickListener { select(i) }
             }
-            binding.simSelector.addView(tab)
+            binding.chipcardSelector.addView(tab)
         }
         styleSelector()
     }
 
     private fun styleSelector() {
-        for (i in 0 until binding.simSelector.childCount) {
-            val tab = binding.simSelector.getChildAt(i) as TextView
+        for (i in 0 until binding.chipcardSelector.childCount) {
+            val tab = binding.chipcardSelector.getChildAt(i) as TextView
             val on = i == selectedIndex
             tab.setTextColor(ContextCompat.getColor(this, if (on) R.color.ds_primary else R.color.ds_muted))
             tab.typeface = ResourcesCompat.getFont(this, if (on) R.font.figtree_bold else R.font.figtree_semibold)
@@ -121,26 +121,26 @@ class DoubleChipOverviewActivity : StageActivity<ScreenDualSimDashboardBinding>(
     private fun renderSelected() {
         val info = subs.getOrNull(selectedIndex)
         if (info == null) {
-            binding.tvLevel.setText(R.string.dashboard_na)
-            binding.tvDbm.text = ""
+            binding.txtLevel.setText(R.string.dashboard_na)
+            binding.txtDbm.text = ""
             setMeter(0)
-            listOf(binding.tvNetwork, binding.tvRoaming, binding.tvCountry, binding.tvSimState)
+            listOf(binding.txtNetwork, binding.txtRoaming, binding.txtCountry, binding.txtSimState)
                 .forEach { it.setText(R.string.dashboard_na) }
             return
         }
         val tm = telephonyFor(info)
-        binding.tvNetwork.text = networkLabel(runCatching { tm.dataNetworkType }.getOrDefault(TelephonyManager.NETWORK_TYPE_UNKNOWN))
-        binding.tvRoaming.setText(if (runCatching { tm.isNetworkRoaming }.getOrDefault(false)) R.string.dashboard_on else R.string.dashboard_off)
-        binding.tvCountry.text = countryName(runCatching { tm.networkCountryIso }.getOrNull()
+        binding.txtNetwork.text = networkLabel(runCatching { tm.dataNetworkType }.getOrDefault(TelephonyManager.NETWORK_TYPE_UNKNOWN))
+        binding.txtRoaming.setText(if (runCatching { tm.isNetworkRoaming }.getOrDefault(false)) R.string.dashboard_on else R.string.dashboard_off)
+        binding.txtCountry.text = countryName(runCatching { tm.networkCountryIso }.getOrNull()
             ?: runCatching { tm.simCountryIso }.getOrNull())
-        binding.tvSimState.text = simStateLabel(info.simSlotIndex)
+        binding.txtSimState.text = simStateLabel(info.simSlotIndex)
     }
 
     @SuppressLint("MissingPermission")
     private fun renderDefaults() {
-        binding.tvDefCalls.text = subLabel(SubscriptionManager.getDefaultVoiceSubscriptionId())
-        binding.tvDefData.text = subLabel(SubscriptionManager.getDefaultDataSubscriptionId())
-        binding.tvDefSms.text = subLabel(SubscriptionManager.getDefaultSmsSubscriptionId())
+        binding.txtDefCalls.text = subLabel(SubscriptionManager.getDefaultVoiceSubscriptionId())
+        binding.txtDefData.text = subLabel(SubscriptionManager.getDefaultDataSubscriptionId())
+        binding.txtDefSms.text = subLabel(SubscriptionManager.getDefaultSmsSubscriptionId())
     }
 
     private fun subLabel(subId: Int): String {
@@ -176,15 +176,15 @@ class DoubleChipOverviewActivity : StageActivity<ScreenDualSimDashboardBinding>(
     private fun onSignal(ss: SignalStrength) {
         val level = ss.level.coerceIn(0, 4)
         setMeter(level)
-        binding.tvLevel.setText(levelLabel(level))
+        binding.txtLevel.setText(levelLabel(level))
         val dbm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ss.cellSignalStrengths.firstOrNull { it.dbm != Int.MAX_VALUE && it.dbm != 0 }?.dbm
         } else null
-        binding.tvDbm.text = if (dbm != null) getString(R.string.dashboard_live_fmt, dbm) else ""
+        binding.txtDbm.text = if (dbm != null) getString(R.string.dashboard_live_fmt, dbm) else ""
     }
 
     private fun setMeter(level: Int) {
-        val segs = listOf(binding.seg1, binding.seg2, binding.seg3, binding.seg4)
+        val segs = listOf(binding.part1, binding.part2, binding.part3, binding.part4)
         val onColor = ContextCompat.getColor(this, when {
             level <= 1 -> R.color.ds_danger
             level == 2 -> R.color.ds_warn

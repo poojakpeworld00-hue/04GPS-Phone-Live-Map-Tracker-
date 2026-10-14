@@ -88,18 +88,18 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
 
         if (savedInstanceState == null) logKeyEvent("default_home_view")
 
-        CraftMovement.pressScale(binding.onboardingSetDefault)
-        binding.onboardingSetDefault.setOnClickListener {
+        CraftMovement.pressScale(binding.inductSetDefault)
+        binding.inductSetDefault.setOnClickListener {
             if (isDefaultLauncher()) goHome() else openHomeSettings()
         }
-        binding.onboardingSkip.setOnClickListener {
+        binding.inductSkip.setOnClickListener {
             logKeyEvent("default_home_skip")
             goToNextStep()
         }
 
         val ui = HomeSpotsProfile.onboardingUi(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT)
         skipEnabled = ui.skipEnabled
-        binding.onboardingSkip.isVisible = ui.skipEnabled
+        binding.inductSkip.isVisible = ui.skipEnabled
 
         // Paid users: Back gets one last ask (the role dialog). Organic users: Back is Back.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -114,12 +114,12 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
         HomeSpotsProfile.showSlot(
             activity = this,
             slot = HomeSpotsProfile.onboardingSlot(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT),
-            container = binding.adNativeFrame,
-            shimmer = binding.adShimmer,
+            container = binding.spotNativeFrame,
+            shimmer = binding.spotShimmer,
         )
 
         // Small phones: the hero card gives way to the ad while one is on screen.
-        binding.imageHero.hideWhileAdVisible(binding.adNativeFrame, binding.heroCompact)
+        binding.pictureHero.hideWhileAdVisible(binding.spotNativeFrame, binding.leadCompact)
 
         HomeStream.bindStepHeader(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT, binding.root)
 
@@ -135,8 +135,8 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
     /** The chooser card and the swipe chip float (`floaty 4s`, the chip offset 1.4s). */
     private fun playMotion() {
         if (CraftMovement.animationsDisabled(this)) return
-        animators += CraftMovement.floaty(binding.chooserCard)
-        animators += CraftMovement.floaty(binding.chipSwipe, delayMs = 1400L)
+        animators += CraftMovement.floaty(binding.lvChooserCard)
+        animators += CraftMovement.floaty(binding.pillSwipe, delayMs = 1400L)
     }
 
     // ===== the two-stage request =====

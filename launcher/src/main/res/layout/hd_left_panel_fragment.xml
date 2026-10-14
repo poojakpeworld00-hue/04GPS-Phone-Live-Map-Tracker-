@@ -2,7 +2,7 @@
 <com.livemap.homedeck.parts.ProgramsDeckPlane xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/left_panel_holderUi"
+    android:id="@+id/lv_left_panel_holderUi"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/launcher_all_app_bg"
@@ -12,7 +12,7 @@
     <!-- Pinned to the panel's bottom edge. The scroll view stops above it, so the ad never lies on
          top of the app grids; while it is GONE the scroll view runs to the bottom. -->
     <FrameLayout
-        android:id="@+id/panel_native_frameUi"
+        android:id="@+id/deck_native_frameUi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
@@ -20,10 +20,10 @@
 
     <!-- Everything above the bottom ad scrolls as one: greeting, search, both app grids. -->
     <ScrollView
-        android:id="@+id/panel_scrollUi"
+        android:id="@+id/deck_scrollUi"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/panel_native_frameUi"
+        android:layout_above="@+id/deck_native_frameUi"
         android:layout_alignWithParentIfMissing="true"
         android:clipToPadding="false"
         android:paddingBottom="16dp">
@@ -35,7 +35,7 @@
 
             <!-- Greeting + date, set by ProgramsDeckPlane.onOpened; the first thing the cascade lifts in. -->
             <LinearLayout
-                android:id="@+id/panel_headerUi"
+                android:id="@+id/deck_headerUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
@@ -45,7 +45,7 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/panel_greetingUi"
+                    android:id="@+id/deck_greetingUi"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-medium"
@@ -57,7 +57,7 @@
                     tools:text="Good morning" />
 
                 <TextView
-                    android:id="@+id/panel_dateUi"
+                    android:id="@+id/deck_dateUi"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
@@ -71,7 +71,7 @@
             </LinearLayout>
 
             <RelativeLayout
-                android:id="@+id/panel_search_holderUi"
+                android:id="@+id/deck_search_holderUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="14dp"
@@ -82,7 +82,7 @@
                 android:paddingEnd="4dp">
 
                 <ImageView
-                    android:id="@+id/panel_search_iconUi"
+                    android:id="@+id/deck_search_iconUi"
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_alignParentStart="true"
@@ -93,7 +93,7 @@
                     android:src="@drawable/hd_ic_pseudo_search_vector" />
 
                 <ImageView
-                    android:id="@+id/panel_search_clearUi"
+                    android:id="@+id/deck_search_clearUi"
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_alignParentEnd="true"
@@ -106,11 +106,11 @@
                     android:visibility="gone" />
 
                 <EditText
-                    android:id="@+id/panel_searchUi"
+                    android:id="@+id/deck_searchUi"
                     android:layout_width="match_parent"
                     android:layout_height="46dp"
-                    android:layout_toStartOf="@+id/panel_search_clearUi"
-                    android:layout_toEndOf="@+id/panel_search_iconUi"
+                    android:layout_toStartOf="@+id/deck_search_clearUi"
+                    android:layout_toEndOf="@+id/deck_search_iconUi"
                     android:background="@null"
                     android:ellipsize="end"
                     android:gravity="start|center_vertical"
@@ -128,7 +128,7 @@
             </RelativeLayout>
 
             <RelativeLayout
-                android:id="@+id/panel_results_headerUi"
+                android:id="@+id/deck_results_headerUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
@@ -145,7 +145,7 @@
                     android:textSize="@dimen/smaller_text_size" />
 
                 <TextView
-                    android:id="@+id/panel_see_moreUi"
+                    android:id="@+id/deck_see_moreUi"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
@@ -158,7 +158,7 @@
             </RelativeLayout>
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/panel_results_listUi"
+                android:id="@+id/deck_results_listUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false"
@@ -169,7 +169,7 @@
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
             <TextView
-                android:id="@+id/panel_suggested_headerUi"
+                android:id="@+id/deck_suggested_headerUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
@@ -186,7 +186,7 @@
                 android:textSize="11sp" />
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/panel_suggested_gridUi"
+                android:id="@+id/deck_suggested_gridUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/hd_panel_glass_card"
@@ -198,14 +198,14 @@
                 app:spanCount="4" />
 
             <FrameLayout
-                android:id="@+id/panel_mid_native_frameUi"
+                android:id="@+id/deck_mid_native_frameUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:visibility="gone" />
 
             <TextView
-                android:id="@+id/panel_recent_headerUi"
+                android:id="@+id/deck_recent_headerUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
@@ -222,7 +222,7 @@
                 android:textSize="11sp" />
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/panel_recent_gridUi"
+                android:id="@+id/deck_recent_gridUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/hd_panel_glass_card"
@@ -234,7 +234,7 @@
                 app:spanCount="4" />
 
             <TextView
-                android:id="@+id/panel_search_in_headerUi"
+                android:id="@+id/deck_search_in_headerUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
@@ -246,7 +246,7 @@
                 android:visibility="gone" />
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/panel_search_in_listUi"
+                android:id="@+id/deck_search_in_listUi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"

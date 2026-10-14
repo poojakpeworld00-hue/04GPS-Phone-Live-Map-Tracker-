@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- One app shortcut under the drawer search's top result: its icon and label, a divider above all but the first. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/search_shortcut_rowUi"
+    android:id="@+id/hunt_shortcut_rowUi"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?attr/selectableItemBackground"
@@ -12,13 +12,13 @@
     android:paddingEnd="@dimen/activity_margin">
 
     <ImageView
-        android:id="@+id/search_shortcut_iconUi"
+        android:id="@+id/hunt_shortcut_iconUi"
         android:layout_width="28dp"
         android:layout_height="28dp"
         android:contentDescription="@null" />
 
     <org.fossify.commons.views.MyTextView
-        android:id="@+id/search_shortcut_labelUi"
+        android:id="@+id/hunt_shortcut_labelUi"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/activity_margin"

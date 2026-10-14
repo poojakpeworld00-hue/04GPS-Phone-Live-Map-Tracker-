@@ -273,8 +273,8 @@ class BonusTeaser {
         val (dialog, view) = dialogFor(activity)
         var retrying = false
         dialog.setOnDismissListener { if (!retrying) onDone(Result.CANCELED) }
-        view.btnRetryCancel.setOnClickListener { dialog.dismiss() }
-        view.btnRetry.setOnClickListener {
+        view.actRetryCancel.setOnClickListener { dialog.dismiss() }
+        view.actRetry.setOnClickListener {
             retrying = true
             dialog.dismiss()
             show(activity, onDone, attempt + 1)
@@ -305,8 +305,8 @@ class BonusTeaser {
         var unlock = false
 
         fun setUnlockEnabled(on: Boolean) {
-            view.btnWaitUnlock.isEnabled = on
-            view.btnWaitUnlock.alpha = if (on) 1f else 0.45f
+            view.actWaitUnlock.isEnabled = on
+            view.actWaitUnlock.alpha = if (on) 1f else 0.45f
         }
         setUnlockEnabled(false)
 
@@ -314,15 +314,15 @@ class BonusTeaser {
             override fun run() {
                 val left = BonusPause.remainingMs(activity)
                 if (left > 0) {
-                    view.ringWait.progress = (left / total * view.ringWait.max).toInt()
-                    view.tvWaitTime.text = DateUtils.formatElapsedTime((left + 999) / 1000)
+                    view.lvRingWait.progress = (left / total * view.lvRingWait.max).toInt()
+                    view.txtWaitTime.text = DateUtils.formatElapsedTime((left + 999) / 1000)
                     handler.postDelayed(this, RING_TICK_MS)
                 } else {
-                    view.ringWait.progress = 0
-                    view.tvWaitTime.isVisible = false
-                    view.ivWaitDone.isVisible = true
-                    view.tvWaitTitle.setText(R.string.ds_reward_wait_ready_title)
-                    view.tvWaitBody.setText(R.string.ds_reward_wait_ready)
+                    view.lvRingWait.progress = 0
+                    view.txtWaitTime.isVisible = false
+                    view.imgWaitDone.isVisible = true
+                    view.txtWaitTitle.setText(R.string.ds_reward_wait_ready_title)
+                    view.txtWaitBody.setText(R.string.ds_reward_wait_ready)
                     setUnlockEnabled(true)
                 }
             }
@@ -333,8 +333,8 @@ class BonusTeaser {
             handler.removeCallbacksAndMessages(null)
             if (unlock) show(activity, onDone) else onDone(Result.CANCELED)
         }
-        view.btnWaitLater.setOnClickListener { dialog.dismiss() }
-        view.btnWaitUnlock.setOnClickListener {
+        view.actWaitLater.setOnClickListener { dialog.dismiss() }
+        view.actWaitUnlock.setOnClickListener {
             unlock = true
             dialog.dismiss()
         }

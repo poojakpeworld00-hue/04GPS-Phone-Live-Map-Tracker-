@@ -56,10 +56,10 @@ class CoreHubActivity : StageActivity<ScreenMainBinding>(), MainCasingHolder, Ma
         }
 
     private val homeFragment: MainHubFragment?
-        get() = supportFragmentManager.findFragmentById(R.id.homeContainer) as? MainHubFragment
+        get() = supportFragmentManager.findFragmentById(R.id.deskContainer) as? MainHubFragment
 
     override fun showUpdateReadyPrompt() {
-        Snackbar.make(binding.main, R.string.update_ready_msg, Snackbar.LENGTH_INDEFINITE)
+        Snackbar.make(binding.core, R.string.update_ready_msg, Snackbar.LENGTH_INDEFINITE)
             .setAction(R.string.update_restart) { InCoreRefreshBook.completeUpdate() }
             .show()
     }
@@ -79,16 +79,16 @@ class CoreHubActivity : StageActivity<ScreenMainBinding>(), MainCasingHolder, Ma
 
         drawerMenu = MainSliderOptions(
             this,
-            binding.drawerMenu,
+            binding.sliderMenu,
             requestPhonePermission = { phonePermission.launch(it) },
         ) {
-            binding.main.closeDrawer(GravityCompat.START)
+            binding.core.closeDrawer(GravityCompat.START)
         }.also { it.bind() }
 
         // Back: close the drawer first; then back leaves for the launcher home (launcher mode) or,
         // with launcher mode off, a double back exits the app.
         onBackPressedDispatcher.addCallback(this) {
-            if (binding.main.isDrawerOpen(GravityCompat.START)) binding.main.closeDrawer(GravityCompat.START)
+            if (binding.core.isDrawerOpen(GravityCompat.START)) binding.core.closeDrawer(GravityCompat.START)
             else onShellBackExhausted()
         }
 
@@ -100,7 +100,7 @@ class CoreHubActivity : StageActivity<ScreenMainBinding>(), MainCasingHolder, Ma
 
     /** 3e: the header's menu button opens the left drawer. */
     override fun openHomeMenu() {
-        binding.main.openDrawer(GravityCompat.START)
+        binding.core.openDrawer(GravityCompat.START)
     }
 
     override fun onResume() {

@@ -8,7 +8,7 @@
     theme its own screens run under.
 -->
 <com.livemap.homedeck.parts.HolderDeckPlane xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/host_panel_holderUi"
+    android:id="@+id/lv_host_panel_holderUi"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/lnch_host_panel_bg"
@@ -20,7 +20,7 @@
          with everything it queries and every ad slot it owns, on every launcher start. It is
          committed on the first panel warm-up instead, in HolderDeckPlane.refresh(). -->
     <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/host_panel_containerUi"
+        android:id="@+id/lv_host_panel_containerUi"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

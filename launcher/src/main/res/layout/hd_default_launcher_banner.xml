@@ -19,7 +19,7 @@
     android:visibility="gone">
 
     <FrameLayout
-        android:id="@+id/bannerCardUi"
+        android:id="@+id/ribbonCardUi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/hd_bg_default_launcher_banner"
@@ -27,7 +27,7 @@
 
         <!-- decorative discs bleeding off the corners; clipped by the card outline -->
         <View
-            android:id="@+id/bannerBlobUi"
+            android:id="@+id/ribbonBlobUi"
             android:layout_width="150dp"
             android:layout_height="150dp"
             android:layout_gravity="top|end"
@@ -64,21 +64,21 @@
                 android:clipToPadding="false">
 
                 <View
-                    android:id="@+id/bannerGlowUi"
+                    android:id="@+id/ribbonGlowUi"
                     android:layout_width="72dp"
                     android:layout_height="72dp"
                     android:layout_gravity="center"
                     android:background="@drawable/hd_banner_glow" />
 
                 <View
-                    android:id="@+id/bannerRingUi"
+                    android:id="@+id/ribbonRingUi"
                     android:layout_width="62dp"
                     android:layout_height="62dp"
                     android:layout_gravity="center"
                     android:background="@drawable/hd_banner_ring" />
 
                 <ImageView
-                    android:id="@+id/bannerArtUi"
+                    android:id="@+id/ribbonArtUi"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     android:layout_gravity="center"
@@ -86,7 +86,7 @@
                     android:src="@drawable/hd_art_default_home" />
 
                 <ImageView
-                    android:id="@+id/bannerSparkle1Ui"
+                    android:id="@+id/ribbonSparkle1Ui"
                     android:layout_width="12dp"
                     android:layout_height="12dp"
                     android:layout_gravity="top|end"
@@ -98,7 +98,7 @@
                     app:tint="#FFFFFF" />
 
                 <ImageView
-                    android:id="@+id/bannerSparkle2Ui"
+                    android:id="@+id/ribbonSparkle2Ui"
                     android:layout_width="8dp"
                     android:layout_height="8dp"
                     android:layout_gravity="bottom|start"
@@ -119,7 +119,7 @@
                 android:orientation="vertical">
 
                 <org.fossify.commons.views.MyTextView
-                    android:id="@+id/bannerTitleUi"
+                    android:id="@+id/ribbonTitleUi"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/launcher_default_launcher_banner_title"
@@ -128,7 +128,7 @@
                     android:textStyle="bold" />
 
                 <org.fossify.commons.views.MyTextView
-                    android:id="@+id/bannerBodyUi"
+                    android:id="@+id/ribbonBodyUi"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
@@ -141,7 +141,7 @@
 
             <!-- tap hint: translucent round chip with a chevron that nudges to the right -->
             <FrameLayout
-                android:id="@+id/bannerChevronUi"
+                android:id="@+id/ribbonChevronUi"
                 android:layout_width="34dp"
                 android:layout_height="34dp"
                 android:layout_marginStart="8dp"
@@ -165,7 +165,7 @@
             card grows with it; taller than the card and centred so the tilt never shows an end.
         -->
         <View
-            android:id="@+id/bannerSheenUi"
+            android:id="@+id/ribbonSheenUi"
             android:layout_width="56dp"
             android:layout_height="160dp"
             android:layout_gravity="center_vertical|start"

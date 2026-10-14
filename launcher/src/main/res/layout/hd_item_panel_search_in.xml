@@ -8,18 +8,18 @@
     android:focusable="true">
 
     <ImageView
-        android:id="@+id/item_iconUi"
+        android:id="@+id/elem_iconUi"
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_centerVertical="true"
         android:padding="2dp" />
 
     <TextView
-        android:id="@+id/item_titleUi"
+        android:id="@+id/elem_titleUi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
-        android:layout_toEndOf="@+id/item_iconUi"
+        android:layout_toEndOf="@+id/elem_iconUi"
         android:ellipsize="end"
         android:gravity="start"
         android:maxLines="2"
@@ -33,7 +33,7 @@
         android:layout_height="1dp"
         android:layout_alignParentBottom="true"
         android:layout_marginStart="10dp"
-        android:layout_toEndOf="@+id/item_iconUi"
+        android:layout_toEndOf="@+id/elem_iconUi"
         android:background="@color/launcher_panel_divider" />
 
 </RelativeLayout>

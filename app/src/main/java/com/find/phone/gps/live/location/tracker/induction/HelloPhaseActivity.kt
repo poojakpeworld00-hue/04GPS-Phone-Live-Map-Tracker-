@@ -31,13 +31,13 @@ class HelloPhaseActivity : CasingDeckActivity() {
         setContentView(binding.root)
         excludeAppFromRecents()
 
-        CraftMovement.pressScale(binding.onboardingContinue)
-        binding.onboardingContinue.setOnClickListener { requestOnboardingPermissions() }
-        binding.onboardingSkip.setOnClickListener { goToNextStep() }
+        CraftMovement.pressScale(binding.inductContinue)
+        binding.inductContinue.setOnClickListener { requestOnboardingPermissions() }
+        binding.inductSkip.setOnClickListener { goToNextStep() }
 
         // `onboarding.welcome.skip_enabled: false` makes the screen a required step.
         val ui = HomeSpotsProfile.onboardingUi(this, HomeSpotsProfile.OnboardScreen.WELCOME)
-        binding.onboardingSkip.isVisible = ui.skipEnabled
+        binding.inductSkip.isVisible = ui.skipEnabled
 
         // Paid users: Back behaves like Skip and moves the flow on. Organic users: Back is Back.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -52,12 +52,12 @@ class HelloPhaseActivity : CasingDeckActivity() {
         HomeSpotsProfile.showSlot(
             activity = this,
             slot = HomeSpotsProfile.onboardingSlot(this, HomeSpotsProfile.OnboardScreen.WELCOME),
-            container = binding.adNativeFrame,
-            shimmer = binding.adShimmer,
+            container = binding.spotNativeFrame,
+            shimmer = binding.spotShimmer,
         )
-        binding.adNativeDivider.followAdContainer(binding.adNativeFrame)
+        binding.spotNativeDivider.followAdContainer(binding.spotNativeFrame)
         // Small phones: the hero card gives way to the ad while one is on screen.
-        binding.onboardingHero.hideWhileAdVisible(binding.adNativeFrame, binding.heroCompact)
+        binding.inductHero.hideWhileAdVisible(binding.spotNativeFrame, binding.leadCompact)
 
         HomeStream.bindStepHeader(this, HomeSpotsProfile.OnboardScreen.WELCOME, binding.root)
 
@@ -67,32 +67,32 @@ class HelloPhaseActivity : CasingDeckActivity() {
 
     /** The four launcher gestures: one arrow glyph rotated per direction; "Swipe right" is active. */
     private fun bindGestureTiles() = with(binding) {
-        bindTile(tileSwipeUp, -90f, R.string.gesture_swipe_up, R.string.gesture_swipe_up_body, active = false)
-        bindTile(tileSwipeRight, 0f, R.string.gesture_swipe_right, R.string.gesture_swipe_right_body, active = true)
-        bindTile(tileSwipeDown, 90f, R.string.gesture_swipe_down, R.string.gesture_swipe_down_body, active = false)
-        bindTile(tileSwipeLeft, 180f, R.string.gesture_swipe_left, R.string.gesture_swipe_left_body, active = false)
+        bindTile(cellSwipeUp, -90f, R.string.gesture_swipe_up, R.string.gesture_swipe_up_body, active = false)
+        bindTile(cellSwipeRight, 0f, R.string.gesture_swipe_right, R.string.gesture_swipe_right_body, active = true)
+        bindTile(cellSwipeDown, 90f, R.string.gesture_swipe_down, R.string.gesture_swipe_down_body, active = false)
+        bindTile(cellSwipeLeft, 180f, R.string.gesture_swipe_left, R.string.gesture_swipe_left_body, active = false)
     }
 
     private fun bindTile(tile: CellGestureTileBinding, rotation: Float, title: Int, body: Int, active: Boolean) {
-        tile.tileIcon.rotation = rotation
-        tile.tileTitle.setText(title)
-        tile.tileBody.setText(body)
+        tile.cellIcon.rotation = rotation
+        tile.cellTitle.setText(title)
+        tile.cellBody.setText(body)
         if (active) {
-            tile.tileRoot.setBackgroundResource(R.drawable.lv_gesture_active_r16)
-            tile.tileRoot.elevation = resources.displayMetrics.density * 6f
-            tile.tileIconBox.setBackgroundResource(R.drawable.lv_tile_white20_r12)
-            ImageViewCompat.setImageTintList(tile.tileIcon, ContextCompat.getColorStateList(this, R.color.white))
-            tile.tileTitle.setTextColor(ContextCompat.getColor(this, R.color.white))
-            tile.tileBody.setTextColor(ContextCompat.getColor(this, R.color.ds_white90))
+            tile.cellRoot.setBackgroundResource(R.drawable.lv_gesture_active_r16)
+            tile.cellRoot.elevation = resources.displayMetrics.density * 6f
+            tile.cellIconBox.setBackgroundResource(R.drawable.lv_tile_white20_r12)
+            ImageViewCompat.setImageTintList(tile.cellIcon, ContextCompat.getColorStateList(this, R.color.white))
+            tile.cellTitle.setTextColor(ContextCompat.getColor(this, R.color.white))
+            tile.cellBody.setTextColor(ContextCompat.getColor(this, R.color.ds_white90))
         }
     }
 
     /** The design's loops: badge `fadein .6s .4s`, chips `floaty 4s` (the second offset 1.2s). */
     private fun playMotion() {
         if (CraftMovement.animationsDisabled(this)) return
-        animators += CraftMovement.fadeIn(binding.onboardingBadge, durationMs = 600L, delayMs = 400L)
-        animators += CraftMovement.floaty(binding.chipDial)
-        animators += CraftMovement.floaty(binding.chipGps, delayMs = 1200L)
+        animators += CraftMovement.fadeIn(binding.inductBadge, durationMs = 600L, delayMs = 400L)
+        animators += CraftMovement.floaty(binding.pillDial)
+        animators += CraftMovement.floaty(binding.pillGpsVw, delayMs = 1200L)
     }
 
     override fun onDestroy() {

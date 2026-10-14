@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/manage_hidden_icons_coordinatorUi"
+    android:id="@+id/mng_hidden_icons_coordinatorUi"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <org.fossify.commons.views.MyAppBarLayout
-        android:id="@+id/manage_hidden_icons_appbarUi"
+        android:id="@+id/mng_hidden_icons_appbarUi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
         <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/manage_hidden_icons_toolbarUi"
+            android:id="@+id/mng_hidden_icons_toolbarUi"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/color_primary"
@@ -21,13 +21,13 @@
     </org.fossify.commons.views.MyAppBarLayout>
 
     <RelativeLayout
-        android:id="@+id/manage_hidden_icons_wrapperUi"
+        android:id="@+id/mng_hidden_icons_wrapperUi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <org.fossify.commons.views.MyRecyclerView
-            android:id="@+id/manage_hidden_icons_listUi"
+            android:id="@+id/mng_hidden_icons_listUi"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
@@ -35,7 +35,7 @@
             app:layoutManager="org.fossify.commons.views.MyGridLayoutManager" />
 
         <org.fossify.commons.views.MyTextView
-            android:id="@+id/manage_hidden_icons_placeholderUi"
+            android:id="@+id/mng_hidden_icons_placeholderUi"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"

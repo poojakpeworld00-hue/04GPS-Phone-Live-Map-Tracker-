@@ -48,10 +48,10 @@ class ChartWholeActivity : StageActivity<ScreenMapFullBinding>() {
         // The map runs under the status bar; the top bar sits below it.
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
-        val topPad = binding.mapTopBar.paddingTop
-        ViewCompat.setOnApplyWindowInsetsListener(binding.mapRoot) { v, insets ->
+        val topPad = binding.chartTopBar.paddingTop
+        ViewCompat.setOnApplyWindowInsetsListener(binding.chartRoot) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            binding.mapTopBar.updatePadding(top = topPad + bars.top)
+            binding.chartTopBar.updatePadding(top = topPad + bars.top)
             if (topInset != bars.top) {
                 topInset = bars.top
                 if (::report.isInitialized) centerPin()
@@ -62,31 +62,31 @@ class ChartWholeActivity : StageActivity<ScreenMapFullBinding>() {
 
         val r = report
         val place = listOfNotNull(r.city, r.state).distinct().joinToString(", ")
-        binding.tvTitle.text = place.ifEmpty { r.countryName }
-        binding.tvIso.text = r.iso2
-        binding.tvNumber.text = r.international
-        binding.tvPlace.text = r.placeLabel.ifEmpty { r.countryName }
+        binding.txtTitle.text = place.ifEmpty { r.countryName }
+        binding.txtIso.text = r.iso2
+        binding.txtNumber.text = r.international
+        binding.txtPlace.text = r.placeLabel.ifEmpty { r.countryName }
 
-        binding.btnBack.setOnClickListener { goBack() }
-        binding.btnZoomIn.setOnClickListener { binding.mapView.controller.zoomIn() }
-        binding.btnZoomOut.setOnClickListener { binding.mapView.controller.zoomOut() }
-        binding.btnRecenter.setOnClickListener { recenter() }
-        binding.btnDirections.setOnClickListener { openInMaps() }
-        listOf(binding.btnZoomIn, binding.btnZoomOut, binding.btnRecenter, binding.btnDirections)
+        binding.actBack.setOnClickListener { goBack() }
+        binding.actZoomIn.setOnClickListener { binding.chartView.controller.zoomIn() }
+        binding.actZoomOut.setOnClickListener { binding.chartView.controller.zoomOut() }
+        binding.actRecenter.setOnClickListener { recenter() }
+        binding.actDirections.setOnClickListener { openInMaps() }
+        listOf(binding.actZoomIn, binding.actZoomOut, binding.actRecenter, binding.actDirections)
             .forEach { CraftMovement.pressScale(it) }
 
-        StreetCharts.style(binding.mapView, interactive = true)
-        overlay = StreetCharts.place(binding.mapView, r, coarse = false)
+        StreetCharts.style(binding.chartView, interactive = true)
+        overlay = StreetCharts.place(binding.chartView, r, coarse = false)
         // No point for the area (country-only result): the whole country's name is all we have.
-        binding.btnRecenter.isEnabled = r.pin != null
-        binding.btnRecenter.alpha = if (r.pin != null) 1f else 0.4f
+        binding.actRecenter.isEnabled = r.pin != null
+        binding.actRecenter.alpha = if (r.pin != null) 1f else 0.4f
         centerPin()
     }
 
     /** Back to the area at its own zoom, after the user panned or zoomed away. */
     private fun recenter() {
         val pin = report.pin ?: return
-        binding.mapView.controller.animateTo(
+        binding.chartView.controller.animateTo(
             org.osmdroid.util.GeoPoint(pin.lat, pin.lng), report.precision.zoom, RECENTER_MS,
         )
     }
@@ -96,12 +96,12 @@ class ChartWholeActivity : StageActivity<ScreenMapFullBinding>() {
      * over its bottom — half the difference below centre.
      */
     private fun centerPin() {
-        binding.placeCard.post {
+        binding.lvPlaceCard.post {
             val d = resources.displayMetrics.density
             val above = topInset + (52 * d).roundToInt()
-            val below = binding.placeCard.height + (16 * d).roundToInt()
-            binding.mapView.setMapCenterOffset(0, (above - below) / 2)
-            binding.mapView.invalidate()
+            val below = binding.lvPlaceCard.height + (16 * d).roundToInt()
+            binding.chartView.setMapCenterOffset(0, (above - below) / 2)
+            binding.chartView.invalidate()
         }
     }
 
@@ -119,11 +119,11 @@ class ChartWholeActivity : StageActivity<ScreenMapFullBinding>() {
 
     override fun onResume() {
         super.onResume()
-        if (::report.isInitialized) binding.mapView.onResume()
+        if (::report.isInitialized) binding.chartView.onResume()
     }
 
     override fun onPause() {
-        if (::report.isInitialized) binding.mapView.onPause()
+        if (::report.isInitialized) binding.chartView.onPause()
         super.onPause()
     }
 

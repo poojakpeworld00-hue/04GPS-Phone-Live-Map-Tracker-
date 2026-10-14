@@ -16,13 +16,13 @@
     <data />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/pkgresContentVw"
+        android:id="@+id/parcelContent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/pkgres_page">
 
         <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/pkgresHeroBottomVw"
+            android:id="@+id/parcelHeroBottom"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -30,11 +30,11 @@
 
         <!-- ============ HERO ============ -->
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/pkgresHeroVw"
+            android:id="@+id/parcelHero"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:background="@drawable/bgx_pkgres_hero_installed"
-            app:layout_constraintBottom_toTopOf="@+id/pkgresHeroBottomVw"
+            app:layout_constraintBottom_toTopOf="@+id/parcelHeroBottom"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -50,7 +50,7 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <ImageButton
-                android:id="@+id/pkgresCloseVw"
+                android:id="@+id/parcelClose"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:layout_marginTop="8dp"
@@ -82,7 +82,7 @@
                     android:elevation="8dp">
 
                     <ImageView
-                        android:id="@+id/pkgresAppIconVw"
+                        android:id="@+id/parcelAppIcon"
                         android:layout_width="56dp"
                         android:layout_height="56dp"
                         android:layout_gravity="center"
@@ -91,7 +91,7 @@
                 </FrameLayout>
 
                 <FrameLayout
-                    android:id="@+id/pkgresBadgeVw"
+                    android:id="@+id/parcelBadge"
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="end|bottom"
@@ -99,7 +99,7 @@
                     android:elevation="10dp">
 
                     <ImageView
-                        android:id="@+id/pkgresBadgeIconVw"
+                        android:id="@+id/parcelBadgeIcon"
                         android:layout_width="15dp"
                         android:layout_height="15dp"
                         android:layout_gravity="center"
@@ -112,7 +112,7 @@
 
         <!-- ============ STATUS + COPY ============ -->
         <TextView
-            android:id="@+id/pkgresStatusVw"
+            android:id="@+id/parcelStatus"
             android:layout_width="wrap_content"
             android:layout_height="24dp"
             android:layout_marginTop="10dp"
@@ -128,10 +128,10 @@
             android:textSize="10sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/pkgresHeroVw" />
+            app:layout_constraintTop_toBottomOf="@+id/parcelHero" />
 
         <TextView
-            android:id="@+id/pkgresTitleVw"
+            android:id="@+id/parcelTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="20dp"
@@ -146,11 +146,11 @@
             android:textSize="24sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/pkgresStatusVw"
+            app:layout_constraintTop_toBottomOf="@+id/parcelStatus"
             tools:text="Instagram installed" />
 
         <TextView
-            android:id="@+id/pkgresSubtitleVw"
+            android:id="@+id/parcelSubtitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="24dp"
@@ -164,13 +164,13 @@
             android:textSize="13sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/pkgresTitleVw" />
+            app:layout_constraintTop_toBottomOf="@+id/parcelTitle" />
 
         <!-- ============ CHECK ============ -->
         <!-- The check runs in two phases: a short progress while the real figures are read, then a
              card of results (rows added in code: row_pkgres_check). -->
         <LinearLayout
-            android:id="@+id/pkgresBodyVw"
+            android:id="@+id/parcelBody"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="20dp"
@@ -178,10 +178,10 @@
             android:orientation="vertical"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/pkgresSubtitleVw">
+            app:layout_constraintTop_toBottomOf="@+id/parcelSubtitle">
 
             <LinearLayout
-                android:id="@+id/pkgresProgressVw"
+                android:id="@+id/parcelProgress"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bgx_pkgres_details"
@@ -189,7 +189,7 @@
                 android:padding="16dp">
 
                 <TextView
-                    android:id="@+id/pkgresStepVw"
+                    android:id="@+id/parcelStep"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/figtree_bold"
@@ -199,7 +199,7 @@
                     tools:text="Reading app permissions…" />
 
                 <com.google.android.material.progressindicator.LinearProgressIndicator
-                    android:id="@+id/pkgresProgressBarVw"
+                    android:id="@+id/parcelProgressBar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
@@ -211,7 +211,7 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/pkgresChecksVw"
+                android:id="@+id/parcelChecks"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bgx_pkgres_details"
@@ -223,20 +223,20 @@
 
         <!-- The body native; shown only when the config asks for it. -->
         <FrameLayout
-            android:id="@+id/adNativeFrame"
+            android:id="@+id/spotNativeFrame"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginHorizontal="20dp"
             android:layout_marginTop="12dp"
             android:layout_marginBottom="12dp"
             android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@+id/pkgresActionsVw"
+            app:layout_constraintBottom_toTopOf="@+id/parcelActions"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/pkgresBodyVw">
+            app:layout_constraintTop_toBottomOf="@+id/parcelBody">
 
             <com.facebook.shimmer.ShimmerFrameLayout
-                android:id="@+id/adShimmer"
+                android:id="@+id/spotShimmer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="#ccc">
@@ -247,7 +247,7 @@
 
         <!-- ============ ACTIONS ============ -->
         <LinearLayout
-            android:id="@+id/pkgresActionsVw"
+            android:id="@+id/parcelActions"
             android:layout_width="0dp"
             android:layout_height="54dp"
             android:layout_marginHorizontal="20dp"
@@ -259,7 +259,7 @@
             app:layout_constraintStart_toStartOf="parent">
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/pkgresDoneVw"
+                android:id="@+id/parcelDone"
                 style="@style/Widget.Material3.Button"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -280,7 +280,7 @@
                 app:strokeWidth="1dp" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/pkgresOpenVw"
+                android:id="@+id/parcelOpen"
                 style="@style/Widget.Material3.Button"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"

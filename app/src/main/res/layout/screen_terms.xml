@@ -6,14 +6,14 @@
     <data />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/termsRoot"
+        android:id="@+id/policyRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/background"
         tools:context=".screens.policy.PolicyPortalActivity">
 
         <TextView
-            android:id="@+id/tvTitle"
+            android:id="@+id/txtTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/_18sdp"
@@ -26,17 +26,17 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <androidx.core.widget.NestedScrollView
-            android:id="@+id/scrollTerms"
+            android:id="@+id/scrlTerms"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginTop="@dimen/_12sdp"
             android:clipToPadding="false"
             android:paddingHorizontal="@dimen/_18sdp"
             android:paddingBottom="@dimen/_12sdp"
-            app:layout_constraintBottom_toTopOf="@id/tvAgree"
+            app:layout_constraintBottom_toTopOf="@id/txtAgree"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvTitle">
+            app:layout_constraintTop_toBottomOf="@id/txtTitle">
 
             <TextView
                 android:layout_width="match_parent"
@@ -52,7 +52,7 @@
         </androidx.core.widget.NestedScrollView>
 
         <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/cbAgree"
+            android:id="@+id/checkAgree"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/_14sdp"
@@ -60,12 +60,12 @@
             android:minWidth="0dp"
             android:minHeight="0dp"
             app:buttonTint="@color/primary"
-            app:layout_constraintBottom_toBottomOf="@id/tvAgree"
+            app:layout_constraintBottom_toBottomOf="@id/txtAgree"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@id/tvAgree" />
+            app:layout_constraintTop_toTopOf="@id/txtAgree" />
 
         <TextView
-            android:id="@+id/tvAgree"
+            android:id="@+id/txtAgree"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/_6sdp"
@@ -78,13 +78,13 @@
             android:text="@string/terms_agree"
             android:textColor="@color/on_surface"
             android:textSize="@dimen/_11ssp"
-            app:layout_constraintBottom_toTopOf="@id/btnAccept"
+            app:layout_constraintBottom_toTopOf="@id/actAccept"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/cbAgree"
-            app:layout_constraintTop_toBottomOf="@id/scrollTerms" />
+            app:layout_constraintStart_toEndOf="@id/checkAgree"
+            app:layout_constraintTop_toBottomOf="@id/scrlTerms" />
 
         <TextView
-            android:id="@+id/btnAccept"
+            android:id="@+id/actAccept"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="@dimen/_16sdp"

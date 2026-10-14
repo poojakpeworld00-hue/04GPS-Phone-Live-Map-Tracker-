@@ -12,7 +12,7 @@
     android:padding="20dp">
 
     <TextView
-        android:id="@+id/tvWaitTitle"
+        android:id="@+id/txtWaitTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fontFamily="@font/nunito_extrabold"
@@ -22,7 +22,7 @@
         android:textSize="18sp" />
 
     <TextView
-        android:id="@+id/tvWaitBody"
+        android:id="@+id/txtWaitBody"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
@@ -39,7 +39,7 @@
         android:layout_marginTop="20dp">
 
         <com.google.android.material.progressindicator.CircularProgressIndicator
-            android:id="@+id/ringWait"
+            android:id="@+id/lv_ringWait"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -53,7 +53,7 @@
             tools:progress="700" />
 
         <TextView
-            android:id="@+id/tvWaitTime"
+            android:id="@+id/txtWaitTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -63,7 +63,7 @@
             tools:text="01:48" />
 
         <ImageView
-            android:id="@+id/ivWaitDone"
+            android:id="@+id/imgWaitDone"
             android:layout_width="44dp"
             android:layout_height="44dp"
             android:layout_gravity="center"
@@ -80,7 +80,7 @@
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnWaitLater"
+            android:id="@+id/actWaitLater"
             style="@style/Widget.Material3.Button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -96,7 +96,7 @@
             app:cornerRadius="14dp" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnWaitUnlock"
+            android:id="@+id/actWaitUnlock"
             style="@style/Widget.Material3.Button"
             android:layout_width="0dp"
             android:layout_height="match_parent"

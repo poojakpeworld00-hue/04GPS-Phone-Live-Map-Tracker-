@@ -82,7 +82,7 @@
                 app:typingText="@string/ds_typing_number" />
 
             <View
-                android:id="@+id/obCursor"
+                android:id="@+id/indCursor"
                 android:layout_width="2dp"
                 android:layout_height="20dp"
                 android:layout_marginStart="1dp"
@@ -99,7 +99,7 @@
                 android:clipChildren="false">
 
                 <View
-                    android:id="@+id/obGlow"
+                    android:id="@+id/indGlow"
                     android:layout_width="44dp"
                     android:layout_height="44dp"
                     android:background="@drawable/lv_glow_radial" />
@@ -125,7 +125,7 @@
             android:layout_marginTop="14dp">
 
             <com.facebook.shimmer.ShimmerFrameLayout
-                android:id="@+id/obSrLoad"
+                android:id="@+id/indSrLoad"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 app:shimmer_auto_start="true"
@@ -183,7 +183,7 @@
 
             <!-- result card -->
             <LinearLayout
-                android:id="@+id/obSrRes"
+                android:id="@+id/indSrRes"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:alpha="0"

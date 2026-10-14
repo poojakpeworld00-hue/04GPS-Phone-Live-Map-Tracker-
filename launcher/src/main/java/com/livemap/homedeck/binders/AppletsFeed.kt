@@ -57,20 +57,20 @@ class AppletsFeed(
 
     private fun setupListSection(view: View, section: AppletsListSegment) {
         HdItemWidgetListSectionBinding.bind(view).apply {
-            widgetAppTitleUi.text = section.appTitle
-            widgetAppTitleUi.setTextColor(textColor)
-            widgetAppIconUi.setImageDrawable(section.appIcon)
+            gadgetAppTitleUi.text = section.appTitle
+            gadgetAppTitleUi.setTextColor(textColor)
+            gadgetAppIconUi.setImageDrawable(section.appIcon)
         }
     }
 
     private fun setupListItemsHolder(view: View, listItem: AppletsListElementsKeeper) {
         val binding = HdItemWidgetListItemsHolderBinding.bind(view)
-        binding.widgetListItemsHolderUi.removeAllViews()
-        binding.widgetListItemsScrollViewUi.scrollX = 0
+        binding.gadgetListItemsHolderUi.removeAllViews()
+        binding.gadgetListItemsScrollViewUi.scrollX = 0
         listItem.widgets.forEachIndexed { index, widget ->
             val imageSize = activity.resources.getDimension(R.dimen.launcher_widget_preview_size).toInt()
             val widgetPreview = HdItemWidgetPreviewBinding.inflate(LayoutInflater.from(activity))
-            binding.widgetListItemsHolderUi.addView(widgetPreview.root)
+            binding.gadgetListItemsHolderUi.addView(widgetPreview.root)
 
             val endMargin = if (index == listItem.widgets.size - 1) {
                 activity.resources.getDimension(org.fossify.commons.R.dimen.medium_margin).toInt()
@@ -78,12 +78,12 @@ class AppletsFeed(
                 0
             }
 
-            widgetPreview.widgetTitleUi.apply {
+            widgetPreview.gadgetTitleUi.apply {
                 text = widget.widgetTitleUi
                 setTextColor(textColor)
             }
 
-            widgetPreview.widgetSizeUi.apply {
+            widgetPreview.gadgetSizeUi.apply {
                 text = if (widget.isShortcut) {
                     activity.getString(org.fossify.commons.R.string.shortcut)
                 } else {
@@ -92,7 +92,7 @@ class AppletsFeed(
                 setTextColor(textColor)
             }
 
-            (widgetPreview.widgetImageUi.layoutParams as RelativeLayout.LayoutParams).apply {
+            (widgetPreview.gadgetImageUi.layoutParams as RelativeLayout.LayoutParams).apply {
                 marginStart = activity.resources.getDimension(org.fossify.commons.R.dimen.activity_margin).toInt()
                 marginEnd = endMargin
                 width = imageSize
@@ -101,7 +101,7 @@ class AppletsFeed(
 
             Glide.with(activity)
                 .load(widget.widgetPreviewImage)
-                .into(widgetPreview.widgetImageUi)
+                .into(widgetPreview.gadgetImageUi)
 
             widgetPreview.root.setOnClickListener { itemClick() }
 

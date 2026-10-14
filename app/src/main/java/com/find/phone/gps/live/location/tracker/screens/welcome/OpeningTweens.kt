@@ -23,24 +23,24 @@ object OpeningTweens {
         if (CraftMovement.animationsDisabled(root.context)) return emptyList()
         val out = ArrayList<Animator>(8)
 
-        root.findViewById<View?>(R.id.obPhoneMock)?.let { out += CraftMovement.floaty(it) }
-        root.findViewById<View?>(R.id.obChipDial)?.let { out += CraftMovement.floaty(it, delayMs = 800L) }
-        root.findViewById<View?>(R.id.obChipGps)?.let { out += CraftMovement.floaty(it, delayMs = 1600L) }
-        root.findViewById<View?>(R.id.obSearchTile)?.let { out += CraftMovement.floaty(it, delayMs = 2400L) }
+        root.findViewById<View?>(R.id.indPhoneMock)?.let { out += CraftMovement.floaty(it) }
+        root.findViewById<View?>(R.id.indChipDial)?.let { out += CraftMovement.floaty(it, delayMs = 800L) }
+        root.findViewById<View?>(R.id.indChipGps)?.let { out += CraftMovement.floaty(it, delayMs = 1600L) }
+        root.findViewById<View?>(R.id.indSearchTile)?.let { out += CraftMovement.floaty(it, delayMs = 2400L) }
 
-        root.findViewById<View?>(R.id.obDetailCard)?.let { out += CraftMovement.fadeIn(it, durationMs = 800L) }
+        root.findViewById<View?>(R.id.indDetailCard)?.let { out += CraftMovement.fadeIn(it, durationMs = 800L) }
 
-        root.findViewById<View?>(R.id.obCursor)?.let { out += CraftMovement.blink(it) }
-        root.findViewById<View?>(R.id.obGlow)?.let { out += CraftMovement.glow(it, durationMs = 2000L) }
+        root.findViewById<View?>(R.id.indCursor)?.let { out += CraftMovement.blink(it) }
+        root.findViewById<View?>(R.id.indGlow)?.let { out += CraftMovement.glow(it, durationMs = 2000L) }
 
         // A3: the result area cross-fades from the "Searching…" shimmer to the result card
         // (the design's `srload` / `srres` on one 4 s loop).
-        val srLoad = root.findViewById<View?>(R.id.obSrLoad)
-        val srRes = root.findViewById<View?>(R.id.obSrRes)
+        val srLoad = root.findViewById<View?>(R.id.indSrLoad)
+        val srRes = root.findViewById<View?>(R.id.indSrRes)
         if (srLoad != null && srRes != null) out += crossFade(srLoad, srRes)
 
-        root.findViewById<View?>(R.id.obOrbit)?.let { out += CraftMovement.spin(it, ORBIT_MS) }
-        listOf(R.id.obTile1, R.id.obTile2, R.id.obTile3, R.id.obTile4).forEach { id ->
+        root.findViewById<View?>(R.id.indOrbit)?.let { out += CraftMovement.spin(it, ORBIT_MS) }
+        listOf(R.id.indTile1, R.id.indTile2, R.id.indTile3, R.id.indTile4).forEach { id ->
             root.findViewById<View?>(id)?.let { out += CraftMovement.spin(it, ORBIT_MS, reverse = true) }
         }
         return out

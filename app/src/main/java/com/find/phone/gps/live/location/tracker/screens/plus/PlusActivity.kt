@@ -71,35 +71,35 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
         WindowCompat.getInsetsController(window, binding.root).isAppearanceLightStatusBars = true
-        val closeTop = (binding.btnClose.layoutParams as ViewGroup.MarginLayoutParams).topMargin
-        val bottomPad = binding.bottomBar.paddingBottom
-        ViewCompat.setOnApplyWindowInsetsListener(binding.premiumRoot) { _, insets ->
+        val closeTop = (binding.actClose.layoutParams as ViewGroup.MarginLayoutParams).topMargin
+        val bottomPad = binding.lowerBar.paddingBottom
+        ViewCompat.setOnApplyWindowInsetsListener(binding.plusRoot) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            binding.btnClose.updateLayoutParams<ViewGroup.MarginLayoutParams> { topMargin = closeTop + bars.top }
-            binding.hero.updateLayoutParams { height = dp(300) + bars.top }
-            binding.bottomBar.updatePadding(bottom = bottomPad + bars.bottom)
-            binding.premiumRoot.updatePadding(left = bars.left, right = bars.right)
+            binding.actClose.updateLayoutParams<ViewGroup.MarginLayoutParams> { topMargin = closeTop + bars.top }
+            binding.lead.updateLayoutParams { height = dp(300) + bars.top }
+            binding.lowerBar.updatePadding(bottom = bottomPad + bars.bottom)
+            binding.plusRoot.updatePadding(left = bars.left, right = bars.right)
             insets
         }
 
-        rows = listOf(binding.plan1, binding.plan2, binding.plan3)
+        rows = listOf(binding.lvPlan1, binding.lvPlan2, binding.lvPlan3)
         rows.forEachIndexed { i, row ->
             row.root.isVisible = i < plans.size
-            row.planCard.setOnClickListener { select(i) }
+            row.lvPlanCard.setOnClickListener { select(i) }
         }
         bindPlans()
 
-        CraftMovement.pressScale(binding.btnContinue)
-        binding.btnContinue.clipToOutline = true
-        binding.btnContinue.setOnClickListener { buy() }
-        binding.btnRestore.setOnClickListener { restore() }
-        binding.btnTerms.setOnClickListener { openTermLink() }
-        binding.btnPrivacy.setOnClickListener { openPolicyLink() }
-        binding.btnClose.setOnClickListener { if (binding.btnClose.closable) leave() }
-        binding.btnClose.start(config.closeDelaySec, config.closeButtonOpacity) {}
-        binding.btnContinueFree.paintFlags = binding.btnContinueFree.paintFlags or Paint.UNDERLINE_TEXT_FLAG
+        CraftMovement.pressScale(binding.actContinue)
+        binding.actContinue.clipToOutline = true
+        binding.actContinue.setOnClickListener { buy() }
+        binding.actRestore.setOnClickListener { restore() }
+        binding.actTerms.setOnClickListener { openTermLink() }
+        binding.actPrivacy.setOnClickListener { openPolicyLink() }
+        binding.actClose.setOnClickListener { if (binding.actClose.closable) leave() }
+        binding.actClose.start(config.closeDelaySec, config.closeButtonOpacity) {}
+        binding.actContinueFree.paintFlags = binding.actContinueFree.paintFlags or Paint.UNDERLINE_TEXT_FLAG
         // Shown and usable from the start: close_delay_sec paces only the X.
-        binding.btnContinueFree.setOnClickListener {
+        binding.actContinueFree.setOnClickListener {
             logKeyEvent("premium_continue_free")
             leave()
         }
@@ -107,7 +107,7 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         // Back does nothing until the close control has appeared; then it leaves like the X.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (binding.btnClose.closable) leave()
+                if (binding.actClose.closable) leave()
             }
         })
 
@@ -133,25 +133,25 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
             val row = rows[i]
             val on = i == selected
             // The selected plan fills with the CTA's gradient, turns its copy white and lifts.
-            row.planCard.setBackgroundResource(if (on) R.drawable.lv_plan_on_r18 else R.drawable.lv_plan_off_r18)
-            row.tvName.setTextColor(getColor(if (on) R.color.white else R.color.ds_ink))
-            row.tvPrice.setTextColor(getColor(if (on) R.color.white else R.color.ds_ink))
-            row.tvPeriod.setTextColor(if (on) getColor(R.color.white) and 0xD9FFFFFF.toInt() else getColor(R.color.ds_muted))
-            row.planCard.elevation = if (on) dp(10).toFloat() else 0f
+            row.lvPlanCard.setBackgroundResource(if (on) R.drawable.lv_plan_on_r18 else R.drawable.lv_plan_off_r18)
+            row.txtName.setTextColor(getColor(if (on) R.color.white else R.color.ds_ink))
+            row.txtPrice.setTextColor(getColor(if (on) R.color.white else R.color.ds_ink))
+            row.txtPeriod.setTextColor(if (on) getColor(R.color.white) and 0xD9FFFFFF.toInt() else getColor(R.color.ds_muted))
+            row.lvPlanCard.elevation = if (on) dp(10).toFloat() else 0f
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                row.planCard.outlineSpotShadowColor = getColor(R.color.ds_primary)
-                row.planCard.outlineAmbientShadowColor = getColor(R.color.ds_primary)
+                row.lvPlanCard.outlineSpotShadowColor = getColor(R.color.ds_primary)
+                row.lvPlanCard.outlineAmbientShadowColor = getColor(R.color.ds_primary)
             }
             val scale = if (on) SELECTED_SCALE else 1f
             row.root.animate().scaleX(scale).scaleY(scale).setDuration(180L).start()
-            row.tvName.setText(nameOf(plan))
+            row.txtName.setText(nameOf(plan))
             // The monthly card reads per week (its Play price / 4); the CTA and the price line
             // below keep the amount actually billed each month.
-            row.tvPrice.text = (if (plan.kind == PlusOffer.Kind.MONTHLY) PlusCheckout.weeklyPrice(plan)
+            row.txtPrice.text = (if (plan.kind == PlusOffer.Kind.MONTHLY) PlusCheckout.weeklyPrice(plan)
             else PlusCheckout.price(plan)) ?: PRICE_PENDING
-            row.tvPeriod.setText(periodOf(plan))
-            row.tvTag.text = plan.tag
-            row.tvTag.isVisible = plan.tag.isNotBlank()
+            row.txtPeriod.setText(periodOf(plan))
+            row.txtTag.text = plan.tag
+            row.txtTag.isVisible = plan.tag.isNotBlank()
         }
         val plan = plans.getOrNull(selected) ?: return
         val trial = trialOf(plan)
@@ -166,25 +166,25 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         if (price == null) {
             // No Play price for this plan yet: a spinner while Play is asked, Retry once it failed.
             val failed = priceState == PriceState.FAILED
-            binding.tvPriceLine.text = if (failed) getString(R.string.ds_premium_unavailable) else ""
-            binding.tvCta.text = getString(R.string.ds_retry)
+            binding.txtPriceLine.text = if (failed) getString(R.string.ds_premium_unavailable) else ""
+            binding.txtCta.text = getString(R.string.ds_retry)
             if (!buying) {
-                binding.tvCta.isInvisible = !failed
-                binding.pbCta.isVisible = !failed
+                binding.txtCta.isInvisible = !failed
+                binding.spinCta.isVisible = !failed
             }
             return
         }
         if (!buying) {
-            binding.tvCta.isInvisible = false
-            binding.pbCta.isVisible = false
+            binding.txtCta.isInvisible = false
+            binding.spinCta.isVisible = false
         }
-        binding.tvCta.text = when {
+        binding.txtCta.text = when {
             trial > 0 -> getString(R.string.ds_premium_cta_trial, trial)
             plan.kind == PlusOffer.Kind.WEEKLY -> getString(R.string.ds_premium_cta_week, price)
             plan.kind == PlusOffer.Kind.MONTHLY -> getString(R.string.ds_premium_cta_month, price)
             else -> getString(R.string.ds_premium_cta_lifetime, price)
         }
-        binding.tvPriceLine.text = when (plan.kind) {
+        binding.txtPriceLine.text = when (plan.kind) {
             PlusOffer.Kind.WEEKLY -> if (trial > 0) getString(R.string.ds_premium_price_trial_week, price, trial)
             else getString(R.string.ds_premium_price_week, price)
             PlusOffer.Kind.MONTHLY -> if (trial > 0) getString(R.string.ds_premium_price_trial_month, price, trial)
@@ -239,8 +239,8 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         }
         link(terms) { openTermLink() }
         link(privacy) { openPolicyLink() }
-        binding.tvNote.text = spannable
-        binding.tvNote.movementMethod = LinkMovementMethod.getInstance()
+        binding.txtNote.text = spannable
+        binding.txtNote.movementMethod = LinkMovementMethod.getInstance()
     }
 
     private fun nameOf(plan: PlusOffer) = when (plan.kind) {
@@ -291,11 +291,11 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
     }
 
     private fun restore() {
-        binding.btnRestore.isEnabled = false
+        binding.actRestore.isEnabled = false
         PlusCheckout.sync(this) { active ->
             runOnUiThread {
                 if (isFinishing || isDestroyed) return@runOnUiThread
-                binding.btnRestore.isEnabled = true
+                binding.actRestore.isEnabled = true
                 when (active) {
                     true -> {
                         Toast.makeText(this, R.string.ds_premium_restored, Toast.LENGTH_SHORT).show()
@@ -311,8 +311,8 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
 
     private fun setBuying(on: Boolean) {
         buying = on
-        binding.tvCta.isInvisible = on
-        binding.pbCta.isVisible = on
+        binding.txtCta.isInvisible = on
+        binding.spinCta.isVisible = on
     }
 
     /** Leaves the paywall: on to the next first-run step after the intro, else just back. */
@@ -327,12 +327,12 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
     /** The light streak sweeping across the CTA every 3 s (design `shine`). */
     private fun startShine() {
         if (CraftMovement.animationsDisabled(this)) {
-            binding.shine.isVisible = false
+            binding.lvShine.isVisible = false
             return
         }
-        binding.btnContinue.post {
-            val w = binding.btnContinue.width.toFloat()
-            shine = ObjectAnimator.ofFloat(binding.shine, View.TRANSLATION_X, -0.3f * w, 1.1f * w).apply {
+        binding.actContinue.post {
+            val w = binding.actContinue.width.toFloat()
+            shine = ObjectAnimator.ofFloat(binding.lvShine, View.TRANSLATION_X, -0.3f * w, 1.1f * w).apply {
                 duration = 1_800L
                 startDelay = 400L
                 repeatCount = ValueAnimator.INFINITE

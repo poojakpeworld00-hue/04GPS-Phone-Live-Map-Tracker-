@@ -45,7 +45,7 @@ class PartClueActivity : AppCompatActivity() {
         // window while it was the top task, and the input dispatcher ANR-killed the process on
         // the system list. The first touch dismisses the card, so the list is never blocked.
 
-        val root = findViewById<View>(R.id.llMain)
+        val root = findViewById<View>(R.id.stackMain)
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(bars.left, bars.top, bars.right, bars.bottom)
@@ -54,12 +54,12 @@ class PartClueActivity : AppCompatActivity() {
 
         // The row mirrors the entry the user is looking for: this app's label.
         runCatching {
-            findViewById<TextView>(R.id.guideRowNameTv)?.text =
+            findViewById<TextView>(R.id.coachRowNameTv)?.text =
                 packageManager.getApplicationLabel(applicationInfo).toString().trim()
         }
 
         bindDismissOnTouch(root)
-        enter(findViewById(R.id.overlayCardVw))
+        enter(findViewById(R.id.veilCard))
         startTapLoop()
 
         visible = this
@@ -91,15 +91,15 @@ class PartClueActivity : AppCompatActivity() {
     private fun startTapLoop() {
         if (CraftMovement.animationsDisabled(this)) {
             // Final frame: the hand resting on a selected radio.
-            findViewById<View>(R.id.hintRadioRingOn)?.alpha = 1f
-            findViewById<View>(R.id.hintRadioDot)?.apply { scaleX = 1f; scaleY = 1f }
+            findViewById<View>(R.id.clueRadioRingOn)?.alpha = 1f
+            findViewById<View>(R.id.clueRadioDot)?.apply { scaleX = 1f; scaleY = 1f }
             return
         }
-        val hand = findViewById<View>(R.id.hintHand)
-        val ripple = findViewById<View>(R.id.hintRipple)
-        val ringOn = findViewById<View>(R.id.hintRadioRingOn)
-        val dot = findViewById<View>(R.id.hintRadioDot)
-        val glow = findViewById<View>(R.id.hintRowGlow)
+        val hand = findViewById<View>(R.id.clueHand)
+        val ripple = findViewById<View>(R.id.clueRipple)
+        val ringOn = findViewById<View>(R.id.clueRadioRingOn)
+        val dot = findViewById<View>(R.id.clueRadioDot)
+        val glow = findViewById<View>(R.id.clueRowGlow)
 
         // tap: rests at (10,12); in at 38%, pressed (scale .86) at 48%, released by 62%, back out.
         val restX = dp(10f)
@@ -145,7 +145,7 @@ class PartClueActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        findViewById<View>(R.id.llMain)?.removeCallbacks(autoFinish)
+        findViewById<View>(R.id.stackMain)?.removeCallbacks(autoFinish)
         CraftMovement.cancelAll(animators)
         if (visible === this) visible = null
         super.onDestroy()

@@ -40,12 +40,12 @@ class FrameDialsActivity : StageActivity<ScreenCarrierCodesBinding>() {
     override fun initView() {
         // Dark icons on the light canvas, light icons in dark mode.
         WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = !isNightMode(this)
-        ViewCompat.setOnApplyWindowInsetsListener(binding.codesRoot) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.lvCodesRoot) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(top = bars.top, bottom = bars.bottom)
             insets
         }
-        binding.btnBack.setOnClickListener { goBack() }
+        binding.actBack.setOnClickListener { goBack() }
 
         tabs = MineChipNums.read(this).map { SimTab(it.slot, it.carrier) }
         val wantSlot = intent.getIntExtra(EXTRA_SLOT, -1)
@@ -56,9 +56,9 @@ class FrameDialsActivity : StageActivity<ScreenCarrierCodesBinding>() {
     }
 
     private fun buildTabs() {
-        binding.carrierTabs.removeAllViews()
+        binding.lvCarrierTabs.removeAllViews()
         if (tabs.size < 2) {
-            binding.carrierTabs.visibility = View.GONE
+            binding.lvCarrierTabs.visibility = View.GONE
             return
         }
         tabs.forEachIndexed { i, tab ->
@@ -71,14 +71,14 @@ class FrameDialsActivity : StageActivity<ScreenCarrierCodesBinding>() {
                 text = tab.carrier
                 setOnClickListener { select(i) }
             }
-            binding.carrierTabs.addView(view)
+            binding.lvCarrierTabs.addView(view)
         }
         styleTabs()
     }
 
     private fun styleTabs() {
-        for (i in 0 until binding.carrierTabs.childCount) {
-            val tab = binding.carrierTabs.getChildAt(i) as TextView
+        for (i in 0 until binding.lvCarrierTabs.childCount) {
+            val tab = binding.lvCarrierTabs.getChildAt(i) as TextView
             val on = i == selected
             tab.setTextColor(ContextCompat.getColor(this, if (on) R.color.ds_primary else R.color.ds_muted))
             tab.typeface = ResourcesCompat.getFont(this, if (on) R.font.figtree_bold else R.font.figtree_semibold)
@@ -96,14 +96,14 @@ class FrameDialsActivity : StageActivity<ScreenCarrierCodesBinding>() {
 
     private fun render() {
         val tab = tabs.getOrNull(selected)
-        binding.tvDetected.text = if (tab != null)
+        binding.txtDetected.text = if (tab != null)
             getString(R.string.carrier_codes_detected_fmt, tab.carrier, tab.slot)
         else getString(R.string.carrier_codes_title)
 
-        binding.sections.removeAllViews()
+        binding.lvSections.removeAllViews()
         val inflater = LayoutInflater.from(this)
         FrameDials.forCarrier(tab?.carrier).forEachIndexed { index, section ->
-            binding.sections.addView(sectionLabel(section.title, index == 0))
+            binding.lvSections.addView(sectionLabel(section.title, index == 0))
             val card = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 setBackgroundResource(R.drawable.lv_card_border_r20)
@@ -112,7 +112,7 @@ class FrameDialsActivity : StageActivity<ScreenCarrierCodesBinding>() {
                 if (i > 0) card.addView(divider())
                 card.addView(codeRow(inflater, card, code))
             }
-            binding.sections.addView(card)
+            binding.lvSections.addView(card)
         }
     }
 
@@ -135,10 +135,10 @@ class FrameDialsActivity : StageActivity<ScreenCarrierCodesBinding>() {
 
     private fun codeRow(inflater: LayoutInflater, parent: LinearLayout, code: FrameDials.Code): View =
         CellCarrierCodeBinding.inflate(inflater, parent, false).apply {
-            tvTitle.text = code.title
-            tvSubtitle.text = code.subtitle
-            tvCode.text = code.code
-            codeRow.setOnClickListener { dial(code.code) }
+            txtTitle.text = code.title
+            txtSubtitle.text = code.subtitle
+            txtCode.text = code.code
+            lvCodeRow.setOnClickListener { dial(code.code) }
         }.root
 
     private fun dial(code: String) {

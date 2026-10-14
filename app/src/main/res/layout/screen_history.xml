@@ -11,7 +11,7 @@
     <data />
 
     <LinearLayout
-        android:id="@+id/historyRoot"
+        android:id="@+id/pastRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
@@ -28,7 +28,7 @@
             android:paddingEnd="12dp">
 
             <ImageButton
-                android:id="@+id/btnBack"
+                android:id="@+id/actBack"
                 style="@style/Ds.IconButton"
                 android:contentDescription="@string/ds_cd_back"
                 android:rotation="180"
@@ -36,7 +36,7 @@
                 app:tint="@color/ds_ink" />
 
             <TextView
-                android:id="@+id/tvTitle"
+                android:id="@+id/txtTitle"
                 style="@style/Ds.Text.Header"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -45,7 +45,7 @@
                 android:text="@string/ds_history_title" />
 
             <TextView
-                android:id="@+id/btnClearAll"
+                android:id="@+id/actClearAll"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
@@ -58,7 +58,7 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/tvCount"
+            android:id="@+id/txtCount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
@@ -82,7 +82,7 @@
 
                 <!-- Today / Yesterday / Earlier sections, filled in code -->
                 <LinearLayout
-                    android:id="@+id/sections"
+                    android:id="@+id/lv_sections"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
@@ -91,7 +91,7 @@
 
                 <!-- empty -->
                 <LinearLayout
-                    android:id="@+id/emptyState"
+                    android:id="@+id/blankState"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_horizontal"
@@ -139,7 +139,7 @@
         </androidx.core.widget.NestedScrollView>
 
         <View
-            android:id="@+id/adBannerDivider"
+            android:id="@+id/spotBannerDivider"
             style="@style/AdDivider"
             android:background="@color/ds_hairline12" />
 

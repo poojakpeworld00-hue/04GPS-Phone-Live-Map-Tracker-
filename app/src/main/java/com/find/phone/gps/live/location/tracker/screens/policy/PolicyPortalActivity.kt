@@ -61,19 +61,19 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
         // Record this intro show for the once/count frequency gate.
         OpeningUnveilCharter.markShown(this, OpeningUnveilProfile.TERMS)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.termsRoot) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.policyRoot) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             insets
         }
 
-        binding.cbAgree.isChecked = true
+        binding.checkAgree.isChecked = true
         setAcceptEnabled(true)
 
-        binding.cbAgree.setOnCheckedChangeListener { _, checked -> setAcceptEnabled(checked) }
+        binding.checkAgree.setOnCheckedChangeListener { _, checked -> setAcceptEnabled(checked) }
         // Tapping the label toggles the box too.
-        binding.tvAgree.setOnClickListener { binding.cbAgree.toggle() }
-        binding.btnAccept.setOnClickListener { onAccept() }
+        binding.txtAgree.setOnClickListener { binding.checkAgree.toggle() }
+        binding.actAccept.setOnClickListener { onAccept() }
 
         // Onboarding rule: system back must not exit the app — advance forward to
         // the next screen (marking terms accepted so it isn't shown again). Stays
@@ -115,12 +115,12 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
     }
 
     private fun setAcceptEnabled(enabled: Boolean) {
-        binding.btnAccept.isEnabled = enabled
-        binding.btnAccept.alpha = if (enabled) 1f else 0.5f
+        binding.actAccept.isEnabled = enabled
+        binding.actAccept.alpha = if (enabled) 1f else 0.5f
     }
 
     private fun onAccept() {
-        if (!binding.cbAgree.isChecked) {
+        if (!binding.checkAgree.isChecked) {
             Toast.makeText(this, R.string.terms_please_accept, Toast.LENGTH_SHORT).show()
             return
         }

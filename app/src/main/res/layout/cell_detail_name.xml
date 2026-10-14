@@ -17,7 +17,7 @@
         android:paddingVertical="8dp">
 
         <TextView
-            android:id="@+id/tvAvatar"
+            android:id="@+id/txtAvatar"
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:background="@drawable/lv_circle_track"
@@ -29,7 +29,7 @@
             tools:text="JM" />
 
         <TextView
-            android:id="@+id/tvName"
+            android:id="@+id/txtName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
@@ -42,7 +42,7 @@
             tools:text="John Miller" />
 
         <TextView
-            android:id="@+id/tvRevealed"
+            android:id="@+id/txtRevealed"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
@@ -54,7 +54,7 @@
             tools:visibility="visible" />
 
         <FrameLayout
-            android:id="@+id/btnReveal"
+            android:id="@+id/actReveal"
             android:layout_width="wrap_content"
             android:layout_height="28dp"
             android:layout_marginStart="10dp"
@@ -62,7 +62,7 @@
             android:foreground="?attr/selectableItemBackground">
 
             <TextView
-                android:id="@+id/tvReveal"
+                android:id="@+id/txtReveal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -76,7 +76,7 @@
                 app:drawableTint="@color/white" />
 
             <ProgressBar
-                android:id="@+id/pbReveal"
+                android:id="@+id/spinReveal"
                 android:layout_width="18dp"
                 android:layout_height="18dp"
                 android:layout_gravity="center"
@@ -86,7 +86,7 @@
     </LinearLayout>
 
     <View
-        android:id="@+id/nameDivider"
+        android:id="@+id/lv_nameDivider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@color/ds_divider" />

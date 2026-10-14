@@ -40,33 +40,33 @@ class MemoAmendDrawer(
 
     fun show() = with(binding) {
         if (existing != null) {
-            tvSheetTitle.setText(R.string.rem_edit_edit)
-            btnDelete.isVisible = true
-            etTitle.setText(existing.title)
-            etNumber.setText(existing.number)
-            etNote.setText(existing.note)
+            txtSheetTitle.setText(R.string.rem_edit_edit)
+            actDelete.isVisible = true
+            inputTitle.setText(existing.title)
+            inputNumber.setText(existing.number)
+            inputNote.setText(existing.note)
             // A done or past one-off comes back as "in an hour" rather than a time already gone.
             val at = if (existing.dateTime > System.currentTimeMillis()) existing.dateTime else existing.baseTime
             pick.timeInMillis = at
             repeat = existing.repeatOrOnce
-            if (at <= System.currentTimeMillis() && repeat == Repeat.ONCE) selectChip(chipHour)
+            if (at <= System.currentTimeMillis() && repeat == Repeat.ONCE) selectChip(pillHour)
         } else {
-            selectChip(chipHour)
+            selectChip(pillHour)
         }
 
-        chipHour.setOnClickListener { selectChip(chipHour) }
-        chipTonight.setOnClickListener { selectChip(chipTonight) }
-        chipTomorrow.setOnClickListener { selectChip(chipTomorrow) }
-        chipCustom.setOnClickListener { selectChip(chipCustom); pickDate(thenTime = true) }
-        fieldDate.setOnClickListener { selectChip(chipCustom); pickDate(thenTime = false) }
-        fieldTime.setOnClickListener { selectChip(chipCustom); pickTime() }
-        segOnce.setOnClickListener { setRepeat(Repeat.ONCE) }
-        segDaily.setOnClickListener { setRepeat(Repeat.DAILY) }
-        segWeekdays.setOnClickListener { setRepeat(Repeat.WEEKDAYS) }
-        btnPickContact.setOnClickListener { onPickContact { number -> etNumber.setText(number) } }
-        btnDelete.setOnClickListener { existing?.let { dialog.dismiss(); onDelete(it) } }
-        CraftMovement.pressScale(btnSave)
-        btnSave.setOnClickListener { save() }
+        pillHour.setOnClickListener { selectChip(pillHour) }
+        pillTonight.setOnClickListener { selectChip(pillTonight) }
+        pillTomorrow.setOnClickListener { selectChip(pillTomorrow) }
+        pillCustom.setOnClickListener { selectChip(pillCustom); pickDate(thenTime = true) }
+        lvFieldDate.setOnClickListener { selectChip(pillCustom); pickDate(thenTime = false) }
+        lvFieldTime.setOnClickListener { selectChip(pillCustom); pickTime() }
+        partOnce.setOnClickListener { setRepeat(Repeat.ONCE) }
+        partDaily.setOnClickListener { setRepeat(Repeat.DAILY) }
+        partWeekdays.setOnClickListener { setRepeat(Repeat.WEEKDAYS) }
+        actPickContact.setOnClickListener { onPickContact { number -> inputNumber.setText(number) } }
+        actDelete.setOnClickListener { existing?.let { dialog.dismiss(); onDelete(it) } }
+        CraftMovement.pressScale(actSave)
+        actSave.setOnClickListener { save() }
 
         setRepeat(repeat)
         renderWhen()
@@ -75,18 +75,18 @@ class MemoAmendDrawer(
         dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
         dialog.behavior.skipCollapsed = true
         dialog.show()
-        if (existing == null) etTitle.requestFocus()
+        if (existing == null) inputTitle.requestFocus()
     }
 
     private fun selectChip(view: TextView) {
         val now = Calendar.getInstance()
         when (view.id) {
-            R.id.chipHour -> pick.timeInMillis = roundUp(now.timeInMillis + 60 * 60_000L)
-            R.id.chipTonight -> pick.atHour(now, 20, if (now.get(Calendar.HOUR_OF_DAY) >= 20) 1 else 0)
-            R.id.chipTomorrow -> pick.atHour(now, 9, 1)
+            R.id.pillHour -> pick.timeInMillis = roundUp(now.timeInMillis + 60 * 60_000L)
+            R.id.pillTonight -> pick.atHour(now, 20, if (now.get(Calendar.HOUR_OF_DAY) >= 20) 1 else 0)
+            R.id.pillTomorrow -> pick.atHour(now, 9, 1)
             else -> Unit // Custom keeps the current pick until the pickers change it
         }
-        listOf(binding.chipHour, binding.chipTonight, binding.chipTomorrow, binding.chipCustom).forEach {
+        listOf(binding.pillHour, binding.pillTonight, binding.pillTomorrow, binding.pillCustom).forEach {
             val on = it === view
             it.setBackgroundResource(if (on) R.drawable.lv_reminder_chip_selected else R.drawable.lv_reminder_chip_tint)
             it.setTextColor(ContextCompat.getColor(themed, if (on) R.color.white else R.color.ds_primary))
@@ -127,7 +127,7 @@ class MemoAmendDrawer(
 
     private fun setRepeat(value: String) {
         repeat = value
-        val segs = mapOf(Repeat.ONCE to binding.segOnce, Repeat.DAILY to binding.segDaily, Repeat.WEEKDAYS to binding.segWeekdays)
+        val segs = mapOf(Repeat.ONCE to binding.partOnce, Repeat.DAILY to binding.partDaily, Repeat.WEEKDAYS to binding.partWeekdays)
         segs.forEach { (key, view) ->
             val on = key == value
             view.background = if (on) ContextCompat.getDrawable(themed, R.drawable.lv_reminder_seg_on) else null
@@ -137,13 +137,13 @@ class MemoAmendDrawer(
     }
 
     private fun renderWhen() {
-        binding.tvDate.text = MemoShaper.day(themed, pick.timeInMillis)
-        binding.tvTime.text = MemoShaper.time(themed, pick.timeInMillis)
-        binding.tvError.isVisible = false
+        binding.txtDate.text = MemoShaper.day(themed, pick.timeInMillis)
+        binding.txtTime.text = MemoShaper.time(themed, pick.timeInMillis)
+        binding.txtError.isVisible = false
     }
 
     private fun save() {
-        val title = binding.etTitle.text?.toString()?.trim().orEmpty()
+        val title = binding.inputTitle.text?.toString()?.trim().orEmpty()
         if (title.isEmpty()) return showError(R.string.rem_err_title)
         val at = pick.timeInMillis
         // A one-off must be in the future; a repeating one just starts at its next time.
@@ -151,8 +151,8 @@ class MemoAmendDrawer(
 
         val item = (existing ?: MemoElement(title = title, dateTime = at)).copy(
             title = title,
-            number = binding.etNumber.text?.toString()?.trim().orEmpty(),
-            note = binding.etNote.text?.toString()?.trim().orEmpty(),
+            number = binding.inputNumber.text?.toString()?.trim().orEmpty(),
+            note = binding.inputNote.text?.toString()?.trim().orEmpty(),
             dateTime = at,
             baseTime = at,
             repeat = repeat,
@@ -164,8 +164,8 @@ class MemoAmendDrawer(
     }
 
     private fun showError(res: Int) {
-        binding.tvError.setText(res)
-        binding.tvError.isVisible = true
-        binding.tvError.announceForAccessibility(binding.tvError.text)
+        binding.txtError.setText(res)
+        binding.txtError.isVisible = true
+        binding.txtError.announceForAccessibility(binding.txtError.text)
     }
 }

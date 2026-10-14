@@ -127,7 +127,7 @@ class PreferredMainClueDeck : AppCompatActivity() {
         setContentView(R.layout.hd_default_home_hint_panel)
         applyKind()
 
-        findViewById<View>(R.id.llMainUi)?.setOnClickListener { finish() }
+        findViewById<View>(R.id.stackMainUi)?.setOnClickListener { finish() }
         when (kind.control) {
             Control.SWITCH -> startSwitchAnimation()
             Control.RADIO -> startRadioAnimation()
@@ -147,23 +147,23 @@ class PreferredMainClueDeck : AppCompatActivity() {
         // simply ignore it.
         val label = runCatching { applicationInfo.loadLabel(packageManager).toString() }
             .getOrElse { getString(R.string.launcher_app_launcher_name) }
-        findViewById<android.widget.TextView>(R.id.guideTitleUi)?.text = getString(kind.title, label)
-        findViewById<android.widget.TextView>(R.id.guideDescriptionUi)?.setText(kind.description)
-        findViewById<android.widget.TextView>(R.id.guideMockAppLabelUi)?.text = label
-        findViewById<android.widget.TextView>(R.id.guideMockOverlayLabelUi)?.text = label
+        findViewById<android.widget.TextView>(R.id.coachTitleUi)?.text = getString(kind.title, label)
+        findViewById<android.widget.TextView>(R.id.coachDescriptionUi)?.setText(kind.description)
+        findViewById<android.widget.TextView>(R.id.coachMockAppLabelUi)?.text = label
+        findViewById<android.widget.TextView>(R.id.coachMockOverlayLabelUi)?.text = label
 
         // Each system page gets a mock of itself with this app's row lifted out - the Home-app
         // list with the row selected, the overlay page with the row's switch on. The SMS chooser,
         // which names this app and offers a button, gets words only.
-        findViewById<View>(R.id.guideHomeMockUi)?.visibility =
+        findViewById<View>(R.id.coachHomeMockUi)?.visibility =
             if (kind.control == Control.RADIO) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.guideOverlayMockUi)?.visibility =
+        findViewById<View>(R.id.coachOverlayMockUi)?.visibility =
             if (kind.control == Control.SWITCH) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.guideRowUi)?.visibility =
+        findViewById<View>(R.id.coachRowUi)?.visibility =
             if (kind.control == Control.NONE) View.VISIBLE else View.GONE
 
         if (kind.position == Position.TOP) {
-            findViewById<View>(R.id.guideSpacerUi)?.visibility = View.GONE
+            findViewById<View>(R.id.coachSpacerUi)?.visibility = View.GONE
             window.setGravity(Gravity.TOP)
             window.setLayout(
                 WindowManager.LayoutParams.MATCH_PARENT,
@@ -195,9 +195,9 @@ class PreferredMainClueDeck : AppCompatActivity() {
      * between the two colours, both on the same clock so they read as one movement.
      */
     private fun startSwitchAnimation() {
-        val track = findViewById<FrameLayout>(R.id.guideSwitchTrackUi) ?: return
-        val thumb = findViewById<View>(R.id.guideSwitchThumbUi) ?: return
-        val row = findViewById<View>(R.id.guideMockOverlayRowUi)
+        val track = findViewById<FrameLayout>(R.id.coachSwitchTrackUi) ?: return
+        val thumb = findViewById<View>(R.id.coachSwitchThumbUi) ?: return
+        val row = findViewById<View>(R.id.coachMockOverlayRowUi)
 
         val travel =
             (TRACK_WIDTH_DP - THUMB_SIZE_DP - THUMB_INSET_DP * 2) * resources.displayMetrics.density
@@ -252,9 +252,9 @@ class PreferredMainClueDeck : AppCompatActivity() {
      * read as one movement.
      */
     private fun startRadioAnimation() {
-        val ring = findViewById<View>(R.id.guideRadioRingUi) ?: return
-        val dot = findViewById<View>(R.id.guideRadioDotUi) ?: return
-        val row = findViewById<View>(R.id.guideMockAppRowUi)
+        val ring = findViewById<View>(R.id.coachRadioRingUi) ?: return
+        val dot = findViewById<View>(R.id.coachRadioDotUi) ?: return
+        val row = findViewById<View>(R.id.coachMockAppRowUi)
 
         // Starts invisible rather than small-but-there: an unselected radio button has no centre at
         // all, and a permanent dot would read as "already chosen".

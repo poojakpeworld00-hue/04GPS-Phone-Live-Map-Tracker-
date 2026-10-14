@@ -43,7 +43,7 @@
         android:textSize="22sp" />
 
     <TextView
-        android:id="@+id/tvBody"
+        android:id="@+id/txtBody"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
@@ -55,7 +55,7 @@
         tools:text="+1 415 55 doesn't match the United States number format. Check the digits or the country code." />
 
     <TextView
-        android:id="@+id/btnEdit"
+        android:id="@+id/actEdit"
         android:layout_width="match_parent"
         android:layout_height="54dp"
         android:layout_marginTop="18dp"
@@ -67,7 +67,7 @@
         android:textSize="16sp" />
 
     <TextView
-        android:id="@+id/btnCountry"
+        android:id="@+id/actCountry"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
