@@ -11,13 +11,13 @@
     android:clipToOutline="true"
     tools:ignore="HardcodedText,ContentDescription">
 
-    <com.find.phone.gps.live.location.tracker.ui.design.GridPatternView
+    <com.find.phone.gps.live.location.tracker.ui.design.LatticeMotifView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:gridColor="@color/ds_primary07"
         app:gridSize="28dp" />
 
-    <com.find.phone.gps.live.location.tracker.ui.design.RoadsView
+    <com.find.phone.gps.live.location.tracker.ui.design.PathsView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:roadsVariant="map" />
@@ -31,7 +31,7 @@
         android:background="@drawable/ds_route_dot" />
 
     <!-- destination: cyan ping + pin -->
-    <com.find.phone.gps.live.location.tracker.ui.design.PingRingView
+    <com.find.phone.gps.live.location.tracker.ui.design.BlipLoopView
         android:layout_width="120dp"
         android:layout_height="120dp"
         android:layout_gravity="center"
@@ -46,7 +46,7 @@
         android:layout_gravity="center"
         android:background="@drawable/ds_circle_primary12" />
 
-    <com.find.phone.gps.live.location.tracker.ui.design.PinShapeView
+    <com.find.phone.gps.live.location.tracker.ui.design.TackContourView
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_gravity="center"

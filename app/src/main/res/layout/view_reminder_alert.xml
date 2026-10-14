@@ -178,7 +178,7 @@
                 app:cornerRadius="16dp" />
         </LinearLayout>
 
-        <!-- Mid native ad: only after unlock (see ReminderAlertActivity.loadAdIfUnlocked). -->
+        <!-- Mid native ad: only after unlock (see MemoSirenActivity.loadAdIfUnlocked). -->
         <FrameLayout
             android:id="@+id/alertAdFrame"
             android:layout_width="match_parent"

@@ -2,7 +2,7 @@
 <!--
     One gesture tile of the Welcome step (design 4a): r16 white card with a 34dp icon tile, the
     gesture name and what it opens. Four sit in a row with an 8dp gap; the "Swipe right" tile is
-    the active one (gradient, white text), styled in GreetingStepActivity.bindTile.
+    the active one (gradient, white text), styled in HelloPhaseActivity.bindTile.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"

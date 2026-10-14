@@ -48,7 +48,7 @@
          (48 dp + 4 dp - its cell_layout starts 249 px down at 420 dpi) ... -->
     <dimen name="launcher_drawer_top_gap">52dp</dimen>
     <!-- ... and below the last row, the gap it leaves above the page dots. Between the two the page
-         is split evenly over its rows (DrawerPagesLineup), as One UI's is. -->
+         is split evenly over its rows (SliderLeavesFeed), as One UI's is. -->
     <dimen name="launcher_drawer_page_bottom_gap">24dp</dimen>
     <!-- Gap above the scrolling drawer list's first row when the search bar is at the bottom. -->
     <dimen name="launcher_drawer_list_top_gap">20dp</dimen>
@@ -60,7 +60,7 @@
     <!-- First page: our drawn Google bar (used when Google's own widget cannot be placed). -->
     <dimen name="launcher_google_bar_height">48dp</dimen>
     <dimen name="launcher_google_bar_side">8dp</dimen>
-    <!-- ItemActionsTray, the long-press card -->
+    <!-- ElementMovesBasket, the long-press card -->
     <dimen name="lnch_tray_radius">26dp</dimen>
     <dimen name="lnch_tray_action_width">76dp</dimen>
     <dimen name="lnch_tray_min_width">232dp</dimen>

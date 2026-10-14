@@ -3,7 +3,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <!--
-        The in-app page a direct link opens in (DirectLinkOpener, `link_open_in: webview`). White and
+        The in-app page a direct link opens in (StraightHrefOpener, `link_open_in: webview`). White and
         edge to edge: promo landing pages assume a white background, and unlike a Custom Tab or a
         browser this page has no toolbar of its own to hide.
     -->

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Mid native, no media (Claude Design "Ads Redesign" · small native): 54dp r16 icon, headline +
-     Ad badge, star rating, body, full-width green Install button that glows (NativeAdLook). -->
+     Ad badge, star rating, body, full-width green Install button that glows (EmbeddedSpotGuise). -->
 <com.google.android.gms.ads.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"

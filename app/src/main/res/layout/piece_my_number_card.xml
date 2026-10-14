@@ -2,7 +2,7 @@
 <!-- Drawer "My number" card (design 1a, "SIMs visible"): a white card on the blue drawer header
      with a "MY NUMBER" label; one row per SIM (tile_my_number_sim) once phone access is granted,
      or a "Show" button that asks for it. Fixed white / dark colors so it reads on the blue header
-     in both light and dark mode. Wired by MyNumberCard. -->
+     in both light and dark mode. Wired by MineNumPlate. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -62,7 +62,7 @@
             android:textSize="12sp" />
     </LinearLayout>
 
-    <!-- No-permission subtitle; hidden once the SIM rows show (set in MyNumberCard). -->
+    <!-- No-permission subtitle; hidden once the SIM rows show (set in MineNumPlate). -->
     <TextView
         android:id="@+id/tvMyNumberSub"
         android:layout_width="match_parent"

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Full-screen native ad host for the app-drawer ad sequence (DrawerAdRunner.FULLSCREEN_NATIVE). -->
+<!-- Full-screen native ad host for the app-drawer ad sequence (SliderSpotDriver.FULLSCREEN_NATIVE). -->
 <com.google.android.gms.ads.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"

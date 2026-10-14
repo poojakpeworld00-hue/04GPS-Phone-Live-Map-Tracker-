@@ -8,7 +8,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.LauncherApps
 import android.graphics.drawable.Drawable
-import io.launcher.home.helpers.IconShaper
+import io.launcher.home.helpers.BadgeMolder
 import android.os.Build
 import android.os.Process
 import android.util.Size
@@ -16,30 +16,30 @@ import android.provider.Telephony
 import androidx.annotation.RequiresApi
 import org.fossify.commons.helpers.isQPlus
 import org.fossify.commons.helpers.isSPlus
-import io.launcher.home.databases.AppsDatabase
+import io.launcher.home.databases.ProgramsDb
 import io.launcher.home.helpers.Config
-import io.launcher.home.interfaces.AppLaunchersDao
-import io.launcher.home.interfaces.AppUsageDao
-import io.launcher.home.interfaces.HiddenIconsDao
-import io.launcher.home.interfaces.HomeScreenGridItemsDao
+import io.launcher.home.interfaces.CoreHomesDao
+import io.launcher.home.interfaces.CoreStatsDao
+import io.launcher.home.interfaces.StashedBadgesDao
+import io.launcher.home.interfaces.MainDisplayLatticeElementsDao
 import kotlin.math.ceil
 import kotlin.math.max
 
 val Context.launcherConfig: Config get() = Config.newInstance(applicationContext)
 
-val Context.launchersDB: AppLaunchersDao
-    get() = AppsDatabase.getInstance(applicationContext).AppLaunchersDao()
+val Context.launchersDB: CoreHomesDao
+    get() = ProgramsDb.getInstance(applicationContext).CoreHomesDao()
 
-val Context.homeScreenGridItemsDB: HomeScreenGridItemsDao
-    get() = AppsDatabase.getInstance(
+val Context.homeScreenGridItemsDB: MainDisplayLatticeElementsDao
+    get() = ProgramsDb.getInstance(
         applicationContext
-    ).HomeScreenGridItemsDao()
+    ).MainDisplayLatticeElementsDao()
 
-val Context.hiddenIconsDB: HiddenIconsDao
-    get() = AppsDatabase.getInstance(applicationContext).HiddenIconsDao()
+val Context.hiddenIconsDB: StashedBadgesDao
+    get() = ProgramsDb.getInstance(applicationContext).StashedBadgesDao()
 
-val Context.appUsageDB: AppUsageDao
-    get() = AppsDatabase.getInstance(applicationContext).AppUsageDao()
+val Context.appUsageDB: CoreStatsDao
+    get() = ProgramsDb.getInstance(applicationContext).CoreStatsDao()
 
 @get:RequiresApi(Build.VERSION_CODES.Q)
 val Context.roleManager: RoleManager
@@ -65,7 +65,7 @@ fun Context.getDrawableForPackageName(packageName: String): Drawable? {
     }
 
     // A legacy single-bitmap icon gets the device's icon shape like every adaptive one.
-    return drawable?.let { IconShaper.shape(it, launcherConfig.legacyIconTray) }
+    return drawable?.let { BadgeMolder.shape(it, launcherConfig.legacyIconTray) }
 }
 
 fun Context.getInitialCellSize(

@@ -11,7 +11,7 @@
     android:paddingBottom="@dimen/small_margin">
 
     <!--
-        Sized by LaunchersLineup once laid out: as tall as the profile's icon plus its top padding
+        Sized by HomesFeed once laid out: as tall as the profile's icon plus its top padding
         when a size is known (so a row is icon + label, and six of them fit a page), square by
         width otherwise.
     -->
@@ -24,7 +24,7 @@
         android:scaleType="fitCenter" />
 
     <!--
-        White, and stated here as well as in LaunchersLineup so a label is never left carrying the
+        White, and stated here as well as in HomesFeed so a label is never left carrying the
         theme's text colour: MyTextView starts from the theme, and the theme's colour follows the
         wallpaper under Material You.
 
@@ -32,7 +32,7 @@
         wallpaper, so whatever the user has set shows through behind these labels; without a dark
         shadow the thin antialiased glyphs pick up the colour behind them and the same white label
         looks blue over a blue wallpaper and warm over a warm one. The home screen's labels have
-        carried the same shadow all along (HomeScreenGrid.textPaint).
+        carried the same shadow all along (MainDisplayLattice.textPaint).
     -->
     <org.fossify.commons.views.MyTextView
         android:id="@+id/launcher_labelUi"

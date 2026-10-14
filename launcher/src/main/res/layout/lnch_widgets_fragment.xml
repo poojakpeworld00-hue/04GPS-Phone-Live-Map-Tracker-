@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<io.launcher.home.fragments.WidgetsSurface xmlns:android="http://schemas.android.com/apk/res/android"
+<io.launcher.home.fragments.AppletsPlane xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/widgets_holderUi"
     android:layout_width="match_parent"
@@ -26,4 +26,4 @@
             app:layoutManager="org.fossify.commons.views.MyLinearLayoutManager" />
 
     </com.qtalk.recyclerviewfastscroller.RecyclerViewFastScroller>
-</io.launcher.home.fragments.WidgetsSurface>
+</io.launcher.home.fragments.AppletsPlane>

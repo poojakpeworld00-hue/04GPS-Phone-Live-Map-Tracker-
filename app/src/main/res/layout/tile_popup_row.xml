@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One DsPopup row: 44dp, r12 ripple, 30dp icon tile, label, optional count pill, check when selected. -->
+<!-- One KitFlyout row: 44dp, r12 ripple, 30dp icon tile, label, optional count pill, check when selected. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"

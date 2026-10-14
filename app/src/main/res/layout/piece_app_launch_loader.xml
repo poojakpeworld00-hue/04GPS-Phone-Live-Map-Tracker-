@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Full-screen loader while an ad for an app tap is fetched: the tapped app's icon and name, so
-     the wait reads as "opening that app", not as the launcher hanging. See AppLaunchLoader. -->
+     the wait reads as "opening that app", not as the launcher hanging. See CoreStartPuller. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

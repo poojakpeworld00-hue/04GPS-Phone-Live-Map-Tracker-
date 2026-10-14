@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?><!--
     "Setup not complete" card at the top of the launcher workspace, shown while the Home role is
     not held. Outer wrapper is transparent and takes the status bar inset padding; the gradient
-    card lives inside it. The whole card is the tap target (LauncherPanel hangs the click on the
-    root); LauncherBannerMotion owns every animation - entrance, the hero loops, the chevron
+    card lives inside it. The whole card is the tap target (HomeDeck hangs the click on the
+    root); HomeRibbonMovement owns every animation - entrance, the hero loops, the chevron
     nudge and the sheen sweep - and starts / stops them with the card's visibility.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -160,7 +160,7 @@
         </LinearLayout>
 
         <!--
-            diagonal highlight swept across the card by LauncherBannerMotion. Fixed height: a
+            diagonal highlight swept across the card by HomeRibbonMovement. Fixed height: a
             match_parent View in a wrap_content FrameLayout takes all the free space and the
             card grows with it; taller than the card and centred so the tilt never shows an end.
         -->

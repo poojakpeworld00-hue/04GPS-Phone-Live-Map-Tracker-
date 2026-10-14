@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?><!--
     The launcher module swipe-in panel (the home screen left drawer). It hosts the app's home
-    content (HomeCoreFragment, committed into panelContent by LauncherShellFragment) inside the
-    same DrawerLayout + 3e menu the standalone AppCoreActivity uses, so the panel behaves like
+    content (MainHubFragment, committed into panelContent by HomeCasingFragment) inside the
+    same DrawerLayout + 3e menu the standalone CoreHubActivity uses, so the panel behaves like
     the main page. The holder is clickable so touches never fall through to the home grid.
 -->
 <layout xmlns:android="http://schemas.android.com/apk/res/android"

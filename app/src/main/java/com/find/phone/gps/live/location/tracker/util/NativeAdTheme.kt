@@ -3,11 +3,11 @@ package com.find.phone.gps.live.location.tracker.util
 import android.content.Context
 import android.content.res.Configuration
 import android.util.Log
-import com.find.phone.gps.live.location.tracker.adcast.domain.AdConfigIngest
-import com.find.phone.gps.live.location.tracker.adcast.domain.AdsVault
-import com.find.phone.gps.live.location.tracker.util.AppVault.THEME_DARK
-import com.find.phone.gps.live.location.tracker.util.AppVault.THEME_LIGHT
-import com.find.phone.gps.live.location.tracker.util.AppVault.THEME_SYSTEM
+import com.find.phone.gps.live.location.tracker.adcast.domain.SpotProfileAbsorb
+import com.find.phone.gps.live.location.tracker.adcast.domain.SpotsLocker
+import com.find.phone.gps.live.location.tracker.util.CoreLocker.THEME_DARK
+import com.find.phone.gps.live.location.tracker.util.CoreLocker.THEME_LIGHT
+import com.find.phone.gps.live.location.tracker.util.CoreLocker.THEME_SYSTEM
 import org.json.JSONObject
 
 private const val TAG = "NativeTheme"
@@ -22,14 +22,14 @@ private const val TAG = "NativeTheme"
  * a screen that renders natives without calling this shows them in whatever mode some earlier
  * screen left behind, or unset entirely on a cold boot (dark-on-dark, effectively invisible).
  *
- * Called by [com.find.phone.gps.live.location.tracker.base.CanvasActivity] for every normal screen, and
+ * Called by [com.find.phone.gps.live.location.tracker.base.StageActivity] for every normal screen, and
  * separately by the launcher home — which does not extend it, yet is the device HOME and so is
  * often the first screen after a reboot.
  */
 fun Context.applyNativeAdTheme(
-    theme: String = AppVault.selectedTheme(this).ifEmpty { THEME_SYSTEM }
+    theme: String = CoreLocker.selectedTheme(this).ifEmpty { THEME_SYSTEM }
 ) {
-    val adsPref = AdsVault.getInstance(this)
+    val adsPref = SpotsLocker.getInstance(this)
     val modeKey = when (theme) {
         THEME_LIGHT -> "NativeLight"
         THEME_DARK -> "NativeDark"
@@ -44,8 +44,8 @@ fun Context.applyNativeAdTheme(
     }
 
     try {
-        // The audience block's own palette (AdConfigIngest.applyNativeTheme), light or dark.
-        val palette = JSONObject(adsPref.getString(AdConfigIngest.NATIVE_THEME_ACTIVE, "{}") ?: "{}")
+        // The audience block's own palette (SpotProfileAbsorb.applyNativeTheme), light or dark.
+        val palette = JSONObject(adsPref.getString(SpotProfileAbsorb.NATIVE_THEME_ACTIVE, "{}") ?: "{}")
         val themeJson = palette.optJSONObject(modeKey)
 
         if (themeJson == null) {

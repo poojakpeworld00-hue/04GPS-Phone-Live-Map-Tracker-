@@ -90,8 +90,8 @@
                         android:textSize="13sp"
                         tools:text="Version 1.0.0" />
 
-                    <!-- "My number" card (design 1a): the phone's own SIMs, wired by MyNumberCard
-                         from HomeDrawerMenu. Hidden on a phone with no ready SIM. -->
+                    <!-- "My number" card (design 1a): the phone's own SIMs, wired by MineNumPlate
+                         from MainSliderOptions. Hidden on a phone with no ready SIM. -->
                     <include
                         android:id="@+id/myNumber"
                         layout="@layout/piece_my_number_card"
@@ -322,7 +322,7 @@
                 </LinearLayout>
 
                 <!-- Delete the phonebook this install uploaded. Hidden until the user has consented
-                     to the upload (HomeDrawerMenu). -->
+                     to the upload (MainSliderOptions). -->
                 <LinearLayout
                     android:id="@+id/rowDeleteContacts"
                     style="@style/Ds.DrawerRow"

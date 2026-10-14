@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- ItemActionsTray: the app's own shortcuts as rows, then the launcher's actions as a row of icons. -->
+<!-- ElementMovesBasket: the app's own shortcuts as rows, then the launcher's actions as a row of icons. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/trayCardUi"
     android:layout_width="wrap_content"

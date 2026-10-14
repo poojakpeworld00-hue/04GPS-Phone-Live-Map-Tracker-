@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?><!--
     Shared "STEP n OF m" indicator for the numbered onboarding steps (design 4a-4c): a 6dp track
     with the gradient fill and the tint pill. The pill text and the progress are set in code by
-    LauncherFlow.bindStepHeader, so the count follows the live onboarding order.
+    HomeStream.bindStepHeader, so the count follows the live onboarding order.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"

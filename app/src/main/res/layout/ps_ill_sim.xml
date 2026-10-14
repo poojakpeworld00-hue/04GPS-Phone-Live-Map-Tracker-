@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Page 2 illustration (2b, the before/after reveal): a grey "without access" SIM card under a
-     gradient "with access" one. RevealCompareLayout wipes the top card in and out on an 8s loop and
+     gradient "with access" one. UnveilVersusArrange wipes the top card in and out on an 8s loop and
      lets the user drag the ‹› handle to compare. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -25,7 +25,7 @@
         android:text="@string/ps_sim_with"
         android:textColor="@color/ps_primary" />
 
-    <com.find.phone.gps.live.location.tracker.permission.sheet.RevealCompareLayout
+    <com.find.phone.gps.live.location.tracker.permission.sheet.UnveilVersusArrange
         android:id="@+id/reveal"
         android:layout_width="match_parent"
         android:layout_height="156dp"
@@ -217,5 +217,5 @@
                 android:textColor="@color/ps_primary"
                 android:textSize="13sp" />
         </FrameLayout>
-    </com.find.phone.gps.live.location.tracker.permission.sheet.RevealCompareLayout>
+    </com.find.phone.gps.live.location.tracker.permission.sheet.UnveilVersusArrange>
 </FrameLayout>

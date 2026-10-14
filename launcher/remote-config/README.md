@@ -40,7 +40,7 @@ values. Test config-driven behaviour on the *second* launch.
 ## The audience split
 
 Each blob carries an `organic` and a `marketing` branch, picked by
-`LauncherBridge.isOrganicAudience()`. A blob with no branches at all is read flat and applies to
+`HomeGateway.isOrganicAudience()`. A blob with no branches at all is read flat and applies to
 both, so an older template keeps working after a key gains its split.
 
 ## `launcher_config` fields
@@ -74,13 +74,13 @@ drawerAppAdEnabled        bool   sponsored tiles in the app drawer; default fals
 drawerAppAdEvery          int    one tile after every N apps; default 8, minimum 1
 drawerAppAds              array  the tiles, each used once, in order
   .logo                   str    image URL; shaped like an app icon
-  .landing_url            str    opened on tap via LauncherAds.openSponsored; an entry without one is dropped
+  .landing_url            str    opened on tap via HomeSpots.openSponsored; an entry without one is dropped
   .label                  str    shown as "Ad · <label>"
 ```
 
 Sponsored tiles are left out of search results, cannot be long-pressed (nothing to drag or
 uninstall), and skip the `drawer_open` gesture promo. The logos are loaded over the network, so the
-host needs the `INTERNET` permission. Tapping one calls `LauncherAds.openSponsored`, which defaults
+host needs the `INTERNET` permission. Tapping one calls `HomeSpots.openSponsored`, which defaults
 to `ACTION_VIEW`; override it to open the link in your own WebView or Custom Tab.
 
 `panels.host` was spelled `messages` while the launcher lived in a messaging app. Both spellings
@@ -96,8 +96,8 @@ same bridge — the module falls back to its own built-in table when they are ab
 | `home_profile_rules` | which OEM profile applies to which device |
 | `home_profile_probes` | where to look inside an OEM launcher's APK for its grid |
 
-To create one, dump the built-in table as your starting point: `HomeProfileRules.DEFAULT_RULES_JSON`
-and `ApkProfileReader.DEFAULT_PROBES_JSON` in the module source.
+To create one, dump the built-in table as your starting point: `MainPresetLaws.DEFAULT_RULES_JSON`
+and `BundlePresetScanner.DEFAULT_PROBES_JSON` in the module source.
 
 ## Gotchas worth knowing before debugging a gate
 

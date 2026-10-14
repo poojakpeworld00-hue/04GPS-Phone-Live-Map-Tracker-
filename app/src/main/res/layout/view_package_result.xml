@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    The install / uninstall screen. Shown by PackageEventWatcher on ACTION_PACKAGE_ADDED /
+    The install / uninstall screen. Shown by ParcelHappeningSentinel on ACTION_PACKAGE_ADDED /
     ACTION_PACKAGE_REMOVED: a privacy check of the new app's permissions on install, a storage and
     memory check on uninstall. Every figure shown is read from the device.
 
-    One layout serves both outcomes: PackageResultActivity swaps the hero wash, the badge glyph and
+    One layout serves both outcomes: ParcelVerdictActivity swaps the hero wash, the badge glyph and
     the status pill between installed (green) and removed (red), and hides "Open app" when there is
     nothing left to open. Colours are literals from colors_package_result.xml so the page reads the
     same whatever the app's light/dark setting is.

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Home content (design 3a/3b/3e), hosted by HomeCoreFragment: a live radar hero under the
+    Home content (design 3a/3b/3e), hosted by MainHubFragment: a live radar hero under the
     status bar, the raised search card that overlaps it, the native mid slot below the fold
     line, then recent searches; the adaptive banner docks at the bottom once recents exist.
-    The same fragment is the standalone home (AppCoreActivity) and the launcher's swipe-in panel.
+    The same fragment is the standalone home (CoreHubActivity) and the launcher's swipe-in panel.
 -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -14,7 +14,7 @@
     android:background="@color/ds_canvas"
     android:clickable="true"
     android:focusable="true"
-    tools:context=".ui.home.HomeCoreFragment">
+    tools:context=".ui.home.MainHubFragment">
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scroll"
@@ -45,13 +45,13 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
-                <com.find.phone.gps.live.location.tracker.ui.design.GridPatternView
+                <com.find.phone.gps.live.location.tracker.ui.design.LatticeMotifView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     app:gridColor="@color/ds_white07"
                     app:gridSize="28dp" />
 
-                <com.find.phone.gps.live.location.tracker.ui.design.RoadsView
+                <com.find.phone.gps.live.location.tracker.ui.design.PathsView
                     android:id="@+id/heroRoads"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -72,21 +72,21 @@
                         android:layout_height="match_parent"
                         android:background="@drawable/ds_ring_white25" />
 
-                    <com.find.phone.gps.live.location.tracker.ui.design.RadarSweepView
+                    <com.find.phone.gps.live.location.tracker.ui.design.SonarSwipeView
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         app:sweepAngle="70"
                         app:sweepColor="@color/ds_white35"
                         app:sweepDuration="3000" />
 
-                    <com.find.phone.gps.live.location.tracker.ui.design.PingRingView
+                    <com.find.phone.gps.live.location.tracker.ui.design.BlipLoopView
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         app:pingColor="@color/ds_white70"
                         app:pingDuration="2400"
                         app:pingStrokeWidth="2dp" />
 
-                    <com.find.phone.gps.live.location.tracker.ui.design.PinShapeView
+                    <com.find.phone.gps.live.location.tracker.ui.design.TackContourView
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         android:layout_gravity="center"

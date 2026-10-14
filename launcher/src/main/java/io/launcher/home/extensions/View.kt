@@ -75,7 +75,7 @@ fun MySearchMenu.applyDrawerSkin() {
         clipToOutline = true
         elevation = 0f
         val compact = context.launcherConfig.drawerSearchAtBottom &&
-            context.launcherConfig.launcherStyle != io.launcher.home.profile.HomeProfileApplier.STYLE_DEFAULT
+            context.launcherConfig.launcherStyle != io.launcher.home.profile.MainPresetEnforcer.STYLE_DEFAULT
         val width = if (compact) {
             (resources.displayMetrics.widthPixels * 0.62f).toInt().coerceAtLeast((240 * dp).toInt())
         } else {

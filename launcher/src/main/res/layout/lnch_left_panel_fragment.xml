@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<io.launcher.home.fragments.AppsPanelSurface xmlns:android="http://schemas.android.com/apk/res/android"
+<io.launcher.home.fragments.ProgramsDeckPlane xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/left_panel_holderUi"
@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Greeting + date, set by AppsPanelSurface.onOpened; the first thing the cascade lifts in. -->
+            <!-- Greeting + date, set by ProgramsDeckPlane.onOpened; the first thing the cascade lifts in. -->
             <LinearLayout
                 android:id="@+id/panel_headerUi"
                 android:layout_width="match_parent"
@@ -261,4 +261,4 @@
 
     </ScrollView>
 
-</io.launcher.home.fragments.AppsPanelSurface>
+</io.launcher.home.fragments.ProgramsDeckPlane>

@@ -17,7 +17,7 @@
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
         android:orientation="vertical"
-        tools:context=".ui.lookup.MapFullActivity">
+        tools:context=".ui.lookup.ChartWholeActivity">
 
         <FrameLayout
             android:layout_width="match_parent"

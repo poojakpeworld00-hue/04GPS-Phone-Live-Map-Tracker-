@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<io.launcher.home.fragments.DrawerSurface xmlns:android="http://schemas.android.com/apk/res/android"
+<io.launcher.home.fragments.SliderPlane xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/all_apps_holderUi"
     android:layout_width="match_parent"
@@ -14,10 +14,10 @@
 
     <!--
         The grid scrolls itself: the drawer's native slot is not a sibling here but a full-width
-        row inside it (see DrawerSurface.adSlot), so it scrolls away with the apps while the
-        grid keeps recycling and LauncherPanel's drag-to-close still reads a real scroll offset.
+        row inside it (see SliderPlane.adSlot), so it scrolls away with the apps while the
+        grid keeps recycling and HomeDeck's drag-to-close still reads a real scroll offset.
     -->
-    <io.launcher.home.views.FadingGridView
+    <io.launcher.home.views.DimmingLatticeView
         android:id="@+id/all_apps_gridUi"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -34,7 +34,7 @@
 
     <!--
         The paged (Samsung-style) drawer: one grid page per swipe, dots underneath. Shown instead of
-        the scrolling grid above when Config.drawerMode is PAGED - see DrawerSurface.setupAdapter.
+        the scrolling grid above when Config.drawerMode is PAGED - see SliderPlane.setupAdapter.
     -->
     <LinearLayout
         android:id="@+id/all_apps_page_dotsUi"
@@ -59,9 +59,9 @@
 
     <!--
         The search's own surface, shown instead of the grid / pages while the search bar is open:
-        "Suggested apps" (the launcher's own most / recently opened, AppSuggestions) before anything
+        "Suggested apps" (the launcher's own most / recently opened, CorePicks) before anything
         is typed, "Searched apps" plus the top match's shortcuts once there is a query. Anchored
-        against the search bar whichever edge it sits on (DrawerSurface.applySearchPosition).
+        against the search bar whichever edge it sits on (SliderPlane.applySearchPosition).
     -->
     <LinearLayout
         android:id="@+id/search_panelUi"
@@ -154,4 +154,4 @@
         android:textStyle="italic"
         android:visibility="gone" />
 
-</io.launcher.home.fragments.DrawerSurface>
+</io.launcher.home.fragments.SliderPlane>

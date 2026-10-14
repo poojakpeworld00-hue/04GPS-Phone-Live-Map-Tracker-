@@ -6,7 +6,7 @@
   The card mirrors the row the user is looking for on the system "Appear on
   top" page — app icon, app name, toggle — so the eye can match it 1:1 against
   the real list. The Lottie plays the flip they need to perform. Tapping
-  anywhere finishes (HintSheetActivity).
+  anywhere finishes (ClueDrawerActivity).
 
   Sizes are sdp/ssp throughout, like the rest of the app: this card is a
   full-width sheet and fixed dp made it overrun the screen on small phones.
@@ -78,7 +78,7 @@
 
             <!-- HOME mode only. The "Default home app" list is a radio list, not a switch
                  list, so the toggle Lottie on the right would be mirroring a control that is
-                 not on the page. HintSheetActivity.applyMode swaps the two. -->
+                 not on the page. ClueDrawerActivity.applyMode swaps the two. -->
             <androidx.appcompat.widget.AppCompatRadioButton
                 android:id="@+id/guideRadioRb"
                 android:layout_width="wrap_content"

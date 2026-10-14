@@ -49,7 +49,7 @@
         android:visibility="gone" />
 
     <!--
-        The guide's scrim. Deliberately not clickable: LauncherPanel receives touches at the Activity
+        The guide's scrim. Deliberately not clickable: HomeDeck receives touches at the Activity
         level, so both the swipe it teaches and the tap-to-perform shortcut still land even though
         nothing here consumes them. Making it clickable would swallow the drag and silently break
         the very gesture step three teaches.

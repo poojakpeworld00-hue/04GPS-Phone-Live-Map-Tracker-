@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
-        tools:context=".ui.sim.DualSimDashboardActivity">
+        tools:context=".ui.sim.DoubleChipOverviewActivity">
 
         <LinearLayout
             android:id="@+id/topBar"

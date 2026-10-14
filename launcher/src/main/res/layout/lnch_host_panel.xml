@@ -7,7 +7,7 @@
     module's neutral default; a host redefines that style name in its own res to hand its panel the
     theme its own screens run under.
 -->
-<io.launcher.home.fragments.HostPanelSurface xmlns:android="http://schemas.android.com/apk/res/android"
+<io.launcher.home.fragments.HolderDeckPlane xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/host_panel_holderUi"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -18,10 +18,10 @@
 
     <!-- deliberately no android:name — inflating the fragment here would build the whole host UI,
          with everything it queries and every ad slot it owns, on every launcher start. It is
-         committed on the first panel warm-up instead, in HostPanelSurface.refresh(). -->
+         committed on the first panel warm-up instead, in HolderDeckPlane.refresh(). -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/host_panel_containerUi"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-</io.launcher.home.fragments.HostPanelSurface>
+</io.launcher.home.fragments.HolderDeckPlane>

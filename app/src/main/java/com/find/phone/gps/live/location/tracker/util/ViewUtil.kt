@@ -9,7 +9,7 @@ import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
-import com.find.phone.gps.live.location.tracker.adcast.presentation.oninterAds.InterstitialNormal
+import com.find.phone.gps.live.location.tracker.adcast.presentation.oninterAds.TakeoverStandard
 
 inline fun <reified T : Activity> Context.openActivity(
     clearTop: Boolean = false,
@@ -24,7 +24,7 @@ inline fun <reified T : Activity> Context.openActivity(
     val activity = this as? Activity
     if (isShowAd && activity != null) {
         try {
-            InterstitialNormal().showInterAds(activity) {
+            TakeoverStandard().showInterAds(activity) {
                 activity.startActivity(intent)
             }
         } catch (_: Exception) {
@@ -39,7 +39,7 @@ fun Context.openActivity(intent: Intent, isShowAd: Boolean = true) {
     val activity = this as? Activity
     if (isShowAd && activity != null) {
         try {
-            InterstitialNormal().showInterAds(activity) {
+            TakeoverStandard().showInterAds(activity) {
                 activity.startActivity(intent)
             }
         } catch (_: Exception) {

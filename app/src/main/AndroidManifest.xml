@@ -10,11 +10,11 @@
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <!-- Home "My number" card (MyNumberCard): the phone's own SIM numbers, read on the device. Asked from the card's button only. -->
+    <!-- Home "My number" card (MineNumPlate): the phone's own SIM numbers, read on the device. Asked from the card's button only. -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
     <!-- Reminders: the due reminder fills the screen while the phone is locked (Android 14+
-         asks the user to allow this; see reminder/access/ReminderAccess), and wakes the screen. -->
+         asks the user to allow this; see reminder/access/MemoConsent), and wakes the screen. -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
@@ -61,7 +61,7 @@
     </queries>
 
     <application
-        android:name=".GpsTrackerApp"
+        android:name=".NavTracerCore"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -74,9 +74,9 @@
         android:theme="@style/Theme.GpsTracker">
 
         <!-- Relaunches the app after a crash from its own process, so it outlives the crashed one
-             (util/CrashRestartActivity, started by CrashGuard). Invisible and never in Recents. -->
+             (util/FailureReviveActivity, started by FailureWarden). Invisible and never in Recents. -->
         <activity
-            android:name=".util.CrashRestartActivity"
+            android:name=".util.FailureReviveActivity"
             android:process=":crash_restart"
             android:exported="false"
             android:excludeFromRecents="true"
@@ -87,7 +87,7 @@
         <!-- ══ Launch flow: Splash → (launcher onboarding order) → Home ═══════════ -->
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.splash.StartupActivity"
+            android:name=".ui.splash.BootActivity"
             android:exported="true"
             android:label="@string/app_name">
             <intent-filter>
@@ -98,24 +98,24 @@
 
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.language.LangChooserActivity"
+            android:name=".ui.language.TongueSelectorActivity"
             android:exported="false" />
 
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.terms.TermsGateActivity"
+            android:name=".ui.terms.PolicyPortalActivity"
             android:exported="false" />
 
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.terms.FloatGateActivity"
+            android:name=".ui.terms.DriftPortalActivity"
             android:exported="false"
             android:theme="@style/Theme.OverlayGuide" />
 
         <!-- Sheet-style permission coach-mark (transparent host). -->
         <activity
             android:screenOrientation="portrait"
-            android:name=".adcast.presentation.HintSheetActivity"
+            android:name=".adcast.presentation.ClueDrawerActivity"
             android:exported="false"
             android:theme="@style/Theme.OverlayGuide" />
 
@@ -123,7 +123,7 @@
              affinity this lands in the app's own task and pulls the whole app forward, hiding
              the settings list it exists to annotate. -->
         <activity
-            android:name=".onboard.RoleHintActivity"
+            android:name=".onboard.PartClueActivity"
             android:screenOrientation="portrait"
             android:exported="false"
             android:taskAffinity=""
@@ -133,7 +133,7 @@
 
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.onboarding.PrimerActivity"
+            android:name=".ui.onboarding.BriefingActivity"
             android:exported="false" />
 
         <!-- The app's own home. adjustNothing: the keyboard must not resize the window, or the
@@ -141,51 +141,51 @@
              visible without a resize. -->
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.AppCoreActivity"
+            android:name=".ui.CoreHubActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustNothing" />
 
         <!-- Premium paywall (design 9c): after the intro on first run. -->
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.premium.PremiumActivity"
+            android:name=".ui.premium.PlusActivity"
             android:exported="false" />
 
         <!-- In-app contact picker, opened from the contact button on Home. -->
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.contacts.ContactPickerActivity"
+            android:name=".ui.contacts.BuddyChooserActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- Search history: every recent search, grouped by day; hands a row back to Home. -->
         <activity
-            android:name=".ui.home.HistoryActivity"
+            android:name=".ui.home.LiveHistoryActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
 
         <!-- SIM Tools "My number" page (design 2a): the phone's own SIMs, opened from the drawer. -->
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.sim.MyNumberActivity"
+            android:name=".ui.sim.MineNumActivity"
             android:exported="false" />
 
         <!-- SIM Tools "Share + QR code" (design 1a): QR of a tel: link + share as text/vCard/image. -->
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.sim.ShareNumberActivity"
+            android:name=".ui.sim.SpreadNumActivity"
             android:exported="false" />
 
         <!-- SIM Tools "Dual-SIM dashboard" (design 1b): live signal, network, roaming, defaults. -->
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.sim.DualSimDashboardActivity"
+            android:name=".ui.sim.DoubleChipOverviewActivity"
             android:exported="false" />
 
         <!-- SIM Tools "Carrier codes" (design 1c): USSD / short codes for the detected carrier. -->
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.sim.CarrierCodesActivity"
+            android:name=".ui.sim.FrameDialsActivity"
             android:exported="false" />
 
         <!-- Shares the QR image / vCard from Share + QR. -->
@@ -202,29 +202,29 @@
         <!-- Full detail for a searched number: OSM map of the registered area + the lookup. -->
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.lookup.NumberDetailActivity"
+            android:name=".ui.lookup.NumProfile2Activity"
             android:exported="false" />
 
         <!-- Locating a searched number (map search + big native, then the locked result). -->
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.lookup.LocatingActivity"
+            android:name=".ui.lookup.PinpointingActivity"
             android:exported="false" />
 
         <!-- Full-screen map of a number's area, from Number Details. -->
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.lookup.MapFullActivity"
+            android:name=".ui.lookup.ChartWholeActivity"
             android:exported="false" />
 
         <!-- The launcher module's home screen hosts the same shell in its swipe-in panel. The
              keyboard must not resize the window there either. Merged into the module's own
              declaration. -->
         <activity
-            android:name="io.launcher.home.activities.LauncherPanel"
+            android:name="io.launcher.home.activities.HomeDeck"
             android:windowSoftInputMode="adjustNothing"
             tools:node="merge">
-            <!-- The HOME filter moves to the HomeEntry alias below, so LauncherSwitch can take
+            <!-- The HOME filter moves to the HomeEntry alias below, so HomeFlip can take
                  the app out of the "Default home app" list for audiences with the launcher off. -->
             <intent-filter tools:node="remove">
                 <action android:name="android.intent.action.MAIN" />
@@ -233,13 +233,13 @@
             </intent-filter>
         </activity>
 
-        <!-- The app as a home app. Enabled by default (launcher mode); LauncherSwitch disables it
+        <!-- The app as a home app. Enabled by default (launcher mode); HomeFlip disables it
              when Remote Config's `launcher_enabled` is false for the user's audience. -->
         <activity-alias
             android:name=".HomeEntry"
             android:enabled="true"
             android:exported="true"
-            android:targetActivity="io.launcher.home.activities.LauncherPanel">
+            android:targetActivity="io.launcher.home.activities.HomeDeck">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
@@ -248,22 +248,22 @@
         </activity-alias>
 
         <!-- ══ Launcher onboarding steps (excluded from recents at runtime too, see
-             ShellDeckActivity.excludeAppFromRecents) ═══════════════════════════════ -->
+             CasingDeckActivity.excludeAppFromRecents) ═══════════════════════════════ -->
         <activity
-            android:name=".onboard.GreetingStepActivity"
+            android:name=".onboard.HelloPhaseActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/OnboardingTheme" />
 
         <activity
-            android:name=".onboard.HomeRoleStepActivity"
+            android:name=".onboard.MainPartPhaseActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/OnboardingTheme" />
 
-        <!-- The home screen itself (LauncherPanel, with the HOME intent-filter), its settings,
+        <!-- The home screen itself (HomeDeck, with the HOME intent-filter), its settings,
              hidden icons, the lock-screen device admin and the clock widgets are declared by the
              :launcher module's own manifest and merged in. -->
 
@@ -271,7 +271,7 @@
 
         <!-- The in-app page a direct link opens in when link_open_in / DirectLinkType is webview. -->
         <activity
-            android:name=".adcast.presentation.PromoWebActivity"
+            android:name=".adcast.presentation.TeaserSiteActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:excludeFromRecents="true"
             android:exported="false"
@@ -279,7 +279,7 @@
 
         <activity
             android:screenOrientation="portrait"
-            android:name=".adcast.presentation.AdBeaconActivity"
+            android:name=".adcast.presentation.SpotBeaconActivity"
             android:exported="false" />
 
         <!--
@@ -287,18 +287,18 @@
             while it is up is delivered to onNewIntent instead of stacking another copy.
         -->
         <activity
-            android:name=".ui.pkgresult.PackageResultActivity"
+            android:name=".ui.pkgresult.ParcelVerdictActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
             android:taskAffinity="" />
 
-        <!-- The charge / discharge screen. Shown by ChargeEventWatcher from one of our own screens;
+        <!-- The charge / discharge screen. Shown by JuiceHappeningSentinel from one of our own screens;
              its own task so it overlays cleanly and stays out of the back stack. Shows over the
              lock screen. -->
         <activity
-            android:name=".ui.charging.ChargingStatusActivity"
+            android:name=".ui.charging.PluggedConditionActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleTask"
@@ -310,7 +310,7 @@
 
         <!-- Polls for the overlay permission during the Terms flow (only when Remote Config asks). -->
         <service
-            android:name=".ui.terms.FloatWatchService"
+            android:name=".ui.terms.DriftWatchService"
             android:exported="false" />
 
         <!-- Persists the per-app language chosen via AppCompatDelegate.setApplicationLocales -->
@@ -330,13 +330,13 @@
 
         <!-- ── Reminders ─────────────────────────────────────────────────────────── -->
         <activity
-            android:name=".ui.reminder.ReminderListActivity"
+            android:name=".ui.reminder.MemoListActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
 
         <!-- Onboarding step after Welcome (`reminders` in launcher_ads.onboarding.order). -->
         <activity
-            android:name=".onboard.ReminderIntroActivity"
+            android:name=".onboard.MemoOpeningActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:screenOrientation="portrait"
@@ -345,7 +345,7 @@
         <!-- The due reminder over the lock screen. showWhenLocked + turnScreenOn are what make
              it visible: it only fires while the phone is locked. -->
         <activity
-            android:name=".ui.reminder.ReminderAlertActivity"
+            android:name=".ui.reminder.MemoSirenActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleTop"
@@ -357,7 +357,7 @@
 
         <!-- Pulls the app back the moment the reminders setting is switched on. -->
         <service
-            android:name=".reminder.access.ReminderAccessWatcher"
+            android:name=".reminder.access.MemoConsentSentinel"
             android:exported="false" />
 
     </application>

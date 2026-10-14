@@ -60,7 +60,7 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
-    // MyAppWidgetResizeFrame snapshots the occupied cells while a widget is being dragged.
+    // MineCoreAppletStretchBorder snapshots the occupied cells while a widget is being dragged.
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.coroutines.android)
 

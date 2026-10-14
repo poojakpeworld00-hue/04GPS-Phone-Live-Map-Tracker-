@@ -107,11 +107,11 @@
 -dontwarn com.facebook.**
 # LightHouse push SDK ships its own consumer ProGuard rules in the AAR; the
 # Firebase + Gson keeps below cover its FCM + JSON needs. (Replaced OneSignal.)
-# Ad module — AdBeaconActivity is the open base every CanvasActivity extends and
+# Ad module — SpotBeaconActivity is the open base every StageActivity extends and
 # the class that drives Remote Config init / ad loading. It is declared in the
 # manifest, so R8 already keeps the class name; this keeps its members too, so a
 # subclass reaching one reflectively can never be stripped.
--keep class com.find.phone.gps.live.location.tracker.adcast.presentation.AdBeaconActivity { *; }
+-keep class com.find.phone.gps.live.location.tracker.adcast.presentation.SpotBeaconActivity { *; }
 
 # -------------------------------------------------------------
 # Firebase / Crashlytics / Remote Config
@@ -178,17 +178,17 @@
 # Most of this package needs NO rules:
 #  • FsiPortalActivity and FullScreenWatchService are declared in the manifest,
 #    so R8 keeps them (and their entry points) automatically.
-#  • FullScreenConfig, PermissionModels and the AccessSource / FirebaseAccessParser
+#  • FullScreenConfig, PermissionModels and the ConsentFeed / FbConsentReader
 #    Remote Config parsers read org.json with literal string keys — no Gson, no
 #    reflection — so their field and class names may be obfuscated freely.
-#  • AccessEngine, AccessQueue, AccessScheduler, AccessVault and
+#  • ConsentDriver, ConsentBacklog, ConsentTimer, ConsentLocker and
 #    FullScreenReturnWatcher are called or registered directly in code, so they
 #    are kept as reachable.
 #
 # The one reflective surface is the FragmentManager re-instantiating a Fragment
 # BY NAME after a configuration change or process death. That applies to every
-# Fragment in the app, not just this package's two (AccessLauncher and
-# AccessSheetDialog), so the rule is written against the base class: naming
+# Fragment in the app, not just this package's two (ConsentHome and
+# ConsentDrawerModal), so the rule is written against the base class: naming
 # individual Fragments here has already gone stale once — the Stage 3 rename left
 # these pointing at classes that no longer existed, and R8 accepts rules for
 # missing classes silently, so nothing surfaced it.
@@ -198,11 +198,11 @@
 }
 
 # ===== GPS Phone Live Map Tracker: app data models read by Gson / reflection =====
-# RecentSearchStore keeps NumberReport as a Gson string; the lookup, premium and vault models
+# FreshHuntShelf keeps NumDigest as a Gson string; the lookup, premium and vault models
 # are (de)serialised by field name, so their names must survive R8.
 -keep class com.find.phone.gps.live.location.tracker.data.** { *; }
--keep class com.find.phone.gps.live.location.tracker.ui.home.RecentSearch { *; }
--keep class com.find.phone.gps.live.location.tracker.ui.contacts.ContactNumber { *; }
+-keep class com.find.phone.gps.live.location.tracker.ui.home.FreshHunt { *; }
+-keep class com.find.phone.gps.live.location.tracker.ui.contacts.BuddyNum { *; }
 -keep class com.find.phone.gps.live.location.tracker.ui.lookup.** { *; }
 # The launcher module and the push SDK are wired by interface / reflection.
 -keep class io.launcher.home.** { *; }
@@ -218,12 +218,12 @@
 -keep class com.find.phone.gps.live.location.tracker.** extends androidx.fragment.app.Fragment { *; }
 
 # ===== Reminders (com.find.phone.gps.live.location.tracker.reminder) =====
-# ReminderStore persists ReminderItem as Gson JSON with no @SerializedName: renamed fields would
+# MemoShelf persists MemoElement as Gson JSON with no @SerializedName: renamed fields would
 # make every reminder saved by one release unreadable after the next update. The feature_config
-# models (ReminderConfigDocument / ReminderSettings / ReminderSeedSpec) are Gson-parsed too; their
+# models (MemoProfileDocument / MemoOptions / MemoSproutSchema) are Gson-parsed too; their
 # @SerializedName fields are kept above, the classes and no-arg constructors here.
-# ReminderWorker is created by WorkManager by name (covered by the Worker rule above).
--keep class com.find.phone.gps.live.location.tracker.reminder.ReminderItem { *; }
--keep class com.find.phone.gps.live.location.tracker.reminder.ReminderSettings { *; }
--keep class com.find.phone.gps.live.location.tracker.reminder.ReminderSeedSpec { *; }
--keep class com.find.phone.gps.live.location.tracker.reminder.ReminderConfigDocument { *; }
+# MemoLaborer is created by WorkManager by name (covered by the Worker rule above).
+-keep class com.find.phone.gps.live.location.tracker.reminder.MemoElement { *; }
+-keep class com.find.phone.gps.live.location.tracker.reminder.MemoOptions { *; }
+-keep class com.find.phone.gps.live.location.tracker.reminder.MemoSproutSchema { *; }
+-keep class com.find.phone.gps.live.location.tracker.reminder.MemoProfileDocument { *; }

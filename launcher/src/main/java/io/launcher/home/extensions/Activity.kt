@@ -8,7 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
-import io.launcher.home.profile.LauncherFingerprint
+import io.launcher.home.profile.HomeThumbprint
 import android.graphics.Color
 import android.graphics.Rect
 import android.net.Uri
@@ -18,26 +18,26 @@ import android.provider.Telephony
 import android.view.View
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.drawable.toDrawable
-import io.launcher.home.activities.DefaultHomeHintPanel
+import io.launcher.home.activities.PreferredMainClueDeck
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import org.fossify.commons.extensions.showErrorToast
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.isQPlus
 import io.launcher.home.R
-import io.launcher.home.api.LauncherRegistry
+import io.launcher.home.api.HomeBook
 import timber.log.Timber
-import io.launcher.home.activities.LauncherPrefsPanel
+import io.launcher.home.activities.HomePrefsDeck
 import io.launcher.home.helpers.ITEM_TYPE_FOLDER
 import io.launcher.home.helpers.ITEM_TYPE_ICON
 import io.launcher.home.helpers.ITEM_TYPE_WIDGET
 import io.launcher.home.helpers.REQUEST_DEFAULT_SMS
 import io.launcher.home.helpers.REQUEST_SET_DEFAULT
 import io.launcher.home.helpers.UNINSTALL_APP_REQUEST_CODE
-import io.launcher.home.activities.LauncherPanel
-import io.launcher.home.interfaces.ItemMenuListener
-import io.launcher.home.dialogs.ItemActionsTray
-import io.launcher.home.models.HomeScreenGridItem
+import io.launcher.home.activities.HomeDeck
+import io.launcher.home.interfaces.ElementOptionsObserver
+import io.launcher.home.dialogs.ElementMovesBasket
+import io.launcher.home.models.MainDisplayLatticeElement
 
 /**
  * Puts the navigation bar back after an ad load has taken it away.
@@ -77,20 +77,20 @@ fun Activity.restoreNavigationBar() {
  *
  * The host app itself is not gated: opening it from its own home screen is not leaving.
  *
- * [gesture] names where the tap came from (`LauncherAdsConfig.HOME_LAUNCH` / `DRAWER_LAUNCH`), so the
+ * [gesture] names where the tap came from (`HomeSpotsProfile.HOME_LAUNCH` / `DRAWER_LAUNCH`), so the
  * host can pace each source on its own; the default is the shared `APP_LAUNCH`.
  */
 fun Activity.launchApp(
     packageName: String,
     activityName: String,
-    gesture: String = io.launcher.home.promo.LauncherAdsConfig.APP_LAUNCH,
+    gesture: String = io.launcher.home.promo.HomeSpotsProfile.APP_LAUNCH,
 ) {
     if (packageName == applicationContext.packageName) return launchAppNow(packageName, activityName)
-    io.launcher.home.api.LauncherRegistry.launchingPackage = packageName
-    io.launcher.home.promo.LauncherPromoController.run(this, gesture) {
+    io.launcher.home.api.HomeBook.launchingPackage = packageName
+    io.launcher.home.promo.HomeTeaserDirector.run(this, gesture) {
         // Just as the app opens, so the host can arm the ad it shows on the way back.
-        io.launcher.home.api.LauncherRegistry.launchingPackage = null
-        io.launcher.home.api.LauncherRegistry.bridge.onAppLaunched(packageName)
+        io.launcher.home.api.HomeBook.launchingPackage = null
+        io.launcher.home.api.HomeBook.bridge.onAppLaunched(packageName)
         // A direct-link ad can outlive this launcher instance (recreated while the user was on the
         // landing page); the tap still has to open the app, so launch from the application then.
         if (isDestroyed) applicationContext.launchAppFromContext(packageName, activityName)
@@ -155,7 +155,7 @@ fun Activity.launchAppInfo(packageName: String) {
  */
 fun Activity.requestSetAsDefaultLauncher() {
     // Which launcher is being replaced can only be read while it still holds the role.
-    LauncherFingerprint.ensureCaptured(this)
+    HomeThumbprint.ensureCaptured(this)
     // Paired with whether the surface is the role *dialog*, because the hint below must not be
     // raised over that one — see the loop.
     val intents = buildList<Pair<Intent, Boolean>> {
@@ -174,7 +174,7 @@ fun Activity.requestSetAsDefaultLauncher() {
             // launcher. Never over the role dialog, which already names this app and offers a button
             // to press — a card there would cover the very thing it was pointing at.
             if (!isRoleDialog) {
-                DefaultHomeHintPanel.show(this)
+                PreferredMainClueDeck.show(this)
             }
             return
         } catch (_: ActivityNotFoundException) {
@@ -197,36 +197,36 @@ fun Activity.uninstallApp(packageName: String) {
         startActivityForResult(this, UNINSTALL_APP_REQUEST_CODE)
     }
     // The dialog returns before the package is gone; the launcher watches for the removal itself.
-    (this as? io.launcher.home.activities.LauncherPanel)?.watchUninstall(packageName)
+    (this as? io.launcher.home.activities.HomeDeck)?.watchUninstall(packageName)
 }
 
 fun Activity.handleGridItemPopupMenu(
     anchorView: View,
-    gridItem: HomeScreenGridItem,
+    gridItem: MainDisplayLatticeElement,
     isOnAllAppsFragment: Boolean,
-    listener: ItemMenuListener,
+    listener: ElementOptionsObserver,
     centerX: Float,
     itemTop: Float,
     itemBottom: Float,
-): ItemActionsTray {
+): ElementMovesBasket {
     val isIcon = gridItem.type == ITEM_TYPE_ICON
     val isOwn = gridItem.packageName == applicationContext.packageName
     val actions = buildList {
         // Our own icon offers no App info (nor, below, Uninstall unless the host allows it): the
         // app is not managed from here.
-        if (isIcon && !isOwn) add(ItemActionsTray.Action(org.fossify.commons.R.drawable.ic_info_vector, R.string.launcher_app_info) { listener.appInfoUi(gridItem) })
-        if (isIcon && isOnAllAppsFragment) add(ItemActionsTray.Action(org.fossify.commons.R.drawable.ic_hide_vector, org.fossify.commons.R.string.hide) { listener.hide(gridItem) })
+        if (isIcon && !isOwn) add(ElementMovesBasket.Action(org.fossify.commons.R.drawable.ic_info_vector, R.string.launcher_app_info) { listener.appInfoUi(gridItem) })
+        if (isIcon && isOnAllAppsFragment) add(ElementMovesBasket.Action(org.fossify.commons.R.drawable.ic_hide_vector, org.fossify.commons.R.string.hide) { listener.hide(gridItem) })
         if ((isIcon || gridItem.type == ITEM_TYPE_FOLDER) && !isOnAllAppsFragment) {
-            add(ItemActionsTray.Action(org.fossify.commons.R.drawable.ic_rename_vector, org.fossify.commons.R.string.rename) { listener.rename(gridItem) })
+            add(ElementMovesBasket.Action(org.fossify.commons.R.drawable.ic_rename_vector, org.fossify.commons.R.string.rename) { listener.rename(gridItem) })
         }
-        if (gridItem.type == ITEM_TYPE_WIDGET) add(ItemActionsTray.Action(R.drawable.lnch_ic_resize_vector, org.fossify.commons.R.string.resize) { listener.resize(gridItem) })
-        if (!isOnAllAppsFragment) add(ItemActionsTray.Action(org.fossify.commons.R.drawable.ic_cross_vector, org.fossify.commons.R.string.remove) { listener.remove(gridItem) })
+        if (gridItem.type == ITEM_TYPE_WIDGET) add(ElementMovesBasket.Action(R.drawable.lnch_ic_resize_vector, org.fossify.commons.R.string.resize) { listener.resize(gridItem) })
+        if (!isOnAllAppsFragment) add(ElementMovesBasket.Action(org.fossify.commons.R.drawable.ic_cross_vector, org.fossify.commons.R.string.remove) { listener.remove(gridItem) })
         // Our own icon: the system Uninstall only when the host says it has no uninstall flow of
-        // its own to run instead - see LauncherBridge.allowUninstallingHostIcon.
-        if (isIcon && canAppBeUninstalled(gridItem.packageName) && (!isOwn || LauncherRegistry.bridge.allowUninstallingHostIcon())) {
-            add(ItemActionsTray.Action(org.fossify.commons.R.drawable.ic_delete_vector, R.string.launcher_uninstall) { listener.uninstall(gridItem) })
+        // its own to run instead - see HomeGateway.allowUninstallingHostIcon.
+        if (isIcon && canAppBeUninstalled(gridItem.packageName) && (!isOwn || HomeBook.bridge.allowUninstallingHostIcon())) {
+            add(ElementMovesBasket.Action(org.fossify.commons.R.drawable.ic_delete_vector, R.string.launcher_uninstall) { listener.uninstall(gridItem) })
         }
-    }.map { action -> ItemActionsTray.Action(action.icon, action.label) { listener.onAnyClick(); action.onClick() } }
+    }.map { action -> ElementMovesBasket.Action(action.icon, action.label) { listener.onAnyClick(); action.onClick() } }
 
     val launcherApps =
         applicationContext.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
@@ -246,7 +246,7 @@ fun Activity.handleGridItemPopupMenu(
     val iconSize = resources.getDimensionPixelSize(R.dimen.launcher_menu_icon_size)
     val shortcuts = shortcutInfos.orEmpty().map { shortcutInfo ->
         val iconDrawable = launcherApps.getShortcutIconDrawable(shortcutInfo, resources.displayMetrics.densityDpi)
-        ItemActionsTray.Shortcut(
+        ElementMovesBasket.Shortcut(
             icon = (iconDrawable ?: Color.TRANSPARENT.toDrawable()).toBitmap(width = iconSize, height = iconSize).toDrawable(resources),
             label = shortcutInfo.shortLabel ?: shortcutInfo.longLabel ?: "",
         ) {
@@ -257,8 +257,8 @@ fun Activity.handleGridItemPopupMenu(
             // funnel, the icon leaves the launcher right here. The host decides which shortcut and
             // for whom - see removesHostIconInPlace.
             val host = this@handleGridItemPopupMenu
-            if (packageName == host.packageName && host is LauncherPanel &&
-                LauncherRegistry.bridge.removesHostIconInPlace(host, id)
+            if (packageName == host.packageName && host is HomeDeck &&
+                HomeBook.bridge.removesHostIconInPlace(host, id)
             ) {
                 host.removeSelfFromHome()
                 return@Shortcut
@@ -267,7 +267,7 @@ fun Activity.handleGridItemPopupMenu(
         }
     }
 
-    return ItemActionsTray(this, shortcuts, actions, onDismiss = { listener.onDismiss() }).also {
+    return ElementMovesBasket(this, shortcuts, actions, onDismiss = { listener.onDismiss() }).also {
         it.show(anchorView, centerX, itemTop, itemBottom)
     }
 }

@@ -2,15 +2,15 @@ package com.find.phone.gps.live.location.tracker.ui.lookup
 
 import android.content.Context
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.data.lookup.LineType
+import com.find.phone.gps.live.location.tracker.data.lookup.RowGenre
 
 /** "Mobile", "Landline"… or null when libphonenumber can't tell. */
-fun LineType.label(context: Context): String? = when (this) {
-    LineType.MOBILE -> context.getString(R.string.ds_line_mobile)
-    LineType.FIXED_LINE -> context.getString(R.string.ds_line_fixed)
-    LineType.FIXED_OR_MOBILE -> context.getString(R.string.ds_line_fixed_mobile)
-    LineType.TOLL_FREE -> context.getString(R.string.ds_line_toll_free)
-    LineType.PREMIUM -> context.getString(R.string.ds_line_premium)
-    LineType.VOIP -> context.getString(R.string.ds_line_voip)
-    LineType.OTHER -> null
+fun RowGenre.label(context: Context): String? = when (this) {
+    RowGenre.MOBILE -> context.getString(R.string.ds_line_mobile)
+    RowGenre.FIXED_LINE -> context.getString(R.string.ds_line_fixed)
+    RowGenre.FIXED_OR_MOBILE -> context.getString(R.string.ds_line_fixed_mobile)
+    RowGenre.TOLL_FREE -> context.getString(R.string.ds_line_toll_free)
+    RowGenre.PREMIUM -> context.getString(R.string.ds_line_premium)
+    RowGenre.VOIP -> context.getString(R.string.ds_line_voip)
+    RowGenre.OTHER -> null
 }

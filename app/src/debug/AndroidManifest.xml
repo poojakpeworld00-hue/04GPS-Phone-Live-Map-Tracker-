@@ -2,11 +2,11 @@
 <!--
     DEBUG ONLY. Exports the individual screens so QA can open any of them directly:
 
-        adb shell am start -n com.find.phone.gps.live.location.tracker/.ui.language.LangChooserActivity
-        adb shell am start -n com.find.phone.gps.live.location.tracker/.ui.onboarding.PrimerActivity
-        adb shell am start -n com.find.phone.gps.live.location.tracker/.onboard.GreetingStepActivity
-        adb shell am start -n com.find.phone.gps.live.location.tracker/.onboard.HomeRoleStepActivity
-        adb shell am start -n com.find.phone.gps.live.location.tracker/.ui.AppCoreActivity
+        adb shell am start -n com.find.phone.gps.live.location.tracker/.ui.language.TongueSelectorActivity
+        adb shell am start -n com.find.phone.gps.live.location.tracker/.ui.onboarding.BriefingActivity
+        adb shell am start -n com.find.phone.gps.live.location.tracker/.onboard.HelloPhaseActivity
+        adb shell am start -n com.find.phone.gps.live.location.tracker/.onboard.MainPartPhaseActivity
+        adb shell am start -n com.find.phone.gps.live.location.tracker/.ui.CoreHubActivity
 
     Release builds keep every one of them exported="false" (see src/main/AndroidManifest.xml).
 -->
@@ -15,43 +15,43 @@
 
     <application>
         <activity
-            android:name=".ui.language.LangChooserActivity"
+            android:name=".ui.language.TongueSelectorActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".ui.onboarding.PrimerActivity"
+            android:name=".ui.onboarding.BriefingActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".onboard.GreetingStepActivity"
+            android:name=".onboard.HelloPhaseActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".onboard.HomeRoleStepActivity"
+            android:name=".onboard.MainPartPhaseActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".onboard.RoleHintActivity"
+            android:name=".onboard.PartClueActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".ui.premium.PremiumActivity"
+            android:name=".ui.premium.PlusActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".ui.AppCoreActivity"
+            android:name=".ui.CoreHubActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".ui.contacts.ContactPickerActivity"
+            android:name=".ui.contacts.BuddyChooserActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".ui.home.HistoryActivity"
+            android:name=".ui.home.LiveHistoryActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".ui.lookup.MapFullActivity"
+            android:name=".ui.lookup.ChartWholeActivity"
             android:exported="true"
             tools:replace="android:exported" />
     </application>

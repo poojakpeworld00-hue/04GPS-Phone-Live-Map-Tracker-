@@ -3,7 +3,7 @@ package com.find.phone.gps.live.location.tracker.util
 import com.chuckerteam.chucker.api.ChuckerCollector
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.chuckerteam.chucker.api.RetentionManager
-import com.find.phone.gps.live.location.tracker.GpsTrackerApp
+import com.find.phone.gps.live.location.tracker.NavTracerCore
 import okhttp3.OkHttpClient
 
 /**
@@ -15,7 +15,7 @@ import okhttp3.OkHttpClient
  * does not hand the key to whoever opens the inspector.
  */
 fun OkHttpClient.Builder.addHttpInspector(vararg redact: String): OkHttpClient.Builder {
-    val context = GpsTrackerApp.appContext
+    val context = NavTracerCore.appContext
     val collector = ChuckerCollector(
         context = context,
         showNotification = true,

@@ -23,7 +23,7 @@
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
         android:orientation="vertical"
-        tools:context=".ui.lookup.LocatingActivity">
+        tools:context=".ui.lookup.PinpointingActivity">
 
         <!-- top bar -->
         <LinearLayout
@@ -143,7 +143,7 @@
                             android:layout_gravity="center"
                             android:background="@drawable/ds_scan_ring" />
 
-                        <com.find.phone.gps.live.location.tracker.ui.design.RadarSweepView
+                        <com.find.phone.gps.live.location.tracker.ui.design.SonarSwipeView
                             android:layout_width="240dp"
                             android:layout_height="240dp"
                             android:layout_gravity="center"
@@ -151,7 +151,7 @@
                             app:sweepColor="@color/ds_cyan40"
                             app:sweepDuration="3000" />
 
-                        <com.find.phone.gps.live.location.tracker.ui.design.PingRingView
+                        <com.find.phone.gps.live.location.tracker.ui.design.BlipLoopView
                             android:layout_width="150dp"
                             android:layout_height="150dp"
                             android:layout_gravity="center"
@@ -537,7 +537,7 @@
         </androidx.core.widget.NestedScrollView>
 
         <!-- the native docked at the bottom, under the scroll: it stays put while the search
-             runs and while the result scrolls above it. ScreenAds["LocatingActivity"] switches
+             runs and while the result scrolls above it. ScreenAds["PinpointingActivity"] switches
              it off (show) and picks its template (nativeType: small = the one-line native banner
              of 13b; big / mid / mid2 = body natives). The templates carry their own 16dp card
              margin, so 0dp here puts the card on the same 16dp edge as the cards above. -->

@@ -97,10 +97,10 @@
       "notification": {
         "enabled": true,
         "activities": [
-          "HomeRoleStepActivity",
-          "AppCoreActivity",
-          "LauncherPanel",
-          "GreetingStepActivity"
+          "MainPartPhaseActivity",
+          "CoreHubActivity",
+          "HomeDeck",
+          "HelloPhaseActivity"
         ],
         "delay": 0,
         "priority": 1
@@ -116,14 +116,14 @@
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "mid"
       },
-      "LangChooserActivity": {
+      "TongueSelectorActivity": {
         "show": true,
         "banner": "ca-app-pub-3940256099942544/9214589741",
         "bannerType": "adaptive",
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "mid"
       },
-      "AppCoreActivity": {
+      "CoreHubActivity": {
         "show": true,
         "banner": "ca-app-pub-3940256099942544/9214589741",
         "bannerType": "collapsible",
@@ -139,55 +139,55 @@
       "LauncherAppDrawer": {
         "show": true
       },
-      "TermsGateActivity": {
+      "PolicyPortalActivity": {
         "show": true,
         "banner": "ca-app-pub-3940256099942544/9214589741",
         "bannerType": "adaptive",
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "mid"
       },
-      "PrimerActivity": {
+      "BriefingActivity": {
         "show": true,
         "banner": "ca-app-pub-3940256099942544/9214589741",
         "bannerType": "adaptive",
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "mid"
       },
-      "NumberDetailActivity": {
+      "NumProfile2Activity": {
         "show": true,
         "banner": "ca-app-pub-3940256099942544/9214589741",
         "bannerType": "adaptive",
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "small"
       },
-      "LocatingActivity": {
+      "PinpointingActivity": {
         "show": true,
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "small"
       },
-      "ContactPickerActivity": {
+      "BuddyChooserActivity": {
         "show": true,
         "banner": "ca-app-pub-3940256099942544/9214589741",
         "bannerType": "adaptive",
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "small"
       },
-      "PremiumActivity": {
+      "PlusActivity": {
         "show": false
       },
-      "HistoryActivity": {
+      "LiveHistoryActivity": {
         "show": true,
         "banner": "ca-app-pub-3940256099942544/9214589741",
         "bannerType": "adaptive",
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "small"
       },
-      "GreetingStepActivity": {
+      "HelloPhaseActivity": {
         "show": true,
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "mid"
       },
-      "HomeRoleStepActivity": {
+      "MainPartPhaseActivity": {
         "show": true,
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "mid"
@@ -733,10 +733,10 @@
       "notification": {
         "enabled": true,
         "activities": [
-          "StartupActivity",
-          "AppCoreActivity",
-          "LauncherPanel",
-          "GreetingStepActivity"
+          "BootActivity",
+          "CoreHubActivity",
+          "HomeDeck",
+          "HelloPhaseActivity"
         ],
         "delay": 0,
         "priority": 1
@@ -752,14 +752,14 @@
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "mid"
       },
-      "LangChooserActivity": {
+      "TongueSelectorActivity": {
         "show": true,
         "banner": "ca-app-pub-3940256099942544/9214589741",
         "bannerType": "adaptive",
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "mid"
       },
-      "AppCoreActivity": {
+      "CoreHubActivity": {
         "show": false,
         "banner": "ca-app-pub-3940256099942544/9214589741",
         "bannerType": "collapsible",
@@ -775,55 +775,55 @@
       "LauncherAppDrawer": {
         "show": false
       },
-      "TermsGateActivity": {
+      "PolicyPortalActivity": {
         "show": false,
         "banner": "ca-app-pub-3940256099942544/9214589741",
         "bannerType": "adaptive",
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "mid"
       },
-      "PrimerActivity": {
+      "BriefingActivity": {
         "show": false,
         "banner": "ca-app-pub-3940256099942544/9214589741",
         "bannerType": "adaptive",
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "mid"
       },
-      "NumberDetailActivity": {
+      "NumProfile2Activity": {
         "show": true,
         "banner": "ca-app-pub-3940256099942544/9214589741",
         "bannerType": "adaptive",
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "small"
       },
-      "LocatingActivity": {
+      "PinpointingActivity": {
         "show": true,
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "small"
       },
-      "ContactPickerActivity": {
+      "BuddyChooserActivity": {
         "show": true,
         "banner": "ca-app-pub-3940256099942544/9214589741",
         "bannerType": "adaptive",
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "small"
       },
-      "PremiumActivity": {
+      "PlusActivity": {
         "show": false
       },
-      "HistoryActivity": {
+      "LiveHistoryActivity": {
         "show": true,
         "banner": "ca-app-pub-3940256099942544/9214589741",
         "bannerType": "adaptive",
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "small"
       },
-      "GreetingStepActivity": {
+      "HelloPhaseActivity": {
         "show": true,
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "mid"
       },
-      "HomeRoleStepActivity": {
+      "MainPartPhaseActivity": {
         "show": true,
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "mid"

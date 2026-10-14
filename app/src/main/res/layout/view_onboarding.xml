@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
-        tools:context=".ui.onboarding.PrimerActivity">
+        tools:context=".ui.onboarding.BriefingActivity">
 
         <FrameLayout
             android:id="@+id/topBar"

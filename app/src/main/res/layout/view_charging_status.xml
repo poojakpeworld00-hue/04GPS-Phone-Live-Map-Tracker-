@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     The charging / discharging screen, ported from the reference app's activity_charging_status.
-    Shown by ChargeEventWatcher on ACTION_POWER_CONNECTED / DISCONNECTED. The ChargingEnergyView is
+    Shown by JuiceHappeningSentinel on ACTION_POWER_CONNECTED / DISCONNECTED. The PluggedChargeView is
     this app's reconstruction of the reference's ring. Functional content sits in the top 55%; the ad
     slot fills the bottom.
 -->
@@ -76,7 +76,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <com.find.phone.gps.live.location.tracker.ui.charging.ChargingEnergyView
+        <com.find.phone.gps.live.location.tracker.ui.charging.PluggedChargeView
             android:id="@+id/chargingEnergyView"
             android:layout_width="0dp"
             android:layout_height="0dp"

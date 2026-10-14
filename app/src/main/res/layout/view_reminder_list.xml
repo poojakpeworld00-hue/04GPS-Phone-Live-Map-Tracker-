@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
-        tools:context=".ui.reminder.ReminderListActivity">
+        tools:context=".ui.reminder.MemoListActivity">
 
         <LinearLayout
             android:layout_width="match_parent"

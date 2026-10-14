@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Hint dialog 5a "Default home · centred card" (Hint Dialogs design). Drawn by RoleHintActivity
+    Hint dialog 5a "Default home · centred card" (Hint Dialogs design). Drawn by PartClueActivity
     over the system "Default home app" list: a 70% scrim, a centred r28 card that mirrors this
     app's row and animates the one tap the user needs. Tap anywhere dismisses.
 -->

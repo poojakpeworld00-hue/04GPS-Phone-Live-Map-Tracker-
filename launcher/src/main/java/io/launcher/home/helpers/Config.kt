@@ -3,8 +3,8 @@ package io.launcher.home.helpers
 import android.content.Context
 import org.fossify.commons.helpers.BaseConfig
 import io.launcher.home.R
-import io.launcher.home.promo.LauncherGuideStep
-import io.launcher.home.profile.DrawerMode
+import io.launcher.home.promo.HomeMentorPhase
+import io.launcher.home.profile.SliderWay
 
 class Config(context: Context) : BaseConfig(context) {
     companion object {
@@ -45,12 +45,12 @@ class Config(context: Context) : BaseConfig(context) {
      * Not "was it shown", which is what the flag this replaces recorded and which was spent the
      * moment the overlay appeared. A step that is only shown teaches nothing if the user walks away
      * from it, so only the gesture itself retires one. Turning the guide off is what the Remote
-     * Config flags are for — see [io.launcher.home.promo.LauncherGuideStep].
+     * Config flags are for — see [io.launcher.home.promo.HomeMentorPhase].
      */
-    fun isGuideStepDone(step: LauncherGuideStep): Boolean =
+    fun isGuideStepDone(step: HomeMentorPhase): Boolean =
         prefs.getBoolean(GUIDE_STEP_DONE_PREFIX + step.name, false)
 
-    fun markGuideStepDone(step: LauncherGuideStep) =
+    fun markGuideStepDone(step: HomeMentorPhase) =
         prefs.edit().putBoolean(GUIDE_STEP_DONE_PREFIX + step.name, true).apply()
 
     /**
@@ -76,23 +76,23 @@ class Config(context: Context) : BaseConfig(context) {
         set(homeProfileJson) = prefs.edit().putString(HOME_PROFILE_JSON, homeProfileJson).apply()
 
     /**
-     * How the app drawer is reached. [DrawerMode.NONE] is the classic no-drawer home: every app
+     * How the app drawer is reached. [SliderWay.NONE] is the classic no-drawer home: every app
      * sits on a page, the swipe-up gesture is off and new installs land on the last page. Seeded
      * from the home profile, switchable in settings.
      */
-    var drawerMode: DrawerMode
-        get() = DrawerMode.entries.firstOrNull { it.name.equals(prefs.getString(DRAWER_MODE, ""), ignoreCase = true) }
-            ?: DrawerMode.VERTICAL
+    var drawerMode: SliderWay
+        get() = SliderWay.entries.firstOrNull { it.name.equals(prefs.getString(DRAWER_MODE, ""), ignoreCase = true) }
+            ?: SliderWay.VERTICAL
         set(drawerMode) = prefs.edit().putString(DRAWER_MODE, drawerMode.name.lowercase()).apply()
 
-    val isDrawerEnabled: Boolean get() = drawerMode != DrawerMode.NONE
+    val isDrawerEnabled: Boolean get() = drawerMode != SliderWay.NONE
 
     /** The style to come back to when the drawer is switched off and on again in settings. */
-    var drawerStyleWhenOn: DrawerMode
-        get() = if (prefs.getString(DRAWER_STYLE_WHEN_ON, "").equals(DrawerMode.PAGED.name, ignoreCase = true)) DrawerMode.PAGED else DrawerMode.VERTICAL
+    var drawerStyleWhenOn: SliderWay
+        get() = if (prefs.getString(DRAWER_STYLE_WHEN_ON, "").equals(SliderWay.PAGED.name, ignoreCase = true)) SliderWay.PAGED else SliderWay.VERTICAL
         set(style) = prefs.edit().putString(DRAWER_STYLE_WHEN_ON, style.name.lowercase()).apply()
 
-    /** Rows per page when [drawerMode] is [DrawerMode.PAGED]. */
+    /** Rows per page when [drawerMode] is [SliderWay.PAGED]. */
     var drawerRowCount: Int
         get() = prefs.getInt(DRAWER_ROW_COUNT, DRAWER_ROW_COUNT_DEFAULT)
         set(drawerRowCount) = prefs.edit().putInt(DRAWER_ROW_COUNT, drawerRowCount).apply()
@@ -126,9 +126,9 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getInt(DRAWER_ICON_SIZE_DP, 0).let { if (it in 24..120) it else 0 }
         set(drawerIconSizeDp) = prefs.edit().putInt(DRAWER_ICON_SIZE_DP, drawerIconSizeDp).apply()
 
-    /** Tray behind a wrapped legacy (single-bitmap) icon; see [IconShaper.Tray]. */
-    var legacyIconTray: IconShaper.Tray
-        get() = IconShaper.Tray.parse(prefs.getString(LEGACY_ICON_TRAY, null)) ?: IconShaper.Tray.DOMINANT
+    /** Tray behind a wrapped legacy (single-bitmap) icon; see [BadgeMolder.Tray]. */
+    var legacyIconTray: BadgeMolder.Tray
+        get() = BadgeMolder.Tray.parse(prefs.getString(LEGACY_ICON_TRAY, null)) ?: BadgeMolder.Tray.DOMINANT
         set(tray) = prefs.edit().putString(LEGACY_ICON_TRAY, tray.name.lowercase()).apply()
 
     /** App-label text size (home + drawer) in sp from the home profile; 0 keeps the layouts' own size. */
@@ -170,7 +170,7 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(SHOW_HOME_APP_LABELS, true)
         set(showHomeAppLabels) = prefs.edit().putBoolean(SHOW_HOME_APP_LABELS, showHomeAppLabels).apply()
 
-    /** True once the first home page has been built - see HomeSeeder. */
+    /** True once the first home page has been built - see MainSower. */
     var homeSeeded: Boolean
         get() = prefs.getBoolean(HOME_SEEDED, false)
         set(homeSeeded) = prefs.edit().putBoolean(HOME_SEEDED, homeSeeded).apply()
@@ -180,7 +180,7 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getLong(LAST_INSTALL_SEEN, 0L)
         set(lastInstallSeen) = prefs.edit().putLong(LAST_INSTALL_SEEN, lastInstallSeen).apply()
 
-    /** The launcher style last applied - HomeProfileApplier.STYLE_OS / STYLE_DEFAULT; empty before the first. */
+    /** The launcher style last applied - MainPresetEnforcer.STYLE_OS / STYLE_DEFAULT; empty before the first. */
     var launcherStyle: String
         get() = prefs.getString(LAUNCHER_STYLE, "") ?: ""
         set(launcherStyle) = prefs.edit().putString(LAUNCHER_STYLE, launcherStyle).apply()
@@ -205,7 +205,7 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(SEARCH_WIDGET_SHOWN, true)
         set(searchWidgetShown) = prefs.edit().putBoolean(SEARCH_WIDGET_SHOWN, searchWidgetShown).apply()
 
-    /** True once the time widget sits on the top row, above the default-home banner - see HomeWidgetSeeder.moveTimeWidgetToTop. */
+    /** True once the time widget sits on the top row, above the default-home banner - see MainAppletSower.moveTimeWidgetToTop. */
     var timeWidgetAtTop: Boolean
         get() = prefs.getBoolean(TIME_WIDGET_AT_TOP, false)
         set(timeWidgetAtTop) = prefs.edit().putBoolean(TIME_WIDGET_AT_TOP, timeWidgetAtTop).apply()

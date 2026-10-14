@@ -45,7 +45,7 @@ android {
         versionName = "1.0.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // LightHouse credentials → obfuscated BuildConfig byte[] (decoded at runtime by Scrambled.s).
+        // LightHouse credentials → obfuscated BuildConfig byte[] (decoded at runtime by Muddle.s).
         buildConfigField("byte[]", "LH_API_KEY", xorByteArrayLiteral(lhApiKey))
         buildConfigField("byte[]", "LH_BASE_URL", xorByteArrayLiteral(lhBaseUrl))
         buildConfigField("byte[]", "LOOKUP_API_KEY", xorByteArrayLiteral(lookupApiKey))

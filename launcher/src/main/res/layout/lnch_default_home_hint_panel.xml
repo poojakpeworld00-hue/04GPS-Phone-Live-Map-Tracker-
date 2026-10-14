@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     The hint card that sits over a system screen this app has just opened, showing the user what they
-    came there to do. Three bodies, one shown per Kind (DefaultHomeHintPanel.applyKind):
+    came there to do. Three bodies, one shown per Kind (PreferredMainClueDeck.applyKind):
 
      - guideRowUi: words only, for the SMS chooser (which names this app and offers a button);
      - guideHomeMockUi: a mock of the "Default home app" list with this app's row lifted out of it,

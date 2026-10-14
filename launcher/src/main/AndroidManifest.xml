@@ -96,7 +96,7 @@
             is, so the app ends up with both a drawer icon and the home role.
         -->
         <activity
-            android:name="io.launcher.home.activities.LauncherPanel"
+            android:name="io.launcher.home.activities.HomeDeck"
             android:clearTaskOnLaunch="true"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"
@@ -115,34 +115,34 @@
         </activity>
 
         <activity
-            android:name="io.launcher.home.activities.LauncherPrefsPanel"
+            android:name="io.launcher.home.activities.HomePrefsDeck"
             android:configChanges="orientation"
             android:excludeFromRecents="true"
             android:exported="false"
             android:label="@string/launcher_launcher_settings"
-            android:parentActivityName="io.launcher.home.activities.LauncherPanel"
+            android:parentActivityName="io.launcher.home.activities.HomeDeck"
             android:theme="@style/Launcher.LauncherBaseTheme" />
 
         <activity
-            android:name="io.launcher.home.activities.HiddenIconsPanel"
+            android:name="io.launcher.home.activities.StashedBadgesDeck"
             android:configChanges="orientation"
             android:excludeFromRecents="true"
             android:exported="false"
-            android:parentActivityName="io.launcher.home.activities.LauncherPrefsPanel"
+            android:parentActivityName="io.launcher.home.activities.HomePrefsDeck"
             android:theme="@style/Launcher.LauncherBaseTheme" />
 
         <activity
             android:name="org.fossify.commons.activities.CustomizationActivity"
             android:excludeFromRecents="true"
             android:exported="false"
-            android:parentActivityName="io.launcher.home.activities.LauncherPrefsPanel" />
+            android:parentActivityName="io.launcher.home.activities.HomePrefsDeck" />
 
         <!--
             The coach-mark drawn over the system "Default home app" list. singleInstance with an
             empty taskAffinity so it floats over Settings instead of joining the launcher task.
         -->
         <activity
-            android:name="io.launcher.home.activities.DefaultHomeHintPanel"
+            android:name="io.launcher.home.activities.PreferredMainClueDeck"
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleInstance"
@@ -150,7 +150,7 @@
             android:theme="@style/Launcher.HintOverlayTheme" />
 
         <receiver
-            android:name="io.launcher.home.receivers.LockDeviceAdminReceiver"
+            android:name="io.launcher.home.receivers.LatchGadgetStewardCatcher"
             android:exported="true"
             android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data
@@ -162,7 +162,7 @@
         </receiver>
 
         <receiver
-            android:name="io.launcher.home.widgets.AnalogClockWidgetProvider"
+            android:name="io.launcher.home.widgets.DialTimeAppletSource"
             android:exported="true"
             android:label="@string/launcher_analog_clock_widget">
             <intent-filter>
@@ -174,7 +174,7 @@
         </receiver>
 
         <receiver
-            android:name="io.launcher.home.widgets.DigitalClockWidgetProvider"
+            android:name="io.launcher.home.widgets.NumericTimeAppletSource"
             android:exported="true"
             android:label="@string/launcher_digital_clock_widget">
             <intent-filter>

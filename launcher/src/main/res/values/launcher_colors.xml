@@ -4,7 +4,7 @@
 
     <color name="launcher_all_app_bg">#80000000</color>
     <!-- Behind every app name drawn over the wallpaper, so white reads as white on any of them.
-         Matches the shadow HomeScreenGrid paints under the home screen's own labels. -->
+         Matches the shadow MainDisplayLattice paints under the home screen's own labels. -->
     <color name="launcher_app_label_shadow">#b3000000</color>
     <color name="launcher_all_app_search_bg">#33ffffff</color>
     <!-- The drawer's search pill: a flat, neutral 16% white - quiet enough to sit under the apps
@@ -85,7 +85,7 @@
     <color name="launcher_welcome_cta_shadow">#59BE5433</color>
 
     <!-- The messages side panel's ground: the inbox theme's window background (light / night), not the
-         launcher theme's - LauncherPanel reads this colour to pick the status bar icon colour. -->
+         launcher theme's - HomeDeck reads this colour to pick the status bar icon colour. -->
     <color name="lnch_host_panel_bg">#FFFFFFFF</color>
     <!-- Formerly expected from the host; defined here so the module links on its own. A host may
          still override any of them by declaring the same name. -->
