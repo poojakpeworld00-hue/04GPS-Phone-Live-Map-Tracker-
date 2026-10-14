@@ -19,7 +19,7 @@
         <!-- the home content, shared with the launcher panel (see HomeCoreFragment) -->
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/homeContainer"
-            android:name="com.find.my.phone.gps.location.tracker.ui.home.HomeCoreFragment"
+            android:name="com.find.phone.gps.live.location.tracker.ui.home.HomeCoreFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             tools:layout="@layout/fragment_home_core" />

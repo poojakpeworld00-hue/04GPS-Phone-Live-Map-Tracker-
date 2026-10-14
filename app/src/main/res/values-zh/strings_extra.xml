@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Chinese (Simplified): every default string the earlier translation set lacked (design screens, launcher, lookup, premium). -->
 <resources>
-    <string name="app_name">GPS Location Tracker &amp; Phone</string>
-    <string name="app_label">GPS Location Tracker &amp; Phone</string>
+    <string name="app_name">GPS Phone Live Map Tracker</string>
+    <string name="app_label">GPS Phone Live Map Tracker</string>
     <string name="share_app_via">分享应用至</string>
     <string name="splash_title">GPS 追踪器</string>
     <string name="splash_tagline">找到您的手机。追踪您的位置。</string>
@@ -166,7 +166,7 @@
     <string name="ds_splash_stage_pin">正在放置图钉</string>
     <string name="ds_splash_stage_logo">定位。追踪。保持连接。</string>
     <string name="ds_splash_title">GPS 手机</string>
-    <string name="ds_splash_subtitle">位置追踪器</string>
+    <string name="ds_splash_subtitle">实时地图追踪器</string>
     <string name="ds_splash_footer">此操作可能包含广告</string>
     <string name="ds_intro_title_1">查找任何手机</string>
     <string name="ds_intro_body_1">通过简单搜索获取位置信息。</string>
@@ -190,7 +190,7 @@
     <string name="ds_default_body">将此应用设为主屏幕，位置搜索和最近搜索始终一滑即达。</string>
     <string name="ds_set_default">设为默认</string>
     <string name="ds_default_home_app">默认主屏幕应用</string>
-    <string name="ds_app_short_name">GPS Location Tracker &amp; Phone</string>
+    <string name="ds_app_short_name">GPS Phone Live Map Tracker</string>
     <string name="ds_system_launcher">系统启动器</string>
     <string name="ds_swipe_right_to_search">向右滑动搜索</string>
     <string name="ds_default_footnote">您可以随时在手机设置中更改默认主屏幕。</string>
@@ -200,7 +200,7 @@
     <string name="ds_suggested">推荐</string>
     <string name="ds_all_languages">所有语言</string>
     <string name="ds_current_language">当前语言</string>
-    <string name="ds_home_title">GPS Location Tracker &amp; Phone</string>
+    <string name="ds_home_title">GPS Phone Live Map Tracker</string>
     <string name="ds_home_headline">定位电话号码</string>
     <string name="ds_enter_phone">输入电话号码</string>
     <string name="ds_search_location">搜索位置</string>

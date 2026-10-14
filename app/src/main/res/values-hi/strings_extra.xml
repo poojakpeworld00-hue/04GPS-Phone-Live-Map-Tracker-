@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Hindi: every default string the earlier translation set lacked (design screens, launcher, lookup, premium). -->
 <resources>
-    <string name="app_name">GPS Location Tracker &amp; Phone</string>
-    <string name="app_label">GPS Location Tracker &amp; Phone</string>
+    <string name="app_name">GPS Phone Live Map Tracker</string>
+    <string name="app_label">GPS Phone Live Map Tracker</string>
     <string name="share_app_via">ऐप साझा करें</string>
     <string name="splash_title">GPS ट्रैकर</string>
     <string name="splash_tagline">अपना फ़ोन खोजें। अपनी लोकेशन ट्रैक करें।</string>
@@ -166,7 +166,7 @@
     <string name="ds_splash_stage_pin">पिन लगाया जा रहा है</string>
     <string name="ds_splash_stage_logo">लोकेट करें। ट्रैक करें। जुड़े रहें।</string>
     <string name="ds_splash_title">GPS फ़ोन</string>
-    <string name="ds_splash_subtitle">लोकेशन ट्रैकर</string>
+    <string name="ds_splash_subtitle">लाइव मैप ट्रैकर</string>
     <string name="ds_splash_footer">इस कार्रवाई में विज्ञापन हो सकते हैं</string>
     <string name="ds_intro_title_1">कोई भी फ़ोन खोजें</string>
     <string name="ds_intro_body_1">एक साधारण खोज से लोकेशन जानकारी पाएँ।</string>
@@ -190,7 +190,7 @@
     <string name="ds_default_body">इस ऐप को अपनी होम स्क्रीन बनाएँ ताकि लोकेशन खोज और आपकी हाल की खोजें हमेशा एक स्वाइप की दूरी पर रहें।</string>
     <string name="ds_set_default">डिफ़ॉल्ट बनाएँ</string>
     <string name="ds_default_home_app">डिफ़ॉल्ट होम ऐप</string>
-    <string name="ds_app_short_name">GPS Location Tracker &amp; Phone</string>
+    <string name="ds_app_short_name">GPS Phone Live Map Tracker</string>
     <string name="ds_system_launcher">सिस्टम लॉन्चर</string>
     <string name="ds_swipe_right_to_search">खोजने के लिए दाएँ स्वाइप करें</string>
     <string name="ds_default_footnote">आप अपनी डिफ़ॉल्ट होम स्क्रीन कभी भी फ़ोन सेटिंग से बदल सकते हैं।</string>
@@ -200,7 +200,7 @@
     <string name="ds_suggested">सुझाई गई</string>
     <string name="ds_all_languages">सभी भाषाएँ</string>
     <string name="ds_current_language">वर्तमान भाषा</string>
-    <string name="ds_home_title">GPS Location Tracker &amp; Phone</string>
+    <string name="ds_home_title">GPS Phone Live Map Tracker</string>
     <string name="ds_home_headline">फ़ोन नंबर की लोकेशन पता करें</string>
     <string name="ds_enter_phone">फ़ोन नंबर डालें</string>
     <string name="ds_search_location">लोकेशन खोजें</string>

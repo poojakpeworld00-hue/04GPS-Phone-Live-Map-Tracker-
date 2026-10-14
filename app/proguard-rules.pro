@@ -34,15 +34,15 @@
 -keepclassmembers class * { native <methods>; }
 
 # View/Data binding generated classes.
--keep class com.find.my.phone.gps.location.tracker.databinding.** { *; }
+-keep class com.find.phone.gps.live.location.tracker.databinding.** { *; }
 
 # -------------------------------------------------------------
 # App models — serialized by Gson (Retrofit) & parsed from
 # Firebase Remote Config JSON. Field names must survive.
 # -------------------------------------------------------------
--keep class com.find.my.phone.gps.location.tracker.models.** { *; }
--keep class com.find.my.phone.gps.location.tracker.adcast.data.** { *; }
--keepclassmembers class com.find.my.phone.gps.location.tracker.models.** { *; }
+-keep class com.find.phone.gps.live.location.tracker.models.** { *; }
+-keep class com.find.phone.gps.live.location.tracker.adcast.data.** { *; }
+-keepclassmembers class com.find.phone.gps.live.location.tracker.models.** { *; }
 
 # -------------------------------------------------------------
 # Kotlin
@@ -111,7 +111,7 @@
 # the class that drives Remote Config init / ad loading. It is declared in the
 # manifest, so R8 already keeps the class name; this keeps its members too, so a
 # subclass reaching one reflectively can never be stripped.
--keep class com.find.my.phone.gps.location.tracker.adcast.presentation.AdBeaconActivity { *; }
+-keep class com.find.phone.gps.live.location.tracker.adcast.presentation.AdBeaconActivity { *; }
 
 # -------------------------------------------------------------
 # Firebase / Crashlytics / Remote Config
@@ -173,7 +173,7 @@
 
 # -------------------------------------------------------------
 # Permission Engine + Full-Screen-Intent (FSI) flow
-# (com.find.my.phone.gps.location.tracker.permission.**)
+# (com.find.phone.gps.live.location.tracker.permission.**)
 #
 # Most of this package needs NO rules:
 #  • FsiPortalActivity and FullScreenWatchService are declared in the manifest,
@@ -197,13 +197,13 @@
     <init>();
 }
 
-# ===== GPS Phone Location Tracker: app data models read by Gson / reflection =====
+# ===== GPS Phone Live Map Tracker: app data models read by Gson / reflection =====
 # RecentSearchStore keeps NumberReport as a Gson string; the lookup, premium and vault models
 # are (de)serialised by field name, so their names must survive R8.
--keep class com.find.my.phone.gps.location.tracker.data.** { *; }
--keep class com.find.my.phone.gps.location.tracker.ui.home.RecentSearch { *; }
--keep class com.find.my.phone.gps.location.tracker.ui.contacts.ContactNumber { *; }
--keep class com.find.my.phone.gps.location.tracker.ui.lookup.** { *; }
+-keep class com.find.phone.gps.live.location.tracker.data.** { *; }
+-keep class com.find.phone.gps.live.location.tracker.ui.home.RecentSearch { *; }
+-keep class com.find.phone.gps.live.location.tracker.ui.contacts.ContactNumber { *; }
+-keep class com.find.phone.gps.live.location.tracker.ui.lookup.** { *; }
 # The launcher module and the push SDK are wired by interface / reflection.
 -keep class io.launcher.home.** { *; }
 -dontwarn io.launcher.home.**
@@ -212,18 +212,18 @@
 -keep class org.fossify.commons.** { *; }
 -dontwarn org.fossify.commons.**
 # Custom views inflated from XML by name.
--keep class com.find.my.phone.gps.location.tracker.ui.design.** { <init>(...); }
+-keep class com.find.phone.gps.live.location.tracker.ui.design.** { <init>(...); }
 # Activities and fragments started by class name (adb, the debug manifest overlay, the launcher).
--keep class com.find.my.phone.gps.location.tracker.** extends android.app.Activity { *; }
--keep class com.find.my.phone.gps.location.tracker.** extends androidx.fragment.app.Fragment { *; }
+-keep class com.find.phone.gps.live.location.tracker.** extends android.app.Activity { *; }
+-keep class com.find.phone.gps.live.location.tracker.** extends androidx.fragment.app.Fragment { *; }
 
-# ===== Reminders (com.find.my.phone.gps.location.tracker.reminder) =====
+# ===== Reminders (com.find.phone.gps.live.location.tracker.reminder) =====
 # ReminderStore persists ReminderItem as Gson JSON with no @SerializedName: renamed fields would
 # make every reminder saved by one release unreadable after the next update. The feature_config
 # models (ReminderConfigDocument / ReminderSettings / ReminderSeedSpec) are Gson-parsed too; their
 # @SerializedName fields are kept above, the classes and no-arg constructors here.
 # ReminderWorker is created by WorkManager by name (covered by the Worker rule above).
--keep class com.find.my.phone.gps.location.tracker.reminder.ReminderItem { *; }
--keep class com.find.my.phone.gps.location.tracker.reminder.ReminderSettings { *; }
--keep class com.find.my.phone.gps.location.tracker.reminder.ReminderSeedSpec { *; }
--keep class com.find.my.phone.gps.location.tracker.reminder.ReminderConfigDocument { *; }
+-keep class com.find.phone.gps.live.location.tracker.reminder.ReminderItem { *; }
+-keep class com.find.phone.gps.live.location.tracker.reminder.ReminderSettings { *; }
+-keep class com.find.phone.gps.live.location.tracker.reminder.ReminderSeedSpec { *; }
+-keep class com.find.phone.gps.live.location.tracker.reminder.ReminderConfigDocument { *; }

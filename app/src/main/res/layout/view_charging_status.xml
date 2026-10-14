@@ -76,7 +76,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <com.find.my.phone.gps.location.tracker.ui.charging.ChargingEnergyView
+        <com.find.phone.gps.live.location.tracker.ui.charging.ChargingEnergyView
             android:id="@+id/chargingEnergyView"
             android:layout_width="0dp"
             android:layout_height="0dp"

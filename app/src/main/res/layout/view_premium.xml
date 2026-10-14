@@ -53,7 +53,7 @@
                         android:layout_height="match_parent"
                         android:background="@drawable/ds_premium_fade" />
 
-                    <com.find.my.phone.gps.location.tracker.ui.premium.CloseCountdownView
+                    <com.find.phone.gps.live.location.tracker.ui.premium.CloseCountdownView
                         android:id="@+id/btnClose"
                         android:layout_width="36dp"
                         android:layout_height="36dp"

@@ -45,13 +45,13 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
-                <com.find.my.phone.gps.location.tracker.ui.design.GridPatternView
+                <com.find.phone.gps.live.location.tracker.ui.design.GridPatternView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     app:gridColor="@color/ds_white07"
                     app:gridSize="28dp" />
 
-                <com.find.my.phone.gps.location.tracker.ui.design.RoadsView
+                <com.find.phone.gps.live.location.tracker.ui.design.RoadsView
                     android:id="@+id/heroRoads"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -72,21 +72,21 @@
                         android:layout_height="match_parent"
                         android:background="@drawable/ds_ring_white25" />
 
-                    <com.find.my.phone.gps.location.tracker.ui.design.RadarSweepView
+                    <com.find.phone.gps.live.location.tracker.ui.design.RadarSweepView
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         app:sweepAngle="70"
                         app:sweepColor="@color/ds_white35"
                         app:sweepDuration="3000" />
 
-                    <com.find.my.phone.gps.location.tracker.ui.design.PingRingView
+                    <com.find.phone.gps.live.location.tracker.ui.design.PingRingView
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         app:pingColor="@color/ds_white70"
                         app:pingDuration="2400"
                         app:pingStrokeWidth="2dp" />
 
-                    <com.find.my.phone.gps.location.tracker.ui.design.PinShapeView
+                    <com.find.phone.gps.live.location.tracker.ui.design.PinShapeView
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         android:layout_gravity="center"

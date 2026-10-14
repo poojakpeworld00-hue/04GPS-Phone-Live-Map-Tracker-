@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Russian: every default string the earlier translation set lacked (design screens, launcher, lookup, premium). -->
 <resources>
-    <string name="app_name">GPS Location Tracker &amp; Phone</string>
-    <string name="app_label">GPS Location Tracker &amp; Phone</string>
+    <string name="app_name">GPS Phone Live Map Tracker</string>
+    <string name="app_label">GPS Phone Live Map Tracker</string>
     <string name="share_app_via">Поделиться приложением через</string>
     <string name="splash_title">GPS-трекер</string>
     <string name="splash_tagline">Найдите телефон. Отслеживайте местоположение.</string>
@@ -170,7 +170,7 @@
     <string name="ds_splash_stage_pin">Установка метки</string>
     <string name="ds_splash_stage_logo">Найти. Отследить. Оставаться на связи.</string>
     <string name="ds_splash_title">GPS-телефон</string>
-    <string name="ds_splash_subtitle">Трекер местоположения</string>
+    <string name="ds_splash_subtitle">Трекер живой карты</string>
     <string name="ds_splash_footer">Это действие может содержать рекламу</string>
     <string name="ds_intro_title_1">Найдите любой телефон</string>
     <string name="ds_intro_body_1">Узнавайте информацию о местоположении с помощью простого поиска.</string>
@@ -194,7 +194,7 @@
     <string name="ds_default_body">Сделайте это приложение главным экраном, чтобы поиск местоположения и недавние запросы всегда были на расстоянии одного свайпа.</string>
     <string name="ds_set_default">По умолчанию</string>
     <string name="ds_default_home_app">Главный экран по умолчанию</string>
-    <string name="ds_app_short_name">GPS Location Tracker &amp; Phone</string>
+    <string name="ds_app_short_name">GPS Phone Live Map Tracker</string>
     <string name="ds_system_launcher">Системный лаунчер</string>
     <string name="ds_swipe_right_to_search">Проведите вправо для поиска</string>
     <string name="ds_default_footnote">Главный экран по умолчанию можно изменить в любое время в настройках телефона.</string>
@@ -204,7 +204,7 @@
     <string name="ds_suggested">Рекомендуемые</string>
     <string name="ds_all_languages">Все языки</string>
     <string name="ds_current_language">Текущий язык</string>
-    <string name="ds_home_title">GPS Location Tracker &amp; Phone</string>
+    <string name="ds_home_title">GPS Phone Live Map Tracker</string>
     <string name="ds_home_headline">Найти номер телефона</string>
     <string name="ds_enter_phone">Введите номер телефона</string>
     <string name="ds_search_location">Найти местоположение</string>

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Spanish: every default string the earlier translation set lacked (design screens, launcher, lookup, premium). -->
 <resources>
-    <string name="app_name">GPS Location Tracker &amp; Phone</string>
-    <string name="app_label">GPS Location Tracker &amp; Phone</string>
+    <string name="app_name">GPS Phone Live Map Tracker</string>
+    <string name="app_label">GPS Phone Live Map Tracker</string>
     <string name="share_app_via">Compartir la app con</string>
     <string name="splash_title">Rastreador GPS</string>
     <string name="splash_tagline">Encuentra tu teléfono. Rastrea tu ubicación.</string>
@@ -166,7 +166,7 @@
     <string name="ds_splash_stage_pin">Colocando el pin</string>
     <string name="ds_splash_stage_logo">Localiza. Rastrea. Mantente conectado.</string>
     <string name="ds_splash_title">Teléfono GPS</string>
-    <string name="ds_splash_subtitle">Rastreador de ubicación</string>
+    <string name="ds_splash_subtitle">Rastreador de mapa en vivo</string>
     <string name="ds_splash_footer">Esta acción puede incluir anuncios</string>
     <string name="ds_intro_title_1">Encuentra cualquier teléfono</string>
     <string name="ds_intro_body_1">Descubre información de ubicación con una simple búsqueda.</string>
@@ -190,7 +190,7 @@
     <string name="ds_default_body">Convierte esta app en tu pantalla de inicio para que la búsqueda de ubicación y tus búsquedas recientes estén siempre a un deslizamiento.</string>
     <string name="ds_set_default">Establecer como predeterminada</string>
     <string name="ds_default_home_app">App de inicio predeterminada</string>
-    <string name="ds_app_short_name">GPS Location Tracker &amp; Phone</string>
+    <string name="ds_app_short_name">GPS Phone Live Map Tracker</string>
     <string name="ds_system_launcher">Launcher del sistema</string>
     <string name="ds_swipe_right_to_search">Desliza a la derecha para buscar</string>
     <string name="ds_default_footnote">Puedes cambiar tu pantalla de inicio predeterminada en cualquier momento desde los ajustes del teléfono.</string>
@@ -200,7 +200,7 @@
     <string name="ds_suggested">Sugeridos</string>
     <string name="ds_all_languages">Todos los idiomas</string>
     <string name="ds_current_language">Idioma actual</string>
-    <string name="ds_home_title">GPS Location Tracker &amp; Phone</string>
+    <string name="ds_home_title">GPS Phone Live Map Tracker</string>
     <string name="ds_home_headline">Localiza un número de teléfono</string>
     <string name="ds_enter_phone">Introduce el número de teléfono</string>
     <string name="ds_search_location">Buscar ubicación</string>

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- French: every default string the earlier translation set lacked (design screens, launcher, lookup, premium). -->
 <resources>
-    <string name="app_name">GPS Location Tracker &amp; Phone</string>
-    <string name="app_label">GPS Location Tracker &amp; Phone</string>
+    <string name="app_name">GPS Phone Live Map Tracker</string>
+    <string name="app_label">GPS Phone Live Map Tracker</string>
     <string name="share_app_via">Partager l\'application via</string>
     <string name="splash_title">Traqueur GPS</string>
     <string name="splash_tagline">Retrouvez votre téléphone. Suivez votre position.</string>
@@ -166,7 +166,7 @@
     <string name="ds_splash_stage_pin">Placement du repère</string>
     <string name="ds_splash_stage_logo">Localisez. Suivez. Restez connecté.</string>
     <string name="ds_splash_title">Téléphone GPS</string>
-    <string name="ds_splash_subtitle">Traqueur de position</string>
+    <string name="ds_splash_subtitle">Suivi de carte en direct</string>
     <string name="ds_splash_footer">Cette action peut contenir des publicités</string>
     <string name="ds_intro_title_1">Trouvez n\'importe quel téléphone</string>
     <string name="ds_intro_body_1">Obtenez des informations de position avec une simple recherche.</string>
@@ -190,7 +190,7 @@
     <string name="ds_default_body">Faites de cette application votre écran d\'accueil pour que la recherche de position et vos recherches récentes soient toujours à un geste.</string>
     <string name="ds_set_default">Définir par défaut</string>
     <string name="ds_default_home_app">Application d\'accueil par défaut</string>
-    <string name="ds_app_short_name">GPS Location Tracker &amp; Phone</string>
+    <string name="ds_app_short_name">GPS Phone Live Map Tracker</string>
     <string name="ds_system_launcher">Lanceur du système</string>
     <string name="ds_swipe_right_to_search">Balayez vers la droite pour rechercher</string>
     <string name="ds_default_footnote">Vous pouvez changer d\'écran d\'accueil par défaut à tout moment dans les paramètres du téléphone.</string>
@@ -200,7 +200,7 @@
     <string name="ds_suggested">Suggérées</string>
     <string name="ds_all_languages">Toutes les langues</string>
     <string name="ds_current_language">Langue actuelle</string>
-    <string name="ds_home_title">GPS Location Tracker &amp; Phone</string>
+    <string name="ds_home_title">GPS Phone Live Map Tracker</string>
     <string name="ds_home_headline">Localiser un numéro de téléphone</string>
     <string name="ds_enter_phone">Saisissez le numéro de téléphone</string>
     <string name="ds_search_location">Rechercher la position</string>

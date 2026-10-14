@@ -18,7 +18,7 @@
         android:background="@color/ds_canvas"
         tools:context=".ui.splash.StartupActivity">
 
-        <com.find.my.phone.gps.location.tracker.ui.design.GridPatternView
+        <com.find.phone.gps.live.location.tracker.ui.design.GridPatternView
             android:layout_width="0dp"
             android:layout_height="0dp"
             app:gridColor="@color/ds_primary06"
@@ -28,7 +28,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <com.find.my.phone.gps.location.tracker.ui.design.RoadsView
+        <com.find.phone.gps.live.location.tracker.ui.design.RoadsView
             android:layout_width="0dp"
             android:layout_height="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -83,13 +83,13 @@
                         android:background="@drawable/ds_globe_glow" />
 
                     <!-- the rotating earth -->
-                    <com.find.my.phone.gps.location.tracker.ui.design.EarthGlobeView
+                    <com.find.phone.gps.live.location.tracker.ui.design.EarthGlobeView
                         android:layout_width="196dp"
                         android:layout_height="196dp"
                         android:layout_gravity="center" />
 
                     <!-- dashed orbit, spinning satellites and triangulation lines -->
-                    <com.find.my.phone.gps.location.tracker.ui.design.SatelliteOrbitView
+                    <com.find.phone.gps.live.location.tracker.ui.design.SatelliteOrbitView
                         android:layout_width="match_parent"
                         android:layout_height="match_parent" />
                 </FrameLayout>
@@ -112,7 +112,7 @@
                     android:background="@drawable/ds_pin_ground_shadow_dark" />
 
                 <!-- ground ring: pings every 1.8s, white rim over a red fill -->
-                <com.find.my.phone.gps.location.tracker.ui.design.PingRingView
+                <com.find.phone.gps.live.location.tracker.ui.design.PingRingView
                     android:layout_width="150dp"
                     android:layout_height="150dp"
                     android:layout_gravity="center_horizontal"
@@ -122,7 +122,7 @@
                     app:pingFillColor="@color/ds_ping_red_fill"
                     app:pingStrokeWidth="2dp" />
 
-                <com.find.my.phone.gps.location.tracker.ui.design.PinShapeView
+                <com.find.phone.gps.live.location.tracker.ui.design.PinShapeView
                     android:id="@+id/splashPin"
                     android:layout_width="78dp"
                     android:layout_height="78dp"

@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "808547892381",
-    "project_id": "gps-phone-location-track-b58fb",
-    "storage_bucket": "gps-phone-location-track-b58fb.firebasestorage.app"
+    "project_number": "000000000000",
+    "project_id": "replace-with-your-firebase-project",
+    "storage_bucket": "replace-with-your-firebase-project.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:808547892381:android:21beed6202cc08fec4a874",
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
         "android_client_info": {
-          "package_name": "com.find.my.phone.gps.location.tracker"
+          "package_name": "com.find.phone.gps.live.location.tracker"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDAyGUefinF8RWg7NalDJ9zeM_7O5E60-0"
+          "current_key": "AIzaSyPLACEHOLDER-REPLACE-WITH-REAL-KEY00"
         }
       ],
       "services": {

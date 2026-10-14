@@ -7,7 +7,7 @@
     <string name="ds_splash_stage_pin">Dropping pin</string>
     <string name="ds_splash_stage_logo">Locate. Track. Stay connected.</string>
     <string name="ds_splash_title">GPS Phone</string>
-    <string name="ds_splash_subtitle">Location Tracker</string>
+    <string name="ds_splash_subtitle">Live Map Tracker</string>
     <string name="ds_splash_footer">This action may contain ads</string>
 
     <!-- Onboarding 2a -->
@@ -39,7 +39,7 @@
     <string name="ds_default_body">Make this app your home screen so location search and your recent searches are always one swipe away.</string>
     <string name="ds_set_default">Set as Default</string>
     <string name="ds_default_home_app">Default home app</string>
-    <string name="ds_app_short_name">GPS Location Tracker &amp; Phone</string>
+    <string name="ds_app_short_name">GPS Phone Live Map Tracker</string>
     <string name="ds_system_launcher">System launcher</string>
     <string name="ds_swipe_right_to_search">Swipe right to search</string>
     <string name="ds_default_footnote">You can change your default home screen anytime from your phone settings.</string>
@@ -53,7 +53,7 @@
     <string name="ds_current_language">Current language</string>
 
     <!-- Home 3a-3e -->
-    <string name="ds_home_title">GPS Location Tracker &amp; Phone</string>
+    <string name="ds_home_title">GPS Phone Live Map Tracker</string>
     <string name="ds_home_headline">Locate a phone number</string>
     <string name="ds_enter_phone">Enter phone number</string>
     <string name="ds_search_location">Search Location</string>

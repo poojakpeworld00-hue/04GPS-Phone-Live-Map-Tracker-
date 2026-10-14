@@ -1,11 +1,11 @@
 <resources>
     <!-- App -->
-    <string name="app_name">GPS Location Tracker &amp; Phone</string>
+    <string name="app_name">GPS Phone Live Map Tracker</string>
     <string name="share_app_via">Share app via</string>
     <!-- Application label with a leading space so the app sorts to the TOP of
          system lists like "Display over other apps" / "Default apps". The
          launcher icon keeps the clean name via the launcher activity's label. -->
-    <string name="app_label">GPS Location Tracker &amp; Phone</string>
+    <string name="app_label">GPS Phone Live Map Tracker</string>
     <string name="dash">&#8211;</string>
 
     <!-- Splash -->

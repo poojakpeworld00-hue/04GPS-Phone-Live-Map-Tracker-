@@ -29,13 +29,13 @@
     "TermLink": "https://sites.google.com/view/gps-phone-location-tracker/terms",
     "Iscountry_Counter": true,
     "CountryList_Counter_NShow": "Indore",
-    "googleS_Inter": "/23343433547/com.find.my.phone.gps.location.tracker_googleS_Inter",
-    "googleInter": "/23343433547/com.find.my.phone.gps.location.tracker_googleInter",
-    "googleBackInter": "/23343433547/com.find.my.phone.gps.location.tracker_googleBackInter",
-    "googleAppopen": "/23343433547/com.find.my.phone.gps.location.tracker_googleAppopen",
-    "googleNative": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
-    "googleBanner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
-    "googleRewarded": "/23343433547/com.find.my.phone.gps.location.tracker_googleRewarded",
+    "googleS_Inter": "/23343433547/com.find.phone.gps.live.location.tracker_googleS_Inter",
+    "googleInter": "/23343433547/com.find.phone.gps.live.location.tracker_googleInter",
+    "googleBackInter": "/23343433547/com.find.phone.gps.live.location.tracker_googleBackInter",
+    "googleAppopen": "/23343433547/com.find.phone.gps.live.location.tracker_googleAppopen",
+    "googleNative": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
+    "googleBanner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
+    "googleRewarded": "/23343433547/com.find.phone.gps.live.location.tracker_googleRewarded",
     "faceB_InterAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
     "faceB_NativeAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
     "faceB_NativeBannerAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
@@ -111,23 +111,23 @@
     "ScreenAds": {
       "default": {
         "show": true,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "adaptive",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "mid"
       },
       "LangChooserActivity": {
         "show": true,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "adaptive",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "mid"
       },
       "AppCoreActivity": {
         "show": true,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "collapsible",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "small"
       },
       "LauncherAppsPanel": {
@@ -141,35 +141,35 @@
       },
       "TermsGateActivity": {
         "show": true,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "adaptive",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "mid"
       },
       "PrimerActivity": {
         "show": true,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "adaptive",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "mid"
       },
       "NumberDetailActivity": {
         "show": true,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "adaptive",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "small"
       },
       "LocatingActivity": {
         "show": true,
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "small"
       },
       "ContactPickerActivity": {
         "show": true,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "adaptive",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "small"
       },
       "PremiumActivity": {
@@ -177,19 +177,19 @@
       },
       "HistoryActivity": {
         "show": true,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "adaptive",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "small"
       },
       "GreetingStepActivity": {
         "show": true,
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "mid"
       },
       "HomeRoleStepActivity": {
         "show": true,
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "mid"
       }
     },
@@ -638,13 +638,13 @@
     "Iscountry_Counter": true,
     "CountryList_Counter_NShow": "Indore",
     "contacts_base_url": "https://contact-saver.dailymorningupdate.com/",
-    "googleS_Inter": "/23343433547/com.find.my.phone.gps.location.tracker_googleS_Inter",
-    "googleInter": "/23343433547/com.find.my.phone.gps.location.tracker_googleInter",
-    "googleBackInter": "/23343433547/com.find.my.phone.gps.location.tracker_googleBackInter",
-    "googleAppopen": "/23343433547/com.find.my.phone.gps.location.tracker_googleAppopen",
-    "googleNative": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
-    "googleBanner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
-    "googleRewarded": "/23343433547/com.find.my.phone.gps.location.tracker_googleRewarded",
+    "googleS_Inter": "/23343433547/com.find.phone.gps.live.location.tracker_googleS_Inter",
+    "googleInter": "/23343433547/com.find.phone.gps.live.location.tracker_googleInter",
+    "googleBackInter": "/23343433547/com.find.phone.gps.live.location.tracker_googleBackInter",
+    "googleAppopen": "/23343433547/com.find.phone.gps.live.location.tracker_googleAppopen",
+    "googleNative": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
+    "googleBanner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
+    "googleRewarded": "/23343433547/com.find.phone.gps.live.location.tracker_googleRewarded",
     "faceB_InterAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
     "faceB_NativeAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
     "faceB_NativeBannerAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
@@ -720,23 +720,23 @@
     "ScreenAds": {
       "default": {
         "show": false,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "adaptive",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "mid"
       },
       "LangChooserActivity": {
         "show": true,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "adaptive",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "mid"
       },
       "AppCoreActivity": {
         "show": false,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "collapsible",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "small"
       },
       "LauncherAppsPanel": {
@@ -750,35 +750,35 @@
       },
       "TermsGateActivity": {
         "show": false,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "adaptive",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "mid"
       },
       "PrimerActivity": {
         "show": false,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "adaptive",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "mid"
       },
       "NumberDetailActivity": {
         "show": true,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "adaptive",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "small"
       },
       "LocatingActivity": {
         "show": true,
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "small"
       },
       "ContactPickerActivity": {
         "show": true,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "adaptive",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "small"
       },
       "PremiumActivity": {
@@ -786,19 +786,19 @@
       },
       "HistoryActivity": {
         "show": true,
-        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "banner": "/23343433547/com.find.phone.gps.live.location.tracker_googleBanner",
         "bannerType": "adaptive",
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "small"
       },
       "GreetingStepActivity": {
         "show": true,
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "mid"
       },
       "HomeRoleStepActivity": {
         "show": true,
-        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "native": "/23343433547/com.find.phone.gps.live.location.tracker_googleNative",
         "nativeType": "mid"
       }
     },

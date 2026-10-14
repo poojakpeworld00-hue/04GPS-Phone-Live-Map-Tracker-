@@ -25,7 +25,7 @@
         android:text="@string/ps_sim_with"
         android:textColor="@color/ps_primary" />
 
-    <com.find.my.phone.gps.location.tracker.permission.sheet.RevealCompareLayout
+    <com.find.phone.gps.live.location.tracker.permission.sheet.RevealCompareLayout
         android:id="@+id/reveal"
         android:layout_width="match_parent"
         android:layout_height="156dp"
@@ -217,5 +217,5 @@
                 android:textColor="@color/ps_primary"
                 android:textSize="13sp" />
         </FrameLayout>
-    </com.find.my.phone.gps.location.tracker.permission.sheet.RevealCompareLayout>
+    </com.find.phone.gps.live.location.tracker.permission.sheet.RevealCompareLayout>
 </FrameLayout>

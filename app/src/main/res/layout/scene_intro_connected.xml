@@ -80,7 +80,7 @@
         </FrameLayout>
     </FrameLayout>
 
-    <com.find.my.phone.gps.location.tracker.ui.design.PingRingView
+    <com.find.phone.gps.live.location.tracker.ui.design.PingRingView
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:layout_gravity="center"
