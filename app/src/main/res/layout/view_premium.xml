@@ -16,7 +16,7 @@
         android:layout_height="match_parent"
         android:background="@color/ds_surface"
         android:orientation="vertical"
-        tools:context=".ui.premium.PlusActivity">
+        tools:context=".screens.plus.PlusActivity">
 
         <androidx.core.widget.NestedScrollView
             android:id="@+id/scroll"
@@ -53,7 +53,7 @@
                         android:layout_height="match_parent"
                         android:background="@drawable/ds_premium_fade" />
 
-                    <com.find.phone.gps.live.location.tracker.ui.premium.ShutTickerView
+                    <com.find.phone.gps.live.location.tracker.screens.plus.ShutTickerView
                         android:id="@+id/btnClose"
                         android:layout_width="36dp"
                         android:layout_height="36dp"

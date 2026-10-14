@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/ps_bg_ill_location">
 
-    <com.find.phone.gps.live.location.tracker.permission.sheet.ChartAvenuesView
+    <com.find.phone.gps.live.location.tracker.consent.drawer.ChartAvenuesView
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
@@ -68,7 +68,7 @@
         android:layout_marginTop="27dp"
         android:background="@drawable/ps_bg_area" />
 
-    <com.find.phone.gps.live.location.tracker.ui.design.TackContourView
+    <com.find.phone.gps.live.location.tracker.screens.craft.TackContourView
         android:id="@+id/pin"
         android:layout_width="56dp"
         android:layout_height="56dp"

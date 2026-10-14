@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "io.launcher.home"
+    namespace = "com.livemap.homedeck"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1

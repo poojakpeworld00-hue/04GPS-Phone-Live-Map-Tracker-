@@ -14,7 +14,7 @@
     android:background="@color/ds_canvas"
     android:clickable="true"
     android:focusable="true"
-    tools:context=".ui.home.MainHubFragment">
+    tools:context=".screens.dashboard.MainHubFragment">
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scroll"
@@ -45,13 +45,13 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
-                <com.find.phone.gps.live.location.tracker.ui.design.LatticeMotifView
+                <com.find.phone.gps.live.location.tracker.screens.craft.LatticeMotifView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     app:gridColor="@color/ds_white07"
                     app:gridSize="28dp" />
 
-                <com.find.phone.gps.live.location.tracker.ui.design.PathsView
+                <com.find.phone.gps.live.location.tracker.screens.craft.PathsView
                     android:id="@+id/heroRoads"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -72,21 +72,21 @@
                         android:layout_height="match_parent"
                         android:background="@drawable/ds_ring_white25" />
 
-                    <com.find.phone.gps.live.location.tracker.ui.design.SonarSwipeView
+                    <com.find.phone.gps.live.location.tracker.screens.craft.SonarSwipeView
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         app:sweepAngle="70"
                         app:sweepColor="@color/ds_white35"
                         app:sweepDuration="3000" />
 
-                    <com.find.phone.gps.live.location.tracker.ui.design.BlipLoopView
+                    <com.find.phone.gps.live.location.tracker.screens.craft.BlipLoopView
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         app:pingColor="@color/ds_white70"
                         app:pingDuration="2400"
                         app:pingStrokeWidth="2dp" />
 
-                    <com.find.phone.gps.live.location.tracker.ui.design.TackContourView
+                    <com.find.phone.gps.live.location.tracker.screens.craft.TackContourView
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         android:layout_gravity="center"

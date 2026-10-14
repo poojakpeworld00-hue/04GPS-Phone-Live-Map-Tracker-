@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<io.launcher.home.fragments.ProgramsDeckPlane xmlns:android="http://schemas.android.com/apk/res/android"
+<com.livemap.homedeck.parts.ProgramsDeckPlane xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/left_panel_holderUi"
@@ -261,4 +261,4 @@
 
     </ScrollView>
 
-</io.launcher.home.fragments.ProgramsDeckPlane>
+</com.livemap.homedeck.parts.ProgramsDeckPlane>

@@ -15,43 +15,43 @@
 
     <application>
         <activity
-            android:name=".ui.language.TongueSelectorActivity"
+            android:name=".screens.tongue.TongueSelectorActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".ui.onboarding.BriefingActivity"
+            android:name=".screens.welcome.BriefingActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".onboard.HelloPhaseActivity"
+            android:name=".induction.HelloPhaseActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".onboard.MainPartPhaseActivity"
+            android:name=".induction.MainPartPhaseActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".onboard.PartClueActivity"
+            android:name=".induction.PartClueActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".ui.premium.PlusActivity"
+            android:name=".screens.plus.PlusActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".ui.CoreHubActivity"
+            android:name=".screens.CoreHubActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".ui.contacts.BuddyChooserActivity"
+            android:name=".screens.people.BuddyChooserActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".ui.home.LiveHistoryActivity"
+            android:name=".screens.dashboard.LiveHistoryActivity"
             android:exported="true"
             tools:replace="android:exported" />
         <activity
-            android:name=".ui.lookup.ChartWholeActivity"
+            android:name=".screens.finder.ChartWholeActivity"
             android:exported="true"
             tools:replace="android:exported" />
     </application>

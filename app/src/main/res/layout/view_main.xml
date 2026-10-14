@@ -14,12 +14,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/ds_canvas"
-        tools:context=".ui.CoreHubActivity">
+        tools:context=".screens.CoreHubActivity">
 
         <!-- the home content, shared with the launcher panel (see MainHubFragment) -->
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/homeContainer"
-            android:name="com.find.phone.gps.live.location.tracker.ui.home.MainHubFragment"
+            android:name="com.find.phone.gps.live.location.tracker.screens.dashboard.MainHubFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             tools:layout="@layout/fragment_home_core" />

@@ -41,7 +41,7 @@
 # Firebase Remote Config JSON. Field names must survive.
 # -------------------------------------------------------------
 -keep class com.find.phone.gps.live.location.tracker.models.** { *; }
--keep class com.find.phone.gps.live.location.tracker.adcast.data.** { *; }
+-keep class com.find.phone.gps.live.location.tracker.monetize.model.** { *; }
 -keepclassmembers class com.find.phone.gps.live.location.tracker.models.** { *; }
 
 # -------------------------------------------------------------
@@ -111,7 +111,7 @@
 # the class that drives Remote Config init / ad loading. It is declared in the
 # manifest, so R8 already keeps the class name; this keeps its members too, so a
 # subclass reaching one reflectively can never be stripped.
--keep class com.find.phone.gps.live.location.tracker.adcast.presentation.SpotBeaconActivity { *; }
+-keep class com.find.phone.gps.live.location.tracker.monetize.render.SpotBeaconActivity { *; }
 
 # -------------------------------------------------------------
 # Firebase / Crashlytics / Remote Config
@@ -173,7 +173,7 @@
 
 # -------------------------------------------------------------
 # Permission Engine + Full-Screen-Intent (FSI) flow
-# (com.find.phone.gps.live.location.tracker.permission.**)
+# (com.find.phone.gps.live.location.tracker.consent.**)
 #
 # Most of this package needs NO rules:
 #  • FsiPortalActivity and FullScreenWatchService are declared in the manifest,
@@ -200,30 +200,30 @@
 # ===== GPS Phone Live Map Tracker: app data models read by Gson / reflection =====
 # FreshHuntShelf keeps NumDigest as a Gson string; the lookup, premium and vault models
 # are (de)serialised by field name, so their names must survive R8.
--keep class com.find.phone.gps.live.location.tracker.data.** { *; }
--keep class com.find.phone.gps.live.location.tracker.ui.home.FreshHunt { *; }
--keep class com.find.phone.gps.live.location.tracker.ui.contacts.BuddyNum { *; }
--keep class com.find.phone.gps.live.location.tracker.ui.lookup.** { *; }
+-keep class com.find.phone.gps.live.location.tracker.store.** { *; }
+-keep class com.find.phone.gps.live.location.tracker.screens.dashboard.FreshHunt { *; }
+-keep class com.find.phone.gps.live.location.tracker.screens.people.BuddyNum { *; }
+-keep class com.find.phone.gps.live.location.tracker.screens.finder.** { *; }
 # The launcher module and the push SDK are wired by interface / reflection.
--keep class io.launcher.home.** { *; }
--dontwarn io.launcher.home.**
+-keep class com.livemap.homedeck.** { *; }
+-dontwarn com.livemap.homedeck.**
 -keep class io.lighthouse.** { *; }
 -dontwarn io.lighthouse.**
 -keep class org.fossify.commons.** { *; }
 -dontwarn org.fossify.commons.**
 # Custom views inflated from XML by name.
--keep class com.find.phone.gps.live.location.tracker.ui.design.** { <init>(...); }
+-keep class com.find.phone.gps.live.location.tracker.screens.craft.** { <init>(...); }
 # Activities and fragments started by class name (adb, the debug manifest overlay, the launcher).
 -keep class com.find.phone.gps.live.location.tracker.** extends android.app.Activity { *; }
 -keep class com.find.phone.gps.live.location.tracker.** extends androidx.fragment.app.Fragment { *; }
 
-# ===== Reminders (com.find.phone.gps.live.location.tracker.reminder) =====
+# ===== Reminders (com.find.phone.gps.live.location.tracker.memo) =====
 # MemoShelf persists MemoElement as Gson JSON with no @SerializedName: renamed fields would
 # make every reminder saved by one release unreadable after the next update. The feature_config
 # models (MemoProfileDocument / MemoOptions / MemoSproutSchema) are Gson-parsed too; their
 # @SerializedName fields are kept above, the classes and no-arg constructors here.
 # MemoLaborer is created by WorkManager by name (covered by the Worker rule above).
--keep class com.find.phone.gps.live.location.tracker.reminder.MemoElement { *; }
--keep class com.find.phone.gps.live.location.tracker.reminder.MemoOptions { *; }
--keep class com.find.phone.gps.live.location.tracker.reminder.MemoSproutSchema { *; }
--keep class com.find.phone.gps.live.location.tracker.reminder.MemoProfileDocument { *; }
+-keep class com.find.phone.gps.live.location.tracker.memo.MemoElement { *; }
+-keep class com.find.phone.gps.live.location.tracker.memo.MemoOptions { *; }
+-keep class com.find.phone.gps.live.location.tracker.memo.MemoSproutSchema { *; }
+-keep class com.find.phone.gps.live.location.tracker.memo.MemoProfileDocument { *; }

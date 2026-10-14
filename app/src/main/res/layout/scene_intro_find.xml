@@ -24,7 +24,7 @@
         android:layout_gravity="center"
         android:background="@drawable/ds_ring_primary18" />
 
-    <com.find.phone.gps.live.location.tracker.ui.design.BlipLoopView
+    <com.find.phone.gps.live.location.tracker.screens.craft.BlipLoopView
         android:layout_width="340dp"
         android:layout_height="340dp"
         android:layout_gravity="center"
@@ -32,7 +32,7 @@
         app:pingDuration="2800"
         app:pingStrokeWidth="2dp" />
 
-    <com.find.phone.gps.live.location.tracker.ui.design.BlipLoopView
+    <com.find.phone.gps.live.location.tracker.screens.craft.BlipLoopView
         android:layout_width="340dp"
         android:layout_height="340dp"
         android:layout_gravity="center"

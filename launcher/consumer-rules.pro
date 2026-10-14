@@ -1,15 +1,15 @@
 # Room entities and DAOs are reflected over at runtime.
--keep class io.launcher.home.models.** { *; }
--keep interface io.launcher.home.interfaces.**Dao { *; }
+-keep class com.livemap.homedeck.entities.** { *; }
+-keep interface com.livemap.homedeck.ports.**Dao { *; }
 
 # Widget providers and the device-admin receiver are named in the manifest and instantiated by
 # the system; R8 cannot see those references.
--keep class io.launcher.home.widgets.** { *; }
--keep class io.launcher.home.receivers.** { *; }
+-keep class com.livemap.homedeck.applets.** { *; }
+-keep class com.livemap.homedeck.catchers.** { *; }
 
 # The custom views in the launcher layouts are inflated by name.
--keep class io.launcher.home.views.** { *; }
--keep class io.launcher.home.fragments.** { *; }
+-keep class com.livemap.homedeck.widgetry.** { *; }
+-keep class com.livemap.homedeck.parts.** { *; }
 
 # The host implements these; keep the shapes it compiles against.
--keep interface io.launcher.home.api.** { *; }
+-keep interface com.livemap.homedeck.contract.** { *; }

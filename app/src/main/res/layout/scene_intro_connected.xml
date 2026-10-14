@@ -80,7 +80,7 @@
         </FrameLayout>
     </FrameLayout>
 
-    <com.find.phone.gps.live.location.tracker.ui.design.BlipLoopView
+    <com.find.phone.gps.live.location.tracker.screens.craft.BlipLoopView
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:layout_gravity="center"
