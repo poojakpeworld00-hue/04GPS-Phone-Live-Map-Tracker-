@@ -9,14 +9,14 @@
 -->
 <resources>
     <!-- green ramp -->
-    <color name="cid_g_900">#FF082939</color>
-    <color name="cid_g_800">#FF093F5C</color>
-    <color name="cid_g_700">#FF002EFE</color>
-    <color name="cid_g_600">#FF087AB6</color>
-    <color name="cid_g_500">#FF0B94E0</color>
-    <color name="cid_g_200">#FFADE2FF</color>
-    <color name="cid_g_100">#FFD8EFFF</color>
-    <color name="cid_g_050">#FFEEF8FF</color>
+    <color name="cid_g_900">#FF37160B</color>
+    <color name="cid_g_800">#FF58200F</color>
+    <color name="cid_g_700">#FFF4511E</color>
+    <color name="cid_g_600">#FFAF3915</color>
+    <color name="cid_g_500">#FFD7471B</color>
+    <color name="cid_g_200">#FFF5BDAC</color>
+    <color name="cid_g_100">#FFF3DCD6</color>
+    <color name="cid_g_050">#FFEEF7FD</color>
 
     <!-- accents -->
     <color name="cid_clay">#FFC76841</color>
@@ -41,29 +41,29 @@
         it would read as a bug, not as dark mode.
     -->
     <color name="cid_onb_paper">#FFF1F2F3</color>
-    <color name="cid_onb_ink">#FF082939</color>
-    <color name="cid_onb_muted">#FF5C6C76</color>
+    <color name="cid_onb_ink">#FF37160B</color>
+    <color name="cid_onb_muted">#FF71605A</color>
 
-    <color name="cid_onb_cta">#FF002EFE</color>
+    <color name="cid_onb_cta">#FFF4511E</color>
     <color name="cid_onb_on_cta">#FFFFFFFF</color>
 
-    <color name="cid_onb_accent">#FF002EFE</color>
+    <color name="cid_onb_accent">#FFF4511E</color>
     <color name="cid_onb_on_accent">#FFFFFFFF</color>
     <color name="cid_onb_badge_disc">#FFFFFFFF</color>
 
-    <color name="cid_onb_mark">#FF002EFE</color>
+    <color name="cid_onb_mark">#FFF4511E</color>
     <color name="cid_onb_on_mark">#FFFFFFFF</color>
 
-    <color name="cid_onb_blob">#FFD8EFFF</color>
+    <color name="cid_onb_blob">#FFF3DCD6</color>
     <color name="cid_onb_card">#FFF4FAFF</color>
-    <color name="cid_onb_card_stroke">#FFC9E5F9</color>
-    <color name="cid_onb_tile">#FFD2EDFF</color>
+    <color name="cid_onb_card_stroke">#FFEFCFC5</color>
+    <color name="cid_onb_tile">#FFF5D6CD</color>
 
     <!-- the mock call screen: identical in both themes -->
-    <color name="cid_onb_mock">#FF082939</color>
+    <color name="cid_onb_mock">#FF37160B</color>
     <color name="cid_onb_on_mock">#FFFFFFFF</color>
-    <color name="cid_onb_mock_avatar">#FF687379</color>
-    <color name="cid_onb_mock_chip">#FF093F5C</color>
+    <color name="cid_onb_mock_avatar">#FF726B69</color>
+    <color name="cid_onb_mock_chip">#FF58200F</color>
     <color name="cid_onb_decline">#FFC0522D</color>
 
     <!-- Broadsheet neutrals -->

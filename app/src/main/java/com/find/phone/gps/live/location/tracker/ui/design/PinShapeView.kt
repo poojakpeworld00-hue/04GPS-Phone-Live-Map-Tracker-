@@ -34,8 +34,8 @@ class PinShapeView @JvmOverloads constructor(
 
     init {
         val a = context.obtainStyledAttributes(attrs, R.styleable.PinShapeView)
-        startColor = a.getColor(R.styleable.PinShapeView_pinStartColor, 0xFF5C7DFF.toInt())
-        endColor = a.getColor(R.styleable.PinShapeView_pinEndColor, 0xFF002EFE.toInt())
+        startColor = a.getColor(R.styleable.PinShapeView_pinStartColor, 0xFFF58665.toInt())
+        endColor = a.getColor(R.styleable.PinShapeView_pinEndColor, 0xFFF4511E.toInt())
         dot.color = a.getColor(R.styleable.PinShapeView_pinDotColor, 0xFFFFFFFF.toInt())
         dotSize = a.getDimension(R.styleable.PinShapeView_pinDotSize, 0f)
         shadowColor = a.getColor(R.styleable.PinShapeView_pinShadowColor, 0)

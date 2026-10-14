@@ -26,7 +26,7 @@ class PingRingView @JvmOverloads constructor(
 
     init {
         val a = context.obtainStyledAttributes(attrs, R.styleable.PingRingView)
-        stroke.color = a.getColor(R.styleable.PingRingView_pingColor, 0x733D63FF)
+        stroke.color = a.getColor(R.styleable.PingRingView_pingColor, 0x73F57149)
         stroke.strokeWidth = a.getDimension(R.styleable.PingRingView_pingStrokeWidth, 2f * resources.displayMetrics.density)
         fill.color = a.getColor(R.styleable.PingRingView_pingFillColor, 0)
         durationMs = a.getInt(R.styleable.PingRingView_pingDuration, 2800).toLong()

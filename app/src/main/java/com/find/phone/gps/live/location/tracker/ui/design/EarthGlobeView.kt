@@ -34,12 +34,12 @@ class EarthGlobeView @JvmOverloads constructor(
     private val globe = Paint(Paint.ANTI_ALIAS_FLAG).apply { shader = this@EarthGlobeView.shader }
 
     // A faint blue cast so the daylight texture matches the design's deep-blue ocean look.
-    private val tint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x22124B8A }
+    private val tint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x2284331A }
     private val shade = Paint(Paint.ANTI_ALIAS_FLAG)
     private val highlight = Paint(Paint.ANTI_ALIAS_FLAG)
     private val rim = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        color = 0x5579C3FF
+        color = 0x55F59A7E
     }
 
     private var phase = 0f // 0..1 across one texture width
@@ -54,7 +54,7 @@ class EarthGlobeView @JvmOverloads constructor(
         // Terminator: bright toward the top-left light, darkening to the lower-right rim.
         shade.shader = RadialGradient(
             cx - r * 0.28f, cy - r * 0.3f, r * 1.25f,
-            intArrayOf(0x00000000, 0x11000A1E, 0x66001024, 0xB2000818.toInt()),
+            intArrayOf(0x00000000, 0x111D0802, 0x66230A03, 0xB2170702.toInt()),
             floatArrayOf(0f, 0.55f, 0.82f, 1f), Shader.TileMode.CLAMP,
         )
         highlight.shader = RadialGradient(

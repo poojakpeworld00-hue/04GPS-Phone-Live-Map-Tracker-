@@ -54,7 +54,7 @@
         app:pinDotSize="14dp"
         app:pinEndColor="@color/ds_splash_blue"
         app:pinShadowColor="@color/ds_primary40"
-        app:pinStartColor="#00B8D0" />
+        app:pinStartColor="#1FA5B2" />
 
     <!-- top search bar: back tile + place name -->
     <LinearLayout
@@ -195,7 +195,7 @@
             android:paddingHorizontal="9dp"
             android:paddingVertical="5dp"
             android:text="AT&amp;T"
-            android:textColor="#0047B3"
+            android:textColor="#AC330E"
             android:textSize="11sp" />
     </LinearLayout>
 

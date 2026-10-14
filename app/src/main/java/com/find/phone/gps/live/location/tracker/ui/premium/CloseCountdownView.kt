@@ -126,7 +126,7 @@ class CloseCountdownView @JvmOverloads constructor(
     }
 
     private companion object {
-        const val INK_72 = 0xB80B1B2B.toInt()
+        const val INK_72 = 0xB829140D.toInt()
         const val WHITE = 0xFFFFFFFF.toInt()
         const val WHITE_20 = 0x33FFFFFF
     }

@@ -37,7 +37,7 @@ class SatelliteOrbitView @JvmOverloads constructor(
     }
     private val tile = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = 0xFFFFFFFF.toInt()
-        setShadowLayer(14f * d, 0f, 6f * d, 0x40002EFE)
+        setShadowLayer(14f * d, 0f, 6f * d, 0x40F4511E)
     }
     private val chipPrimary = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ContextCompat.getColor(context, R.color.ds_primary) }
     private val chipCyan = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ContextCompat.getColor(context, R.color.ds_cyan2) }

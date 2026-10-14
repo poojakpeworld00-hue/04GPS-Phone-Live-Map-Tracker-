@@ -9,13 +9,13 @@
     <!-- Card -->
     <path
         android:fillColor="#FFFFFF"
-        android:strokeColor="#C1C6D6"
+        android:strokeColor="#C6C3CC"
         android:strokeWidth="1.5"
         android:pathData="M80,34 h160 a34,34 0 0 1 34,34 v182 a34,34 0 0 1 -34,34 h-160 a34,34 0 0 1 -34,-34 v-182 a34,34 0 0 1 34,-34 z" />
 
     <!-- Primary badge circle -->
     <path
-        android:fillColor="#D8E2FF"
+        android:fillColor="#F3DBD6"
         android:pathData="M122,96 a38,38 0 1 0 76,0 a38,38 0 1 0 -76,0 z" />
 
     <!-- Call glyph -->
@@ -36,7 +36,7 @@
         android:strokeWidth="1.5"
         android:pathData="M92,160 h136 a14,14 0 0 1 14,14 v18 a14,14 0 0 1 -14,14 h-136 a14,14 0 0 1 -14,-14 v-18 a14,14 0 0 1 14,-14 z" />
     <path
-        android:fillColor="#D8E2FF"
+        android:fillColor="#F3DBD6"
         android:pathData="M86,183 a12,12 0 1 0 24,0 a12,12 0 1 0 -24,0 z" />
     <path
         android:fillColor="#009688"
@@ -45,7 +45,7 @@
         android:fillColor="#009688"
         android:pathData="M124,176 h60 a4,4 0 0 1 0,8 h-60 a4,4 0 0 1 0,-8 z" />
     <path
-        android:fillColor="#C1C6D6"
+        android:fillColor="#C6C3CC"
         android:pathData="M124,190 h38 a3.5,3.5 0 0 1 0,7 h-38 a3.5,3.5 0 0 1 0,-7 z" />
     <path
         android:fillColor="#2E7D32"
@@ -59,20 +59,20 @@
         android:fillColor="#DDE0E6"
         android:pathData="M87,234 a11,11 0 1 0 22,0 a11,11 0 1 0 -22,0 z" />
     <path
-        android:fillColor="#C1C6D6"
+        android:fillColor="#C6C3CC"
         android:pathData="M124,230 h72 a4,4 0 0 1 0,8 h-72 a4,4 0 0 1 0,-8 z" />
 
     <!-- Floating "Caller ID" chip -->
     <path
         android:fillColor="#FFFFFF"
-        android:strokeColor="#C1C6D6"
+        android:strokeColor="#C6C3CC"
         android:strokeWidth="1.2"
         android:pathData="M224,40 h56 a18,18 0 0 1 18,18 v4 a18,18 0 0 1 -18,18 h-56 a18,18 0 0 1 -18,-18 v-4 a18,18 0 0 1 18,-18 z" />
     <path
         android:fillColor="#00695C"
         android:pathData="M218,60 a8,8 0 1 0 16,0 a8,8 0 1 0 -16,0 z" />
     <path
-        android:fillColor="#414754"
+        android:fillColor="#514440"
         android:pathData="M248,56 h36 a4,4 0 0 1 0,8 h-36 a4,4 0 0 1 0,-8 z" />
 
 </vector>

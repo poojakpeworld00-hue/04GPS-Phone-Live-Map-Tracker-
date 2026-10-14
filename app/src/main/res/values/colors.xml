@@ -32,7 +32,7 @@
     <color name="card_bg_light">#FFFFFFFF</color>
 
     <!-- Soft, surface-tinted elevation shadow (never pure black) — API 28+ -->
-    <color name="card_shadow">#330F1317</color>
+    <color name="card_shadow">#3316110F</color>
 
     <!-- Language screen: unselected radio ring (muted, distinct from body text) -->
     <color name="radio_unselected">@color/ds_dot</color>
@@ -50,9 +50,9 @@
     <!-- Soft status-pill backgrounds (≈12% tint of their status color) -->
     <color name="success_soft">#1F1E8E5A</color>
     <color name="danger_soft">#1FD93B3B</color>
-    <color name="neutral_soft">#1F677381</color>
-    <color name="accent_purple">#5647DB</color>
-    <color name="accent_purple_soft">#1F5647DB</color>
+    <color name="neutral_soft">#1F7C6A65</color>
+    <color name="accent_purple">#D26E50</color>
+    <color name="accent_purple_soft">#1FD26E50</color>
 
     <!-- Dark stat card (Call Details total duration) -->
     <color name="online_green">#22C55E</color>
@@ -65,17 +65,17 @@
          The greens are sampled straight out of mipmap/ic_launcher.png so the splash
          and the app icon are the same brand colour: #047439 (icon's darkest, bottom
          right) → #15A73D (mid) → #37C747 (lightest, top right). ===== -->
-    <color name="splash_grad_start">#1F4BFF</color>
-    <color name="splash_grad_center">#3D63FF</color>
-    <color name="splash_grad_end">#4D70FF</color>
-    <color name="splash_accent">#0087CB</color>
-    <color name="splash_accent_2">#4D70FF</color>
+    <color name="splash_grad_start">#F55D2F</color>
+    <color name="splash_grad_center">#F57149</color>
+    <color name="splash_grad_end">#F57C58</color>
+    <color name="splash_accent">#C33910</color>
+    <color name="splash_accent_2">#F57C58</color>
     <color name="splash_ring">#47FFFFFF</color>
     <color name="splash_field_bg">#EDF4F7</color>
     <color name="splash_field_text">#0D1718</color>
     <color name="splash_card_bg">#FFFFFF</color>
     <color name="splash_card_name">#0D1718</color>
-    <color name="splash_card_sub">#5B6971</color>
+    <color name="splash_card_sub">#6C5E59</color>
     <color name="splash_chip_bg">#E6EEF2</color>
     <color name="splash_chip_fg">#425D5D</color>
     <color name="splash_verdict_container">#DDF2E7</color>
@@ -83,9 +83,9 @@
     <color name="splash_verified">#1E8E5A</color>
     <!-- Phone illustration -->
     <color name="splash_phone_bg">#FFFFFF</color>
-    <color name="splash_phone_stroke">#D7E5ED</color>
-    <color name="splash_content_line">#CCDFE9</color>
-    <color name="splash_notch">#BDD1DB</color>
+    <color name="splash_phone_stroke">#DBE0E4</color>
+    <color name="splash_content_line">#D9D3D2</color>
+    <color name="splash_notch">#CDC2C0</color>
 
     <!-- ===== Splash "Caller Information" redesign (2026) — white-on-gradient
          tokens shared by light & dark (both hero gradients are deep blue/purple,
@@ -97,7 +97,7 @@
     <color name="splash_scan">#F2FFFFFF</color>          <!-- bright AI-scan arc -->
     <color name="splash_scan_faint">#40FFFFFF</color>    <!-- faint scan ring track -->
     <color name="splash_icon_tile_top">#FFFFFF</color>   <!-- app-icon tile gradient -->
-    <color name="splash_icon_tile_bottom">#DFEDF5</color>
+    <color name="splash_icon_tile_bottom">#E3E8EC</color>
     <color name="splash_pill_bg">#F7FFFFFF</color>       <!-- white verdict pills -->
     <color name="splash_pill_fg">#0D1718</color>
     <color name="splash_incoming_dot">#D6EFDA</color>    <!-- dot behind incoming glyph -->
@@ -110,12 +110,12 @@
     <color name="splash_tagline_on">#D9FFFFFF</color>
 
     <!-- ===== FSI intro Activity (design: All Screen Light+Dark). Own palette
-         (#00897B / #0F172A / greens); theme-aware via values-night. The floating
+         (#00897B / #281610 / greens); theme-aware via values-night. The floating
          caller-ID card itself stays white in both themes. ===== -->
     <color name="fsi_bg_center">#DFF3F3</color>          <!-- radial bg, top-center -->
     <color name="fsi_bg_edge">#F3F7F7</color>            <!-- radial bg, edge -->
-    <color name="fsi_blue">#0087CB</color>              <!-- FSI accent (both themes) -->
-    <color name="fsi_blue_2">#13AEE0</color>            <!-- avatar gradient end -->
+    <color name="fsi_blue">#C33910</color>              <!-- FSI accent (both themes) -->
+    <color name="fsi_blue_2">#D74C22</color>            <!-- avatar gradient end -->
     <color name="fsi_title">#0D1718</color>
     <color name="fsi_subtitle">#425D5D</color>
     <color name="fsi_benefit_card">#FFFFFF</color>
@@ -159,5 +159,5 @@
 
     <!-- Icon and hint on the white home screen search pill: Material's on-surface grey, dark
          enough to read on white without the hard contrast of pure black. -->
-    <color name="pseudo_search_bar_foreground">#5F6368</color>
+    <color name="pseudo_search_bar_foreground">#606265</color>
 </resources>

@@ -20,7 +20,7 @@ class GridPatternView @JvmOverloads constructor(
 
     init {
         val a = context.obtainStyledAttributes(attrs, R.styleable.GridPatternView)
-        paint.color = a.getColor(R.styleable.GridPatternView_gridColor, 0x0F002EFE)
+        paint.color = a.getColor(R.styleable.GridPatternView_gridColor, 0x0FF4511E)
         cell = a.getDimension(R.styleable.GridPatternView_gridSize, 30f * resources.displayMetrics.density)
         a.recycle()
         paint.strokeWidth = resources.displayMetrics.density // 1px in the design ≈ 1dp hairline

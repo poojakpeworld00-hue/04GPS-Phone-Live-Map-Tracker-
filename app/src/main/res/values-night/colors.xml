@@ -34,21 +34,21 @@
 
     <!-- Splash redesign dark overrides. Per Visual System, the hero gradient stays
          a rich Sapphire→Violet even in dark (just deepened) — not near-black. -->
-    <color name="splash_grad_start">#022B42</color>
-    <color name="splash_grad_center">#064262</color>
-    <color name="splash_grad_end">#165D83</color>
-    <color name="splash_card_bg">#11181B</color>
+    <color name="splash_grad_start">#3F1407</color>
+    <color name="splash_grad_center">#5E200D</color>
+    <color name="splash_grad_end">#7E341D</color>
+    <color name="splash_card_bg">#1A1311</color>
     <color name="splash_card_name">#EFF2F4</color>
-    <color name="splash_card_sub">#80919B</color>
-    <color name="splash_chip_bg">#192125</color>
-    <color name="splash_chip_fg">#80919B</color>
+    <color name="splash_card_sub">#95837D</color>
+    <color name="splash_chip_bg">#241B19</color>
+    <color name="splash_chip_fg">#95837D</color>
     <color name="splash_verdict_container">#143126</color>
     <color name="splash_verdict_on">#7BD8A8</color>
     <!-- Phone illustration (dark) -->
-    <color name="splash_phone_bg">#141C20</color>
-    <color name="splash_phone_stroke">#29353C</color>
-    <color name="splash_content_line">#1F2B31</color>
-    <color name="splash_notch">#253035</color>
+    <color name="splash_phone_bg">#1F1714</color>
+    <color name="splash_phone_stroke">#3A2D29</color>
+    <color name="splash_content_line">#2F231F</color>
+    <color name="splash_notch">#332825</color>
 
     <!-- FSI intro Activity — dark (navy) variant of the design. -->
     <color name="fsi_bg_center">#102F2F</color>
@@ -72,7 +72,7 @@
     <!-- Enable-Caller-ID dialog — dark variants. -->
     <color name="cid_hint_bg">#24007171</color>         <!-- ~0.14 blue tint on dark -->
     <color name="cid_shield_check">#090E0E</color>      <!-- dark checkmark on light-blue shield -->
-    <color name="cid_toggle_off">#374351</color>
+    <color name="cid_toggle_off">#4E3C37</color>
 
     <!-- ===== Semantic colours that need a dark-ground counterpart =====
          Everything else in values/colors.xml is deliberately theme-independent:
@@ -85,12 +85,12 @@
            · fsi_*, online_green and whatsapp_green are brand marks.
          The ones below are the surface/semantic colours that genuinely lose contrast
          when the ground inverts, so they are lightened here. -->
-    <color name="accent_purple">#9891FF</color>
+    <color name="accent_purple">#F5AA94</color>
 
     <!-- 12%% tints: on a dark ground the light versions vanish, so they are mixed
          against dark rather than against white -->
     <color name="success_soft">#334FC08A</color>
     <color name="danger_soft">#33FF6B6B</color>
-    <color name="neutral_soft">#338799A7</color>
-    <color name="accent_purple_soft">#339891FF</color>
+    <color name="neutral_soft">#33A08B84</color>
+    <color name="accent_purple_soft">#33F5AA94</color>
 </resources>
