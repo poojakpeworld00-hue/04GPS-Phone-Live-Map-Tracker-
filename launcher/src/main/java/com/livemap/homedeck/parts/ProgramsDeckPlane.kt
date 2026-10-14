@@ -24,14 +24,10 @@ import com.livemap.homedeck.contract.HomeBook
 import com.livemap.homedeck.entities.appLauncherComparator
 import kotlin.math.abs
 
-/**
- * Panel sliding in from the side of the home screen, offering app suggestions and a search field.
- */
 class ProgramsDeckPlane(
     context: Context,
     attributeSet: AttributeSet,
 ) : HomePlane<HdLeftPanelFragmentBinding>(context, attributeSet) {
-
     private var launchers = emptyList<CoreHome>()
     private var resultsCap = COLLAPSED_RESULTS
 
@@ -40,7 +36,6 @@ class ProgramsDeckPlane(
     private lateinit var resultsAdapter: DeckProgramsFeed
     private lateinit var searchInAdapter: DeckProgramsFeed
 
-    // the panel covers the whole screen while open, so HomeDeck never sees these events
     private val gestureDetector = GestureDetectorCompat(context, object : SimpleOnGestureListener() {
         override fun onFling(
             e1: MotionEvent?,
@@ -90,27 +85,6 @@ class ProgramsDeckPlane(
         }
     }
 
-    /**
-     * Requests both panel slots afresh — the middle one sits between Suggested and Recent, the
-     * bottom one is pinned to the panel's foot, outside the scrolling column.
-     *
-     * Driven by `HomeDeck.presentLeftPanel` on every open rather than once from [setupFragment]:
-     * the panel is built at boot and then only parked off screen, so a request made there would
-     * leave the same creative on the panel for as long as the launcher process lives — which, on a
-     * launcher, is until the device restarts. Asking here also means a user who never swipes the
-     * panel open never costs a request.
-     *
-     * A repeat call *is* the refresh: the SDK empties the frame and dispatches a new request each
-     * time, so there is nothing to tear down first — see [com.livemap.homedeck.contract.HomeSpots.bindNative].
-     *
-     * Whether the repeat happens at all is the console's call, per placement — see
-     * [HomeSpotsProfile.reloadAdOnOpen]. With it off the first open still fills the slot and every
-     * open after that leaves it alone.
-     */
-    /**
-     * Called by the host as the panel starts sliding in: the greeting and date are set for now,
-     * then the header, search pill and cards lift in one after another.
-     */
     fun onOpened() {
         val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
         binding.deckGreetingUi.setText(
@@ -145,7 +119,6 @@ class ProgramsDeckPlane(
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        // do not swallow the event, the lists still have to scroll
         gestureDetector.onTouchEvent(event)
         return super.dispatchTouchEvent(event)
     }
@@ -209,7 +182,6 @@ class ProgramsDeckPlane(
 
     private fun fireLauncher(launcher: CoreHome) {
         if (launcher.packageName == context.applicationContext.packageName) {
-            // Our own app: enterHostApp closes this panel itself.
             activity?.enterHostApp(launcher.activityName)
             return
         }
@@ -233,7 +205,6 @@ class ProgramsDeckPlane(
             activity?.startActivity(intent)
             activity?.concealLeftPanel()
         } catch (_: ActivityNotFoundException) {
-            // the app is installed but cannot handle it, let the system pick a handler
             fireLauncher(launcher)
         }
     }

@@ -7,14 +7,7 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.recordPermissionR
 import com.find.phone.gps.live.location.tracker.helpers.WardenRail
 import java.lang.ref.WeakReference
 
-/**
- * Remote-Config-driven permission engine. [check] runs the queue of rules that target the given
- * Activity (by simple name), skipping granted / inapplicable / already-shown permissions, ordered
- * by priority and spaced by each rule's delay, one request at a time. [request] asks a single
- * permission by key regardless of Activity targeting. [init] only warms Remote Config.
- */
 object ConsentDriver {
-
     private const val TAG = "ConsentDriver"
 
     private val timer = ConsentTimer()
@@ -35,10 +28,6 @@ object ConsentDriver {
 
     private fun shortPermName(spec: ConsentSchema): String = spec.androidPermission.substringAfterLast('.')
 
-    /**
-     * Starts the flow for [activity]. [onComplete] fires once on normal completion (or right away
-     * when nothing needs asking); it is dropped if the run is interrupted.
-     */
     @JvmStatic
     @JvmOverloads
     fun check(activity: Activity, onComplete: (() -> Unit)? = null) {
@@ -86,11 +75,6 @@ object ConsentDriver {
         }
     }
 
-    /**
-     * Asks exactly one permission by config [key], ignoring Activity targeting. A rule that exists
-     * but is disabled acts as a remote off-switch; a missing rule still asks. [onComplete] always
-     * fires exactly once.
-     */
     @JvmStatic
     @JvmOverloads
     fun request(activity: Activity, key: String, onComplete: (() -> Unit)? = null) {
@@ -201,7 +185,6 @@ object ConsentDriver {
         }
     }
 
-    /** Clears run state; [fire] = normal completion (runs the stored callback), else interruption. */
     private fun reset(fire: Boolean) {
         timer.clear()
         busy = false

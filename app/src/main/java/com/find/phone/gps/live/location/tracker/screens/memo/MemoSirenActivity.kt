@@ -40,12 +40,7 @@ import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement.loop
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement.pvh
 import com.find.phone.gps.live.location.tracker.helpers.OsModalAide
 
-/**
- * Lock-screen sheet for a reminder that is due. Raised by the notification's full-screen intent
- * and dismisses that notification right away. The native ad waits until the device is unlocked.
- */
 class MemoSirenActivity : AppCompatActivity() {
-
     private lateinit var ui: ScreenReminderAlertBinding
     private val runningAnims = mutableListOf<Animator>()
     private var activeMemo: MemoElement? = null

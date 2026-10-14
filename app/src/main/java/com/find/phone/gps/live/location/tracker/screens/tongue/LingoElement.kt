@@ -2,20 +2,13 @@ package com.find.phone.gps.live.location.tracker.screens.tongue
 
 import com.find.phone.gps.live.location.tracker.screens.finder.Realms
 
-/**
- * A selectable language. [name] (English) and [nativeName] are proper nouns
- * shown the same regardless of the current locale, so they are constants here.
- * [flagIso] is the ISO-3166 alpha-2 of the country whose flag represents this
- * language in the list (emoji flag rendered via [Realms.flag]).
- */
 data class LingoElement(
-    val tag: String,        // BCP-47 tag, e.g. "en", "es"
-    val code: String,       // short badge, e.g. "EN"
-    val name: String,       // English name
-    val nativeName: String, // endonym
-    val flagIso: String     // country ISO-2 for the flag, e.g. "US", "IN"
+    val tag: String,
+    val code: String,
+    val name: String,
+    val nativeName: String,
+    val flagIso: String
 ) {
-    /** Emoji flag for the row's leading edge. */
     val flag: String get() = Realms.flag(flagIso)
 }
 
@@ -36,20 +29,12 @@ object LiveLocales {
 
     private fun byTag(tag: String): LingoElement? = all.firstOrNull { it.tag == tag }
 
-    /** Always appended so every region gets English as a fallback language. */
     private const val ENGLISH = "en"
 
-    /** Shown when we can't resolve a country: Hindi (English is appended below). */
     private val DEFAULT_SUGGESTED = listOf("hi")
 
-    /**
-     * Ordered *native* suggested-language tags per country (ISO-3166 alpha-2).
-     * English is added automatically by [suggestedFor], so list only the local
-     * language(s) here; anything not listed falls back to [DEFAULT_SUGGESTED].
-     * Only tags present in [all] end up on screen.
-     */
     private val SUGGESTED_BY_COUNTRY: Map<String, List<String>> = mapOf(
-        // Americas
+
         "US" to listOf("es", "fr"),
         "CA" to listOf("fr"),
         "MX" to listOf("es"),
@@ -58,13 +43,13 @@ object LiveLocales {
         "CO" to listOf("es"),
         "CL" to listOf("es"),
         "PE" to listOf("es"),
-        // South Asia — India and neighbours
+
         "IN" to listOf("hi"),
         "PK" to listOf("hi"),
         "BD" to listOf("hi"),
         "NP" to listOf("hi"),
         "LK" to listOf("hi"),
-        // Europe
+
         "GB" to listOf(),
         "IE" to listOf(),
         "ES" to listOf("es"),
@@ -75,7 +60,7 @@ object LiveLocales {
         "RU" to listOf("ru"),
         "UA" to listOf("ru"),
         "TR" to listOf("tr"),
-        // Asia-Pacific
+
         "CN" to listOf("zh"),
         "HK" to listOf("zh"),
         "TW" to listOf("zh"),
@@ -87,12 +72,6 @@ object LiveLocales {
         "NZ" to listOf()
     )
 
-    /**
-     * The languages to feature under "Suggested" for the given country: the region's
-     * native language(s) plus English, always. Falls back to Hindi + English when
-     * [iso2] is null/unknown. Order is preserved and duplicates are dropped, so an
-     * English-speaking country shows English once.
-     */
     fun suggestedFor(iso2: String?): List<LingoElement> {
         val base = SUGGESTED_BY_COUNTRY[iso2?.uppercase()] ?: DEFAULT_SUGGESTED
         val tags = (base + ENGLISH).distinct()

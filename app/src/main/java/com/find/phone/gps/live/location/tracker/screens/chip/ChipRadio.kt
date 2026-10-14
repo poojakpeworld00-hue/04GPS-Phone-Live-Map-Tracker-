@@ -5,9 +5,7 @@ import android.content.Context
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 
-/** Small read-only helpers over a SIM's radio (subscription id, network type) for the SIM Tools. */
 object ChipRadio {
-
     @SuppressLint("MissingPermission")
     fun subIdForSlot(context: Context, slot1Based: Int): Int? {
         val sm = context.getSystemService(SubscriptionManager::class.java) ?: return null
@@ -20,7 +18,6 @@ object ChipRadio {
 
     fun defaultVoiceSubId(): Int = SubscriptionManager.getDefaultVoiceSubscriptionId()
 
-    /** "5G" / "4G" / "3G" / "2G", or null when unknown. */
     @SuppressLint("MissingPermission")
     fun networkLabel(context: Context, subId: Int): String? {
         val tm = tmFor(context, subId)

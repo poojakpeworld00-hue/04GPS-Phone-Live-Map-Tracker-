@@ -4,7 +4,6 @@ import android.content.Context
 import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.store.inquiry.RowGenre
 
-/** "Mobile", "Landline"… or null when libphonenumber can't tell. */
 fun RowGenre.label(context: Context): String? = when (this) {
     RowGenre.MOBILE -> context.getString(R.string.ds_line_mobile)
     RowGenre.FIXED_LINE -> context.getString(R.string.ds_line_fixed)

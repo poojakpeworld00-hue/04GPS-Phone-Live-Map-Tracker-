@@ -5,6 +5,6 @@ data class LiveNudge(
     val title: String,
     val description: String,
     val dateTime: Long,
-    val color: Int // Add this// optional
+    val color: Int
 )
 

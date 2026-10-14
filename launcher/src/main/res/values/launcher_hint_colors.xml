@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The coach-mark card over system screens (PreferredMainClueDeck). It is drawn over another
-     app's page, so it follows the system light / dark mode (values-night) rather than the app theme. -->
 <resources>
     <color name="hint_card_bg">#F7FFFFFF</color>
     <color name="hint_card_stroke">#14000000</color>

@@ -15,19 +15,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.PathParser
 import com.find.phone.gps.live.location.tracker.R
 
-/**
- * The decorative road networks the design draws as inline SVGs, scaled to the view:
- *
- *  - [Variant.SPLASH]: three pale roads over the 360×780 splash canvas.
- *  - [Variant.HOME_HERO]: two translucent white roads over the 360×300 home hero.
- *  - [Variant.MAP]: the onboarding "Track on Map" card (328×392) — white roads, two green
- *    blocks, and the blue route that draws itself (`draw 3.2s ease-in-out infinite`:
- *    stroke-dashoffset 320 → 0 over the first 65%, then holds).
- */
 class PathsView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null,
 ) : View(context, attrs) {
-
     enum class Variant { SPLASH, HOME_HERO, MAP }
 
     private class Road(val d: String, val width: Float, val color: Int)
@@ -109,7 +99,7 @@ class PathsView @JvmOverloads constructor(
             routeLength = length
             paint.strokeWidth = 4f * s
             paint.color = ContextCompat.getColor(context, R.color.ds_primary)
-            // stroke-dasharray 320 / dashoffset 320→0, in the design's own units.
+
             val dash = 320f * s
             paint.pathEffect = DashPathEffect(floatArrayOf(dash, dash), dash * (1f - routeProgress))
             canvas.drawPath(scaled, paint)
@@ -120,7 +110,7 @@ class PathsView @JvmOverloads constructor(
         super.onAttachedToWindow()
         if (route == null || CraftMovement.animationsDisabled(context)) return
         animator?.cancel()
-        // `draw`: 0% offset 320 → 65% offset 0 → 100% hold, ease-in-out, 3.2s, infinite.
+
         animator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = 3200L
             repeatCount = ValueAnimator.INFINITE

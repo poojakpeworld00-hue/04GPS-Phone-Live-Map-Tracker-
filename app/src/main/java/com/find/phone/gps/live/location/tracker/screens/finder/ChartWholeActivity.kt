@@ -18,13 +18,7 @@ import com.find.phone.gps.live.location.tracker.databinding.ScreenMapFullBinding
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
 import kotlin.math.roundToInt
 
-/**
- * Full view of a number's registered area, opened from Number Details (the header's Full view,
- * a tap on the header map, or the Map action). The same OpenStreetMap and pulsing area as the
- * header, but interactive, with zoom, recenter and Directions (hands the place to a maps app).
- */
 class ChartWholeActivity : StageActivity<ScreenMapFullBinding>() {
-
     override val layoutId: Int = R.layout.screen_map_full
 
     private lateinit var report: NumDigest
@@ -32,7 +26,6 @@ class ChartWholeActivity : StageActivity<ScreenMapFullBinding>() {
     private var topInset = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // osmdroid must be configured before the MapView is inflated (in super.onCreate).
         StreetCharts.init(this)
         super.onCreate(savedInstanceState)
     }
@@ -45,7 +38,6 @@ class ChartWholeActivity : StageActivity<ScreenMapFullBinding>() {
         }
         report = given
 
-        // The map runs under the status bar; the top bar sits below it.
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
         val topPad = binding.chartTopBar.paddingTop
@@ -77,13 +69,12 @@ class ChartWholeActivity : StageActivity<ScreenMapFullBinding>() {
 
         StreetCharts.style(binding.chartView, interactive = true)
         overlay = StreetCharts.place(binding.chartView, r, coarse = false)
-        // No point for the area (country-only result): the whole country's name is all we have.
+
         binding.actRecenter.isEnabled = r.pin != null
         binding.actRecenter.alpha = if (r.pin != null) 1f else 0.4f
         centerPin()
     }
 
-    /** Back to the area at its own zoom, after the user panned or zoomed away. */
     private fun recenter() {
         val pin = report.pin ?: return
         binding.chartView.controller.animateTo(
@@ -91,10 +82,6 @@ class ChartWholeActivity : StageActivity<ScreenMapFullBinding>() {
         )
     }
 
-    /**
-     * The pin goes in the middle of the map left visible between the top bar and the place card
-     * over its bottom — half the difference below centre.
-     */
     private fun centerPin() {
         binding.lvPlaceCard.post {
             val d = resources.displayMetrics.density

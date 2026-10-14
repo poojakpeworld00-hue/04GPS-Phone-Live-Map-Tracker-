@@ -9,7 +9,6 @@ import com.livemap.homedeck.ext.homeScreenGridItemsDB
 import com.livemap.homedeck.entities.MainDisplayLatticeElement
 
 class RetitleElementBasket(val activity: Activity, val item: MainDisplayLatticeElement, val callback: () -> Unit) {
-
     init {
         val binding = HdDialogRenameItemBinding.inflate(activity.layoutInflater)
         val view = binding.root

@@ -19,26 +19,10 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.recordPermissionR
 import com.find.phone.gps.live.location.tracker.store.LockerBook
 import java.util.Locale
 
-/**
- * Base class for every Fragment in the app.
- *
- * Uses ViewBinding, safely clears the binding in [onDestroyView] to avoid
- * memory leaks, and exposes [initView] / [initObservers] hooks.
- *
- * Usage:
- * ```
- * class OverviewFragment : FrameFragment<PanelHomeBinding>() {
- *     override fun expandBinding(inflater, container) =
- *         PanelHomeBinding.inflate(inflater, container, false)
- * }
- * ```
- */
 abstract class FrameFragment<VB : ViewBinding> : Fragment() {
-
     private var _binding: VB? = null
     protected val binding: VB get() = _binding!!
 
-    /** Inflate the concrete ViewBinding for this fragment. */
     protected abstract fun expandBinding(inflater: LayoutInflater, container: ViewGroup?): VB
 
     override fun onCreateView(
@@ -56,21 +40,14 @@ abstract class FrameFragment<VB : ViewBinding> : Fragment() {
         initObservers()
     }
 
-    /** Set up views, listeners, adapters. */
     protected open fun initView() {}
 
-    /** Subscribe to ViewModel LiveData / Flows. */
     protected open fun initObservers() {}
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
-
-    // --- Screen-view analytics ---
-    // CoreHubActivity hosts tabs via add/show/hide, so log when a fragment is
-    // actually visible: on first resume and whenever it is un-hidden. Hidden
-    // fragments still receive onResume on app-resume, hence the isHidden guard.
 
     override fun onResume() {
         super.onResume()
@@ -86,32 +63,22 @@ abstract class FrameFragment<VB : ViewBinding> : Fragment() {
         context?.recordKeyEvent("screen_${this::class.java.simpleName.lowercase(Locale.ROOT)}")
     }
 
-    // --- Shared runtime-permission handling ---
-
-    /**
-     * Requests [permission] through the given [launcher], but once the user has denied
-     * it twice (permanently denied — the system will no longer show its dialog), opens
-     * the app's settings page instead so they can enable it manually.
-     */
     protected fun demandPermissionManaged(
         permission: String,
         launcher: ActivityResultLauncher<String>
     ) {
         val prefs = LockerBook(requireContext())
         when {
-            // First-ever request → show the system dialog.
             !prefs.hasRequestedPermission(permission) -> {
                 prefs.flagPermissionRequested(permission)
                 launcher.launch(permission)
             }
-            // Denied before but the system will still show the dialog → ask again.
+
             shouldShowRequestPermissionRationale(permission) -> launcher.launch(permission)
-            // Permanently denied → the dialog won't appear, so send them to Settings.
+
             else -> enterAppSettings()
         }
     }
-
-    // --- Chained runtime-permission requests ---
 
     private val permissionChain = ArrayDeque<String>()
     private var onPermissionChainComplete: (() -> Unit)? = null
@@ -124,12 +91,6 @@ abstract class FrameFragment<VB : ViewBinding> : Fragment() {
         advancePermissionChain()
     }
 
-    /**
-     * Requests [permissions] one after another (skipping any already granted), then
-     * runs [onComplete] once the whole sequence is finished — e.g. to kick off the
-     * overlay-permission step. A permanently-denied permission diverts to the app's
-     * Settings page and pauses the chain; calling this again restarts it.
-     */
     protected fun demandPermissionChain(
         permissions: List<String>,
         onComplete: () -> Unit
@@ -150,29 +111,27 @@ abstract class FrameFragment<VB : ViewBinding> : Fragment() {
             ) continue
 
             when {
-                // First-ever request → show the system dialog (callback continues the chain).
                 !prefs.hasRequestedPermission(permission) -> {
                     prefs.flagPermissionRequested(permission)
                     lastChainPermission = permission
                     chainLauncher.launch(permission)
                 }
-                // Denied before but the dialog still appears → ask again.
+
                 shouldShowRequestPermissionRationale(permission) -> {
                     lastChainPermission = permission
                     chainLauncher.launch(permission)
                 }
-                // Permanently denied → divert to Settings and pause here.
+
                 else -> enterAppSettings()
             }
             return
         }
-        // Sequence exhausted — fire the completion hook.
+
         val done = onPermissionChainComplete
         onPermissionChainComplete = null
         done?.invoke()
     }
 
-    /** Opens this app's system settings (App info) screen. */
     protected fun enterAppSettings() {
         runCatching {
             startActivity(
@@ -183,8 +142,6 @@ abstract class FrameFragment<VB : ViewBinding> : Fragment() {
             )
         }
     }
-
-    // --- Shared direct-calling (CALL_PHONE) ---
 
     private var pendingCallNumber: String? = null
 
@@ -197,7 +154,6 @@ abstract class FrameFragment<VB : ViewBinding> : Fragment() {
         if (number != null) if (granted) beginCall(number) else enterDialer(number)
     }
 
-    /** Places the call directly (CALL_PHONE), requesting the permission if needed. */
     protected fun siteCall(number: String) {
         if (number.isBlank()) return
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CALL_PHONE)

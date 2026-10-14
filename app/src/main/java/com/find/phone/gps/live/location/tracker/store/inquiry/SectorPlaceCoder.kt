@@ -11,12 +11,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Locale
 import kotlin.coroutines.resume
 
-/**
- * Platform [Geocoder] lookup of a registration area, from the most specific query down to the
- * country alone. Hits are memoised in SharedPreferences keyed by the lowercased query.
- */
 object SectorPlaceCoder {
-
     private const val CACHE_FILE = "area_geocode_cache"
     private const val LOOKUP_TIMEOUT_MS = 6_000L
 
@@ -55,10 +50,6 @@ object SectorPlaceCoder {
         return result.toList()
     }
 
-    /**
-     * Single geocoder round, never throws: some vendor builds (OnePlus / OPPO, ColorOS 15+,
-     * Android 16) blow up with an NPE across Binder from forwardGeocode, so any throw means no hit.
-     */
     private suspend fun lookup(context: Context, query: String): TerraTack? {
         val present = runCatching { Geocoder.isPresent() }.getOrElse { false }
         if (!present) return null

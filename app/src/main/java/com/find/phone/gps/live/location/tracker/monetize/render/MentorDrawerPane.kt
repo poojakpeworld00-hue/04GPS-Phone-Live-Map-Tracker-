@@ -16,38 +16,15 @@ import androidx.core.view.WindowInsetsCompat
 import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.helpers.WardenRail
 
-/**
- * The guide card drawn as a real overlay window instead of an activity.
- *
- * [ClueDrawerActivity] can only land on top of a system page that stays in this
- * app's task. That holds for ACTION_MANAGE_OVERLAY_PERMISSION, but the "Default
- * home app" list is normally hoisted into the Settings app's own task, and an
- * activity started right after it ends up behind it — the hint is there, just
- * never visible. A TYPE_APPLICATION_OVERLAY window has no such problem.
- *
- * Only the card is added, not the dimmed full-screen root: the window is
- * bottom-anchored and wrap-content, so everything above it — the list the user
- * has to tap — keeps receiving touches.
- *
- * Needs the "display over other apps" permission, so [show] returns false when it
- * is missing and the caller falls back to the activity.
- */
 object MentorDrawerPane {
-
     private const val AUTO_DISMISS_MS = 3_000L
     private const val POLL_MS = 500L
 
     private val main = Handler(Looper.getMainLooper())
     private var shown: View? = null
 
-    /** True when this app may draw the card over another app's UI. */
     fun canDraw(context: Context): Boolean = Settings.canDrawOverlays(context.applicationContext)
 
-    /**
-     * [delayMs] holds the card back until the page it belongs to is actually in front.
-     * The window is added the instant the caller starts the system page, so without it
-     * the first part of the 3 seconds is spent over the caller's own screen.
-     */
     fun show(context: Context, mode: String, delayMs: Long = 0L): Boolean {
         if (delayMs > 0L) {
             val app = context.applicationContext
@@ -61,7 +38,6 @@ object MentorDrawerPane {
     private fun presentNow(context: Context, mode: String): Boolean {
         val app = context.applicationContext
         if (!Settings.canDrawOverlays(app)) {
-            // The one thing that decides whether the card can sit on the system page.
             WardenRail.log("OverlayGuide", "no SYSTEM_ALERT_WINDOW → cannot draw over Settings ($mode)")
             return false
         }
@@ -79,8 +55,7 @@ object MentorDrawerPane {
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                // NOT_FOCUSABLE keeps the keyboard and back key with the page underneath;
-                // NOT_TOUCH_MODAL lets every touch outside the card through to it.
+
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT,
@@ -90,7 +65,6 @@ object MentorDrawerPane {
             windowManager.addView(card, params)
             shown = card
 
-            // Same nav-bar clearance the activity applies, for the same reason.
             ViewCompat.setOnApplyWindowInsetsListener(card) { v, insets ->
                 val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
                 v.setPadding(bars.left, v.paddingTop, bars.right, bars.bottom)
@@ -120,7 +94,6 @@ object MentorDrawerPane {
         }
     }
 
-    /** Clears the card the moment the user satisfies the request underneath. */
     private fun poll(context: Context, mode: String) {
         main.postDelayed(object : Runnable {
             override fun run() {

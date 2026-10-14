@@ -14,21 +14,7 @@ import android.view.animation.OvershootInterpolator
 import androidx.core.view.isVisible
 import com.livemap.homedeck.databinding.HdDefaultLauncherBannerBinding
 
-/**
- * Motion for the launcher's default-home card (`lnch_default_launcher_banner.xml`): the card pops
- * in each time [HomeDeck][com.livemap.homedeck.screens.HomeDeck]
- * shows it, and while it is on screen the hero floats over a breathing glow and a turning dashed
- * ring, two sparkles twinkle, the chevron chip nudges towards the edge and a highlight sweeps the
- * card every few seconds.
- *
- * The panel toggles the card's root between GONE and VISIBLE from its touch path, so nothing here
- * hangs off that call: [bind] watches the root through a global-layout listener and starts the
- * loops on the GONE -> VISIBLE edge and cancels them on the way back, which keeps six animators
- * from ticking under a hidden card for the life of the home screen. Everything no-ops when the
- * system animator scale is 0.
- */
 object HomeRibbonMovement {
-
     private const val ENTER_MS = 420L
     private const val ENTER_FROM_SCALE = 0.9f
     private const val ENTER_FROM_Y_DP = -28f
@@ -48,7 +34,7 @@ object HomeRibbonMovement {
 
     fun bind(binding: HdDefaultLauncherBannerBinding) {
         val root = binding.root
-        // the card's rounded shape is its outline: clip the corner discs and the sheen to it
+
         binding.ribbonCardUi.clipToOutline = true
         if (!mustAnimate(root.context)) return
 
@@ -86,7 +72,6 @@ object HomeRibbonMovement {
         if (wasVisible) start()
     }
 
-    /** Drops the card in from just above its slot with a soft overshoot. */
     private fun enter(card: View) {
         card.animate().cancel()
         card.alpha = 0f
@@ -145,11 +130,6 @@ object HomeRibbonMovement {
         return loops
     }
 
-    /**
-     * Sweeps the highlight from past the card's left edge to past its right edge, then rests off
-     * screen until the next pass; the repeat is a fixed-length animator that spends its tail out
-     * of sight, so there is no handler to clear.
-     */
     private fun sheen(sheen: View, card: View): Animator {
         val fraction = SHEEN_MS.toFloat() / SHEEN_EVERY_MS
         return ValueAnimator.ofFloat(0f, 1f).apply {
@@ -171,7 +151,6 @@ object HomeRibbonMovement {
         }
     }
 
-    /** A there-and-back loop: [period] covers both directions, so one leg is half of it. */
     private fun loop(animator: ObjectAnimator, period: Long, delay: Long): Animator = animator.apply {
         duration = period / 2
         startDelay = delay

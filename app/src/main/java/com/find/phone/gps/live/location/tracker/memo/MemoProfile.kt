@@ -9,47 +9,36 @@ import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import java.util.Locale
 
-/** One sample reminder, as delivered inside `default_config_list`. */
 data class MemoSproutSchema(
     @SerializedName("title") val title: String = "",
     @SerializedName("note") val note: String = "",
     @SerializedName("daysAhead") val daysAhead: Int = 1,
 )
 
-/**
- * One audience branch of the `feature_config` Remote Config JSON. Field names mirror the JSON so
- * the Firebase value stays diff-able against this class. Every field has a default: Gson then
- * fills absent keys with it, and the defaults double as the safe "everything off" branch.
- */
 data class MemoOptions(
     @SerializedName("feature_title") val featureTitle: String = "",
-    /** May contain `{title}` and `{time}`, filled from the reminder that was just saved. */
+
     @SerializedName("feature_desc") val featureDesc: String = "",
     @SerializedName("feature_action") val featureAction: String = "",
 
-    /** CSV minutes, e.g. `5,10,30,60`: the alert's Snooze choices. */
     @SerializedName("action_delay_options") val actionDelayOptions: String = "5,10,30,60",
 
     @SerializedName("is_default_config") val isDefaultConfig: Boolean = false,
     @SerializedName("default_config_list") val defaultConfigList: List<MemoSproutSchema> = emptyList(),
 
-    /** Master for the "Turn on reminders" prompt shown after the first save. */
     @SerializedName("is_feature_prompt") val isFeaturePrompt: Boolean = false,
-    /** Off → due reminders arrive as a normal notification instead of filling the screen. */
+
     @SerializedName("is_enhanced_mode") val isEnhancedMode: Boolean = true,
-    /** The `reminders` onboarding step after Welcome. */
+
     @SerializedName("is_intro_screen") val isIntroScreen: Boolean = false,
 
-    /** `always` | `once` | `every_days` | `app_launches` | `reminder_creations` | `never`. */
     @SerializedName("prompt_frequency") val promptFrequency: String = "always",
     @SerializedName("prompt_interval") val promptInterval: Int = 0,
 
-    /** Country filter master. Off → shown in every country. */
     @SerializedName("is_country_filter") val isCountryFilter: Boolean = false,
-    /** CSV ISO-2 codes where the feature is hidden (block list). */
+
     @SerializedName("excluded_countries") val excludedCountries: String = "",
 
-    /** The drawer's Reminders row; it also has its own country block list. */
     @SerializedName("is_settings_row") val isSettingsRow: Boolean = false,
     @SerializedName("settings_row_excluded_countries") val settingsRowExcludedCountries: String = "",
 
@@ -62,13 +51,7 @@ private data class MemoProfileDocument(
     @SerializedName("organic") val organic: MemoOptions? = null,
 )
 
-/**
- * Reader for the `feature_config` Remote Config JSON (branches `marketing` / `organic`). Uses the
- * activated Firebase value when present, otherwise [DEFAULT_CONFIG]. The branch is chosen by the
- * `OnMaketing` flag in [SpotsLocker]; country checks rely on [LockerBook]. Never throws.
- */
 object MemoProfile {
-
     const val RC_KEY = "feature_config"
     const val MARKETING = "marketing"
     const val ORGANIC = "organic"
@@ -122,7 +105,6 @@ object MemoProfile {
         }
     }
 
-    /** Fail-open: an unknown country or an empty list never blocks. */
     private fun blocked(iso: String?, csv: String): Boolean {
         if (iso.isNullOrBlank() || csv.isBlank()) return false
         for (token in csv.split(',')) {
@@ -131,7 +113,6 @@ object MemoProfile {
         return false
     }
 
-    /** Splash IP country, then the user's Home pick, then the SIM network; null if none known. */
     private fun deviceCountry(context: Context): String? {
         val book = LockerBook(context)
         val candidates = sequenceOf(
@@ -147,10 +128,6 @@ object MemoProfile {
         return first.uppercase(Locale.ROOT).takeIf { it.isNotBlank() }
     }
 
-    /**
-     * In-app default: what users get before the first fetch, or when `feature_config` is not set
-     * in Firebase. Keep it identical to the value published in the console.
-     */
     private const val DEFAULT_CONFIG = """
 {
   "marketing": {

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="launcher_hint_overlay_title">Увімкніть \"Відображення поверх інших додатків\"</string>
-    <string name="launcher_hint_overlay_description">Ми одразу повернемо вас назад, щойно це буде увімкнено.</string>
-    <string name="launcher_hint_default_home_title">Виберіть %1$s як головний екран</string>
-    <string name="launcher_hint_default_home_description">Виберіть його у списку, щоб встановити як головний екран.</string>
-    <string name="launcher_hint_default_sms_title">Встановіть як SMS-додаток</string>
-    <string name="launcher_hint_default_sms_description">Натисніть \"Встановити за замовчуванням\", щоб завершити.</string>
+    <string name="launcher_hint_overlay_title">Активуйте параметр \"Відображення поверх інших додатків\"</string>
+    <string name="launcher_hint_overlay_description">Щойно параметр буде активовано, ми одразу повернемо вас сюди.</string>
+    <string name="launcher_hint_default_home_title">Призначте %1$s головним екраном</string>
+    <string name="launcher_hint_default_home_description">Знайдіть його у списку й зробіть головним екраном.</string>
+    <string name="launcher_hint_default_sms_title">Зробіть застосунком для SMS</string>
+    <string name="launcher_hint_default_sms_description">Для завершення торкніться \"Встановити за замовчуванням\".</string>
     <string name="launcher_hint_mock_row">Головний екран за замовчуванням</string>
-    <string name="launcher_hint_mock_toggle_row">Дозвіл</string>
+    <string name="launcher_hint_mock_toggle_row">Доступ</string>
     <string name="launcher_hint_overlay_row">Дозволити відображення поверх інших додатків</string>
 </resources>

@@ -15,23 +15,9 @@ import com.find.phone.gps.live.location.tracker.BuildConfig
 import org.json.JSONObject
 import com.find.phone.gps.live.location.tracker.consent.DisplayMatcher
 
-/**
- * Per-screen on-load ad configuration, driven by Remote Config.
- *
- * Resolution order:
- *  - `screen_wise_ad = false` → global `googleBanner` / `googleNative`.
- *  - `screen_wise_ad = true` + `screen_wise_default = true` → `ScreenAds.default`.
- *  - `screen_wise_ad = true` + `screen_wise_default = false` → `ScreenAds.<Screen>`
- *    (falling back to `default`). A per-entry empty id inherits the global id.
- *
- * In DEBUG builds every resolution is logged under the tag `DisplayTeaserProfile`
- * (filter logcat by that tag to verify which id/type each screen uses).
- */
 object DisplayTeaserProfile {
-
     private const val TAG = "DisplayTeaserProfile"
 
-    /** Resolved on-load ad config for a single screen. */
     data class ScreenAd(
         val show: Boolean,
         val bannerId: String,
@@ -40,7 +26,6 @@ object DisplayTeaserProfile {
         val nativeType: String
     )
 
-    /** Resolves the on-load ad config for [screenName] (logs the decision in DEBUG). */
     fun resolve(context: Context, screenName: String): ScreenAd {
         val pref = SpotsLocker.getInstance(context)
         val globalBanner = pref.getString("googleBanner").orEmpty()
@@ -48,13 +33,8 @@ object DisplayTeaserProfile {
         val screenWise = pref.getBoolean("screen_wise_ad")
         val useDefault = pref.getBoolean("screen_wise_default")
 
-        // ScreenAds is parsed whenever present — even with screen_wise_ad=false —
-        // because the per-screen `show` flag is honored in GLOBAL id mode too, so a
-        // screen like CoreHubActivity (show:false) stays hidden while still using the
-        // global banner/native ids.
         val root = runCatching { JSONObject(pref.getString("ScreenAds", "{}") ?: "{}") }.getOrNull()
 
-        // Entry that supplies the ad-unit IDs — only when screen-wise ids are on.
         val entry = when {
             !screenWise -> null
             root == null -> null
@@ -62,12 +42,9 @@ object DisplayTeaserProfile {
             else -> root.screenEntry(screenName) ?: root.optJSONObject("default")
         }
 
-        // `show` is resolved per-screen regardless of screen_wise_ad: the screen's
-        // own ScreenAds entry (else `default`) wins; absent → true (visible).
         val showEntry = root?.let { it.screenEntry(screenName) ?: it.optJSONObject("default") }
         val globalShow = showEntry?.optBoolean("show", true) ?: true
-        // Like `show`, the native template (`nativeType`) is a per-screen layout choice, not an
-        // ad-unit id, so the screen's entry decides it in GLOBAL id mode too.
+
         val globalNativeType = showEntry?.optString("nativeType")?.ifBlank { null } ?: "mid"
 
         val result: ScreenAd
@@ -118,11 +95,6 @@ object DisplayTeaserProfile {
         return result
     }
 
-    /**
-     * Global native ad-unit id, screen-wise aware. The native ad pool is
-     * preloaded once with no screen context, so it resolves to the `default`
-     * entry's native id (or the global `googleNative` when screen-wise is off).
-     */
     fun nativeAdUnitId(context: Context): String {
         val pref = SpotsLocker.getInstance(context)
         val globalNative = pref.getString("googleNative").orEmpty()
@@ -150,11 +122,6 @@ object DisplayTeaserProfile {
         return result
     }
 
-    /**
-     * Loads the bottom on-load banner into [container] for [screenName]. Banner
-     * first; if it fails, a native banner is shown in the same container.
-     * Hidden when ads are globally off or the screen's `show` flag is false.
-     */
     fun showAd(
         screenName: String,
         activity: Activity,
@@ -176,7 +143,6 @@ object DisplayTeaserProfile {
             return
         }
 
-        // bannerType → RibbonSpan + collapsible flag.
         val (size, collapsible) = when (resolved.bannerType.lowercase()) {
             "inline" -> RibbonSpan.INLINE to false
             "normal" -> RibbonSpan.NORMAL to false
@@ -192,8 +158,6 @@ object DisplayTeaserProfile {
             )
         }
 
-        // disableInternalFallback=true → RibbonTeaser reports a single onAdFailed()
-        // so the native-banner fallback owns the failure path (no double-load).
         RibbonTeaser().presentBanner(
             activity = activity,
             container = container,
@@ -215,12 +179,5 @@ object DisplayTeaserProfile {
     }
 }
 
-/**
- * The `ScreenAds` entry for [screenName], honouring [DisplayMatcher]'s legacy-name
- * table so a key written against an earlier build still resolves. A plain
- * `optJSONObject(screenName)` silently fell through to `default` after a class
- * rename — which is what a server-side "LanguageActivity" key has been doing since
- * that screen became TongueSelectorActivity.
- */
 private fun JSONObject.screenEntry(screenName: String): JSONObject? =
     DisplayMatcher.keyFor(keys(), screenName)?.let { optJSONObject(it) }

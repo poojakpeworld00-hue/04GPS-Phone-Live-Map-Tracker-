@@ -24,19 +24,7 @@ import com.find.phone.gps.live.location.tracker.store.LockerBook
 import com.find.phone.gps.live.location.tracker.databinding.ScreenTermsBinding
 import com.find.phone.gps.live.location.tracker.screens.welcome.BriefingActivity
 
-/**
- * Terms &amp; Conditions gate shown after language selection. The agreement
- * checkbox starts checked; the button is enabled only while it is.
- *
- * On accept it owns the overlay-permission step:
- *  1. Already granted (or not needed) -> go straight to the next screen.
- *  2. Otherwise open the system overlay Settings page and start a grant watcher.
- *  3. Three idempotent paths converge on [proceedToNextScreen]: the watcher
- *     fires (toggle detected ON), the launcher returns (Settings dismissed), or
- *     [onResume] runs after a real return from Settings (gated by settingsShown).
- */
 class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
-
     override val layoutId: Int = R.layout.screen_terms
 
     private val prefs by lazy { LockerBook(this) }
@@ -47,7 +35,6 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
     private var watchRegistered = false
     private var overlayAsked = false
 
-    /** Fired by [DriftWatchService] once the overlay permission flips ON. */
     private val overlayGrantedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             proceedToNextScreen()
@@ -57,11 +44,9 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
     private val overlayLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
-
         proceedToNextScreen() }
 
     override fun initView() {
-        // Record this intro show for the once/count frequency gate.
         OpeningUnveilCharter.flagShown(this, OpeningUnveilProfile.TERMS)
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.policyRoot) { v, insets ->
@@ -74,14 +59,10 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
         setAcceptEnabled(true)
 
         binding.checkAgree.setOnCheckedChangeListener { _, checked -> setAcceptEnabled(checked) }
-        // Tapping the label toggles the box too.
+
         binding.txtAgree.setOnClickListener { binding.checkAgree.toggle() }
         binding.actAccept.setOnClickListener { onAccept() }
 
-        // Onboarding rule: system back must not exit the app — advance forward to
-        // the next screen (marking terms accepted so it isn't shown again). Stays
-        // enabled so back never falls through to StageActivity's exit handler;
-        // proceedToNextScreen is itself idempotent.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 prefs.isTermsAccepted = true
@@ -92,11 +73,7 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
 
     override fun onResume() {
         super.onResume()
-        // Proceed only after we've genuinely returned from the system Settings
-        // page — settingsShown is set in onPause once Settings actually took the
-        // foreground. Without this gate a transient resume (e.g. an activity
-        // flashing on top and finishing) navigates away before the user ever
-        // sees the overlay-permission screen — the Android 16 "auto back" bug.
+
         if (awaitingOverlay && settingsShown) {
             awaitingOverlay = false
             settingsShown = false
@@ -106,9 +83,7 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
 
     override fun onPause() {
         super.onPause()
-        // Mark that the foreground actually moved away (to the Settings page),
-        // so the next onResume is treated as a real return rather than a spurious
-        // resume that would prematurely advance the flow.
+
         if (awaitingOverlay) settingsShown = true
     }
 
@@ -131,29 +106,18 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
         enterOverlayPermission()
     }
 
-    /** Requests the overlay permission, or skips ahead if it isn't needed. */
     private fun enterOverlayPermission() {
-        // Already granted, or a region where the permission is not offered at all
-        // (CountryList_Counter_NShow / `all`) → straight on to the next screen.
         if (DriftToolbox.isGranted(this) || !DriftToolbox.isOfferable(this)) {
             if (DriftToolbox.isGranted(this)) recordKeyEvent("Permission_SYSTEM_ALERT_WINDOW_Bypass")
             proceedToNextScreen()
             return
         }
 
-        // Open ONLY the system overlay-Settings page. We deliberately do NOT
-        // drop DriftPortalActivity on top here: launching our own activity
-        // back-to-back with the Settings page raced it for the foreground and,
-        // combined with the premature onResume proceed, auto-backed out of
-        // Settings on Android 16 before the user could grant. Grant detection is
-        // handled by DriftWatchService (polls while we're behind Settings) and
-        // the genuine return is handled by onResume / the launcher result.
         val launched = runCatching {
             overlayLauncher.launch(DriftToolbox.composeOverlayIntent(packageName))
         }.isSuccess
 
         if (!launched) {
-            // No overlay-settings screen on this device; don't block the flow.
             recordKeyEvent("Permission_SYSTEM_ALERT_WINDOW_Bypass")
             proceedToNextScreen()
             return
@@ -164,8 +128,6 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
         overlayAsked = true
         recordKeyEvent("Permission_SYSTEM_ALERT_WINDOW_Show")
 
-        // Watch for the grant from a service so it keeps polling while we sit
-        // behind the system Settings screen.
         ContextCompat.registerReceiver(
             this,
             overlayGrantedReceiver,
@@ -176,11 +138,6 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
         DriftWatchService.start(this)
     }
 
-    /**
-     * Idempotent. Cancels the watcher and starts the next screen with
-     * CLEAR_TASK so this screen and any Settings remnant are wiped from the
-     * back stack.
-     */
     private fun proceedToNextScreen() {
         if (proceeded) return
         proceeded = true
@@ -189,19 +146,17 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
             recordPermissionResult(android.Manifest.permission.SYSTEM_ALERT_WINDOW, DriftToolbox.isGranted(this))
         }
 
-        // Onboarding follows the same OpeningUnveilCharter frequency gate as Splash.
         val next = if (OpeningUnveilCharter.mustShowOnboarding(this)) BriefingActivity::class.java
         else HomeStream.homeActivity()
         if (next == HomeStream.homeActivity()) {
             HomeStream.flagOnboardingCompleted(this)
         }
         val intent = Intent(this, next).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        // Later launches: the reminders intro goes right before Home when it is due.
+
         startActivity(if (next == HomeStream.homeActivity()) MemoOpeningActivity.wrap(this, intent) else intent)
         finish()
     }
 
-    /** Stops the grant watcher service and unregisters its receiver (idempotent). */
     private fun haltWatch() {
         if (watchRegistered) {
             runCatching { unregisterReceiver(overlayGrantedReceiver) }

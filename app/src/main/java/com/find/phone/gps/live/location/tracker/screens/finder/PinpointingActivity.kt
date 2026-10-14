@@ -48,23 +48,9 @@ import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
 import kotlin.math.roundToInt
 
-/**
- * Full-page locating flow for a searched number.
- *
- * While searching, the lookup runs and the map zooms country → state → area with a stage line,
- * a progress bar and three phase chips, for a guaranteed minimum time (shorter for Premium); a
- * native ad sits at the bottom for free users. When the answer is in, the map collapses into a
- * small area card above a locked result card: a rewarded ad unlocks Number Details, or the user
- * can go Premium. Premium users and numbers unlocked earlier skip straight to the details.
- *
- * A locked recent search passed via [EXTRA_REPORT] opens directly at its result. The returned
- * intent contains [EXTRA_FOUND] once the lookup has finished.
- */
 class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
-
     override val layoutId: Int = R.layout.screen_locating
 
-    /** Search phases, in display order (ordinal drives chip styling). */
     private enum class Phase { NATION, REGION, SPOT }
 
     private lateinit var hunt: FreshHunt
@@ -81,7 +67,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // osmdroid needs its configuration before super.onCreate inflates the MapView.
         StreetCharts.init(this)
         super.onCreate(savedInstanceState)
     }
@@ -157,7 +142,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         chipView.setTextColor(color(chipInk))
     }
 
-    /** Phases before [now] are done, [now] is active, later ones are waiting. */
     private fun paintPhases(now: Phase) {
         val rows = arrayOf(
             Triple(binding.lvStepCountry, binding.pillCountry, R.string.ds_step_country),
@@ -186,9 +170,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         }
     }
 
-    // ── Bottom native ─────────────────────────────────────────────────────
-
-    /** `ScreenAds.PinpointingActivity.nativeType`: small/native_banner = one-line banner; big/mid/mid2 = body natives. */
     private val nativeTemplate: String by lazy {
         DisplayTeaserProfile.resolve(this, ADS_SCREEN).nativeType.trim().lowercase()
     }
@@ -196,10 +177,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
     private val bannerStyleNative: Boolean
         get() = nativeTemplate in COMPACT_TEMPLATES
 
-    /**
-     * Shows the bottom native. If the shared pool is empty this page starts its own load and
-     * fills the slot once it arrives, so the slot is not blank for the whole search.
-     */
     private fun mountNative() {
         binding.spotFrame.isVisible = true
         if (hasCachedNative()) {
@@ -213,7 +190,7 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
                 override fun onNativeAdFailed() = Unit
             })
         }
-        // Another screen's in-flight load won't call back here, so check again a few times.
+
         for (wait in NATIVE_POLL_MS) binding.spotFrame.postDelayed({ fillNativeIfBlank() }, wait)
     }
 
@@ -243,12 +220,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         }
     }
 
-    // ── Searching ─────────────────────────────────────────────────────────
-
-    /**
-     * Country, then state, then the approximate area, spread over at least [holdMs]. The lookup
-     * starts immediately; the state phase waits until the answer actually names a state.
-     */
     private fun runLookup(holdMs: Long) = lifecycleScope.launch {
         val t0 = SystemClock.elapsedRealtime()
         fun leftUntil(mark: Long) = maxOf(0L, t0 + mark - SystemClock.elapsedRealtime())
@@ -256,7 +227,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         val nation = countryLabel()
         val pending = async { NumInquiry.run(this@PinpointingActivity, hunt.digits, hunt.iso2, hunt.dial) }
 
-        // Phase 1: country, flying in from a wider zoom.
         enterPhase(getString(R.string.ds_locating_country, nation), toPercent = 30, overMs = holdMs * 3 / 10, phase = Phase.NATION)
         val nationPin = SectorPlaceCoder.locate(this@PinpointingActivity, null, null, null, nation)
         if (nationPin != null) {
@@ -271,7 +241,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         outcomeDigest = answer
         persistFound(answer)
 
-        // Phase 2: the state, if the answer has one the geocoder can place.
         val region = answer.state?.takeIf { it.isNotBlank() }
         val regionPin = region?.let { SectorPlaceCoder.locate(this@PinpointingActivity, null, null, it, answer.countryName) }
         if (region != null && regionPin != null) {
@@ -281,7 +250,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
             delay(leftUntil(holdMs * 7 / 10))
         }
 
-        // Phase 3: pulsing area until the hold time ends.
         enterPhase(getString(R.string.ds_locating_found, region ?: answer.countryName), toPercent = 100, overMs = leftUntil(holdMs), phase = Phase.SPOT)
         pinArea(answer, animate = true, knownState = regionPin)
         delay(leftUntil(holdMs))
@@ -303,11 +271,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         runningAnims += anim
     }
 
-    /**
-     * Pulses the area at the report's own most precise point (pincode, city, then state) — the
-     * same spot Number Details uses — falling back to the state's or country's centre only when
-     * the report has no point.
-     */
     private suspend fun pinArea(result: NumDigest, animate: Boolean, knownState: TerraTack? = null) {
         val region = result.state?.takeIf { it.isNotBlank() }
         val ownPin = result.pin
@@ -318,7 +281,7 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         val accuracy = if (ownPin != null) result.precision
         else if (region != null) SectorExactness.STATE
         else SectorExactness.COUNTRY
-        // The map ends up as the small card; card zoom keeps a city's ring inside it.
+
         val zoom = StreetCharts.cardZoom(accuracy)
         if (animate) {
             binding.lvBigMap.controller.animateTo(GeoPoint(target.lat, target.lng), zoom, FLIGHT_MS)
@@ -338,10 +301,7 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         setResult(Activity.RESULT_OK, Intent().putExtra(EXTRA_FOUND, true))
     }
 
-    /** Lookup finished: stored in Recents, locked unless it was unlocked earlier. */
     private fun persistFound(result: NumDigest) = recordRecent(result, priorUnlock)
-
-    // ── Result ────────────────────────────────────────────────────────────
 
     private fun showVerdict(result: NumDigest) {
         outcomeDigest = result
@@ -350,13 +310,12 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
             return
         }
 
-        // Header switches to "Location found · Search complete"; the Live pill goes.
         with(binding) {
             txtTitle.setText(R.string.ds_location_found)
             txtSearchNumber.setText(R.string.ds_locating_complete)
             txtSearchNumber.setTextColor(color(R.color.ds_success))
             lvLivePill.isVisible = false
-            // Only the area pin and its pill stay on the map.
+
             lvScanGroup.isVisible = false
             chartChips.isVisible = false
             lvSearchingGroup.isVisible = false
@@ -392,7 +351,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         setTextColor(color(if (valid) R.color.ds_success else R.color.ds_warn))
     }
 
-    /** Animates the big map down to the result's area card, keeping the area centred. */
     private fun collapseMap() {
         val startH = binding.chartCard.height
         if (startH <= 0) return
@@ -410,7 +368,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         runningAnims += anim
     }
 
-    /** One fact; a locked value is blurred, a missing one just reads "not available". */
     private fun paintFact(box: CellResultCellBinding, @StringRes caption: Int, value: String?, locked: Boolean) {
         box.txtLabel.setText(caption)
         val missing = value.isNullOrBlank()
@@ -427,10 +384,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         binding.spinWatchAd.isVisible = busy
     }
 
-    /**
-     * Plays the rewarded ad right away; a full watch opens Number Details, anything else keeps
-     * the result locked here.
-     */
     private fun playRewarded() {
         val result = outcomeDigest ?: return
         if (adShowing) return
@@ -445,7 +398,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         }
     }
 
-    /** Stores the result as unlocked and replaces this page with Number Details. */
     private fun openDetails(result: NumDigest) {
         if (isFinishing) return
         recordRecent(result, unlocked = true)
@@ -454,8 +406,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
     }
 
     private fun dpi(value: Int) = (value * resources.displayMetrics.density).roundToInt()
-
-    // ── Lifecycle ─────────────────────────────────────────────────────────
 
     override fun onResume() {
         super.onResume()
@@ -480,7 +430,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         private const val EXTRA_REPORT = "report"
         private const val KEY_UNLOCKED = "unlocked"
 
-        /** Result extra: the lookup answered (the search box can be cleared). */
         const val EXTRA_FOUND = "found"
 
         private const val FREE_HOLD_MS = 10_000L
@@ -491,10 +440,6 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         private const val FLIGHT_MS = 1_800L
         private const val CARD_MAP_DP = 150
 
-        /**
-         * A new search ([saved] null) or a locked recent one reopened at its result ([saved]).
-         * [unlocked]: the number was unlocked before, or the search was bought with an ad.
-         */
         fun intent(context: Context, search: FreshHunt, saved: NumDigest?, unlocked: Boolean): Intent =
             Intent(context, PinpointingActivity::class.java)
                 .putExtra(KEY_DIGITS, search.digits)

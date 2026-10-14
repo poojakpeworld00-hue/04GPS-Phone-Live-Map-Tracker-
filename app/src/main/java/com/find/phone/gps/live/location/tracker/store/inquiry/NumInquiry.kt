@@ -13,11 +13,9 @@ import retrofit2.Response
 import java.io.Serializable
 import java.util.Locale
 
-/** A map point. */
 @Keep
 data class TerraTack(val lat: Double, val lng: Double) : Serializable
 
-/** How precisely the number's area is known; drives the map zoom and the area circle. */
 enum class SectorExactness(val zoom: Double, val radiusMeters: Double) {
     PINCODE(13.5, 3_000.0),
     CITY(12.0, 6_000.0),
@@ -25,7 +23,6 @@ enum class SectorExactness(val zoom: Double, val radiusMeters: Double) {
     COUNTRY(4.5, 0.0),
 }
 
-/** Everything the detail screen shows for one searched number. */
 @Keep
 data class NumDigest(
     val e164: String,
@@ -36,18 +33,17 @@ data class NumDigest(
     val lineType: RowGenre,
     val carrier: String?,
     val timeZone: String?,
-    /** Best-match name from the server; null when nobody knows it. */
+
     val name: String?,
     val otherNames: List<String>,
     val city: String?,
     val state: String?,
     val pincode: String?,
     val spam: Boolean,
-    /** False when the server couldn't be reached (offline, timeout): only offline facts are shown. */
+
     val serverReached: Boolean,
     val pin: TerraTack?,
 ) : Serializable {
-
     val precision: SectorExactness
         get() = when {
             !pincode.isNullOrBlank() -> SectorExactness.PINCODE
@@ -56,18 +52,12 @@ data class NumDigest(
             else -> SectorExactness.COUNTRY
         }
 
-    /** "Junagadh, Gujarat, India": most precise first, blanks dropped. */
     val placeLabel: String
         get() = listOf(city, state, countryName).mapNotNull { it?.trim()?.takeIf(String::isNotEmpty) }
             .distinct().joinToString(", ")
 }
 
-/**
- * Runs a single lookup: libphonenumber facts, then the remote contact-saver call, then a geocode
- * of the reported area. Server trouble never fails the lookup; it only flips [NumDigest.serverReached].
- */
 object NumInquiry {
-
     private const val TAG = "NumInquiry"
     private const val CALL_BUDGET_MS = 12_000L
 
@@ -151,7 +141,6 @@ object NumInquiry {
 
     private fun String?.nonBlank(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
 
-    /** ISO alpha-2 to a localized country name; anything else is returned as given. */
     private fun displayCountry(code: String?): String? {
         val raw = code.nonBlank() ?: return null
         val isIso = raw.length == 2 && raw.all { it.isLetter() }

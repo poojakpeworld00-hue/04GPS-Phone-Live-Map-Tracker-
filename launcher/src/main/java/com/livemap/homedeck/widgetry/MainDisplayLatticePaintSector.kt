@@ -8,7 +8,6 @@ import android.view.View
 class MainDisplayLatticePaintSector @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
-
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         (parent as MainDisplayLattice).sketchInto(canvas)

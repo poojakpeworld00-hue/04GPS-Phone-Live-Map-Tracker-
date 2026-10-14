@@ -11,43 +11,32 @@ import org.fossify.commons.helpers.ensureBackgroundThread
 import org.json.JSONObject
 import timber.log.Timber
 
-/**
- * What the device and the launcher it shipped with look like — every field read from the
- * system, none guessed. Captured once, before this app takes the Home role, because
- * afterwards the system reports *us* as the default home and the launcher we replaced can
- * only be inferred (see [previousHome]). Stays in our prefs; never leaves the device.
- */
 data class HomeThumbprint(
-    /** The launcher we replaced; empty when nothing could be told apart from ourselves. */
+
     val homePackage: String,
     val homeVersionCode: Long,
     val homeVersionName: String,
-    /** Lower-cased, the way rules compare them. */
+
     val manufacturer: String,
     val brand: String,
     val model: String,
     val device: String,
     val sdk: Int,
-    /** `Configuration.smallestScreenWidthDp` — phone < 600, foldable inner / small tablet < 720, tablet after. */
+
     val swDp: Int,
-    /** `Settings.Secure.navigation_mode`: 0 three-button, 1 two-button, 2 gesture, -1 unknown. */
+
     val navMode: Int,
-    /** Portrait display size in dp - the short and the long side - and its density bucket. */
+
     val widthDp: Int = 0,
     val heightDp: Int = 0,
     val densityDpi: Int = 0,
     val product: String = "",
-    /**
-     * The OEM skin's own version, read from its system property (One UI `ro.build.version.oneui`,
-     * MIUI / HyperOS, ColorOS, Funtouch / OriginOS, EMUI, MagicOS, HiOS) - "60101" on One UI 6.1.1,
-     * "V14.0.0" on ColorOS 14. Empty when no known property is set. See [MakerPlatformEdition].
-     */
+
     val osVersion: String = "",
 ) {
     val isTablet: Boolean get() = swDp >= 720
     val isFoldInner: Boolean get() = swDp in 600..719
 
-    /** [osVersion] as a comparable number - see [MakerPlatformEdition.toNumber]; 0 when unknown. */
     val osVersionNumber: Long get() = MakerPlatformEdition.toNumber(osVersion)
 
     fun toJson(): String = JSONObject().apply {
@@ -85,7 +74,6 @@ data class HomeThumbprint(
         private const val KEY_PRODUCT = "product"
         private const val KEY_OS_VERSION = "os_version"
 
-        /** The resolver's own package when no default home is set — never "the previous launcher". */
         private const val SYSTEM_RESOLVER = "android"
 
         fun fromJson(raw: String): HomeThumbprint? = runCatching {
@@ -109,15 +97,9 @@ data class HomeThumbprint(
             )
         }.getOrNull()
 
-        /** The stored fingerprint, or null when none has been captured yet. */
         fun stored(context: Context): HomeThumbprint? =
             context.launcherConfig.homeFingerprintJson.takeIf { it.isNotEmpty() }?.let(::fromJson)
 
-        /**
-         * Captures and stores on a background thread unless a capture that identified the previous
-         * launcher is already held. Cheap and idempotent, so it is called from every surface that
-         * precedes the Home-role request — whichever one the user reaches first wins.
-         */
         fun guaranteeCaptured(context: Context) {
             val app = context.applicationContext
             val held = stored(app)
@@ -128,7 +110,6 @@ data class HomeThumbprint(
             }
         }
 
-        /** Synchronous capture + store; returns what was stored. */
         fun grabAndStore(context: Context): HomeThumbprint {
             val fp = capture(context)
             context.launcherConfig.homeFingerprintJson = fp.toJson()
@@ -170,12 +151,6 @@ data class HomeThumbprint(
             )
         }
 
-        /**
-         * The launcher the user had. The current default home when that is not us; otherwise (we
-         * already hold the role, or none is set) the best other candidate among the installed home
-         * apps: a package the profile tables know, then any system-image launcher, then whatever is
-         * left. Needs the HOME intent in the manifest `<queries>` on API 30+.
-         */
         private fun previousHome(context: Context, pm: PackageManager): String? {
             val ours = context.packageName
             val homeIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)

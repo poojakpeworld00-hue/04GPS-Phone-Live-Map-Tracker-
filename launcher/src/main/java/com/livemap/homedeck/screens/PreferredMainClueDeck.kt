@@ -26,26 +26,17 @@ import com.livemap.homedeck.R
 import com.livemap.homedeck.contract.HomeBook
 import timber.log.Timber
 
-
-/**
- * Translucent coach card placed over a system screen the app just opened (overlay permission,
- * default Home list, default SMS chooser). It mimics the control to operate and removes itself
- * after a timeout, on tap, or as soon as the requested state is reached - staying would keep the
- * underlying Settings page paused, which on some builds stops it from loading.
- */
 class PreferredMainClueDeck : AppCompatActivity() {
-
     private val mainHandler = Handler(Looper.getMainLooper())
     private var mockAnimation: Animator? = null
     private lateinit var kind: Kind
 
-    /** The request the card is for; each kind can tell whether it has been fulfilled. */
     enum class Kind(
         val title: Int,
         val description: Int,
-        /** Card placement; matters for the SMS chooser. */
+
         val position: Position,
-        /** Which control is mimed. */
+
         val control: Control,
         val dismissAfterMs: Long,
     ) {
@@ -87,13 +78,8 @@ class PreferredMainClueDeck : AppCompatActivity() {
         }
     }
 
-    /**
-     * BOTTOM: full-screen window, card at the foot (Settings pages).
-     * TOP: wrap-height, non-focusable window above the SMS chooser so its buttons stay usable.
-     */
     enum class Position { TOP, BOTTOM }
 
-    /** The control shown on the real screen: switch list, radio list, or nothing to mime. */
     enum class Control { SWITCH, RADIO, NONE }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -120,7 +106,6 @@ class PreferredMainClueDeck : AppCompatActivity() {
     private fun shownIf(condition: Boolean) = if (condition) View.VISIBLE else View.GONE
 
     private fun applyKind() {
-        // Use the application label (what Settings lists), falling back to the launcher name.
         val appName = runCatching { applicationInfo.loadLabel(packageManager).toString() }
             .getOrElse { getString(R.string.launcher_app_launcher_name) }
         findViewById<android.widget.TextView>(R.id.coachTitleUi)?.text = getString(kind.title, appName)
@@ -139,12 +124,11 @@ class PreferredMainClueDeck : AppCompatActivity() {
         with(window) {
             setGravity(Gravity.TOP)
             setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)
-            // Leave focus with the chooser underneath.
+
             addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
         }
     }
 
-    /** Polls the request; closes the card as soon as it has been fulfilled. */
     private val doneWatcher = object : Runnable {
         override fun run() {
             if (isFinishing || isDestroyed) return
@@ -155,7 +139,6 @@ class PreferredMainClueDeck : AppCompatActivity() {
         }
     }
 
-    /** Shared clock for every mock animation: same length, endless back-and-forth, eased. */
     private fun <T : ValueAnimator> T.pulsing(): T = apply {
         duration = FLIP_MS
         repeatCount = ValueAnimator.INFINITE
@@ -165,14 +148,12 @@ class PreferredMainClueDeck : AppCompatActivity() {
 
     private fun startTogether(parts: List<Animator>) {
         mockAnimation = AnimatorSet().apply {
-            // Hold at each end so it reads as an instruction, not a spinner.
             startDelay = HOLD_MS
             playTogether(parts)
             start()
         }
     }
 
-    /** Thumb slides while the track colour cross-fades, endlessly. */
     private fun animateToggle() {
         val track = findViewById<FrameLayout>(R.id.coachSwitchTrackUi) ?: return
         val thumb = findViewById<View>(R.id.coachSwitchThumbUi) ?: return
@@ -190,7 +171,6 @@ class PreferredMainClueDeck : AppCompatActivity() {
         startTogether(listOf(slide, fade) + rowLift(row))
     }
 
-    /** Small lift of the mock row in step with its control; empty without a row. */
     private fun rowLift(row: View?): List<Animator> {
         if (row == null) return emptyList()
         val rise = -ROW_LIFT_DP * resources.displayMetrics.density
@@ -201,13 +181,11 @@ class PreferredMainClueDeck : AppCompatActivity() {
         )
     }
 
-    /** Dot grows in while ring and dot cross-fade to the selected colour, endlessly. */
     private fun animateRadio() {
         val ring = findViewById<View>(R.id.coachRadioRingUi) ?: return
         val dot = findViewById<View>(R.id.coachRadioDotUi) ?: return
         val row = findViewById<View>(R.id.coachMockAppRowUi)
 
-        // Hidden at rest: an unselected radio has no centre dot.
         dot.apply {
             scaleX = 0f
             scaleY = 0f
@@ -239,29 +217,18 @@ class PreferredMainClueDeck : AppCompatActivity() {
     }
 
     companion object {
-
         private const val TAG = "OverlayFlow"
         private const val EXTRA_KIND = "hint_kind"
 
-        /** Over the system "display over other apps" page. */
         fun presentForOverlay(activity: Activity) = show(activity, Kind.OVERLAY)
 
-        /** Over the system "Default home app" list. */
         fun presentForDefaultHome(activity: Activity) = show(activity, Kind.DEFAULT_HOME)
 
-        /** The launcher only uses the default-home coach-mark. */
         fun show(activity: Activity) = show(activity, Kind.DEFAULT_HOME)
 
-        /** Over the system default-SMS chooser. */
         fun presentForDefaultSms(activity: Activity) = show(activity, Kind.DEFAULT_SMS)
 
-        /**
-         * Schedules the card over the screen [activity] just started; call right after starting it.
-         * The card waits until the host loses focus (the system screen is up), and is launched in
-         * its own task (NEW_TASK) so it does not bring this app's task forward.
-         */
         fun show(activity: Activity, kind: Kind) {
-            // Nothing to coach when it is already done.
             if (kind.isSatisfied(activity)) return
 
             val poller = Handler(Looper.getMainLooper())
@@ -283,7 +250,6 @@ class PreferredMainClueDeck : AppCompatActivity() {
         private fun deliver(activity: Activity, kind: Kind) {
             if (activity.isFinishing || activity.isDestroyed || kind.isSatisfied(activity)) return
             runCatching {
-                // Prefer the host's own default-home card so onboarding and launcher match.
                 val hostCard = kind.takeIf { it == Kind.DEFAULT_HOME }
                     ?.let { HomeBook.bridge.defaultHomeHintIntent(activity) }
                 val target = hostCard
@@ -294,29 +260,22 @@ class PreferredMainClueDeck : AppCompatActivity() {
             }.onFailure { Timber.tag(TAG).w(it, "could not show the %s hint", kind) }
         }
 
-        /** First focus check; then polled until the system screen takes focus (a fixed delay misses slow role UIs). */
         private const val FIRST_CHECK_MS = 250L
         private const val POLL_MS = 150L
 
-        /** Extra beat after focus moves so the card lands on a settled screen. */
         private const val SETTLE_MS = 350L
 
-        /** Give up if focus never moved: the page did not open. */
         private const val GIVE_UP_MS = 6_000L
 
-        /** Re-check interval for [Kind.isSatisfied] while the card is visible. */
         private const val CHECK_MS = 300L
 
-        /** One off-to-on flip; the reversing repeat doubles the round trip. */
         private const val FLIP_MS = 700L
         private const val HOLD_MS = 250L
 
-        // Keep in sync with the switch drawn in the hint layout.
         private const val TRACK_WIDTH_DP = 52f
         private const val THUMB_SIZE_DP = 26f
         private const val THUMB_INSET_DP = 3f
 
-        /** Mock row lift as its control turns on. */
         private const val ROW_LIFT_SCALE = 1.04f
         private const val ROW_LIFT_DP = 3f
     }

@@ -8,17 +8,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 
-/**
- * Backup watcher for reminder access while the user is on the Settings page: the moment it is
- * switched on, it asks for the screen that opened the page to come back and stops itself.
- *
- * The host's own in-Activity poll is the primary path: on Android 15+ a start from a service is a
- * background launch and is usually blocked, while the host (whose task Settings sits in) may
- * still bring itself forward. So this only clears what sits above the host, never CLEAR_TASK, which would wipe the host
- * even when the start itself is refused.
- */
 class MemoConsentSentinel : Service() {
-
     private val handler = Handler(Looper.getMainLooper())
     private var returnToClass: String? = null
 
@@ -38,7 +28,7 @@ class MemoConsentSentinel : Service() {
         returnToClass = intent?.getStringExtra(EXTRA_RETURN_TO)
         handler.removeCallbacks(poll)
         handler.post(poll)
-        // Give up after a while: a user who never flips the switch must not leave us polling.
+
         handler.postDelayed({ stopSelf() }, MAX_WATCH_MS)
         return START_NOT_STICKY
     }

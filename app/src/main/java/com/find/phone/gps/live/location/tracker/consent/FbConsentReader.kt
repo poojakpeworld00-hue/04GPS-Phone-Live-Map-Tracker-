@@ -3,26 +3,7 @@ package com.find.phone.gps.live.location.tracker.consent
 import com.find.phone.gps.live.location.tracker.helpers.WardenRail
 import org.json.JSONObject
 
-/**
- * Parses the `permission_engine` Remote Config JSON into [ConsentClause]s.
- *
- * Accepts either shape, so it works whether the value is stored as its own
- * Remote Config parameter or nested inside a larger config blob:
- *
- * Wrapped:
- * ```
- * { "permission_engine": { "notification": { ... }, "phone_state": { ... } } }
- * ```
- * Unwrapped (the object itself):
- * ```
- * { "notification": { ... }, "phone_state": { ... } }
- * ```
- *
- * Malformed input never throws — it logs and returns an empty list so the app
- * simply behaves as if no permissions were configured.
- */
 object FbConsentReader {
-
     private const val TAG = "ConsentDriver"
     private const val ROOT_KEY = "permission_engine"
 
@@ -30,7 +11,7 @@ object FbConsentReader {
         if (json.isNullOrBlank()) return emptyList()
         return try {
             val root = JSONObject(json)
-            // Tolerate both wrapped and unwrapped shapes.
+
             val engine = root.optJSONObject(ROOT_KEY) ?: root
 
             val rules = ArrayList<ConsentClause>()

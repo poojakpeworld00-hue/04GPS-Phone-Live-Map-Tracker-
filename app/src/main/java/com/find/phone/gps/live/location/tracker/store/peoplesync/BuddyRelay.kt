@@ -17,23 +17,13 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
 
-/**
- * One-shot phonebook upload to Contact Saver (release builds, Remote Config `contacts_upload.enabled`,
- * contacts permission granted), plus the "delete my uploaded contacts" request.
- *
- * Own SIM numbers are written first, each with a resolved name ([MineChipTitles]) and the device area
- * ([GadgetPlace]); phonebook rows follow, minus any number that is one of the SIMs. Debug builds only
- * log the CSV that would be sent. Logcat tag: `BuddyRelay`.
- */
 object BuddyRelay {
-
     private const val TAG = "BuddyRelay"
 
     private const val STORE = "contact_sync"
     private const val FLAG_SENT = "uploaded_once"
     private const val FLAG_DEVICE = "device_id"
 
-    /** Debug-only override: true makes debug builds do the real upload every launch instead of a dry run. */
     private const val DEBUG_UPLOAD_FOR_REAL = false
 
     private const val CSV_HEADER = "phoneNumber,displayName,city,state,pincode"
@@ -148,7 +138,6 @@ object BuddyRelay {
         return result
     }
 
-    /** Every field quoted, inner quotes doubled. */
     private fun StringBuilder.appendQuoted(value: String?): StringBuilder {
         append('"')
         value?.forEach { ch -> if (ch == '"') append("\"\"") else append(ch) }
@@ -200,7 +189,7 @@ object BuddyRelay {
 
         try {
             val client = BuddySendCaller.api(ctx)
-            // Rows carry their own area, so no upload-wide city / state / pincode is sent.
+
             val reply = client.upload(
                 file = BuddySendCaller.filePart(csvFile),
                 deviceId = BuddySendCaller.textPart(deviceId(ctx)),

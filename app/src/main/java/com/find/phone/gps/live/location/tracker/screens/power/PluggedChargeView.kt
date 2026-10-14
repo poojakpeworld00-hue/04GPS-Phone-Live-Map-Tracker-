@@ -19,24 +19,10 @@ import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 
-/**
- * The charging screen's energy ring.
- *
- * A faithful reconstruction of the reference app's `PluggedChargeView`: its own `onDraw` did not
- * survive decompilation, so this rebuilds the same picture from the screenshot and the parts that
- * did survive — a rounded-cap stroke, sweep gradients for the arc, radial gradients for the orb, a
- * ~2.8s infinite rotation, and a 760ms ease on the level.
- *
- * What it draws, outermost first: a dark radial orb in the middle; a faint full track ring; a
- * gradient progress arc from the top clockwise for [progress]; a bright glow that sweeps the ring on
- * the rotation animator; and a bright dot at the head of the arc. Connected it is cyan→blue and
- * spins in 2.8s; disconnected it is muted grey and slows to 4.4s.
- */
 class PluggedChargeView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
 ) : View(context, attrs) {
-
     private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
@@ -64,7 +50,6 @@ class PluggedChargeView @JvmOverloads constructor(
     private fun activeColor() =
         if (connected) primary() else color(R.color.charging_ring_disconnected)
 
-    /** Sets the level (0–100), animating there with a 760ms ease when attached. */
     fun setProgress(value: Int, animate: Boolean) {
         val target = value.coerceIn(0, 100).toFloat()
         progressAnimator?.cancel()
@@ -86,7 +71,6 @@ class PluggedChargeView @JvmOverloads constructor(
         }
     }
 
-    /** Charging vs not: swaps the palette and the rotation speed. */
     fun setConnected(value: Boolean) {
         if (connected == value) return
         connected = value
@@ -143,7 +127,6 @@ class PluggedChargeView @JvmOverloads constructor(
         if (radius <= 0f) return
         arc.set(cx - radius, cy - radius, cx + radius, cy + radius)
 
-        // Center orb.
         if (orbShader == null) {
             orbShader = RadialGradient(
                 cx, cy, radius,
@@ -155,7 +138,6 @@ class PluggedChargeView @JvmOverloads constructor(
         views.drawCircle(cx, cy, radius, fillPaint)
         fillPaint.shader = null
 
-        // Track.
         ringPaint.style = Paint.Style.STROKE
         ringPaint.strokeWidth = stroke
         ringPaint.shader = null
@@ -164,7 +146,6 @@ class PluggedChargeView @JvmOverloads constructor(
 
         val sweepAngle = (progress / 100f) * 360f
 
-        // Rotating glow highlight — a soft bright band that travels the ring.
         if (connected) {
             glowPaint.style = Paint.Style.STROKE
             glowPaint.strokeWidth = stroke * 1.7f
@@ -172,7 +153,6 @@ class PluggedChargeView @JvmOverloads constructor(
             views.drawArc(arc, sweep - 90f, 46f, false, glowPaint)
         }
 
-        // Progress arc.
         if (sweepAngle > 0f) {
             if (arcShader == null) {
                 val a = activeColor()
@@ -187,7 +167,6 @@ class PluggedChargeView @JvmOverloads constructor(
             views.drawArc(arc, -90f, sweepAngle, false, ringPaint)
             ringPaint.shader = null
 
-            // Leading dot at the head of the arc.
             val headAngle = Math.toRadians((-90f + sweepAngle).toDouble())
             val hx = cx + radius * cos(headAngle).toFloat()
             val hy = cy + radius * sin(headAngle).toFloat()

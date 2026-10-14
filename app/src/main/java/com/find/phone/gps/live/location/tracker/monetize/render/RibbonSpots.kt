@@ -23,25 +23,15 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.recordAdLoadError
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.facebook.ads.AdView as FbAdView
 
-// --------------------------------------------------------------
-// ENUMS
-// --------------------------------------------------------------
 enum class RibbonSpan { ADAPTIVE, INLINE, NORMAL }
 enum class RibbonSort { AUTO, GOOGLE, FACEBOOK, CUSTOM }
 
-// --------------------------------------------------------------
-// OBSERVER
-// --------------------------------------------------------------
 interface RibbonSpotSentinel {
     fun onAdLoaded() {}
     fun onAdFailed() {}
 }
 
-// --------------------------------------------------------------
-// BANNER ADS MANAGER
-// --------------------------------------------------------------
 class RibbonTeaser {
-
     private var googleBanner: AdView? = null
     private var facebookBanner: FbAdView? = null
 
@@ -49,9 +39,6 @@ class RibbonTeaser {
         var bannerCounter = 0
     }
 
-    // -----------------------------
-    // SHOW BANNER ENTRY POINT
-    // -----------------------------
     fun presentBanner(
         activity: Activity,
         container: FrameLayout,
@@ -65,14 +52,12 @@ class RibbonTeaser {
     ) {
         val pref = SpotsLocker.getInstance(activity)
 
-        // Ads OFF
         if (!isNetworkConnected(activity)|| !pref.getBoolean("IsAdsON") || !pref.getBoolean("BannerAds")) {
             hide(container)
             observer?.onAdFailed()
             return
         }
 
-        // Banner counter logic
         if (bannerCounter < pref.getInt("BannerCounter")) {
             bannerCounter++
             hide(container)
@@ -142,9 +127,6 @@ class RibbonTeaser {
         }
     }
 
-    // -----------------------------
-    // GOOGLE BANNER
-    // -----------------------------
     private fun fetchGoogleBanner(
         activity: Activity,
         container: FrameLayout,
@@ -165,14 +147,13 @@ class RibbonTeaser {
         }
 
         hide(container)
-        // Show shimmer while loading
+
         shimmer?.startShimmer()
         shimmer?.visibility = View.VISIBLE
         container.removeAllViews()
         shimmer?.let { container.addView(it) }
         container.visibility = View.VISIBLE
 
-        // Preload banner
         if (googleBanner == null) googleBanner = AdView(activity)
         googleBanner?.adUnitId = adUnitId
 
@@ -189,7 +170,7 @@ class RibbonTeaser {
                     "BannerAds",
                     "Ad loaded. adView.isCollapsible() is ${googleBanner?.isCollapsible}.",
                 )
-                // Log load
+
                 activity.recordKeyEvent("Banner_Load")
                 activity.recordAdEvent("banner", "loaded")
 
@@ -198,7 +179,6 @@ class RibbonTeaser {
                 googleBanner!!.setOnPaidEventListener {
                     SpotIncomeGauge.recordPaidEvent(activity, it)
                 }
-
 
                 shimmer?.stopShimmer()
                 shimmer?.visibility = View.GONE
@@ -287,9 +267,6 @@ class RibbonTeaser {
         return (display.widthPixels / display.density).toInt()
     }
 
-    // -----------------------------
-    // FACEBOOK BANNER
-    // -----------------------------
     private fun fetchFacebookBanner(
         activity: Activity,
         container: FrameLayout,
@@ -314,7 +291,7 @@ class RibbonTeaser {
         }
 
         hide(container)
-        // Show shimmer while loading
+
         shimmer?.startShimmer()
         shimmer?.visibility = View.VISIBLE
         container.removeAllViews()
@@ -327,7 +304,6 @@ class RibbonTeaser {
         facebookBanner?.loadAd(
             facebookBanner!!.buildLoadAdConfig()
                 .withAdListener(object : com.facebook.ads.AdListener {
-
                     override fun onAdLoaded(ad: Ad?) {
                         shimmer?.stopShimmer()
                         shimmer?.visibility = View.GONE
@@ -369,9 +345,6 @@ class RibbonTeaser {
         )
     }
 
-    // -----------------------------
-    // FALLBACK
-    // -----------------------------
     private fun fallbackToFBOrCustom(
         activity: Activity,
         container: FrameLayout,
@@ -380,10 +353,8 @@ class RibbonTeaser {
     ) {
         val pref = SpotsLocker.getInstance(activity)
         if (pref.getBoolean("IsFail_FB")) {
-            // Pass shimmer to Facebook banner loader
             fetchFacebookBanner(activity, container, shimmer, observer)
         } else {
-            // Optionally, you can show shimmer for custom ads if BespokeSpotsBook supports it
             shimmer?.startShimmer()
             shimmer?.visibility = View.VISIBLE
             BespokeSpotsBook().fetchCustomAd(
@@ -394,9 +365,6 @@ class RibbonTeaser {
         }
     }
 
-    // -----------------------------
-    // HIDE
-    // -----------------------------
     private fun hide(container: FrameLayout) {
         container.removeAllViews()
         container.visibility = View.GONE

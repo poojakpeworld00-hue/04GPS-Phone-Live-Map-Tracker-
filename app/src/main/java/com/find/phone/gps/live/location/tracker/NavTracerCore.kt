@@ -53,17 +53,10 @@ import kotlinx.coroutines.launch
 import org.fossify.commons.helpers.BaseConfig
 import org.fossify.commons.helpers.SIDELOADING_FALSE
 
-/**
- * Application: ad layer bootstrap, launcher module install, LightHouse init, the App Open ad on
- * foreground, and the process-scoped Remote Config channel. Ported from the reference app's
- * Application class with the caller-ID watchers (charging / package / recents / post-call) removed.
- */
 class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, LifecycleObserver {
-
     private var currentActivity: Activity? = null
 
     companion object {
-        /** Application context, set in [onCreate] — used where only a Context is needed. */
         lateinit var appContext: Context
             private set
     }
@@ -71,13 +64,10 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
     override fun onCreate() {
         super.onCreate()
         appContext = applicationContext
-        // The crash-restart process only relaunches the app; none of the setup below belongs there.
+
         if (FailureReviveActivity.isRestartProcess(this)) return
         SpotsLocker.getInstance(this)
 
-        // The saved theme before any Activity exists: screens that do not extend StageActivity
-        // (the first-run deck, the launcher home) otherwise start light on a cold process until
-        // a StageActivity has run and set the night mode.
         AppCompatDelegate.setDefaultNightMode(
             when (CoreLocker.effectiveTheme(this)) {
                 CoreLocker.THEME_DARK -> AppCompatDelegate.MODE_NIGHT_YES
@@ -86,60 +76,34 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
             }
         )
 
-        // Load the WebView provider now, before any Activity exists. The first load (normally
-        // MobileAds.initialize, or an ad's WebView) appends WebView's assets to every live
-        // Resources and rebuilds them from the system configuration, dropping AppCompat's
-        // night-mode override: with the app on Dark and the system on Light, views inflated
-        // after an ad came back with light colours next to dark ones (invisible text on Home).
         runCatching { WebSettings.getDefaultUserAgent(this) }
 
-        // Premium entitlement: re-checked with Google Play on every start (expired / refunded
-        // subscriptions drop off); the cached flag answers until then.
         PlusCheckout.sync(this)
-        // Play's localized prices, loaded now so the paywall (after the intro or from Home) has them.
+
         PlusCheckout.prefetchDetails(this)
 
-        // Launcher mode per audience (`launcher_enabled`): list or unlist the app as a home app to
-        // match the last-ingested config. Also re-applied on every config ingest.
         HomeFlip.apply(this)
 
-        // One-time phonebook upload: finishes on this launch if the user consented earlier but the
-        // upload never completed. A no-op without consent / contacts permission / the RC switch.
         CoroutineScope(Dispatchers.IO).launch { BuddyRelay.pushOnceIfDue(this@NavTracerCore) }
 
-        // Debug builds: SIM present? which number does it report? (`adb logcat -s SimNumber`)
         ChipNumDiary.log(this)
-        // Debug builds: fresh position, accuracy and street address (`adb logcat -s PlaceDiary`).
+
         PlaceDiary.log(this)
 
-        // App install / removal → the result screen, shown from whichever of our screens is
-        // foreground (queued otherwise). Also seeds the package metadata cache.
         ParcelHappeningSentinel.register(this)
 
-        // Charger plugged in / pulled out → the charging screen. Inert unless `system_ads.charge` /
-        // `discharge` is enabled in Remote Config.
         JuiceHappeningSentinel.register(this)
 
-        // An ad after unlock, on our own home. Inert unless `launcher_config.unlock_ads.enabled`.
         UnlatchSpotSentinel.register(this)
 
-        // Fossify Commons runs an anti-clone heuristic that probes one of its own drawable ids
-        // and, on a lookup miss, wedges the app behind a permanent "download the original"
-        // dialog. Recording the result up front means the probe never runs. It has to be in
-        // onCreate rather than attachBaseContext: Context.config is not safe to read earlier.
         BaseConfig.newInstance(this).appSideloadingStatus = SIDELOADING_FALSE
 
-        // Home grid, drawer and side panels come from the :launcher module; its gesture ads and
-        // inline slots are served by this app's own ad layer (RingHomeSpots). The swipe-in
-        // panel hosts this app's own (placeholder) home (RingHomeGateway.panelFragment).
         HomeBook.install(
             context = this,
             bridge = RingHomeGateway(),
             ads = RingHomeSpots(),
         )
 
-        // Register the splash + rich-push activities so the SDK can forward a
-        // push-launched cold start from the splash (see BootActivity.handleFromSplash).
         LightHouseRichPush.setActivities(
             splashActivity = BootActivity::class.java,
             richPushActivity = CoreHubActivity::class.java,
@@ -153,9 +117,7 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
                 richPushActivity = CoreHubActivity::class.java,
             ),
         )
-        // A sideloaded build has no Play install referrer, so the SDK would classify it organic
-        // while SpotBeaconActivity runs whichever half DEBUG_AUDIENCE_MARKETING picks. Force both
-        // sides of the decision onto the same audience (see SpotBeaconActivity.isAudienceForced).
+
         if (SpotBeaconActivity.isAudienceForced) {
             if (SpotBeaconActivity.DEBUG_AUDIENCE_MARKETING) LightHouse.debugForceFlagged(false)
             LightHouse.debugForceInstallSource(
@@ -165,8 +127,7 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
         CoroutineScope(Dispatchers.Main).launch {
             try {
                 FirebaseApp.initializeApp(this@NavTracerCore)
-                // Global permission engine — fetches the latest `permission_engine` Remote
-                // Config so every screen can be gated dynamically. Requires FirebaseApp first.
+
                 ConsentDriver.init(this@NavTracerCore)
             } catch (e: Exception) {
                 WardenRail.log("NavTracerCore", "init failed: ${e.message}")
@@ -175,18 +136,17 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
 
         registerActivityLifecycleCallbacks(this)
         com.find.phone.gps.live.location.tracker.foundation.NavPressTracker.install(this)
-        // `recent_playstore`: Recents pressed in the first session → Play Store home.
+
         FreshSpotSentinel.install(this)
-        // Home on a first-run screen moves onboarding forward, like Back (marketing).
+
         InductionMainOnward.install(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             object : DefaultLifecycleObserver {
                 override fun onStart(owner: LifecycleOwner) {
                     processAppForeground()
-                    // Remote Config follows the PROCESS: live for as long as the app is
-                    // foreground, gone with it.
+
                     InstantProfileSentinel.start(this@NavTracerCore)
-                    // Backstop for the push channel, throttled by `Config_Sync_Hrs`.
+
                     InstantProfileSentinel.renewIfStale(this@NavTracerCore)
                 }
 
@@ -196,15 +156,11 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
             }
         )
 
-        // Last: it wraps whichever UncaughtExceptionHandler is already installed (Crashlytics').
         FailureWarden.install(this) {
             ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
         }
     }
 
-    // --------------------------------------------------
-    // APP FOREGROUND HANDLER (APP OPEN AD)
-    // --------------------------------------------------
     private fun processAppForeground() {
         WardenRail.log("AppOpen", "handleAppForeground() called")
 
@@ -219,19 +175,16 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
             return
         }
 
-        // The splash owns its own ad path and must never be monetised on foreground.
         if (activity is BootActivity) {
             WardenRail.log("AppOpen", "⛔ Excluded screen (splash)")
             return
         }
 
-        // A due reminder brings the app forward over the lock screen; an ad must never cover it.
         if (activity is MemoSirenActivity) {
             WardenRail.log("AppOpen", "⛔ Excluded screen (reminder alert)")
             return
         }
 
-        // One-shot skip for app-initiated returns (e.g. a Settings round trip we opened).
         if (CoreOpenSpotBook.skipNextAppOpenAd) {
             CoreOpenSpotBook.skipNextAppOpenAd = false
             CoreOpenSpotBook.absorbExpectReturnAd()
@@ -239,8 +192,6 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
             return
         }
 
-        // Coming back from an app the launcher just opened is the one time an ad shows on the
-        // launcher home: `launcher_ads.app_close` (its own sequence and counter).
         if (CoreOpenSpotBook.absorbExpectReturnAd()) {
             WardenRail.log("AppOpen", "↩ other_app_return")
             activity.execWhenWindowFocused {
@@ -250,14 +201,11 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
             return
         }
 
-        // Ordinary returns never monetise the always-foreground launcher home: it is resumed on
-        // every press of Home, which is not an app launch.
         if (activity is LauncherHomeActivity) {
             WardenRail.log("AppOpen", "⛔ Excluded screen")
             return
         }
 
-        // `appOpen_ad_flow` / an `appOpen_` link chain: the dynamic flow instead of the App Open ad.
         if (HomeSeatSpots.hasOwnFlow(activity, "appOpen")) {
             if (!SpotsLocker.getInstance(activity).getBoolean("IsAdsON") ||
                 !HomeSeatSpots.placementEnabled(activity, "appOpen") ||
@@ -295,9 +243,6 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
         }
     }
 
-    // --------------------------------------------------
-    // ACTIVITY LIFECYCLE
-    // --------------------------------------------------
     override fun onActivityCreated(p0: Activity, p1: Bundle?) {}
 
     override fun onActivityResumed(activity: Activity) {
@@ -313,9 +258,6 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
     override fun onActivityStarted(p0: Activity) {}
     override fun onActivityStopped(p0: Activity) {}
 
-    // --------------------------------------------------
-    // WINDOW FOCUS SAFE EXECUTION
-    // --------------------------------------------------
     private fun Activity.execWhenWindowFocused(action: () -> Unit) {
         if (hasWindowFocus()) {
             action()

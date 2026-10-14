@@ -2,13 +2,7 @@ package com.find.phone.gps.live.location.tracker.screens.chip
 
 import java.util.Locale
 
-/**
- * USSD / short codes for the SIM Tools "Carrier codes" screen (design 1c), grouped by section and
- * picked from the detected carrier name. Codes are set by the carrier and can change, so the screen
- * shows a disclaimer and only opens the dialer (ACTION_DIAL) — it never dials automatically.
- */
 object FrameDials {
-
     data class Code(val title: String, val subtitle: String, val code: String)
     data class Section(val title: String, val codes: List<Code>)
 

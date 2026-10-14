@@ -30,13 +30,7 @@ import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.helpers.OsModalAide
 import com.find.phone.gps.live.location.tracker.helpers.enactNativeAdTheme
 
-/**
- * Power connected / disconnected screen, started by [JuiceHappeningSentinel] once its gates pass.
- * Paints the live battery snapshot, fills the bottom native slot per `system_ads.<trigger>.native`
- * and plays the configured `close_ad` on exit.
- */
 class PluggedConditionActivity : AppCompatActivity() {
-
     private var exiting = false
 
     private val eventKey: String
@@ -71,7 +65,7 @@ class PluggedConditionActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this) { leaveScreen() }
         paintBattery(registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)))
         loadBodyNative()
-        // Warm the exit ad while the user is looking at the screen.
+
         if (endsWithFullNative) SliderSpotDriver.preload(this, buildFullNativeFlow())
     }
 
@@ -188,7 +182,6 @@ class PluggedConditionActivity : AppCompatActivity() {
         }
     }
 
-    /** Leaves after the configured exit ad; the screen always closes, ad or not. */
     private fun leaveScreen() {
         if (exiting) return
         exiting = true
@@ -199,7 +192,6 @@ class PluggedConditionActivity : AppCompatActivity() {
         }
         when {
             adCfg.closeShowsInterstitial -> {
-                // Bypass the global inter counter: this screen throttles itself.
                 SpotTallyBook.interCounter = SpotsLocker.getInstance(this).getInt("InterCounter")
                 TakeoverStandard().presentInterAds(this) { finishIfAlive() }
             }

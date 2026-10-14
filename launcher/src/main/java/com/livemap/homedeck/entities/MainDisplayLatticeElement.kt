@@ -8,7 +8,6 @@ import android.graphics.drawable.Drawable
 import androidx.room.*
 import com.livemap.homedeck.support.ITEM_TYPE_ICON
 
-// grid cells are from 0-5 by default. Icons and shortcuts occupy 1 slot only, widgets can be bigger
 @Entity(tableName = "home_screen_grid_items", indices = [(Index(value = ["id"], unique = true))])
 data class MainDisplayLatticeElement(
     @PrimaryKey(autoGenerate = true) var id: Long?,
@@ -18,27 +17,22 @@ data class MainDisplayLatticeElement(
     @ColumnInfo(name = "bottom") var bottom: Int,
     @ColumnInfo(name = "page") var page: Int,
     @ColumnInfo(name = "package_name") var packageName: String,
-    @ColumnInfo(name = "activity_name") var activityName: String,   // needed at apps that create multiple icons at install, not just the launcher
+    @ColumnInfo(name = "activity_name") var activityName: String,
     @ColumnInfo(name = "title") var title: String,
     @ColumnInfo(name = "type") var type: Int,
     @ColumnInfo(name = "class_name") var className: String,
     @ColumnInfo(name = "widget_id") var widgetId: Int,
-    @ColumnInfo(name = "shortcut_id") var shortcutId: String,   // used at pinned shortcuts at startLauncher call
-    @ColumnInfo(name = "icon") var icon: Bitmap? = null,        // store images of pinned shortcuts, those cannot be retrieved after creating
-    @ColumnInfo(name = "docked") var docked: Boolean = false,   // special flag, meaning that page, top and bottom don't matter for this item, it is always at the bottom of the screen
-    @ColumnInfo(name = "parent_id") var parentId: Long? = null, // id of folder this item is in (if it is in any)
+    @ColumnInfo(name = "shortcut_id") var shortcutId: String,
+    @ColumnInfo(name = "icon") var icon: Bitmap? = null,
+    @ColumnInfo(name = "docked") var docked: Boolean = false,
+    @ColumnInfo(name = "parent_id") var parentId: Long? = null,
 
     @Ignore var drawable: Drawable? = null,
-    @Ignore var providerInfo: AppWidgetProviderInfo? = null,    // used at widgets
-    @Ignore var activityInfo: ActivityInfo? = null,             // used at shortcuts
+    @Ignore var providerInfo: AppWidgetProviderInfo? = null,
+    @Ignore var activityInfo: ActivityInfo? = null,
     @Ignore var widthCells: Int = 1,
     @Ignore var heightCells: Int = 1,
-    /**
-     * [drawable] rasterised at the size the grid last drew it, and the drawable it was made from.
-     * A page swipe redraws every icon on two pages per frame; an adaptive icon re-renders its
-     * mask and layers on every bounds change, so the grid draws this bitmap instead and only
-     * rasterises again when the drawable or the size changes. See MainDisplayLattice.iconBitmap.
-     */
+
     @Ignore var iconRaster: Bitmap? = null,
     @Ignore var iconRasterSource: Drawable? = null,
 ) {

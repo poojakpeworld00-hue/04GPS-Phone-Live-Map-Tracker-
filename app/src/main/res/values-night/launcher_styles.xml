@@ -1,11 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Dark-theme onboarding. The ds_* tokens flip in values-night, so the only thing the layouts
-    cannot express is the system-bar icon colour: on the dark ground the light-icon flags come
-    off. A style declared here replaces the default one wholesale, so every item is repeated.
--->
 <resources xmlns:tools="http://schemas.android.com/tools">
-
     <style name="OnboardingTheme" parent="LauncherBaseTheme">
         <item name="android:windowBackground">@color/ds_canvas</item>
         <item name="android:fontFamily">@font/figtree_regular</item>
@@ -19,5 +13,4 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
     </style>
-
 </resources>

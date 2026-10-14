@@ -38,12 +38,7 @@ import com.find.phone.gps.live.location.tracker.helpers.ChipNumDiary
 import com.find.phone.gps.live.location.tracker.helpers.isNightMode
 import kotlinx.coroutines.launch
 
-/**
- * Shows the device's own SIM lines as selectable cards; the chosen line feeds the SIM tools
- * underneath. Needs READ_PHONE_STATE only.
- */
 class MineNumActivity : StageActivity<ScreenMyNumberBinding>() {
-
     override val layoutId: Int = R.layout.screen_my_number
 
     private class SimTile(
@@ -178,7 +173,6 @@ class MineNumActivity : StageActivity<ScreenMyNumberBinding>() {
         val cell = tile.views
         cell.root.setBackgroundResource(if (chosen) R.drawable.lv_sim_card_selected else R.drawable.lv_sim_card_unselected)
 
-        // Fixed palette on purpose: the adaptive ink colours would disappear on the white card at night.
         val mainInk = tint(if (chosen) R.color.white else R.color.ds_ink_fixed)
         val dimInk = if (chosen) 0xCCFFFFFF.toInt() else tint(R.color.ds_muted_fixed)
         cell.txtCarrier.setTextColor(mainInk)

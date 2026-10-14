@@ -33,42 +33,18 @@ import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.Takeo
 import com.find.phone.gps.live.location.tracker.databinding.DlgRewardRetryBinding
 import com.find.phone.gps.live.location.tracker.databinding.DlgRewardWaitBinding
 
-/**
- * Preload-and-show pattern for Google AdMob Rewarded ads.
- *
- * Usage:
- *   BonusTeaser.preload(activity)                      // call early (screen open)
- *   BonusTeaser().show(activity) { result -> ... }     // on the user's "watch ad" tap
- *
- * [Result] says whether the user may have what the ad was for:
- * - ads OFF, or no internet (even during a no-fill cooldown): EARNED straight away — the
- *   content shows without an ad;
- * - no rewarded unit id, or the ad loaded but failed to show: EARNED, after the DirectLink
- *   fallback when custom ads are on;
- * - no fill (the network had no ad): a cooldown starts ([BonusPause]) with no requests at
- *   all. `rewarded.nofill_mode` "free" unlocks every tap until it ends (EARNED); "wait" shows the
- *   countdown ring — at zero "Unlock now" asks for the ad again, "Maybe later" gives CANCELED;
- * - any other load error while online: the "Ad not ready" dialog — Retry loads and tries again,
- *   Cancel gives CANCELED; after `rewarded.max_retries` failed Retries it unlocks (EARNED);
- * - the ad played: EARNED only if the reward was earned before it was closed, else NOT_EARNED.
- */
 class BonusTeaser {
-
     enum class Result { EARNED, NOT_EARNED, CANCELED }
 
     companion object {
         private const val TAG = "BonusTeaser"
 
-        /** How long a tap waits for a load that is already in flight. */
         private const val WAIT_FOR_LOAD_MS = 6_000L
 
-        /** Countdown ring refresh: smooth enough to drain, cheap enough to not matter. */
         private const val RING_TICK_MS = 100L
 
-        /** How dark the screen behind the rewarded dialogs goes. */
         private const val DIM_AMOUNT = 0.6f
 
-        /** AdMob's "no ad to serve" codes: NO_FILL and MEDIATION_NO_FILL. */
         private val NO_FILL_CODES = setOf(AdRequest.ERROR_CODE_NO_FILL, AdRequest.ERROR_CODE_MEDIATION_NO_FILL)
 
         private var loadedAd: RewardedAd? = null
@@ -77,12 +53,11 @@ class BonusTeaser {
 
         fun isReady(): Boolean = loadedAd != null
 
-        /** Call this early (e.g. when the screen opens) to warm up the ad. */
         fun preload(context: Context) {
             val pref = SpotsLocker.getInstance(context)
             if (!pref.getBoolean("IsAdsON")) return
             if (loadedAd != null || isLoading) return
-            // Asking again inside a no-fill cooldown only piles up empty requests.
+
             if (BonusPause.isActive(context)) return
 
             val unitId = pref.getString("googleRewarded")
@@ -130,7 +105,6 @@ class BonusTeaser {
             pending.forEach { it() }
         }
 
-        /** Show DirectLink fallback, then invoke [onClosed] when it's done. */
         private fun presentDirectLinkFallback(activity: Activity, onClosed: () -> Unit) {
             val pref = SpotsLocker.getInstance(activity)
             if (pref.getBoolean("IsCustomADS")) {
@@ -142,10 +116,8 @@ class BonusTeaser {
         }
     }
 
-    /** Shows the rewarded ad; [onDone] gets whether the reward counts (see the class doc). */
     fun show(activity: Activity, onDone: (Result) -> Unit) = show(activity, onDone, attempt = 0)
 
-    /** [attempt] counts the "Ad not ready" Retries taken so far in this tap. */
     private fun show(activity: Activity, onDone: (Result) -> Unit, attempt: Int) {
         val pref = SpotsLocker.getInstance(activity)
 
@@ -153,8 +125,7 @@ class BonusTeaser {
             onDone(Result.EARNED)
             return
         }
-        // Offline always unlocks — ahead of the no-fill cooldown, so "wait" mode never holds an
-        // offline user. A preloaded ad stays held for the next tap online.
+
         if (!isNetworkConnected(activity)) {
             Log.d(TAG, "No internet — content shown without an ad")
             onDone(Result.EARNED)
@@ -162,11 +133,8 @@ class BonusTeaser {
         }
         if (BonusPause.isActive(activity)) return onCooldown(activity, onDone)
 
-        // Nothing loaded and nothing loading (the preload failed earlier, or a cooldown just
-        // ended): ask now, then wait for it like for one already in flight.
         if (loadedAd == null) preload(activity)
 
-        // A load is running: give it a moment instead of skipping the ad outright.
         if (loadedAd == null && isLoading) {
             val handler = Handler(Looper.getMainLooper())
             var settled = false
@@ -197,7 +165,7 @@ class BonusTeaser {
                     Log.d(TAG, "No rewarded unit — showing DirectLink fallback")
                     presentDirectLinkFallback(activity) { onDone(Result.EARNED) }
                 }
-                // The load just came back empty and started a cooldown.
+
                 BonusPause.isActive(activity) -> onCooldown(activity, onDone)
                 maxRetries >= 0 && attempt >= maxRetries -> {
                     Log.d(TAG, "Still no ad after $attempt Retries — content shown without an ad")
@@ -213,7 +181,6 @@ class BonusTeaser {
             return
         }
 
-        // Consume the held reference so we don't show it twice
         loadedAd = null
         var earned = false
 
@@ -245,7 +212,6 @@ class BonusTeaser {
         }
     }
 
-    /** Dims the screen behind [dialog], whatever the dialog theme says. */
     private fun dimBehind(dialog: Dialog) {
         dialog.window?.apply {
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
@@ -253,7 +219,6 @@ class BonusTeaser {
         }
     }
 
-    /** Inside a no-fill cooldown: unlock ("free") or show the countdown ("wait"). */
     private fun onCooldown(activity: Activity, onDone: (Result) -> Unit) {
         if (BonusProfile.read(activity).mode == BonusProfile.Mode.FREE) {
             Log.d(TAG, "No-fill cooldown (${BonusPause.remainingMs(activity) / 1000}s left) — content shown without an ad")
@@ -278,10 +243,6 @@ class BonusTeaser {
         return dialog to view
     }
 
-    /**
-     * "Ad not ready — try again": Retry starts a fresh load (or joins the one in flight) and goes
-     * through [show] again, which waits for it; Cancel or Back ends with [Result.CANCELED].
-     */
     private fun queryRetry(activity: Activity, onDone: (Result) -> Unit, attempt: Int) {
         if (activity.isFinishing || activity.isDestroyed) return onDone(Result.CANCELED)
         val (dialog, view) = dialogFor(activity)
@@ -296,12 +257,6 @@ class BonusTeaser {
         dialog.show()
     }
 
-    /**
-     * "Almost ready to unlock" (`nofill_mode` "wait"): a ring that drains with the countdown in
-     * its centre. The copy never mentions ads — it keeps the user here (or brings them back) for
-     * the unlock. At zero the ring turns into a check and "Unlock now" asks for the ad again;
-     * "Maybe later" / Back → CANCELED.
-     */
     private fun queryWait(activity: Activity, onDone: (Result) -> Unit) {
         if (activity.isFinishing || activity.isDestroyed) return onDone(Result.CANCELED)
         val themed = ContextThemeWrapper(activity, R.style.Theme_GpsTracker)

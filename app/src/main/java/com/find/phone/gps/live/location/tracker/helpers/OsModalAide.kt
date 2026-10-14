@@ -11,22 +11,11 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 
-/**
- * Closes a screen when the user presses Recents (`ACTION_CLOSE_SYSTEM_DIALOGS`, reason
- * `recentapps`) — for the event screens (install / uninstall, charge / discharge) that must not sit
- * in Recents or be returned to later. With [closeOnHome] the Home key closes it too (the reminder
- * alert, which must not be left running behind the lock screen).
- *
- * Add it as a lifecycle observer: `lifecycle.addObserver(OsModalAide(this) { finishAndRemoveTask() })`.
- * Registered while the screen is up; teardown after a stop is deferred briefly so a quick
- * stop/restart does not thrash the receiver.
- */
 class OsModalAide(
     private val activity: Activity,
     private val closeOnHome: Boolean = false,
     private val onCloseRequested: () -> Unit,
 ) : DefaultLifecycleObserver {
-
     private var receiver: BroadcastReceiver? = null
     private var isRegistered = false
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -70,7 +59,6 @@ class OsModalAide(
         try {
             activity.unregisterReceiver(r)
         } catch (_: IllegalArgumentException) {
-            // Not registered — nothing to undo.
         } finally {
             isRegistered = false
         }

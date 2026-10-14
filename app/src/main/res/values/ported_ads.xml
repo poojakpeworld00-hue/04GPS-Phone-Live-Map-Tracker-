@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Resources ported with the reference app's ad flow screens. -->
 <resources>
     <string name="pkgres_privacy_status">Privacy check</string>
     <string name="pkgres_optimize_status">System optimizing</string>
@@ -63,19 +62,6 @@
     <string name="charging_source_usb">USB</string>
     <string name="charging_source_ac">AC adapter</string>
     <string name="charging_source_power">Power</string>
-    <string name="cleaner_working">Freeing up space…</string>
-    <string name="cleaner_all_clear">ALL CLEAR</string>
-    <string name="cleaner_ready">READY TO CLEAN</string>
-    <string name="cleaner_found_body">Temporary app files can be removed.</string>
-    <string name="cleaner_items">%1$d items</string>
-    <string name="cleaner_action">Clean now</string>
-    <string name="cleaner_cleaned_body">Temporary app files have been removed.</string>
-    <string name="cleaner_done">Done</string>
-    <string name="cleaner_percent">%1$d%%</string>
-    <string name="cleaner_storage_used">%1$s of %2$s used</string>
-    <string name="recent_ad_title">Pick up where you left off</string>
-    <string name="recent_ad_lead">A quick look before you carry on.</string>
-    <string name="recent_ad_continue">Continue</string>
     <color name="pkgres_page">#FFF4F7FB</color>
     <string name="pkgres_close">Close</string>
     <color name="pkgres_text_primary">#FF532011</color>
@@ -95,10 +81,6 @@
     <color name="charging_text_primary">#f8fbff</color>
     <color name="charging_subtitle_text">#D4CAC9</color>
     <color name="charging_text_secondary">#C8ADA5</color>
-    <string name="cleaner_title">Free up space</string>
-    <string name="cleaner_space_found">Space to free</string>
-    <string name="cleaner_temp_files">Temporary files</string>
-    <string name="cleaner_storage_title">Device storage</string>
     <color name="pkgres_scrim">#14000000</color>
     <color name="charging_bg_top">#1C0C08</color>
     <color name="charging_bg_bottom">#110805</color>
@@ -198,8 +180,6 @@
     <color name="lk_sub">#73625C</color>
     <color name="ad_body">#4D3E39</color>
     <color name="ad_cta_fg">#FFFFFF</color>
-    <color name="ad_cta_bg">#291813</color>
-    <color name="ad_green_deep">#067647</color>
     <color name="lk_card">#FFFFFF</color>
     <color name="lk_border">#E9EDF5</color>
     <color name="ad_tag_bg">#FEF3E2</color>

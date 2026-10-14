@@ -39,16 +39,14 @@ class EmbeddedTeaserRibbon {
     companion object {
         private var nativeAdBanner: NativeAd? = null
 
-        /** A native banner is cached and ready to show. */
         fun hasPreloadedNativeBanner(): Boolean = nativeAdBanner != null
     }
 
     fun fetchNativeBannerAds(activity: Activity) {
         val adsPref = SpotsLocker.getInstance(activity)
         if (!adsPref.getBoolean("IsAdsON")) return
-        // Firebase "NativeBanner" master switch — disable native banner loading
-        if (!adsPref.getBoolean("NativeBanner")) return
 
+        if (!adsPref.getBoolean("NativeBanner")) return
 
         when (SpotSort.fromString(adsPref.getString("IsAdType"))) {
             SpotSort.GOOGLE -> {
@@ -68,7 +66,6 @@ class EmbeddedTeaserRibbon {
                     override fun onAdFailedToLoad(error: LoadAdError) {
                         Log.e("EmbeddedTeaserRibbon", "Ad failed to load: ${error.message}")
                         nativeAdBanner = null
-                        // No retry logic
 
                         try {
                             activity.recordKeyEvent("NativeBanner_fail")
@@ -87,18 +84,15 @@ class EmbeddedTeaserRibbon {
             }
 
             SpotSort.FACEBOOK -> {
-                // FB ad type → directly try FB
                 Log.e(TAG_EVENT, "AdType FaceBook NOt Pre load Google Native")
                 return
             }
 
             SpotSort.UNKNOWN, SpotSort.CUSTOM -> {
-                // Custom ad type
                 Log.e(TAG_EVENT, "AdType Custom NOt Pre load Google Native")
                 return
             }
         }
-
 
     }
 
@@ -108,14 +102,12 @@ class EmbeddedTeaserRibbon {
         Log.e("NativeAds", "Google Show: nativeAd")
         val adsPref = SpotsLocker.getInstance(context)
 
-        // 🔥 CRASH FIX 1: Activity lifecycle safety
         if (context.isFinishing || context.isDestroyed) return
-
 
         if (!isNetworkConnected(context)
             || !adsPref.getBoolean("IsAdsON")
             || !adsPref.getBoolean("NativeBanner")
-            // Per-screen visibility: a screen whose ScreenAds entry is off gets no native banner.
+
             || !DisplayTeaserProfile.resolve(context, context.javaClass.simpleName).show
         ) {
             layout.removeAllViews()
@@ -142,7 +134,6 @@ class EmbeddedTeaserRibbon {
 
         when (SpotSort.fromString(adsPref.getString("IsAdType"))) {
             SpotSort.GOOGLE -> {
-
                 layout.post {
                     try {
                         if (context.isFinishing || context.isDestroyed) return@post
@@ -159,10 +150,7 @@ class EmbeddedTeaserRibbon {
                             fetchNativeBannerAds(context)
                             return@post
                         } else {
-                            // Google failed → FB fallback or Custom
                             if (adsPref.getBoolean("IsFail_FB")) {
-                                // With the shimmer: this branch renders the ad itself, so
-                                // without it nothing ever takes the placeholder down.
                                 presentFBNativeBannerFallback(context, layout, shimmer)
                             } else {
                                 layout.removeAllViews()
@@ -175,9 +163,7 @@ class EmbeddedTeaserRibbon {
                         }
                     } catch (e: Exception) {
                         Log.e("EmbeddedTeaserRibbon", "Google NativeBanner failed: ${e.message}")
-                        // Same reason as EmbeddedTeaser.wipeToEmpty: the ad view is built
-                        // before the shimmer comes down, so a throw here would otherwise
-                        // leave the placeholder running over an empty frame.
+
                         runCatching {
                             shimmer?.stopShimmer()
                             shimmer?.isVisible = false
@@ -205,7 +191,6 @@ class EmbeddedTeaserRibbon {
     private fun wireGoogleNativeAd(
         nativeAd: NativeAd, binding: GmsNativebannerBinding, context: Activity
     ) {
-        // Log load
         context.recordKeyEvent("NativeBanner_Show_Google")
 
         if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(context)
@@ -221,8 +206,6 @@ class EmbeddedTeaserRibbon {
             mainNativeadView.iconView = adAppIcon
 
             (adHeadline as TextView).text = nativeAd.headline
-            // Remote Config ad colours (theme fallback) are applied in EmbeddedSpotGuise.bind.
-
 
             if (nativeAd.body != null) {
                 adBody.visibility = View.VISIBLE
@@ -262,7 +245,6 @@ class EmbeddedTeaserRibbon {
             Color.parseColor(defaultColor)
         }
     }
-
 
     private fun presentFBNativeBannerFallback(
         context: Activity, layout: FrameLayout, shimmer: ShimmerFrameLayout? = null
@@ -318,26 +300,20 @@ class EmbeddedTeaserRibbon {
         activity: Activity,
         adSize: String? = null
     ) {
-        // ✅ Make sure container is visible
         viewGroup.isVisible = true
 
-        // Unregister any old ad view
         nativeAd.unregisterView()
 
-        // ✅ Inflate layout with ViewBinding
         val binding =
             MetaNativeBannerBinding.inflate(LayoutInflater.from(activity), viewGroup, false)
 
-        // Clear old views and add new ad view
         viewGroup.removeAllViews()
         viewGroup.addView(binding.root)
 
-        // ✅ Add AdChoicesView
         val adOptionsView = AdOptionsView(activity, nativeAd, binding.nativview)
         binding.adChoicesContainer.removeAllViews()
         binding.adChoicesContainer.addView(adOptionsView, 0)
 
-        // ✅ Bind ad data to views
         binding.nativeAdTitle.text = nativeAd.advertiserName
         binding.nativeAdSocialContext.text = nativeAd.adSocialContext
         binding.nativeAdSponsoredLabel.text = nativeAd.sponsoredTranslation
@@ -367,7 +343,6 @@ class EmbeddedTeaserRibbon {
             binding.nativeAdCallToAction.isVisible = false
         }
 
-        // ✅ Register clickable views
         val clickableViews = listOf(binding.nativeAdTitle, binding.nativeAdCallToAction)
 
         nativeAd.registerViewForInteraction(

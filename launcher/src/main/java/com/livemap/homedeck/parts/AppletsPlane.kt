@@ -42,7 +42,6 @@ import com.livemap.homedeck.entities.AppletsListElement
 import com.livemap.homedeck.entities.AppletsListElementsKeeper
 import com.livemap.homedeck.entities.AppletsListSegment
 
-
 class AppletsPlane(context: Context, attributeSet: AttributeSet) :
     HomePlane<HdWidgetsFragmentBinding>(context, attributeSet), AppletsFragmentObserver {
     private val dragSlop = ViewConfiguration.get(context).scaledTouchSlop
@@ -94,7 +93,6 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
             }
         }
 
-        // Some devices keep sending ACTION_MOVE through a long press; only a real movement counts.
         val moved = lastPointer.first != event.x || lastPointer.second != event.y
         if (ignoreTouches && moved) {
             touchDownY = -1
@@ -104,8 +102,6 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
         lastPointer = Pair(event.x, event.y)
         if (touchDownY == -1) return false
 
-        // Overscrolling down from the very top (past the slop, so a resting finger does not
-        // cancel a widget long press) drags the whole panel.
         val pullingDown = event.y.toInt() - touchDownY > dragSlop &&
             binding.lvWidgetsListUi.computeVerticalScrollOffset() == 0
         if (!pullingDown) return false
@@ -115,16 +111,12 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
         return true
     }
 
-    /**
-     * Widget preview limited to [maxSide] px. Bitmap previews are decoded directly at the bounded
-     * size (some apps ship enormous ones); anything else falls back to the framework loader.
-     */
     private fun boundedPreview(info: AppWidgetProviderInfo, maxSide: Int): Drawable? {
         val decoded = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && info.previewImage != 0) {
             runCatching {
                 val providerRes = context.packageManager.getResourcesForApplication(info.provider.packageName)
                 ImageDecoder.decodeDrawable(ImageDecoder.createSource(providerRes, info.previewImage)) { decoder, image, _ ->
-                    // Software allocation: hardware bitmaps cannot be read back by Glide or the drag shadow.
+
                     decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
                     val w = image.size.width
                     val h = image.size.height
@@ -144,7 +136,6 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
         return decoded ?: info.loadPreviewImage(context, resources.displayMetrics.densityDpi)
     }
 
-    /** True once the widget list has been built at least once. */
     fun hasWidgets() = binding.lvWidgetsListUi.adapter != null
 
     @SuppressLint("WrongConstant")
@@ -189,7 +180,6 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
         }
     }
 
-    /** Shortcut-creating activities, listed alongside real widgets. */
     @SuppressLint("WrongConstant")
     private fun shortcutApplets(pm: PackageManager): List<CoreApplet> {
         val creators = pm.queryIntentActivities(Intent(Intent.ACTION_CREATE_SHORTCUT, null), PackageManager.PERMISSION_GRANTED)
@@ -216,7 +206,6 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
         }
     }
 
-    /** Widgets drawn by the launcher itself; they have no AppWidget provider. */
     private fun builtInApplets(): List<CoreApplet> {
         val self = appHeaderFor(context.packageName) ?: return emptyList()
         val specs = listOf(
@@ -323,7 +312,6 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
             return
         }
 
-        // Built-in widgets keep their title: there is no provider to read a label from later.
         val title = appWidget.widgetTitleUi.takeIf { appWidget.className.startsWith(PSEUDO_WIDGET_PREFIX) } ?: ""
         val gridItem = MainDisplayLatticeElement(
             id = null,
@@ -354,7 +342,6 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
     }
 
     private companion object {
-        /** Previews are kept at twice the list's tile so the drag shadow on the home screen stays sharp. */
         const val PREVIEW_OVERSAMPLE = 2
     }
 }

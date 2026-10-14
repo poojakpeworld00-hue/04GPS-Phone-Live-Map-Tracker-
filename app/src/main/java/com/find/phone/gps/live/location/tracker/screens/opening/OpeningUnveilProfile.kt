@@ -4,36 +4,6 @@ import android.content.Context
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import org.json.JSONObject
 
-/**
- * How often an intro screen (Language / Terms / Onboarding / permission sheet) is
- * shown, from Remote Config.
- *
- * The `intro_display` parameter is split by audience — `marketing` and `organic`
- * (resolved from `SpotsLocker.OnMaketing`, matching the FSI config) — each
- * holding the per-screen objects:
- * ```json
- * {
- *   "marketing": {
- *     "language":         { "enabled": true,  "prompt_frequency": "once",         "prompt_interval": 0 },
- *     "terms":            { "enabled": false, "prompt_frequency": "once",         "prompt_interval": 0 },
- *     "onboarding":       { "enabled": true,  "prompt_frequency": "app_launches", "prompt_interval": 3 },
- *     "permission_sheet": { "enabled": true,  "prompt_frequency": "always",       "prompt_interval": 0 },
- *     "reminders_intro":  { "enabled": true,  "prompt_frequency": "once",         "prompt_interval": 0 }
- *   },
- *   "organic": { "language": { ... }, "terms": { ... }, "onboarding": { ... }, "permission_sheet": { ... } }
- * }
- * ```
- * A flat structure (the four screen objects at the top level, no `marketing` /
- * `organic` wrapper) is still accepted for back-compat.
- *
- * `prompt_frequency` — `always` | `once` | `every_days` | `app_launches` | `never`.
- * `prompt_interval`  — the X value (days for `every_days`, launches for `app_launches`);
- *                      ignored for `always` / `once` / `never`.
- *
- * Defaults (when the parameter / audience / screen object is missing) preserve the
- * historical behaviour: Language `once`, Terms off, Onboarding off, permission
- * sheet on+always.
- */
 enum class CueTempo {
     ALWAYS, ONCE, EVERY_DAYS, APP_LAUNCHES, NEVER;
 
@@ -56,7 +26,6 @@ data class OpeningUnveil(
 )
 
 object OpeningUnveilProfile {
-
     private const val RC_KEY = "intro_display"
 
     const val LANGUAGE = "language"
@@ -65,31 +34,18 @@ object OpeningUnveilProfile {
     const val PERMISSION_SHEET = "permission_sheet"
     const val REMINDERS_INTRO = "reminders_intro"
 
-    /**
-     * The reminders intro on later launches (after Intro, before Premium / Home). Defaults to a
-     * one-time show; the first-run onboarding step stamps the same ledger, so by default it is not
-     * shown twice. feature_config still has to allow it (see OpeningUnveilCharter).
-     */
     fun remindersIntro(context: Context): OpeningUnveil =
         load(context, REMINDERS_INTRO, defaultEnabled = true, defaultFrequency = CueTempo.ONCE)
 
-    /** Language defaults to a one-time show (matches the old first-run behaviour). */
     fun language(context: Context): OpeningUnveil =
         load(context, LANGUAGE, defaultEnabled = true, defaultFrequency = CueTempo.ONCE)
 
-    /** Terms defaults to OFF (matches the old `hide_terms = true` default). */
     fun terms(context: Context): OpeningUnveil =
         load(context, TERMS, defaultEnabled = false, defaultFrequency = CueTempo.ONCE)
 
-    /** Onboarding defaults to OFF (matches the old `hide_intro = true` default). */
     fun onboarding(context: Context): OpeningUnveil =
         load(context, ONBOARDING, defaultEnabled = false, defaultFrequency = CueTempo.ONCE)
 
-    /**
-     * Permission sheet defaults to ON + every launch (matches the old
-     * `Perm_Sheet_Show = true` / `Perm_Sheet_Mode = "always"`). Map the old
-     * `interval` mode to `every_days` and `off` to `never` / `enabled:false`.
-     */
     fun permissionSheet(context: Context): OpeningUnveil =
         load(context, PERMISSION_SHEET, defaultEnabled = true, defaultFrequency = CueTempo.ALWAYS)
 
@@ -117,11 +73,6 @@ object OpeningUnveilProfile {
         )
     }
 
-    /**
-     * The audience-specific sub-object for the resolved segment, preferring
-     * [isMarketing] ? `marketing` : `organic`, then the other audience, then the
-     * root itself (a flat, un-split `intro_display` — back-compat).
-     */
     private fun audienceContainer(root: JSONObject, isMarketing: Boolean): JSONObject {
         val preferred = if (isMarketing) "marketing" else "organic"
         val fallback = if (isMarketing) "organic" else "marketing"

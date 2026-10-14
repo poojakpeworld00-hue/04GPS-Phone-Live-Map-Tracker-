@@ -6,7 +6,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HomeSpotsProfileTest {
-
     private val blob = """
         {"organic":{"screenWiseAds":{
             "app_drawer": {"reload_ad_on_open": false, "ad_row_position": 9, "adType": "native", "loadType": "preload",

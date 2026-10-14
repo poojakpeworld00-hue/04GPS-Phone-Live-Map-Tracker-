@@ -9,22 +9,10 @@ import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement.dp
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement.loop
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement.pvh
 
-/**
- * The permission sheet's looping illustrations, ported from the `@keyframes` in
- * "Permission Sheet.dc.html" (`ping`, `bell`, `pop`, `cardA`, `cardB`, `rowIn`, `drop`, and the
- * SIM page's `rev`/`hd`/`wOff`/`wOn`, which [UnveilVersusArrange] owns).
- *
- * Only the page on screen animates ("paused off-screen" in the spec): the sheet calls [start] for
- * the selected page and [stop] for the rest. With system animations off nothing runs and every
- * view keeps its resting frame from the layout.
- */
 object DrawerDrawings {
-
-    /** One-time setup after the illustration is inflated into its page. */
     fun bind(page: DrawerFolio, root: View) {
         when (page) {
             DrawerFolio.CONTACTS -> {
-                // Last four digits per row (2104 / 2114 / 2124).
                 listOf(R.id.lv_sub1 to "2104", R.id.lv_sub2 to "2114", R.id.lv_sub3 to "2124").forEach { (id, digits) ->
                     root.findViewById<TextView>(id).text = root.context.getString(R.string.ps_contacts_mobile, digits)
                 }
@@ -32,7 +20,7 @@ object DrawerDrawings {
             DrawerFolio.SIM -> {
                 val without = root.findViewById<View>(R.id.txtWithout)
                 val with = root.findViewById<View>(R.id.txtWith)
-                // wOff / wOn: the active side reads at full strength, the other at 35%.
+
                 root.findViewById<UnveilVersusArrange>(R.id.lv_reveal).onFractionChanged = { f ->
                     without.alpha = 1f - 0.65f * f
                     with.alpha = 0.35f + 0.65f * f
@@ -42,7 +30,6 @@ object DrawerDrawings {
         }
     }
 
-    /** Starts [page]'s loops; returns them so the caller can [stop] them. */
     fun start(page: DrawerFolio, root: View): List<Animator> {
         if (page == DrawerFolio.SIM) {
             root.findViewById<UnveilVersusArrange>(R.id.lv_reveal).start()
@@ -64,7 +51,6 @@ object DrawerDrawings {
         rewindToRest(root)
     }
 
-    /** Puts every animated view back on its resting frame (what the layout draws). */
     private fun rewindToRest(root: View) {
         listOf(R.id.lv_ring, R.id.lv_bell, R.id.lv_badge, R.id.plateA, R.id.plateB, R.id.line1, R.id.line2, R.id.line3,
             R.id.lineCheck, R.id.lv_areaPing, R.id.lv_pin).forEach { id ->
@@ -76,13 +62,12 @@ object DrawerDrawings {
 
     private fun ping(view: View, durationMs: Long): Animator = loop(
         view, durationMs, 0L,
-        // ping: scale .4 → 1.5, opacity .9 → 0, ease-out
+
         pvh(View.SCALE_X, CraftMovement.EASE_OUT, 0f to 0.4f, 1f to 1.5f),
         pvh(View.SCALE_Y, CraftMovement.EASE_OUT, 0f to 0.4f, 1f to 1.5f),
         pvh(View.ALPHA, CraftMovement.EASE_OUT, 0f to 0.9f, 1f to 0f),
     )
 
-    /** pop: 0–10% hidden, 20% overshoot to 1.2, 26% settled. */
     private fun pop(view: View, durationMs: Long): Animator = loop(
         view, durationMs, 0L,
         pvh(View.SCALE_X, CraftMovement.EASE_OUT, 0f to 0f, 0.1f to 0f, 0.2f to 1.2f, 0.26f to 1f, 1f to 1f),
@@ -92,7 +77,7 @@ object DrawerDrawings {
     private fun notifications(root: View): List<Animator> {
         val ctx = root.context
         val bell = root.findViewById<View>(R.id.lv_bell)
-        // transform-origin: 50% 10% — the bell swings from its hanger.
+
         bell.post { bell.pivotX = bell.width / 2f; bell.pivotY = bell.height * 0.1f }
         val e = CraftMovement.EASE_IN_OUT
         val up12 = ctx.dp(12f)
@@ -121,7 +106,7 @@ object DrawerDrawings {
         val shift = root.context.dp(10f)
         val rows = listOf(R.id.line1, R.id.line2, R.id.line3).mapIndexed { i, id ->
             val row = root.findViewById<View>(id)
-            // rowIn, staggered 0 / .2 / .4s; hidden until its delay runs out.
+
             row.alpha = 0f
             loop(
                 row, 3600L, i * 200L,
@@ -136,7 +121,7 @@ object DrawerDrawings {
         val ctx = root.context
         return listOf(
             ping(root.findViewById(R.id.lv_areaPing), 2600L),
-            // drop: falls 50dp, bounces 4 / -3, settles by 40%.
+
             loop(
                 root.findViewById(R.id.lv_pin), 2600L, 0L,
                 pvh(

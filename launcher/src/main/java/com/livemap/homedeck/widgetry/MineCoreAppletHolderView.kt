@@ -17,11 +17,10 @@ class MineCoreAppletHolderView(context: Context) : AppWidgetHostView(context) {
     private val moveGestureThreshold = resources.getDimension(R.dimen.launcher_move_gesture_threshold).toInt() / 4
     var hasLongPressed = false
 
-    /** The grid row this view draws. Its widget id (the tag) can be stale in a freshly fetched row. */
     var itemId: Long? = null
     var ignoreTouches = false
     var longPressListener: ((x: Float, y: Float) -> Unit)? = null
-    var onIgnoreInterceptedListener: (() -> Unit)? = null       // let the home grid react on swallowed clicks, for example by hiding the widget resize frame
+    var onIgnoreInterceptedListener: (() -> Unit)? = null
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         return if (ignoreTouches) {

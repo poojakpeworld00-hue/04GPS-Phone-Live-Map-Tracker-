@@ -28,24 +28,13 @@ object CoreOpenSpotBook {
     var callbackshow:Boolean = false
     var isOpenAppDismiss: Boolean = false
 
-    // When true, the next background→foreground transition skips the App Open
-    // ad exactly once. Set before app-initiated trips to system settings (e.g.
-    // the overlay-permission flow) so that programmatic return isn't monetised.
     var skipNextAppOpenAd: Boolean = false
 
-    /**
-     * Set when the launcher opens another app, so the *return* from that app is the moment an ad may
-     * show — the reference's `other_app_return`. Consumed once, on the first foreground after it is
-     * set, so it never leaks into an unrelated return. This is what lets the app-tap ad fire on the
-     * way back rather than alongside the app (e.g. the Play Store) it just launched.
-     */
     private var expectReturnAd: Boolean = false
 
     fun expectReturnAd() {
         expectReturnAd = true
-        // A skip armed earlier but never consumed (the splash arms one for its disclosure trip,
-        // which often never leaves the app) would otherwise eat this return and its ad. The user
-        // leaving for another app from the launcher is the newer, deliberate trip, so it wins.
+
         skipNextAppOpenAd = false
     }
 
@@ -66,7 +55,7 @@ object CoreOpenSpotBook {
             return
         }
         val adsPreference = SpotsLocker.getInstance(context)
-        // Firebase "AppopenAds" master switch — disable app-open loading entirely
+
         if (!adsPreference.getBoolean("AppopenAds")) {
             Log.e(LOG_TAG, "AppopenAds disabled by Firebase flag")
             return
@@ -75,14 +64,12 @@ object CoreOpenSpotBook {
             isLoadingAd = true
             val request = AdRequest.Builder().build()
 
-
             if (adsPreference.getString("IsAdType").equals("Google", true)) {
                 SpotsLocker.getInstance(context).getString("googleAppopen")?.let { adUnitId ->
                     context.recordAdEvent("app_open", "req")
                     AppOpenAd.load(
                         context, adUnitId, request, object : AppOpenAdLoadCallback() {
                             override fun onAdLoaded(ad: AppOpenAd) {
-
                                 try {
                                     context.recordKeyEvent("appopen_ad_loaded")
                                     context.recordAdEvent("app_open", "loaded")
@@ -121,7 +108,7 @@ object CoreOpenSpotBook {
         if (!SpotsLocker.getInstance(activity).getBoolean("IsAdsON")) {
             return
         }
-        // Firebase "AppopenAds" master switch — skip showing app-open ads entirely
+
         if (!SpotsLocker.getInstance(activity).getBoolean("AppopenAds")) {
             Log.e(LOG_TAG, "AppopenAds disabled by Firebase flag")
             onShowAdCompleteListener.onShowAdComplete()
@@ -133,7 +120,7 @@ object CoreOpenSpotBook {
             )
             return
         }
-        // Never cover a LightHouse rich-push overlay with an App Open ad.
+
         if (LightHouseRichPush.shouldDeferOverlay(activity)) {
             Log.e(LOG_TAG, "Deferring App Open — rich-push overlay active")
             return
@@ -210,7 +197,6 @@ object CoreOpenSpotBook {
             }
         }
 
-        // Log load
         activity.recordKeyEvent("appopen_ad_shown")
 
         if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(activity)

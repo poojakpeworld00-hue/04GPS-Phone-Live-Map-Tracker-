@@ -34,14 +34,6 @@ import com.livemap.homedeck.support.MarkContour
 import com.livemap.homedeck.ports.AllProgramsObserver
 import com.livemap.homedeck.entities.CoreHome
 
-
-/**
- * Adapter behind the drawer grid.
- *
- * An optional [adSlot] travels inside the submitted list as a full-span row, marked by [AD_SLOT]
- * at whatever index the caller chose (the row position is remotely configurable). Keeping the
- * marker in the list means every position the differ reports is a real adapter position.
- */
 class HomesFeed(
     val activity: HomeBaseDeck,
     val allAppsListener: AllProgramsObserver,
@@ -49,33 +41,26 @@ class HomesFeed(
     val itemClick: (Any) -> Unit
 ) : ListAdapter<CoreHome, RecyclerView.ViewHolder>(CoreHomeDeltaHook()),
     RecyclerViewFastScroller.OnPopupTextUpdate {
-
     private var fallbackInset = 0
     private var targetIconPx = 0
 
-    /** Horizontal padding the tile layout applies on each side. */
     private val cellSidePad = activity.resources.getDimensionPixelSize(org.fossify.commons.R.dimen.small_margin)
 
-    /** Grid currently attached, used to derive the cell width. */
     private var hostGrid: RecyclerView? = null
 
-    /** Rebinds every tile (posted, after layout) whenever the grid's width actually changes. */
     private val gridWidthWatcher = View.OnLayoutChangeListener { v, left, _, right, _, oldLeft, _, oldRight, _ ->
         val newWidth = right - left
         if (newWidth <= 0 || newWidth == oldRight - oldLeft) return@OnLayoutChangeListener
         v.post { if (itemCount > 0) notifyItemRangeChanged(0, itemCount) }
     }
 
-    /** Search query to tint in labels (first match only); empty means plain labels. */
     var highlight: String = ""
         set(value) { field = value.trim() }
     private var labelSizeSp = 0f
 
-    /** Sponsored logos decode at the icon cache size so Glide keeps one bitmap per logo. */
     private val sponsorLogoPx = activity.resources.getDimensionPixelSize(R.dimen.launcher_icon_cache_size)
     private val sponsorMask = MarkContour(activity.resources, activity.launcherConfig.legacyIconTray)
 
-    /** Row height for the paged drawer (content centred in the cell); 0 wraps content. */
     var cellHeightPx = 0
 
     init {
@@ -91,7 +76,6 @@ class HomesFeed(
         else -> VIEW_TYPE_LAUNCHER
     }
 
-    /** Whether [position] is the full-span ad row. */
     fun isAdSlotPosition(position: Int) =
         position in 0 until itemCount && isAdSlot(getItem(position))
 
@@ -103,8 +87,6 @@ class HomesFeed(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder = when (viewType) {
-        // The ad view is moved into a disposable host rather than used as itemView, so the ad SDK
-        // and RecyclerView never both own it and it is never attached twice.
         VIEW_TYPE_AD -> AdViewHolder(
             FrameLayout(parent.context).apply {
                 layoutParams = ViewGroup.LayoutParams(
@@ -130,10 +112,6 @@ class HomesFeed(
         super.onDetachedFromRecyclerView(recyclerView)
     }
 
-    /**
-     * Pre-inflates up to [count] app cells into [grid]'s pool, one per main-thread idle slot, so
-     * the first fling after a cold start recycles instead of inflating.
-     */
     fun prewarm(grid: RecyclerView, count: Int) {
         val pool = grid.recycledViewPool
         pool.setMaxRecycledViews(VIEW_TYPE_LAUNCHER, count)
@@ -151,10 +129,6 @@ class HomesFeed(
         }
     }
 
-    /**
-     * Holds [adSlot]. While the slot is GONE the host wraps to zero height, so a late fill only
-     * has to show the slot; nothing is inserted or removed around the user.
-     */
     inner class AdViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         fun wireSlot() {
             val slot = adSlot ?: return
@@ -180,15 +154,14 @@ class HomesFeed(
         val cfg = activity.launcherConfig
         labelSizeSp = cfg.labelTextSp
         val cellWidth = activity.realScreenSize.x / cfg.drawerColumnCount
-        // Known previous-launcher icon size, applied as padding once the view has its width.
+
         val sizeDp = cfg.drawerIconSizeDp.takeIf { it > 0 } ?: cfg.iconSizeDp
         targetIconPx = (sizeDp * activity.resources.displayMetrics.density).toInt()
-        // Fallback when no size is known: 15% inset at scale 1, scaled by the profile.
+
         val insetShare = (0.5f - 0.35f * cfg.iconScale).coerceIn(0f, 0.45f)
         fallbackInset = (cellWidth * insetShare).toInt()
     }
 
-    /** Insets [view] so [targetIconPx] remains visible within [width] and sizes its height to match. */
     private fun insetToIcon(view: View, width: Int) {
         if (width <= 0) return
         val sideInset = ((width - targetIconPx) / 2).coerceIn(0, (width * 0.45f).toInt())
@@ -201,7 +174,6 @@ class HomesFeed(
         view.layoutParams = view.layoutParams.apply { height = wantedHeight }
     }
 
-    /** No known size: a square as wide as the cell. */
     private fun makeSquare(view: View, width: Int) {
         if (width <= 0 || view.layoutParams.height == width) return
         view.layoutParams = view.layoutParams.apply { height = width }
@@ -229,7 +201,6 @@ class HomesFeed(
         }
     }
 
-    /** Cell width the GridLayoutManager will hand out, minus tile padding; 0 before measure. */
     private fun measuredIconWidth(): Int {
         val grid = hostGrid ?: return 0
         val usable = grid.width - grid.paddingLeft - grid.paddingRight
@@ -240,7 +211,6 @@ class HomesFeed(
         }
     }
 
-    /** Sizes the icon at bind time; the layout watcher remains as a fallback for unmeasured grids. */
     private fun applyIconSize(view: View) {
         val known = measuredIconWidth()
         val width = if (known > 0) known else view.width
@@ -267,12 +237,12 @@ class HomesFeed(
 
         private fun showLabel(binding: HdItemLauncherLabelBinding, launcher: CoreHome, sponsored: Boolean) {
             val label = binding.homexLabelUi
-            // Sponsored tiles say so: they open a web page rather than an app.
+
             label.text = when {
                 sponsored -> itemView.context.getString(R.string.lnch_sponsored_label, launcher.title)
                 else -> tintMatch(launcher.title)
             }
-            // Always white over the drawer scrim; re-applied because the view picks up the theme colour on inflate.
+
             label.setTextColor(Color.WHITE)
             if (labelSizeSp > 0f) label.setTextSize(TypedValue.COMPLEX_UNIT_SP, labelSizeSp)
             label.beVisibleIf(activity.launcherConfig.showDrawerAppLabels)
@@ -280,7 +250,7 @@ class HomesFeed(
 
         private fun showIcon(binding: HdItemLauncherLabelBinding, launcher: CoreHome, sponsored: Boolean) {
             val icon = binding.homexIconUi
-            // Drop any sponsored logo still loading into this recycled view.
+
             Glide.with(activity).clear(icon)
             if (sponsored) {
                 icon.tag = null
@@ -295,13 +265,12 @@ class HomesFeed(
             }
             val inMemory = launcher.drawable ?: BadgePuller.cached(launcher.packageName, launcher.activityName)
             if (inMemory != null) {
-                // Set synchronously so a rebind never flashes the placeholder.
                 launcher.drawable = inMemory
                 icon.setImageDrawable(inMemory)
                 icon.tag = null
                 return
             }
-            // Cold: show the tint now, decode just this icon, and only apply it if the view still waits for it.
+
             val pendingKey = launcher.packageName + "/" + launcher.activityName
             icon.tag = pendingKey
             icon.setImageDrawable(
@@ -334,7 +303,6 @@ class HomesFeed(
             val tile = itemView
             tile.setOnClickListener { itemClick(launcher) }
             tile.setOnLongClickListener {
-                // A sponsored tile is only a link: nothing to drag or uninstall.
                 if (!sponsored) {
                     val onScreen = IntArray(2)
                     tile.getLocationOnScreen(onScreen)
@@ -383,13 +351,8 @@ class HomesFeed(
         private const val LAUNCHER_SCALE_UP_DURATION = 100L
         private const val LAUNCHER_SCALE_DOWN_DURATION = 50L
 
-        /** A package name no installed app can have, so the marker never collides with a real launcher. */
         private const val AD_SLOT_PACKAGE = "com.livemap.homedeck.ad_slot"
 
-        /**
-         * Placeholder row inserted by the caller where the ad belongs. One shared instance, so the
-         * differ treats it as the same item across submissions.
-         */
         val AD_SLOT = CoreHome(
             id = null,
             title = "",
@@ -411,7 +374,7 @@ class CoreHomeDeltaHook : DiffUtil.ItemCallback<CoreHome>() {
     override fun areContentsTheSame(oldItem: CoreHome, newItem: CoreHome): Boolean {
         val oldIsAd = HomesFeed.isAdSlot(oldItem)
         val newIsAd = HomesFeed.isAdSlot(newItem)
-        // The ad row is constant; reporting a change would bounce the ad view between hosts.
+
         if (oldIsAd || newIsAd) return oldIsAd && newIsAd
         if (oldItem.drawable == null || newItem.drawable == null) return false
         return oldItem.title == newItem.title &&

@@ -15,22 +15,7 @@ import com.livemap.homedeck.ext.getDrawableForPackageName
 import com.livemap.homedeck.ext.launcherConfig
 import java.util.concurrent.Executors
 
-/**
- * One launcher icon at a time, on demand.
- *
- * [HomeSurvey] decodes every installed app before the list is complete; on a cold start that is
- * seconds of coloured placeholder tiles. A tile that is actually on screen does not need to wait
- * for the other hundred: it asks here, gets its own icon in a few milliseconds, and the scan finds
- * it already cached. Same shaping and size as the scan, so the two produce the same picture.
- *
- * The cache must never outlive the icon it holds. An app update installs a new APK whose icon may
- * differ, so the scan drops every entry whose `sourceDir` moved ([invalidate]); a change of the
- * legacy-icon tray re-shapes every icon, so [alignTray] empties it; and [clear] follows
- * [BadgeStash.clear]. Without those, an updated app kept its old icon until the process died.
- */
 object BadgePuller {
-
-    /** Sized by bitmap bytes (KB), not entries: an eighth of the heap, whatever the density. */
     private val cache = object : LruCache<String, Drawable>(
         (Runtime.getRuntime().maxMemory() / 1024 / 8).toInt().coerceAtLeast(1024)
     ) {
@@ -49,12 +34,10 @@ object BadgePuller {
 
     fun cached(packageName: String, activityName: String): Drawable? = cache.get(key(packageName, activityName))
 
-    /** Remember an icon decoded elsewhere (the scan), so a tile bound later finds it at once. */
     fun put(packageName: String, activityName: String, drawable: Drawable) {
         cache.put(key(packageName, activityName), drawable)
     }
 
-    /** Forgets the icons for these `package/activity` keys - their APK changed. */
     fun invalidate(keys: Collection<String>) {
         keys.forEach { cache.remove(it) }
     }
@@ -63,7 +46,6 @@ object BadgePuller {
         cache.evictAll()
     }
 
-    /** Empties the cache when [current] is not the tray its icons were shaped on. */
     fun alignTray(current: BadgeMolder.Tray) {
         if (tray != current) {
             if (tray != null) clear()
@@ -71,7 +53,6 @@ object BadgePuller {
         }
     }
 
-    /** Decodes off the main thread and calls [onReady] on it; [onReady] is skipped when the decode fails. */
     fun load(context: Context, packageName: String, activityName: String, onReady: (Drawable) -> Unit) {
         val app = context.applicationContext
         pool.execute {

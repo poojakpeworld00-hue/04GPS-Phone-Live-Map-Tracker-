@@ -16,13 +16,7 @@ import com.find.phone.gps.live.location.tracker.helpers.followAdContainer
 import com.find.phone.gps.live.location.tracker.helpers.concealWhileAdVisible
 import org.fossify.commons.extensions.viewBinding
 
-/**
- * Welcome step (design 4a): the gesture guide. Continue hands off to [ConsentDriver], which
- * asks whatever `permission_engine` has configured for this Activity, then the flow moves on
- * to whatever `onboarding.order` puts next. Skip goes to the same place without asking.
- */
 class HelloPhaseActivity : CasingDeckActivity() {
-
     private val binding by viewBinding(ScreenOnboardingWelcomeBinding::inflate)
     private val animators = mutableListOf<Animator>()
 
@@ -35,11 +29,9 @@ class HelloPhaseActivity : CasingDeckActivity() {
         binding.inductContinue.setOnClickListener { demandOnboardingPermissions() }
         binding.inductSkip.setOnClickListener { headToNextStep() }
 
-        // `onboarding.welcome.skip_enabled: false` makes the screen a required step.
         val ui = HomeSpotsProfile.onboardingUi(this, HomeSpotsProfile.OnboardScreen.WELCOME)
         binding.inductSkip.isVisible = ui.skipEnabled
 
-        // Paid users: Back behaves like Skip and moves the flow on. Organic users: Back is Back.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (HomeStream.backMovesForward(this@HelloPhaseActivity)) headToNextStep()
@@ -47,8 +39,6 @@ class HelloPhaseActivity : CasingDeckActivity() {
             }
         })
 
-        // Ad frame pinned at the bottom, `launcher_ads.onboarding.welcome.slot`. presentSlot hides
-        // the frame outright when the slot is off, and followAdContainer drops the hairline.
         HomeSpotsProfile.presentSlot(
             activity = this,
             slot = HomeSpotsProfile.onboardingSlot(this, HomeSpotsProfile.OnboardScreen.WELCOME),
@@ -56,7 +46,7 @@ class HelloPhaseActivity : CasingDeckActivity() {
             shimmer = binding.spotShimmer,
         )
         binding.spotNativeDivider.followAdContainer(binding.spotNativeFrame)
-        // Small phones: the hero card gives way to the ad while one is on screen.
+
         binding.inductHero.concealWhileAdVisible(binding.spotNativeFrame, binding.leadCompact)
 
         HomeStream.wireStepHeader(this, HomeSpotsProfile.OnboardScreen.WELCOME, binding.root)
@@ -65,7 +55,6 @@ class HelloPhaseActivity : CasingDeckActivity() {
         playMotion()
     }
 
-    /** The four launcher gestures: one arrow glyph rotated per direction; "Swipe right" is active. */
     private fun wireGestureTiles() = with(binding) {
         wireTile(cellSwipeUp, -90f, R.string.gesture_swipe_up, R.string.gesture_swipe_up_body, active = false)
         wireTile(cellSwipeRight, 0f, R.string.gesture_swipe_right, R.string.gesture_swipe_right_body, active = true)
@@ -87,7 +76,6 @@ class HelloPhaseActivity : CasingDeckActivity() {
         }
     }
 
-    /** The design's loops: badge `fadein .6s .4s`, chips `floaty 4s` (the second offset 1.2s). */
     private fun playMotion() {
         if (CraftMovement.animationsDisabled(this)) return
         animators += CraftMovement.fadeIn(binding.inductBadge, durationMs = 600L, delayMs = 400L)
@@ -101,12 +89,9 @@ class HelloPhaseActivity : CasingDeckActivity() {
     }
 
     private fun demandOnboardingPermissions() {
-        // onComplete fires once the whole configured queue is done — or straight away when
-        // there is nothing to ask.
         ConsentDriver.check(this) { headToNextStep() }
     }
 
-    /** Whatever `launcher_ads.onboarding.order` puts after this screen, behind its exit interstitial. */
     private fun headToNextStep() {
         HomeSpotsProfile.execOnboardingInter(this, HomeSpotsProfile.OnboardScreen.WELCOME) {
             HomeStream.advance(this)

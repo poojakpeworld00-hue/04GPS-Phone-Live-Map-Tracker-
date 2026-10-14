@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Red pin ground shadow: radial-gradient(closest-side, rgba(0,20,60,.45), transparent). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
-    <gradient
-        android:type="radial"
-        android:gradientRadius="50%p"
-        android:centerX="0.5"
-        android:centerY="0.5"
-        android:startColor="#73260B03"
-        android:endColor="#00260B03" />
+  <gradient
+    android:type="radial"
+    android:gradientRadius="50%p"
+    android:centerX="0.5"
+    android:centerY="0.5"
+    android:startColor="#73260B03"
+    android:endColor="#00260B03" />
 </shape>

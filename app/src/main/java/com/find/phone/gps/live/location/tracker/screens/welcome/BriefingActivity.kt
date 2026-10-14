@@ -25,24 +25,16 @@ import com.find.phone.gps.live.location.tracker.screens.opening.OpeningUnveilPro
 import com.find.phone.gps.live.location.tracker.screens.opening.OpeningUnveilCharter
 import kotlin.math.abs
 
-/**
- * The intro carousel (design 2a). Four hero-card pages; the card and CTA stay fixed while the
- * illustration parallaxes at 0.6× and the copy fades over ~200ms of the swipe. The native
- * banner slot (`launcher_ads.onboarding.intro.slot`) sits under the CTA on the third page.
- */
 class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
-
     override val layoutId: Int = R.layout.screen_onboarding
 
     private val prefs by lazy { LockerBook(this) }
     private val pages = OpeningLeaves.all
     private val dots = mutableListOf<View>()
 
-    // Spring settle used by the dot pill stretch and the CTA morph.
     private val spring = PathInterpolator(0.34f, 1.56f, 0.64f, 1f)
     private var wasLast = false
 
-    /** One-shot guard so a first-page back cannot fire the forward flow twice. */
     private var forwarding = false
 
     override fun initView() {
@@ -54,7 +46,6 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
             insets
         }
 
-        // The slot loads once; its container is only revealed on the page that carries it.
         HomeSpotsProfile.presentSlot(
             activity = this,
             slot = HomeSpotsProfile.onboardingSlot(this, HomeSpotsProfile.OnboardScreen.INTRO),
@@ -67,8 +58,6 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
         composeDots()
         reviseDots(0)
 
-        // Swipe: the illustration moves at 0.6× the page (parallax), the copy fades out over
-        // the first fifth of the swipe (≈200ms of a 1s page change).
         binding.vwPager.setPageTransformer { page, position ->
             val w = page.width.toFloat()
             page.findViewById<View?>(R.id.lv_artContainer)?.translationX = position * w * 0.4f
@@ -93,17 +82,13 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
             }
         }
 
-        // Back walks FORWARD through the pages for paid users (every page is seen before the
-        // user can leave); organic users get a real Back. `back_action: "next_screen"` leaves
-        // for the next screen straight away.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val current = binding.vwPager.currentItem
                 if (!HomeStream.backMovesForward(this@BriefingActivity)) {
                     when {
                         current > 0 -> binding.vwPager.setCurrentItem(current - 1, true)
-                        // A later-launch intro (intro_display) has nothing behind it: land on Home
-                        // instead of closing the app.
+
                         !HomeStream.isOnboardingActive(this@BriefingActivity) ->
                             HomeStream.goHome(this@BriefingActivity)
                         else -> HomeStream.passBackThrough(this@BriefingActivity, this)
@@ -151,7 +136,6 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
         }
     }
 
-    /** Springs a dot's width to [target] (the pill-stretch effect). */
     private fun tweenDotWidth(dot: View, target: Int) {
         val lp = dot.layoutParams as LinearLayout.LayoutParams
         if (lp.width == target) return
@@ -168,7 +152,6 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
         }
     }
 
-    /** Scale spring when the CTA morphs between Next and Get Started. */
     private fun popCta() {
         binding.actNext.animate().cancel()
         binding.actNext.scaleX = 0.94f
@@ -184,13 +167,7 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
         prefs.isOnboardingDone = true
         recordKeyEvent("onboarding_completed")
         ConsentDriver.check(this) {
-            // Permission done → this screen's interstitial (`onboarding.intro.inter_enabled`,
-            // the callback fires immediately when there is nothing to show) → THEN navigate.
             HomeSpotsProfile.execOnboardingInter(this, HomeSpotsProfile.OnboardScreen.INTRO) {
-                // The Premium paywall (design 9c) comes next; it continues this same
-                // navigation once it is closed or a plan is bought.
-                // Later launches: the reminders intro sits between this screen and Premium / Home
-                // (wrap() passes the intent straight through during the first-run onboarding).
                 if (PlusActivity.showsAfterIntro(this)) {
                     startActivity(MemoOpeningActivity.wrap(this, PlusActivity.afterIntro(this, HomeStream.isOnboarding(this))))
                     finish()

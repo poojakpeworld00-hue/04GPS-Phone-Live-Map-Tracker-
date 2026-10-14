@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Dark-mode twin of values/launcher_hint_colors.xml: the reference's slate card and list. -->
 <resources>
     <color name="hint_card_bg">#F7312420</color>
     <color name="hint_card_stroke">#1AFFFFFF</color>

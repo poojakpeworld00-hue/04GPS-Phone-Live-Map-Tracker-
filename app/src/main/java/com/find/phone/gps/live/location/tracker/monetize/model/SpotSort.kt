@@ -7,10 +7,10 @@ enum class SpotSort {
     FACEBOOK,
     CUSTOM,
     UNKNOWN;
-/**/
+
     companion object {
         fun fromString(value: String?): SpotSort {
-            return when (value?.lowercase()) {  // convert input to lowercase
+            return when (value?.lowercase()) {
                 "google" -> GOOGLE
                 "facebook", "fb" -> FACEBOOK
                 "custom" -> CUSTOM

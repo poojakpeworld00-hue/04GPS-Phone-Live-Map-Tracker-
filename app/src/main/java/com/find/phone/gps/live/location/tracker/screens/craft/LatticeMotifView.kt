@@ -7,14 +7,9 @@ import android.util.AttributeSet
 import android.view.View
 import com.find.phone.gps.live.location.tracker.R
 
-/**
- * The design's map grid: `background-image: linear-gradient(<color> 1px, transparent 1px),
- * linear-gradient(90deg, …); background-size: N N` — one hairline every [cell] dp.
- */
 class LatticeMotifView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null,
 ) : View(context, attrs) {
-
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private var cell: Float
 
@@ -23,7 +18,7 @@ class LatticeMotifView @JvmOverloads constructor(
         paint.color = a.getColor(R.styleable.LatticeMotifView_gridColor, 0x0FF4511E)
         cell = a.getDimension(R.styleable.LatticeMotifView_gridSize, 30f * resources.displayMetrics.density)
         a.recycle()
-        paint.strokeWidth = resources.displayMetrics.density // 1px in the design ≈ 1dp hairline
+        paint.strokeWidth = resources.displayMetrics.density
     }
 
     override fun onDraw(canvas: Canvas) {

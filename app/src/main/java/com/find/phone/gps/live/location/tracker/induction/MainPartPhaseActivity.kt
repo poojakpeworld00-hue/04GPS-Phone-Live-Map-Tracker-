@@ -23,17 +23,10 @@ import com.livemap.homedeck.ext.roleManager
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.isQPlus
 
-/**
- * Onboarding step asking the user to make this app the default home app. Tries the system
- * home-app settings first, then the Q+ role dialog. When opened with [EXTRA_ROLE_GRANTED] the
- * page stays blank and the post-grant path runs immediately.
- */
 class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
-
     private val binding by viewBinding(ScreenOnboardingDefaultLauncherBinding::inflate)
     private val floatAnims = mutableListOf<Animator>()
 
-    /** Latched once a destination has been chosen. */
     private var exitCommitted = false
     private var awaitingResult = false
     private var openSettingsOnResume = false
@@ -77,7 +70,6 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
 
         HomeStream.wireStepHeader(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT, binding.root)
 
-        // Debug-only `qa_no_auto_open` keeps the page up for inspection.
         val holdForQa = BuildConfig.DEBUG && intent.getBooleanExtra("qa_no_auto_open", false)
         openSettingsOnResume = savedInstanceState == null && !holdForQa && !InductionMainOnward.isSavedFor(this)
 
@@ -113,8 +105,6 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
         floatAnims.add(CraftMovement.floaty(binding.pillSwipe, delayMs = 1400L))
     }
 
-    // ── stage 1: settings page, stage 2: role dialog ──
-
     private fun openDefaultAppsPage() {
         if (exitCommitted || awaitingResult) return
         launchHomeSettingsPages()
@@ -125,7 +115,7 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
         if (exitCommitted) return
         val pageOpened = sequenceOf(Settings.ACTION_HOME_SETTINGS, Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
             .any { action -> startForResultSafely(Intent(action), REQ_HOME_SETTINGS) }
-        // No settings page on this ROM: fall through to the role dialog.
+
         if (!pageOpened) askRoleDialog()
     }
 
@@ -152,7 +142,7 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
         super.onActivityResult(requestCode, resultCode, resultData)
         awaitingResult = false
-        // Holding the role is the only reliable signal; both surfaces return CANCELED on Back.
+
         if (exitCommitted || isDefaultLauncher()) return
         if (requestCode == REQ_HOME_SETTINGS) {
             askRoleDialog()
@@ -204,8 +194,6 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
         }, waitMs)
     }
 
-    // ── exits ──
-
     private fun completeToHome() {
         if (exitCommitted) return
         exitCommitted = true
@@ -245,10 +233,8 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
         private const val REQ_HOME_SETTINGS = 7011
         private const val REQ_ROLE_HOME = 7012
 
-        /** Finish a grant that happened while this screen was away: no page, straight to the ad. */
         const val EXTRA_ROLE_GRANTED = "role_granted"
 
-        /** Process-wide: a grant via the settings list returns to a fresh instance. */
         private var lastSurfaceCode = 0
         private var grantReported = false
     }

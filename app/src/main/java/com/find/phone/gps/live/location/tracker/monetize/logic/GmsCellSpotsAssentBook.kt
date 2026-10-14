@@ -38,7 +38,7 @@ class GmsCellSpotsAssentBook private constructor(context: Context) {
         consentInformation.requestConsentInfoUpdate(activity, params, {
             UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity,
                 { formError: FormError? ->
-                    // Consent has been gathered.
+
                     onConsentGatheringCompleteListener.consentGatheringComplete(formError)
                 })
         }, { requestConsentError: FormError? ->

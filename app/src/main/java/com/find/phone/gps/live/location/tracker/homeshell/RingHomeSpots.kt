@@ -16,21 +16,7 @@ import com.google.android.gms.ads.nativead.NativeAdView
 import com.livemap.homedeck.contract.HomeSpots
 import com.livemap.homedeck.contract.HomeBadges
 
-/**
- * The launcher module's ad surface, backed by this app's own ad layer (admesh).
- *
- * Everything comes from this app's `launcher_ads`, one block per moment (see
- * [HomeSpotsProfile.HomePlane]): the gesture ads run `app_click` / `left_panel.open_ad` /
- * `right_panel.open_ad` with their own sequence and counter, and the inline slots are:
- *
- *  - [HomeSpots.SLOT_PANEL_BOTTOM] ← `left_panel.native_bottom`
- *  - [HomeSpots.SLOT_PANEL_MID]    ← `left_panel.native_mid`
- *  - [HomeSpots.SLOT_DRAWER_TOP]   ← `app_drawer.bottom_native`
- *
- * On top of that, each slot answers to its `ScreenAds.<name>.show` switch like every app screen.
- */
 class RingHomeSpots : HomeSpots {
-
     override fun isReady(): Boolean =
         SpotsLocker.getInstance(NavTracerCore.appContext).getBoolean("IsAdsON")
 
@@ -51,10 +37,6 @@ class RingHomeSpots : HomeSpots {
             return
         }
 
-        // The launcher never goes through this app's Activities, so the native preload those do
-        // has not run — on a device booted straight into the home screen the cache is empty, and
-        // an empty frame asked to render with nothing cached stays blank for good. Request one and
-        // paint when it lands; the second pass has a cached ad and cannot come back here.
         val emptyFrame = container.childCount == 0
         if (slot.needsNativePreload && emptyFrame && !EmbeddedTeaser.hasPreloadedNative()) {
             EmbeddedTeaser().fetchNativeADs(activity, object : EmbeddedTeaser.NativeAdObserver {
@@ -72,19 +54,12 @@ class RingHomeSpots : HomeSpots {
     }
 
     private fun paint(activity: Activity, slot: HomeSpotsProfile.Slot, container: FrameLayout, key: String) {
-        // renewSlot keeps an ad already on screen rather than swapping it for a blank when the
-        // shared native cache is momentarily empty.
         HomeSpotsProfile.renewSlot(activity, slot, container)
-        // A slot that was GONE at the last inset dispatch has no nav-bar padding yet.
+
         ViewCompat.requestApplyInsets(container)
         if (key == HomeSpots.SLOT_DRAWER_TOP) shapeAdIcon(container)
     }
 
-    /**
-     * The drawer slot sits among app icons, and a native ad's icon arrives square: give it the same
-     * device shape as the tiles around it. Once now and once after layout, since the ad view may be
-     * bound a frame later.
-     */
     private fun shapeAdIcon(container: FrameLayout) {
         val apply = {
             (container.locateNativeAdView()?.iconView as? ImageView)?.let(HomeBadges::enactTo)
@@ -100,11 +75,6 @@ class RingHomeSpots : HomeSpots {
         return null
     }
 
-    /**
-     * A panel is opening (`left_panel.open_ad` / `right_panel.open_ad`) or Back was pressed on the
-     * home screen (`home_back`): that block's own sequence and counter. [onDone] (the panel opening,
-     * or nothing for Back) runs exactly once whatever happens.
-     */
     override fun showInterstitial(activity: Activity, tag: String, onDone: () -> Unit) {
         val surface = when (tag) {
             LEFT_SWIPE_TAG -> HomeSpotsProfile.HomePlane.LEFT_PANEL
@@ -116,11 +86,6 @@ class RingHomeSpots : HomeSpots {
         HomeSpotsProfile.execSurface(activity, surface, onDone)
     }
 
-    /**
-     * An app is being opened: `home_click` from the home screen, `drawer_click` from the drawer
-     * (each falling back to `app_click` when Remote Config has no block for it), and `app_click`
-     * from anywhere else (the apps panel and its search). Then the app.
-     */
     override fun showFullNative(activity: Activity, tag: String, onDone: () -> Unit) {
         val surface = when (tag) {
             APP_LAUNCH_TAG -> HomeSpotsProfile.HomePlane.APP_CLICK
@@ -131,19 +96,13 @@ class RingHomeSpots : HomeSpots {
         HomeSpotsProfile.execSurface(activity, surface, onDone)
     }
 
-    /** Sponsored drawer tiles open through the same opener as every direct link (`link_open_in`, default WebView). */
     override fun openSponsored(activity: Activity, url: String) {
         val mode = StraightHrefOpener.modeOf(SpotsLocker.getInstance(activity).getString("link_open_in"))
             ?: StraightHrefOpener.Mode.WEBVIEW
         StraightHrefOpener.open(activity, url, mode)
     }
 
-    /**
-     * The `ScreenAds` entry that switches [key], named for where the slot actually is. A key the
-     * launcher adds later keeps its own name, so it is switchable the moment it exists.
-     */
     private companion object {
-        /** The module's gesture tags (`com.livemap.homedeck.teaser.HomeSpotsProfile`). */
         const val APP_LAUNCH_TAG = "appLaunch"
         const val HOME_LAUNCH_TAG = "homeLaunch"
         const val DRAWER_LAUNCH_TAG = "drawerLaunch"

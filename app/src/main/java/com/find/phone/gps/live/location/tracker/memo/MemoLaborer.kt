@@ -19,13 +19,7 @@ import com.find.phone.gps.live.location.tracker.screens.memo.MemoSirenActivity
 import com.find.phone.gps.live.location.tracker.screens.memo.MemoListActivity
 import com.find.phone.gps.live.location.tracker.helpers.WardenRail
 
-/**
- * Worker behind a single due reminder. It first rolls the reminder forward (done, or next
- * occurrence) and then, only when the screen is locked, posts a high-priority notification
- * whose full-screen target is [MemoSirenActivity]. While the device is in use nothing is shown.
- */
 class MemoLaborer(context: Context, params: WorkerParameters) : Worker(context, params) {
-
     override fun doWork(): Result {
         val appCtx = applicationContext
         val reminderId = inputData.getLong(KEY_ID, -1L)

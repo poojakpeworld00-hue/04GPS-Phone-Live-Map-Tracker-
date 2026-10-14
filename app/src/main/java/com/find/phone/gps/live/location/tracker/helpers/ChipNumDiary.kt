@@ -12,21 +12,7 @@ import androidx.core.content.ContextCompat
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.find.phone.gps.live.location.tracker.store.peoplesync.BuddyLines
 
-/**
- * DEBUG ONLY. Logs whether a SIM is present and which phone number the device reports for it.
- * Filter: `adb logcat -s SimNumber`
- *
- * The phone permissions are asked from the Home "My number" card; to test without it, grant them
- * from adb, then restart the app:
- *
- *     adb shell pm grant com.find.phone.gps.live.location.tracker android.permission.READ_PHONE_STATE
- *     adb shell pm grant com.find.phone.gps.live.location.tracker android.permission.READ_PHONE_NUMBERS
- *
- * Without them the SIM state, country and carrier still log; the number lines say so instead.
- * Many carriers do not write the number onto the SIM, so an empty number with a READY SIM is normal.
- */
 object ChipNumDiary {
-
     private const val TAG = "SimNumber"
 
     fun log(context: Context) {
@@ -51,7 +37,6 @@ object ChipNumDiary {
         Log.d(TAG, "simOperator=${tm.simOperatorName}  network=${tm.networkOperatorName}")
         Log.d(TAG, "deviceRegion (used for contacts)=${BuddyLines.deviceRegion(context)}")
 
-        // Default SIM's number. line1Number accepts either permission.
         if (phoneNumbers || phoneState) {
             val line1 = runCatching { tm.line1Number }
                 .getOrElse { "error: ${it.javaClass.simpleName}: ${it.message}" }
@@ -60,7 +45,6 @@ object ChipNumDiary {
             Log.d(TAG, "line1Number skipped: no phone permission")
         }
 
-        // Every active SIM (dual-SIM phones). The list needs READ_PHONE_STATE.
         if (!phoneState) {
             Log.d(TAG, "Per-SIM list skipped: READ_PHONE_STATE not granted")
             return

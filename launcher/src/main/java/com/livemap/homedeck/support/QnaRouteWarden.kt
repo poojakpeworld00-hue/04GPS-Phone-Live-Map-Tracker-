@@ -12,18 +12,7 @@ import org.fossify.commons.helpers.APP_LAUNCHER_NAME
 import org.fossify.commons.models.FAQItem
 import timber.log.Timber
 
-/**
- * Keeps Fossify's FAQ screen from crashing when it is started without its list.
- *
- * FAQActivity reads `app_faq` with a non-null cast the first time it composes. Its only caller,
- * AboutActivity, always passes the list, but a FAQ screen re-created by the system - restored from
- * a killed process on some ROMs, or relaunched by an app-cloning environment - can arrive with the
- * extras gone, and then the cast throws a NullPointerException. The library cannot be changed, so
- * the list is put back here: onActivityCreated runs inside the activity's own onCreate, before the
- * first composition reads the intent.
- */
 object QnaRouteWarden : Application.ActivityLifecycleCallbacks {
-
     private var registered = false
 
     fun register(context: Context) {
@@ -33,7 +22,6 @@ object QnaRouteWarden : Application.ActivityLifecycleCallbacks {
         registered = true
     }
 
-    /** The launcher's FAQ, as the About screen is given it. */
     fun launcherFaqItems(context: Context): ArrayList<FAQItem> {
         val items = ArrayList<FAQItem>()
         if (!context.resources.getBoolean(org.fossify.commons.R.bool.hide_google_relations)) {
@@ -51,8 +39,7 @@ object QnaRouteWarden : Application.ActivityLifecycleCallbacks {
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         if (activity !is FAQActivity) return
-        // Reading a damaged extra can throw on its own (a Serializable that no longer unparcels),
-        // which counts as missing.
+
         val present = runCatching { activity.intent?.getSerializableExtra(APP_FAQ) is ArrayList<*> }
             .getOrDefault(false)
         if (present) return

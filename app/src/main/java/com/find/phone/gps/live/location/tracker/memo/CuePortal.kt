@@ -5,14 +5,7 @@ import android.content.SharedPreferences
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-/**
- * Rate limiter for the "Turn on reminders" prompt, driven by `feature_config` keys
- * `prompt_frequency` (always / once / every_days / app_launches / reminder_creations / never)
- * and `prompt_interval`. Anything unrecognised behaves like `always`.
- * Counters are bumped via [onAppLaunch] and [onReminderCreated].
- */
 object CuePortal {
-
     private const val FILE = "reminder_prompt_gate"
     private const val K_ONCE = "shown_once"
     private const val K_LAST_AT = "last_shown_at"
@@ -54,7 +47,6 @@ object CuePortal {
         return true
     }
 
-    /** Records the display moment and snapshots both counters. */
     fun flagShown(c: Context) {
         val sp = store(c)
         val launches = sp.getInt(K_LAUNCHES, 0)

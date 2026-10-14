@@ -9,37 +9,12 @@ import org.xmlpull.v1.XmlPullParser
 import timber.log.Timber
 import kotlin.math.hypot
 
-/**
- * The previous launcher's *own* factory grid, read from its APK resources through the public
- * `getResourcesForApplication` API — real numbers for that exact build, no table involved.
- *
- * Three readers, each filling only what the previous left unknown:
- *
- * 1. **Launcher3 `device_profiles.xml`** — every AOSP-derived launcher (Pixel, ColorOS/OxygenOS,
- *    Motorola, Nothing, Sony, HMD, plain AOSP) ships `res/xml/device_profiles.xml` listing its
- *    grid options with the display size each is meant for. We pick the option Launcher3 itself
- *    would pick for this display.
- * 2. **Generic name reader** ([CommonLatticeScanner]) — for every other launcher: the APK's own
- *    resource names ([BundleResLedger]) are scored for "this is the column count" and read
- *    through `Resources`, so a launcher this code has never met still resolves.
- * 3. **Console probes** — an explicit per-package name list in Remote Config `home_profile_probes`,
- *    the override for a launcher whose names fool the generic reader.
- *
- * Anything that fails — package not visible, no such resource, odd XML — yields nothing for that
- * field and the documented OEM default (rules table) or our standard value stands.
- */
 object BundlePresetScanner {
-
     private const val RES_AUTO_NS = "http://schemas.android.com/apk/res-auto"
     private const val DEVICE_PROFILES = "device_profiles"
     private const val TAG_GRID_OPTION = "grid-option"
     private const val TAG_DISPLAY_OPTION = "display-option"
 
-    /**
-     * Remote Config `home_profile_probes`: `{ "<package>": { "home_cols": ["name", …], "home_rows": [...],
-     * "dock_size": [...], "drawer_cols": [...], "icon_size_dp": [...], "label_sp": [...] } }` — resource
-     * names to try in order; `label_sp` names dimens read with their unit.
-     */
     const val KEY_HOME_COLS = "home_cols"
     const val KEY_HOME_ROWS = "home_rows"
     const val KEY_DOCK_SIZE = "dock_size"
@@ -47,33 +22,10 @@ object BundlePresetScanner {
     const val KEY_ICON_SIZE_DP = "icon_size_dp"
     const val KEY_LABEL_SP = "label_sp"
 
-    /**
-     * Drawer-mode probe, for the launchers that state their home/drawer layout as a number of
-     * their own: `drawer_mode` names the integer resources holding the factory value,
-     * `drawer_mode_setting` the `Settings.Global` key the launcher writes when the user switches
-     * modes (unset until they do, so the resource is the factory answer), and `drawer_mode_values`
-     * maps those numbers onto ours. A launcher with no such entry - Samsung, Pixel, MIUI, every
-     * other - is untouched by this; its mode keeps coming from the rules table.
-     *
-     * ColorOS / OxygenOS: `integer/config_default_launcher_mode`, whose `LauncherMode` is
-     * Standard 0 (every app on the home screen, no drawer), Drawer 2 (home screen + drawer) and
-     * Simple 3 (big-icon home, no drawer); `LauncherMode.create` reads anything else as Standard.
-     * Verified identical on OxygenOS 14 (com.android.launcher 14.0.62) and 16 (16.4.25).
-     */
     const val KEY_DRAWER_MODE = "drawer_mode"
     const val KEY_DRAWER_MODE_SETTING = "drawer_mode_setting"
     const val KEY_DRAWER_MODE_VALUES = "drawer_mode_values"
 
-    /**
-     * Bool resource naming whether that launcher also puts a newly installed app on the workspace
-     * (ColorOS: `config_default_add_new_app_to_workspace_in_drawer_mode`). Same gate as
-     * [KEY_DRAWER_MODE]: only a launcher whose entry names it is read at all.
-     */
-
-    /**
-     * The probes this app ships with, used when the console blob is empty. Names verified against
-     * the launcher build named beside them; mirrored in `docs/remote-config/home_profile_probes.json`.
-     */
     const val DEFAULT_PROBES_JSON = """
 {
   "com.miui.home": {
@@ -114,13 +66,8 @@ object BundlePresetScanner {
 }
 """
 
-    /** The grid numbers an APK yielded and which readers contributed, for the log. */
     class ApkFacts(val numbers: MainPreset.Numbers?, val sources: List<String>)
 
-    /**
-     * Reads the grid from the APK: Launcher3 `device_profiles.xml` first, then the generic
-     * resource-name reader, then the console probes as an override; each only fills gaps.
-     */
     fun read(context: Context, fp: HomeThumbprint, probesJson: String): ApkFacts? {
         val target = fp.homePackage
         if (target.isEmpty() || target == context.packageName) return null
@@ -160,16 +107,10 @@ object BundlePresetScanner {
         return ApkFacts(if (merged.isEmpty) null else merged, contributors)
     }
 
-    /**
-     * The mode [value] stands for, per the probe entry's own table; null when the entry does not
-     * name that number. Pure, so an OEM's numbering is unit-testable without its device.
-     */
     fun drawerModeOf(value: Int, values: JSONObject?): SliderWay? {
         val label = values?.optString(value.toString())?.trim()?.takeIf { it.isNotEmpty() } ?: return null
         return SliderWay.entries.firstOrNull { it.name.equals(label, ignoreCase = true) }
     }
-
-    // ---- Launcher3 ---------------------------------------------------------------------------
 
     private class DisplayOption(
         val minWidthDps: Float,
@@ -212,8 +153,6 @@ object BundlePresetScanner {
             else -> "phone"
         }
 
-        // Same choice Launcher3 makes: options for this device class that may be default, nearest
-        // display size wins. Untagged options count for every class.
         val pool = grids.filter { it.deviceCategory == null || it.deviceCategory.contains(category) }
             .ifEmpty { grids }
         var chosenGrid: GridOption? = null
@@ -272,7 +211,6 @@ object BundlePresetScanner {
                     val minW = xml.attrFloat("minWidthDps")
                     val minH = xml.attrFloat("minHeightDps")
                     if (owner != null && minW != null && minH != null) {
-                        // A file older than canBeDefault treats every option as a candidate.
                         owner.displays += DisplayOption(
                             minWidthDps = minW,
                             minHeightDps = minH,
@@ -292,7 +230,6 @@ object BundlePresetScanner {
         return found
     }
 
-    // res-auto namespace first; some builds flatten attributes into the default namespace.
     private fun XmlResourceParser.attr(name: String): String? =
         getAttributeValue(RES_AUTO_NS, name) ?: getAttributeValue(null, name)
 
@@ -300,15 +237,11 @@ object BundlePresetScanner {
     private fun XmlResourceParser.attrFloat(name: String): Float? = attr(name)?.trim()?.toFloatOrNull()
     private fun XmlResourceParser.attrBool(name: String): Boolean? = attr(name)?.trim()?.toBooleanStrictOrNull()
 
-    // ---- Named-integer probes ----------------------------------------------------------------
-
-    /** Trimmed, non-blank entries of the string array under [key], or null when there is none. */
     private fun JSONObject.nameList(key: String): Sequence<String>? =
         optJSONArray(key)?.let { arr ->
             (0 until arr.length()).asSequence().map { arr.optString(it).trim() }.filter { it.isNotEmpty() }
         }
 
-    /** `integer/<name>` verbatim, otherwise `dimen/<name>` in dp; null if neither resolves. */
     private fun readNumber(apkRes: Resources, packageName: String, name: String): Int? {
         val integerId = apkRes.getIdentifier(name, "integer", packageName)
         if (integerId != 0) return runCatching { apkRes.getInteger(integerId) }.getOrNull()
@@ -328,8 +261,6 @@ object BundlePresetScanner {
                 readNumber(apkRes, packageName, name)?.takeIf { it in range }
             }
 
-        // Only launchers whose entry names a mode resource: the user's switch (Settings) wins
-        // over the factory default resource.
         val mode = entry.nameList(KEY_DRAWER_MODE)?.let { candidates ->
             val table = entry.optJSONObject(KEY_DRAWER_MODE_VALUES)
             val settingKey = entry.optString(KEY_DRAWER_MODE_SETTING).trim().takeIf { it.isNotEmpty() }

@@ -15,13 +15,7 @@ import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement.loop
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement.pvh
 import java.lang.ref.WeakReference
 
-/**
- * "Get your reminders on time" (design 4): the bell on the gradient disc with two pulsing rings,
- * title / description / button from Remote Config, and "Maybe later". Layout
- * `dialog_reminder_prompt`.
- */
 object MemoCueModal {
-
     private var current: WeakReference<Dialog>? = null
     private val anims = mutableListOf<Animator>()
 
@@ -72,7 +66,6 @@ object MemoCueModal {
         current = null
     }
 
-    /** Rings: scale .7 → 1.55 / 1.9 while fading out; bell: a swing every 3s from its hanger. */
     private fun animate(root: View) {
         if (CraftMovement.animationsDisabled(root.context)) return
         val e = CraftMovement.EASE_OUT

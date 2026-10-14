@@ -36,12 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
-/**
- * Phone-book picker: account scope, search, a native card, starred people and an A–Z list
- * with a side letter index. Locate returns the chosen number through [EXTRA_NUMBER].
- */
 class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
-
     override val layoutId: Int = R.layout.screen_contact_picker
 
     private var everyone: List<BuddyNum> = emptyList()
@@ -92,12 +87,10 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
 
     override fun onResume() {
         super.onResume()
-        // Returning from system settings after granting.
+
         if (!binding.grantState.isVisible) return
         if (contactsGranted()) revealContacts()
     }
-
-    // ----- permission gate -----
 
     private fun contactsGranted(): Boolean = PackageManager.PERMISSION_GRANTED ==
         ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
@@ -132,8 +125,6 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
         mountNativeAd()
         readPhoneBook()
     }
-
-    // ----- data -----
 
     private fun inScope(): List<BuddyNum> = everyone.filter { activeAccount == null || it.account == activeAccount }
 
@@ -182,7 +173,6 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
             buildLetterRail()
         }
 
-        // Starred people within the scope; hidden while a search is typed.
         val starred = pool.filter { it.starred }.distinctBy { it.contactId }
         starAdapter.submitList(starred)
         binding.lvFavoritesGroup.isVisible = term.isEmpty() && starred.isNotEmpty()
@@ -203,8 +193,6 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
         binding.txtEmptyBody.setText(detail)
         binding.blankState.isVisible = true
     }
-
-    // ----- popups -----
 
     private fun accountIcon(name: String): Int = when (name) {
         BuddyNum.ACCOUNT_PHONE -> R.drawable.lv_ic_phone
@@ -250,8 +238,6 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
             .show(binding.actTools, Gravity.END)
     }
 
-    // ----- row actions -----
-
     private fun returnNumber(entry: BuddyNum) {
         val data = Intent().putExtra(EXTRA_NUMBER, entry.number)
         setResult(RESULT_OK, data)
@@ -263,8 +249,6 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
         runCatching { startActivity(dialIntent) }
     }
 
-    // ----- native card -----
-
     private fun mountNativeAd() {
         val enabled = SpotsLocker.getInstance(this).getBoolean("IsAdsON") &&
             DisplayTeaserProfile.resolve(this, javaClass.simpleName).show
@@ -272,8 +256,6 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
         if (!enabled) return
         EmbeddedTeaserRibbon().presentNativeBannerNative(this, binding.spotNativeFrame, binding.spotShimmer)
     }
-
-    // ----- letter index -----
 
     private fun railLabel(letter: String, face: android.graphics.Typeface?): TextView = TextView(this).apply {
         text = letter

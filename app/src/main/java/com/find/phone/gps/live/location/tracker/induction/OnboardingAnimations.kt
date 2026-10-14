@@ -6,21 +6,10 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 
-/**
- * The onboarding screens' motion, ported from the Claude Design page's keyframes:
- * `cid-rise-in` for the staggered entrance, `cid-stamp` for the verified badge,
- * `cid-breathe` for the shield, and `cid-twinkle` for the sparkles.
- *
- * All of it is decorative. Android turns animators into no-ops when the user has
- * animations switched off in developer options or accessibility settings, so the
- * screens still land in their finished state — hence every helper sets the final
- * values up front and only animates away from them.
- */
 private const val RISE_DISTANCE_DP = 18f
 private const val RISE_DURATION = 460L
 private const val STAGGER = 70L
 
-/** `cid-rise-in`: fade up from below, one view after another. */
 fun riseIn(views: List<View>, startDelay: Long = 90L) {
     val density = views.firstOrNull()?.resources?.displayMetrics?.density ?: return
     val offset = RISE_DISTANCE_DP * density
@@ -38,7 +27,6 @@ fun riseIn(views: List<View>, startDelay: Long = 90L) {
     }
 }
 
-/** `cid-stamp`: the badge lands late and overshoots, so the check reads as a stamp. */
 fun stampIn(view: View, startDelay: Long = 520L) {
     view.alpha = 0f
     view.scaleX = 1.6f
@@ -53,11 +41,6 @@ fun stampIn(view: View, startDelay: Long = 520L) {
         .start()
 }
 
-/**
- * `cid-breathe`: a slow 4.5% pulse on the shield. Returns the animator so the caller
- * can cancel it in onDestroy — an infinite animator holding a View keeps the whole
- * activity alive otherwise.
- */
 fun breathe(view: View): ValueAnimator =
     ValueAnimator.ofFloat(1f, 1.045f).apply {
         duration = 2600L
@@ -73,7 +56,6 @@ fun breathe(view: View): ValueAnimator =
         start()
     }
 
-/** `cid-twinkle`: the sparkles breathe out of phase with each other. */
 fun twinkle(views: List<View>): List<ValueAnimator> =
     views.mapIndexed { index, view ->
         ValueAnimator.ofFloat(0.35f, 1f).apply {

@@ -1,20 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.livemap.homedeck.widgetry.MainDisplayLattice xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/desk_screen_gridUi"
+  android:id="@+id/desk_screen_gridUi"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent">
+  <com.livemap.homedeck.widgetry.MainDisplayLatticePaintSector
+    android:id="@+id/lv_drawing_areaUi"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <!-- Drawing area with Z translation so it is drawn over widgets -->
-    <com.livemap.homedeck.widgetry.MainDisplayLatticePaintSector
-        android:id="@+id/lv_drawing_areaUi"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:translationZ="1dp" />
-
-    <com.livemap.homedeck.widgetry.MineCoreAppletStretchBorder
-        android:id="@+id/lv_resize_frameUi"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone" />
-
+    android:layout_height="match_parent"
+    android:translationZ="1dp" />
+  <com.livemap.homedeck.widgetry.MineCoreAppletStretchBorder
+    android:id="@+id/lv_resize_frameUi"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:visibility="gone" />
 </com.livemap.homedeck.widgetry.MainDisplayLattice>

@@ -39,20 +39,6 @@ import com.livemap.homedeck.ports.ElementOptionsObserver
 import com.livemap.homedeck.modals.ElementMovesBasket
 import com.livemap.homedeck.entities.MainDisplayLatticeElement
 
-/**
- * Puts the navigation bar back after an ad load has taken it away.
- *
- * `DynamicAdsHelper.loadDynamicAd` ORs `SYSTEM_UI_FLAG_HIDE_NAVIGATION or
- * SYSTEM_UI_FLAG_IMMERSIVE_STICKY` (0x1002) onto the host Activity's decor view on every call,
- * unconditionally and with nothing in the ads launcherConfig asking for it. Sticky is the part that makes
- * it look broken rather than deliberate: the bar comes back on a swipe and then goes away again a
- * few seconds later, so the buttons are never where the user left them.
- *
- * Called right after each load and again when a fill arrives. Clearing the flags is enough to end
- * the immersive behaviour; the bar itself is asked back explicitly so it does not wait for the next
- * interaction. The window still draws edge to edge behind a transparent bar — the *space* is given
- * back by the insets padding each screen already applies, not here.
- */
 fun Activity.recoverNavigationBar() {
     val decorView = window.decorView
 
@@ -68,18 +54,6 @@ fun Activity.recoverNavigationBar() {
         .show(WindowInsetsCompat.Type.systemBars())
 }
 
-/**
- * Opens another app, behind the `appLaunch` promo when one is configured.
- *
- * The gate lives here rather than at the call sites because there are three of them — the drawer,
- * the home grid and the apps panel — and the placement is "the user is leaving for another app",
- * which is true of all three. The launch itself always happens; the promo only precedes it.
- *
- * The host app itself is not gated: opening it from its own home screen is not leaving.
- *
- * [gesture] names where the tap came from (`HomeSpotsProfile.HOME_LAUNCH` / `DRAWER_LAUNCH`), so the
- * host can pace each source on its own; the default is the shared `APP_LAUNCH`.
- */
 fun Activity.fireApp(
     packageName: String,
     activityName: String,
@@ -88,17 +62,14 @@ fun Activity.fireApp(
     if (packageName == applicationContext.packageName) return fireAppNow(packageName, activityName)
     com.livemap.homedeck.contract.HomeBook.launchingPackage = packageName
     com.livemap.homedeck.teaser.HomeTeaserDirector.run(this, gesture) {
-        // Just as the app opens, so the host can arm the ad it shows on the way back.
         com.livemap.homedeck.contract.HomeBook.launchingPackage = null
         com.livemap.homedeck.contract.HomeBook.bridge.onAppLaunched(packageName)
-        // A direct-link ad can outlive this launcher instance (recreated while the user was on the
-        // landing page); the tap still has to open the app, so launch from the application then.
+
         if (isDestroyed) applicationContext.fireAppFromContext(packageName, activityName)
         else fireAppNow(packageName, activityName)
     }
 }
 
-/** [fireAppNow] without an Activity: a new task from the application context. */
 private fun Context.fireAppFromContext(packageName: String, activityName: String) {
     runCatching {
         startActivity(
@@ -115,7 +86,6 @@ private fun Context.fireAppFromContext(packageName: String, activityName: String
     }
 }
 
-/** The bare launch, with no promo. */
 fun Activity.fireAppNow(packageName: String, activityName: String) {
     try {
         Intent(Intent.ACTION_MAIN).apply {
@@ -134,8 +104,7 @@ fun Activity.fireAppNow(packageName: String, activityName: String) {
             return
         }
     }
-    // Every launch from the home screen, dock, drawer and search passes here: the launcher's own
-    // "most / recently opened" record, which the drawer's search suggests from. Local only.
+
     ensureBackgroundThread {
         runCatching { appUsageDB.noteLaunch(packageName, activityName) }
     }
@@ -148,16 +117,9 @@ fun Activity.fireAppInfo(packageName: String) {
     }
 }
 
-/**
- * Tries, in order: the system's home-app picker, the Q+ role request (shows a one-tap system
- * confirmation instead of a settings list), the generic default-apps settings, then plain
- * Settings. Used by the long-press "Set as default" menu item and by onboarding.
- */
 fun Activity.demandSetAsDefaultLauncher() {
-    // Which launcher is being replaced can only be read while it still holds the role.
     HomeThumbprint.guaranteeCaptured(this)
-    // Paired with whether the surface is the role *dialog*, because the hint below must not be
-    // raised over that one — see the loop.
+
     val intents = buildList<Pair<Intent, Boolean>> {
         add(Intent(Settings.ACTION_HOME_SETTINGS) to false)
         if (isQPlus()) {
@@ -170,9 +132,7 @@ fun Activity.demandSetAsDefaultLauncher() {
     for ((intent, isRoleDialog) in intents) {
         try {
             startActivityForResult(intent, REQUEST_SET_DEFAULT)
-            // A hint over the Settings list, where the user has to find this app among every other
-            // launcher. Never over the role dialog, which already names this app and offers a button
-            // to press — a card there would cover the very thing it was pointing at.
+
             if (!isRoleDialog) {
                 PreferredMainClueDeck.show(this)
             }
@@ -196,7 +156,7 @@ fun Activity.uninstallApp(packageName: String) {
         data = Uri.fromParts("package", packageName, null)
         startActivityForResult(this, UNINSTALL_APP_REQUEST_CODE)
     }
-    // The dialog returns before the package is gone; the launcher watches for the removal itself.
+
     (this as? com.livemap.homedeck.screens.HomeDeck)?.watchUninstall(packageName)
 }
 
@@ -212,8 +172,6 @@ fun Activity.processGridItemPopupMenu(
     val isIcon = gridItem.type == ITEM_TYPE_ICON
     val isOwn = gridItem.packageName == applicationContext.packageName
     val actions = buildList {
-        // Our own icon offers no App info (nor, below, Uninstall unless the host allows it): the
-        // app is not managed from here.
         if (isIcon && !isOwn) add(ElementMovesBasket.Action(org.fossify.commons.R.drawable.ic_info_vector, R.string.launcher_app_info) { listener.appInfoUi(gridItem) })
         if (isIcon && isOnAllAppsFragment) add(ElementMovesBasket.Action(org.fossify.commons.R.drawable.ic_hide_vector, org.fossify.commons.R.string.hide) { listener.hide(gridItem) })
         if ((isIcon || gridItem.type == ITEM_TYPE_FOLDER) && !isOnAllAppsFragment) {
@@ -221,8 +179,7 @@ fun Activity.processGridItemPopupMenu(
         }
         if (gridItem.type == ITEM_TYPE_WIDGET) add(ElementMovesBasket.Action(R.drawable.hd_ic_resize_vector, org.fossify.commons.R.string.resize) { listener.resize(gridItem) })
         if (!isOnAllAppsFragment) add(ElementMovesBasket.Action(org.fossify.commons.R.drawable.ic_cross_vector, org.fossify.commons.R.string.remove) { listener.remove(gridItem) })
-        // Our own icon: the system Uninstall only when the host says it has no uninstall flow of
-        // its own to run instead - see HomeGateway.allowUninstallingHostIcon.
+
         if (isIcon && canAppBeUninstalled(gridItem.packageName) && (!isOwn || HomeBook.bridge.allowUninstallingHostIcon())) {
             add(ElementMovesBasket.Action(org.fossify.commons.R.drawable.ic_delete_vector, R.string.launcher_uninstall) { listener.uninstall(gridItem) })
         }
@@ -253,9 +210,7 @@ fun Activity.processGridItemPopupMenu(
             listener.onAnyClick()
             val id = shortcutInfo.id
             val packageName = shortcutInfo.`package`
-            // One of the host's own shortcuts that it wants handled as an in-place removal: no
-            // funnel, the icon leaves the launcher right here. The host decides which shortcut and
-            // for whom - see removesHostIconInPlace.
+
             val host = this@processGridItemPopupMenu
             if (packageName == host.packageName && host is HomeDeck &&
                 HomeBook.bridge.removesHostIconInPlace(host, id)
@@ -272,14 +227,6 @@ fun Activity.processGridItemPopupMenu(
     }
 }
 
-/**
- * Raises the launcher task back over whatever the user was sent to.
- *
- * REORDER_TO_FRONT rather than a fresh launch: the screen underneath is still alive and only has
- * to be brought up, not rebuilt. CLEAR_TOP clears any transparent coach-mark activity stacked on
- * top of it. Wrapped because a backgrounded app is only allowed this in narrow cases - a
- * just-granted role being one of them - and a refusal is not worth a crash.
- */
 fun Activity.bringTaskToFront() {
     runCatching {
         startActivity(

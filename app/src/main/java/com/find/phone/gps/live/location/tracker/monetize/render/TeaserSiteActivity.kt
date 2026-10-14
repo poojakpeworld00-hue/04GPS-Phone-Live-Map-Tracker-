@@ -18,18 +18,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnAttach
 
-/**
- * The in-app landing page for direct-link promos (the drawer's `directlink` ad step and the drawer's
- * configured promo tiles).
- *
- * A WebView rather than a Custom Tab or the browser, because neither of those can hide its toolbar
- * and the whole point is that the landing page fills the screen. Chrome-less on purpose: no
- * toolbar, no title, back goes back through the page's own history and only leaves once it has none.
- *
- * Views are built in code — a single full-bleed WebView does not earn a layout file.
- */
 class TeaserSiteActivity : Activity() {
-
     private var webView: WebView? = null
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -38,7 +27,6 @@ class TeaserSiteActivity : Activity() {
 
         val url = intent?.getStringExtra(EXTRA_URL)?.trim()
         if (url.isNullOrEmpty()) {
-            // Nothing to show; never leave an empty white screen on the stack.
             finish()
             return
         }
@@ -63,8 +51,7 @@ class TeaserSiteActivity : Activity() {
                     request: WebResourceRequest,
                 ): Boolean {
                     val target = request.url
-                    // market://, intent://, tel:, mailto: … are for other apps, not the WebView.
-                    // If nothing resolves we return false and let the WebView try (and fail quietly).
+
                     if (!StraightHrefOpener.isWebScheme(target)) {
                         val handed = runCatching {
                             startActivity(
@@ -72,9 +59,7 @@ class TeaserSiteActivity : Activity() {
                                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             )
                         }.isSuccess
-                        // Step aside once the hand-off takes. We are a separate task, so staying
-                        // alive leaves Play (or the dialler, or the mail app) opening *behind* a
-                        // WebView the user then has to dismiss to see what they tapped.
+
                         if (handed) finish()
                         return handed
                     }
@@ -86,8 +71,6 @@ class TeaserSiteActivity : Activity() {
         root.addView(web)
         setContentView(root)
 
-        // Pad the root, not the WebView: the page then scrolls under nothing and its own content
-        // still starts below the status bar.
         enactInsets(root)
         web.loadUrl(url)
     }
@@ -123,11 +106,6 @@ class TeaserSiteActivity : Activity() {
         fun intentFor(context: Context, url: String): Intent =
             Intent(context, TeaserSiteActivity::class.java).putExtra(EXTRA_URL, url)
 
-        /**
-         * Opens [url] in this WebView, falling back to whatever else can handle it. Blank or
-         * scheme-less links are ignored, so a misconfigured Remote Config entry is a no-op rather
-         * than a crash. Returns true if something was opened.
-         */
         fun open(context: Context, url: String): Boolean {
             val uri = runCatching { url.trim().toUri().takeIf { !it.scheme.isNullOrBlank() } }
                 .getOrNull() ?: return false

@@ -12,20 +12,6 @@ import org.json.JSONObject
 
 private const val TAG = "NativeTheme"
 
-/**
- * Copies the light/dark native-ad palette for the active theme into the ad preferences, where
- * the native renderers read it from.
- *
- * The palette keys (`NativebtnColor`, `NativeBgColor`, …) are **global and last-write-wins** —
- * nothing re-derives them at render time — so whichever screen wrote them last decides how every
- * native ad afterwards looks. That makes this a per-screen responsibility, not a one-off:
- * a screen that renders natives without calling this shows them in whatever mode some earlier
- * screen left behind, or unset entirely on a cold boot (dark-on-dark, effectively invisible).
- *
- * Called by [com.find.phone.gps.live.location.tracker.foundation.StageActivity] for every normal screen, and
- * separately by the launcher home — which does not extend it, yet is the device HOME and so is
- * often the first screen after a reboot.
- */
 fun Context.enactNativeAdTheme(
     theme: String = CoreLocker.selectedTheme(this).ifEmpty { THEME_SYSTEM }
 ) {
@@ -44,14 +30,10 @@ fun Context.enactNativeAdTheme(
     }
 
     try {
-        // The audience block's own palette (SpotProfileAbsorb.enactNativeTheme), light or dark.
         val palette = JSONObject(adsPref.getString(SpotProfileAbsorb.NATIVE_THEME_ACTIVE, "{}") ?: "{}")
         val themeJson = palette.optJSONObject(modeKey)
 
         if (themeJson == null) {
-            // No palette to copy — Remote Config has not landed yet (the launcher is the device
-            // HOME, so it can run before any fetch has ever happened) or the key is absent. Say
-            // so rather than logging a write that did not occur.
             Log.d(TAG, "No $modeKey palette in NativeTheme — native colors left unchanged")
             return
         }

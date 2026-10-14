@@ -11,55 +11,22 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 
-/**
- * Dismisses a caller-ID overlay when the user leaves via Home or Recents.
- *
- * Android broadcasts ACTION_CLOSE_SYSTEM_DIALOGS (reason "homekey" / "recentapps")
- * when the user presses Home or Recents. This helper listens for that broadcast
- * while the host Activity is resumed and invokes [onCloseRequested] so the overlay
- * window can be torn down cleanly instead of being left stuck on screen.
- *
- * It is a [DefaultLifecycleObserver]: the Activity registers it once and the helper
- * wires itself to RESUME / STOP / DESTROY automatically.
- *
- * Usage in your CallerIdActivity:
- *
- *     private val systemDialogHelper by lazy {
- *         CallerIdSystemDialogHelper(this) { dismissCallerIdWindow() }
- *     }
- *
- *     override fun onCreate(savedInstanceState: Bundle?) {
- *         super.onCreate(savedInstanceState)
- *         lifecycle.addObserver(systemDialogHelper)
- *         // ...
- *     }
- *
- * @param activity         host Activity — used as the receiver Context and for
- *                         isFinishing / isDestroyed guards.
- * @param onCloseRequested called on the main thread when the overlay should close.
- */
 class OsModalToolbox(
     private val activity: Activity,
     private val onCloseRequested: () -> Unit,
 ) : DefaultLifecycleObserver {
-
     private var receiver: BroadcastReceiver? = null
     private var isRegistered = false
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private var pendingTeardown: Runnable? = null
 
-    // --- Lifecycle callbacks -------------------------------------------------
-
     override fun onResume(owner: LifecycleOwner) {
-        // A recent onStop may have queued a teardown — cancel it so a quick
-        // stop/restart (rotation, fast app-switch) does not thrash the receiver.
         abortPendingTeardown()
         register()
     }
 
     override fun onStop(owner: LifecycleOwner) {
-        // Defer teardown 100ms to debounce a stop immediately followed by restart.
         val teardown = Runnable {
             unregister()
             pendingTeardown = null
@@ -73,8 +40,6 @@ class OsModalToolbox(
         unregister()
         receiver = null
     }
-
-    // --- Receiver registration ----------------------------------------------
 
     private fun register() {
         if (isRegistered) return
@@ -94,7 +59,6 @@ class OsModalToolbox(
         try {
             activity.unregisterReceiver(r)
         } catch (_: IllegalArgumentException) {
-            // Receiver was not registered — safe to ignore.
         } finally {
             isRegistered = false
         }
@@ -117,7 +81,6 @@ class OsModalToolbox(
                     }
                 }
             } catch (_: Exception) {
-                // Match the original: never let a broadcast crash the Activity.
             }
         }
     }

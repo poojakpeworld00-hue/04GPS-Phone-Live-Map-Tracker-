@@ -2,7 +2,7 @@ package com.find.phone.gps.live.location.tracker.monetize.model
 
 data class TerraDetails(
     val country: String?,
-    val countryCode: String?,   // ISO 3166-1 alpha-2, e.g. "IN"
+    val countryCode: String?,
     val regionName: String?,
     val city: String?
 )

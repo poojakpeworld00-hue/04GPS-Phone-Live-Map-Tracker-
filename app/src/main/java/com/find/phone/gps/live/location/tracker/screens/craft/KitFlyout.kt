@@ -13,19 +13,13 @@ import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.databinding.PartPopupMenuBinding
 import com.find.phone.gps.live.location.tracker.databinding.CellPopupRowBinding
 
-/**
- * A menu popup in the design system: an r16 surface card with a hairline border and shadow,
- * 44dp rows with a 30dp icon tile, the label, an optional count pill, and a check on the
- * selected row. Replaces the platform PopupMenu wherever a screen offers a short choice.
- */
 class KitFlyout(private val context: Context) {
-
     private val binding = PartPopupMenuBinding.inflate(LayoutInflater.from(context))
     private val window = PopupWindow(
         binding.root, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true,
     ).apply {
         elevation = dp(16f)
-        // A transparent window background: the card drawable draws the shape, the elevation the shadow.
+
         setBackgroundDrawable(ContextCompat.getDrawable(context, android.R.color.transparent))
         isOutsideTouchable = true
     }
@@ -53,7 +47,6 @@ class KitFlyout(private val context: Context) {
         return this
     }
 
-    /** Drops down under [anchor], 8dp below it, aligned to its start or end edge. */
     fun show(anchor: View, gravity: Int = Gravity.START) {
         binding.root.measure(
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),

@@ -7,22 +7,11 @@ import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import com.livemap.homedeck.R
 
-/** Small, reusable view motions that any screen can hang on a click. */
 object GeneralTweens {
-
     private const val PRESS_SCALE = 0.94f
     private const val PRESS_DOWN_MS = 90L
     private const val PRESS_UP_MS = 220L
 
-    /**
-     * Sinks [view] to 94%, springs it back with a touch of overshoot, THEN runs [onClick].
-     * The work waits for the motion so the tap always reads before a dialog or screen lands
-     * on top of it. Re-entrant taps while the pill is still moving are ignored - a second
-     * press mid-animation would otherwise fire [onClick] twice.
-     *
-     * Also drops the view's lift (translationZ) for the press and restores it on the way up,
-     * so a button with an elevation shadow visibly settles onto the surface.
-     */
     fun buttonPressAnimation(
         view: View,
         onClick: () -> Unit
@@ -58,11 +47,6 @@ object GeneralTweens {
     private const val REVEAL_FROM_SCALE = 0.82f
     private const val REVEAL_FROM_Y_DP = 32f
 
-    /**
-     * Pops [view] in: from slightly small, low and transparent to full size with a soft
-     * overshoot. Safe to call while the reverse is mid-flight - it cancels and takes over from
-     * wherever the view is. No-op when the view is already fully shown and at rest.
-     */
     fun unveilCard(view: View) {
         if (view.getTag(R_TAG_SHOWN) == true) return
         view.setTag(R_TAG_SHOWN, true)
@@ -87,11 +71,6 @@ object GeneralTweens {
             .start()
     }
 
-    /**
-     * The reverse of [unveilCard]: shrinks and fades [view] out, then hides it. Calling it again
-     * while the fade is running is a no-op - the running animation owns the view until it ends.
-     * Snapping to hidden here is what made the card blink when a re-render landed mid-fade.
-     */
     fun concealCard(view: View) {
         if (view.getTag(R_TAG_SHOWN) != true) return
         view.setTag(R_TAG_SHOWN, false)
@@ -106,8 +85,6 @@ object GeneralTweens {
             .setInterpolator(AccelerateInterpolator(1.4f))
             .withLayer()
             .withEndAction {
-                // INVISIBLE, not GONE: keeps the view's slot, so hiding never triggers a relayout
-                // of the siblings underneath - one less thing to flash.
                 if (view.getTag(R_TAG_SHOWN) != true) view.visibility = View.INVISIBLE
             }
             .start()
@@ -117,10 +94,6 @@ object GeneralTweens {
     private const val FADE_MS = 200L
     private const val POP_MS = 220L
 
-    /**
-     * Bottom-sheet style entrance: [view] becomes visible and slides up from a quarter of its
-     * height while fading in. Idempotent while already shown.
-     */
     fun unveilSheet(view: View) {
         if (view.getTag(R_TAG_SHOWN) == true) return
         view.setTag(R_TAG_SHOWN, true)
@@ -145,7 +118,6 @@ object GeneralTweens {
             .setInterpolator(DecelerateInterpolator(2f)).withLayer().start()
     }
 
-    /** The reverse of [unveilSheet]: slides down and fades, then GONE. */
     fun concealSheet(view: View) {
         if (view.getTag(R_TAG_SHOWN) != true) return
         view.setTag(R_TAG_SHOWN, false)
@@ -165,7 +137,6 @@ object GeneralTweens {
             .start()
     }
 
-    /** Fades [view] in (to [alpha]) or out to [hidden]. Used for scrims. */
     fun fade(view: View, shown: Boolean, hidden: Int = View.GONE, alpha: Float = 1f) {
         if (view.getTag(R_TAG_SHOWN) == shown) return
         view.setTag(R_TAG_SHOWN, shown)
@@ -181,7 +152,6 @@ object GeneralTweens {
             .start()
     }
 
-    /** Small pop for a control that just appeared - a send button, a badge. */
     fun popIn(view: View) {
         view.animate().cancel()
         view.scaleX = 0.5f
@@ -196,11 +166,6 @@ object GeneralTweens {
             .start()
     }
 
-    /**
-     * For controls where the result must show up at once - filter chips, tabs: [onClick] runs
-     * on the tap itself and a short pulse (94% and back, 160ms) plays alongside it, so nothing
-     * waits on the motion. Use [buttonPressAnimation] when the work should follow the motion.
-     */
     fun quickPressAnimation(view: View, onClick: () -> Unit) {
         view.animate().cancel()
         view.scaleX = PRESS_SCALE
@@ -214,17 +179,14 @@ object GeneralTweens {
         onClick()
     }
 
-    /** Hangs [quickPressAnimation] on [view]'s click listener. */
     fun View.setOnQuickPressClickListener(onClick: () -> Unit) {
         setOnClickListener { quickPressAnimation(this, onClick) }
     }
 
-    /** Hangs [buttonPressAnimation] on [view]'s click listener. */
     fun View.setOnPressAnimatedClickListener(onClick: () -> Unit) {
         setOnClickListener { buttonPressAnimation(this, onClick) }
     }
 
-    /** View tag keys: a tag id must be a resource id, so they are reserved in ids.xml. */
     private val R_TAG_PRESSING = R.id.tag_press_animating
     private val R_TAG_SHOWN = R.id.tag_card_shown
 }

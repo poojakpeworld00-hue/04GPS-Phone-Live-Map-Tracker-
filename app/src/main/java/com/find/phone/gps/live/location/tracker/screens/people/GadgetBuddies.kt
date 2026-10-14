@@ -5,33 +5,28 @@ import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.provider.ContactsContract.RawContacts
 import java.util.Locale
 
-/** One phone number of one contact, as the contact list shows it. */
 data class BuddyNum(
     val contactId: Long,
     val name: String,
     val number: String,
-    /** "Mobile", "Work", a custom label… */
+
     val label: String,
-    /** Starred in the phone book: shown in the Favorites row. */
+
     val starred: Boolean = false,
-    /** The account the contact lives in ("Phone", "SIM", or the account name), for the filter. */
+
     val account: String = ACCOUNT_PHONE,
 ) {
-    /** Group heading: the first letter, or "#" for names that don't start with one. */
     val letter: String
         get() = name.firstOrNull()?.takeIf(Char::isLetter)?.uppercaseChar()?.toString() ?: "#"
 
-    /** Up to two initials ("Aditya Kumar" → "AK"). */
     val initials: String
         get() = name.split(' ').filter { it.isNotBlank() }.take(2)
             .mapNotNull { w -> w.firstOrNull { it.isLetterOrDigit() }?.uppercaseChar() }
             .joinToString("")
             .ifEmpty { "#" }
 
-    /** The given name, for the Favorites row. */
     val firstName: String get() = name.substringBefore(' ')
 
-    /** Which of the six avatar gradients this contact gets (stable per contact). */
     val avatar: Int get() = ((contactId % AVATAR_COUNT) + AVATAR_COUNT).toInt() % AVATAR_COUNT
 
     companion object {
@@ -41,13 +36,7 @@ data class BuddyNum(
     }
 }
 
-/**
- * Reads every phone number in the phone book (READ_CONTACTS must be granted), sorted by name,
- * with the starred flag and the owning account. The same number saved twice on one contact
- * (different formatting) is listed once.
- */
 object GadgetBuddies {
-
     fun load(context: Context): List<BuddyNum> {
         val accounts = fetchAccounts(context)
         val projection = arrayOf(
@@ -72,11 +61,10 @@ object GadgetBuddies {
                 out += BuddyNum(id, name, number, label, starred, account)
             }
         }
-        // Names starting with a letter first (A–Z), the rest ("#") after them.
+
         return out.sortedWith(compareBy<BuddyNum> { it.letter == "#" }.thenBy { it.name.lowercase(Locale.getDefault()) })
     }
 
-    /** raw contact id → the account it belongs to, as the filter names it. */
     private fun fetchAccounts(context: Context): Map<Long, String> {
         val map = HashMap<Long, String>()
         runCatching {

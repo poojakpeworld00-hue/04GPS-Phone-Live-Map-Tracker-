@@ -48,7 +48,6 @@ val Context.roleManager: RoleManager
 fun Context.getDrawableForPackageName(packageName: String): Drawable? {
     var drawable: Drawable? = null
     try {
-        // try getting the properly colored launcher icons
         val launcher = getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
         val activityList = launcher.getActivityList(packageName, Process.myUserHandle())[0]
         drawable = activityList.getBadgedIcon(0)
@@ -64,7 +63,6 @@ fun Context.getDrawableForPackageName(packageName: String): Drawable? {
         }
     }
 
-    // A legacy single-bitmap icon gets the device's icon shape like every adaptive one.
     return drawable?.let { BadgeMolder.shape(it, launcherConfig.legacyIconTray) }
 }
 
@@ -87,18 +85,6 @@ fun Context.getCellCount(size: Int): Int {
     return max(tiles, 1)
 }
 
-/**
- * Whether this app is the SMS handler — the messages panel's gate for asking to become it.
- *
- * The role is the authority on Q+, exactly as the messaging module's `PermissionManagerImpl` reads
- * it. `getDefaultSmsPackage` is the legacy telephony answer and the two can disagree: it goes
- * through the telephony stack, so it comes back null or stale on builds without it — a tablet, an
- * emulator with no SIM, a secondary user — while the role is genuinely held. Reading only that one
- * left the panel believing it was not the handler and firing the role request on every open, with
- * the system dismissing it straight away because there was nothing to grant.
- *
- * Still the fallback below Q, where the role does not exist.
- */
 fun Context.isDefaultSmsApp(): Boolean {
     val roleHeld = if (isQPlus()) {
         runCatching {

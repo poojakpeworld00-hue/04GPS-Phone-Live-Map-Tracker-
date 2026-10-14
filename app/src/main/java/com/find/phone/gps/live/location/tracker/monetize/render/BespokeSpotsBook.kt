@@ -19,10 +19,9 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.R
 
 class BespokeSpotsBook {
-
     companion object {
         private var cachedAds: List<InhouseSpot>? = null
-        
+
         fun wipeCache() {
             cachedAds = null
         }
@@ -50,7 +49,6 @@ class BespokeSpotsBook {
 
         val pref = SpotsLocker.getInstance(context)
 
-        // Custom Ads OFF → fallback
         if (!pref.getBoolean("IsCustomADS")) {
             fallback(container, backupImage, backupLayout, onFail)
             return
@@ -98,7 +96,6 @@ class BespokeSpotsBook {
         wireData( view, ad)
         setClickListeners(view)
 
-        // Final UI setup (defer to next frame to avoid NestedScrollView layout issues)
         container.post {
             if (context.isHostActivityDead()) {
                 container.visibility = View.GONE
@@ -115,12 +112,8 @@ class BespokeSpotsBook {
         }
     }
 
-    // --------------------------------------------------------
-    // THEME APPLY
-    // --------------------------------------------------------
     private fun enactTheme(context: Context, view: View, pref: SpotsLocker) {
         try {
-
             val bgColor = color(pref.getString("NativeBgColor"), "#FFFFFF")
             val btnColor = color(pref.getString("NativebtnColor"), "#000000")
             val txtColor = color(pref.getString("NativetxtColor"), "#000000")
@@ -144,25 +137,18 @@ class BespokeSpotsBook {
             view.findViewById<TextView?>(R.id.only_banner_desc)?.setTextColor(txtColor)
 
         } catch (_: Exception) {
-            // Silent fail → do not crash
         }
     }
 
-    // --------------------------------------------------------
-    // DATA BINDING
-    // --------------------------------------------------------
     private fun wireData(view: View, ad: InhouseSpot) {
-        // Big / Mid Native
         view.findViewById<TextView?>(R.id.titileText)?.text = ad.title
         view.findViewById<TextView?>(R.id.Texttext)?.text = ad.description
         view.findViewById<TextView?>(R.id.btntext)?.text = ad.buttonText
 
-        // Banner Native
         view.findViewById<TextView?>(R.id.only_banner_title)?.text = ad.title
         view.findViewById<TextView?>(R.id.only_banner_desc)?.text = ad.description
         view.findViewById<TextView?>(R.id.only_banner_button)?.text = ad.buttonText
 
-        // Images
         view.findViewById<ImageView?>(R.id.gif_image)?.let { wireGlideSafe(it, ad.icon) }
         view.findViewById<ImageView?>(R.id.only_banner_logo)?.let { wireGlideSafe(it, ad.icon) }
         view.findViewById<ImageView?>(R.id.custom_native)?.let { wireGlideSafe(it, ad.bannerImage) }
@@ -192,9 +178,6 @@ class BespokeSpotsBook {
         }
     }
 
-    // --------------------------------------------------------
-    // CLICK ACTIONS
-    // --------------------------------------------------------
     private fun setClickListeners(view: View) {
         val click = View.OnClickListener {
             Directlink(view.context)
@@ -205,9 +188,6 @@ class BespokeSpotsBook {
         view.findViewById<View?>(R.id.only_banner_button)?.setOnClickListener(click)
     }
 
-    // --------------------------------------------------------
-    // FALLBACK
-    // --------------------------------------------------------
     private fun fallback(
         container: FrameLayout,
         img: ImageView?,
@@ -231,7 +211,6 @@ class BespokeSpotsBook {
         }
     }
 
-    // Safe color parser
     private fun color(value: String?, default: String): Int {
         return try {
             Color.parseColor(value ?: default)

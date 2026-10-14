@@ -18,13 +18,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
-/**
- * The country selector sheet (design 3c). Opens expanded to ~81% of the screen (the design's
- * 150px top offset on 780), with the current choice under "Suggested" and every territory
- * under "All countries", filtered by name or dial code.
- */
 class LandChooserDrawer : BottomSheetDialogFragment() {
-
     private var _binding: BsheetCountryPickerBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: CountryAdapter
@@ -86,9 +80,7 @@ class LandChooserDrawer : BottomSheetDialogFragment() {
         super.onDestroyView()
     }
 
-    /** Flag / name / dial rows. */
     private class CountryAdapter(private val onClick: (Realm) -> Unit) : RecyclerView.Adapter<CountryAdapter.VH>() {
-
         private val items = mutableListOf<Realm>()
 
         @SuppressLint("NotifyDataSetChanged")

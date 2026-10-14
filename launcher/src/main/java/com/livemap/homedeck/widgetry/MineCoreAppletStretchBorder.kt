@@ -23,8 +23,8 @@ class MineCoreAppletStretchBorder(context: Context, attrs: AttributeSet, defStyl
     private var resizeWidgetLineDotPaint: Paint
     private var actionDownCoords = PointF()
     private var actionDownMS = 0L
-    private var frameRect = Rect(0, 0, 0, 0)    // coords in pixels
-    private var cellsRect = Rect(0, 0, 0, 0)    // cell IDs like 0, 1, 2..
+    private var frameRect = Rect(0, 0, 0, 0)
+    private var cellsRect = Rect(0, 0, 0, 0)
     private var cellWidth = 0
     private var cellHeight = 0
     private var minResizeWidthCells = 1
@@ -33,7 +33,7 @@ class MineCoreAppletStretchBorder(context: Context, attrs: AttributeSet, defStyl
     private var resizedItem: MainDisplayLatticeElement? = null
     private var sideMargins = Rect()
     private val lineDotRadius = context.resources.getDimension(R.dimen.launcher_resize_frame_dot_radius)
-    private val MAX_TOUCH_LINE_DISTANCE = lineDotRadius * 5     // how close we have to be to the widgets side to drag it
+    private val MAX_TOUCH_LINE_DISTANCE = lineDotRadius * 5
     var onClickListener: (() -> Unit)? = null
     var onResizeListener: ((cellsRect: Rect) -> Unit)? = null
 

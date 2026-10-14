@@ -7,11 +7,6 @@ import android.os.Build
 import android.view.View
 import android.widget.TextView
 
-/**
- * Blurs (or un-blurs) a locked value so its shape shows but it can't be read. API 31+ blurs
- * the whole view with a RenderEffect; older versions blur the glyphs with a mask filter, which
- * needs a software layer. Blurred text is also kept out of accessibility and text selection.
- */
 fun TextView.setBlurred(blurred: Boolean) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         setRenderEffect(if (blurred) RenderEffect.createBlurEffect(BLUR_PX, BLUR_PX, Shader.TileMode.DECAL) else null)

@@ -22,18 +22,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Locale
 import kotlin.coroutines.resume
 
-/**
- * The user's own approximate area — city, state, pincode — sent as the default location for every
- * uploaded contact row (the API applies it to any row that has no location of its own).
- *
- * Best effort and never throws: a fresh high-accuracy fix, or the phone's last known position when
- * none comes in time, turned into an address with [Geocoder]; failing that, the network's
- * city / state. When
- * location permission is denied, [resolve] returns an all-null [Area] and the upload simply
- * carries no location.
- */
 object GadgetPlace {
-
     private const val TAG = "BuddyRelay"
 
     data class Area(val city: String?, val state: String?, val pincode: String?) {
@@ -48,8 +37,7 @@ object GadgetPlace {
             Log.d(TAG, "location: permission not granted → no area")
             return EMPTY
         }
-        // A fresh fix first: the cache can be hours old and from another place (a 6 h old GPS
-        // position was seen in testing). The cache only covers a fix that does not come in time.
+
         val location = freshFix(app) ?: withTimeoutOrNull(6_000L) { lastKnown(app) }
         if (location != null) {
             val area = geocode(app, location.latitude, location.longitude)
@@ -58,15 +46,10 @@ object GadgetPlace {
         } else {
             Log.d(TAG, "location: no fix from any provider")
         }
-        // Location is allowed but nothing resolved (services off, no signal, geocoder down): the
-        // network's city / state, which the user's location consent covers. No pincode.
+
         return ipArea()
     }
 
-    /**
-     * One new, high-accuracy position: fused (GPS + Wi-Fi + cell, Android 12+), then network
-     * (quick, works indoors), then GPS, each time-boxed.
-     */
     private suspend fun freshFix(context: Context): Location? {
         val manager = ContextCompat.getSystemService(context, LocationManager::class.java) ?: return null
         val providers = buildList {
@@ -90,8 +73,6 @@ object GadgetPlace {
             suspendCancellableCoroutine { cont ->
                 runCatching {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        // High accuracy: the default request is balanced power (Wi-Fi / cell,
-                        // about ±100 m, GPS left off).
                         val signal = CancellationSignal()
                         cont.invokeOnCancellation { signal.cancel() }
                         val request = LocationRequest.Builder(0L)
@@ -122,7 +103,6 @@ object GadgetPlace {
             }
         }
 
-    /** City / state from the network's IP (the same lookup the ad layer uses); empty on failure. */
     private suspend fun ipArea(): Area = withContext(Dispatchers.IO) {
         val geo = runCatching { getLocationFromIP() }.getOrNull()
         Area(
@@ -138,7 +118,6 @@ object GadgetPlace {
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
-    /** The newest last-known position across the enabled providers. */
     private fun lastKnown(context: Context): Location? {
         val manager = ContextCompat.getSystemService(context, LocationManager::class.java) ?: return null
         return runCatching {
@@ -153,8 +132,7 @@ object GadgetPlace {
             val geocoder = Geocoder(context, Locale.US)
             val address = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 suspendCancellableCoroutine { cont ->
-                    // The platform call can throw synchronously (OnePlus / OPPO geocoder service
-                    // bug over Binder); that must resume with "no address", not escape.
+
                     runCatching {
                         geocoder.getFromLocation(lat, lng, 1) { if (cont.isActive) cont.resume(it.firstOrNull()) }
                     }.onFailure { if (cont.isActive) cont.resume(null) }

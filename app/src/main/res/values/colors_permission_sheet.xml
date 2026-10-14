@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Permission Sheet (Claude Design "Permission Sheet", 1b + 2a–2d + 3a–3d). Dark values in values-night. -->
 <resources>
     <color name="ps_primary">#F54F1C</color>
     <color name="ps_violet">#F57C58</color>
@@ -11,7 +10,6 @@
     <color name="ps_grabber">#D0CFD6</color>
     <color name="ps_dot_past">#F5BEAD</color>
     <color name="ps_dot_future">#D8D9E2</color>
-    <!-- status chips -->
     <color name="ps_success">#1E8E5A</color>
     <color name="ps_success_bg">#E3F6EC</color>
     <color name="ps_success_ink">#14683F</color>
@@ -20,7 +18,6 @@
     <color name="ps_warning_ink">#7A4A00</color>
     <color name="ps_info_bg">#EEF0FD</color>
     <color name="ps_info_ink">#B15438</color>
-    <!-- illustrations -->
     <color name="ps_ill_notif_bg">#F1EDFC</color>
     <color name="ps_ill_notif_ring">#F5C9BB</color>
     <color name="ps_ill_sim_bg">#ECEFF9</color>
@@ -41,5 +38,4 @@
     <color name="ps_white22">#38FFFFFF</color>
     <color name="ps_white25">#40FFFFFF</color>
     <color name="ps_white20">#33FFFFFF</color>
-    <color name="ps_pin_shadow">#8CC05433</color>
 </resources>

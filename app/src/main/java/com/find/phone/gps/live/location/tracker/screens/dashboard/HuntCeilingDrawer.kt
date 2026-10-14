@@ -18,12 +18,6 @@ import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
-/**
- * Search limit reached (design 9b), every time a free user is out of searches: Go Premium goes to
- * [onPremium]. Only when Remote Config's `rewarded_extra_searches` is above 0 does it also offer a
- * rewarded ad, which adds that many searches and [onExtraSearch] carries on with the search that
- * was asked for. Closing the ad early adds nothing.
- */
 class HuntCeilingDrawer(
     private val activity: Activity,
     private val onExtraSearch: () -> Unit,
@@ -40,7 +34,7 @@ class HuntCeilingDrawer(
         val used = HuntRation.used(activity).coerceAtMost(limit)
         binding.txtUsed.text = "$used/$limit"
         binding.lvRing.fraction = if (limit > 0) used.toFloat() / limit else 1f
-        // `rewarded_extra_searches` 0 (the default): Premium is the only way past the limit.
+
         val offersAd = PlusProfile.read(activity).rewardedExtraSearches > 0
         binding.txtBody.text = themed.getString(
             if (offersAd) R.string.ds_limit_body else R.string.ds_limit_body_premium, limit,
@@ -87,7 +81,6 @@ class HuntCeilingDrawer(
         }
     }
 
-    /** The light streak sweeping across the gold button (design `shine`). */
     private fun beginShine() {
         if (CraftMovement.animationsDisabled(themed)) {
             binding.lvShine.isVisible = false

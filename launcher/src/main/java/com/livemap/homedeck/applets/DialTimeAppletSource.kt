@@ -8,7 +8,6 @@ import android.widget.RemoteViews
 import com.livemap.homedeck.R
 
 class DialTimeAppletSource : AppWidgetProvider() {
-
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,

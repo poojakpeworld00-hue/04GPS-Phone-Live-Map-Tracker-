@@ -35,15 +35,12 @@ import com.find.phone.gps.live.location.tracker.helpers.followAdContainer
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
-/** Language chooser; Done confirms, a large native ad sits under the lists. */
 class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
-
     override val layoutId: Int = R.layout.screen_language
 
     private val lingoVm: LingoViewModel by viewModels()
     private val lockerStore by lazy { LockerBook(this) }
 
-    /** Opened from Settings (true) rather than the first-run funnel. */
     private val fromSettings by lazy { intent.getBooleanExtra(EXTRA_STANDALONE, false) }
 
     private lateinit var regionAdapter: LingoAdapter
@@ -77,7 +74,6 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
             else -> HomeStream.wireStepHeader(this, HomeSpotsProfile.OnboardScreen.LANGUAGE, binding.root)
         }
 
-        // Region first so the suggested section is correct on the first frame.
         seedRegion()
 
         regionAdapter = makeAdapter(startTag)
@@ -93,7 +89,7 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
         }
 
         if (fromSettings) return
-        // First-run: Back acts like Done unless the funnel says otherwise.
+
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val host = this@TongueSelectorActivity
@@ -194,7 +190,6 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
             return
         }
 
-        // Permissions, then the exit interstitial, then navigation (locale applied just before).
         ConsentDriver.check(this) {
             val next = when {
                 !fromSettings && HomeStream.isOnboardingActive(this) -> HomeStream.nextActivity(this)
@@ -213,7 +208,7 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
             HomeSpotsProfile.execOnboardingInter(this, HomeSpotsProfile.OnboardScreen.LANGUAGE) {
                 if (hasLeft) return@execOnboardingInter
                 hasLeft = true
-                // Locale goes first so the next screen inflates in the chosen language.
+
                 val activeTags = AppCompatDelegate.getApplicationLocales().toLanguageTags()
                 if (chosen != activeTags) LingoBook.apply(chosen)
                 startActivity(target)

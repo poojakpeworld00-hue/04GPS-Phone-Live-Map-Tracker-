@@ -53,20 +53,9 @@ class EmbeddedTeaser() {
     companion object {
         private var nativeAd: NativeAd? = null
 
-        /**
-         * A load is in flight. The pool is one static slot and every `show*` kicks a refill,
-         * so without this a surface that opens twice in a row (the app drawer, the left panel)
-         * stacks concurrent AdLoader requests that each overwrite — and destroy — the last
-         * one's result.
-         */
         @Volatile
         private var loadingSince = 0L
 
-        /**
-         * Observers that asked while a load was already in flight. Without them a screen that
-         * opens mid-refill (onboarding steps shown seconds apart all share this one slot) was
-         * turned away and never told when the ad landed, so its frame stayed empty.
-         */
         private val waiters = mutableListOf<NativeAdObserver>()
 
         private fun settleWaiters(loaded: Boolean) {
@@ -77,38 +66,15 @@ class EmbeddedTeaser() {
             }
         }
 
-        /**
-         * How long a request may be considered in flight. AdLoader always answers one of its
-         * two callbacks, but a latched flag here would kill native ads process-wide, so the
-         * guard expires rather than trusting that.
-         */
         private const val LOAD_TIMEOUT_MS = 60_000L
 
         private val isLoading: Boolean
             get() = loadingSince != 0L &&
                     System.currentTimeMillis() - loadingSince < LOAD_TIMEOUT_MS
 
-        /**
-         * Whether a native is in hand right now.
-         *
-         * Callers that re-render an already-filled frame need this: rendering consumes the
-         * pooled ad, so asking again before the refill lands would drop through to the
-         * fallback path and replace a good ad with a custom one. See
-         * [com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile.renewSlot].
-         */
         fun hasPreloadedNative(): Boolean = nativeAd != null
     }
 
-    /**
-     * Takes the shimmer down and clears whatever half-built view is in the frame.
-     *
-     * Every render path below builds the ad view FIRST and stops the shimmer only once that
-     * has succeeded — so anything thrown while binding a template (a null asset, a recycled
-     * NativeAd, an inflate failure) used to land in a catch that only logged, leaving the
-     * shimmer running over an empty frame for as long as the screen lived. The launcher's
-     * side panels are where that shows up worst: they are never recreated, so the placeholder
-     * stays until the process dies.
-     */
     private fun wipeToEmpty(layout: FrameLayout, shimmer: ShimmerFrameLayout?) {
         runCatching {
             shimmer?.stopShimmer()
@@ -124,25 +90,23 @@ class EmbeddedTeaser() {
 
     fun fetchNativeADs(context: Activity, observer: NativeAdObserver? = null) {
         val adsPreference = SpotsLocker.getInstance(context)
-        // Ads toggle and type check
+
         if (!adsPreference.getBoolean("IsAdsON") || SpotSort.fromString(adsPreference.getString("IsAdType")) != SpotSort.GOOGLE) {
             observer?.onNativeAdFailed()
             return
         }
-        // Firebase "NativeBanner" master switch — disable native ad loading
+
         if (!adsPreference.getBoolean("NativeAd")) {
             observer?.onNativeAdFailed()
             return
         }
-        // Screen-wise aware: resolves to ScreenAds.default native id, or the
-        // global googleNative when screen_wise_ad is off.
+
         val adUnit = DisplayTeaserProfile.nativeAdUnitId(context)
         if (adUnit.isEmpty()) {
             observer?.onNativeAdFailed()
             return
         }
-        // One request at a time — see [isLoading]. A caller waiting on the result is told when
-        // the in-flight one settles instead of being dropped.
+
         if (isLoading) {
             Log.d("NativeAds", "load already in flight — waiting on it")
             observer?.let { waiters += it }
@@ -152,23 +116,14 @@ class EmbeddedTeaser() {
         val adLoader =
             AdLoader.Builder(context, adUnit)
                 .forNativeAd { nativeAds ->
-                    // Always cache the ad — even when the activity that
-                    // triggered this load is destroyed by the time the ad
-                    // lands. The cache is a static field; it survives
-                    // activity transitions and can be shown by the next
-                    // caller. Previously this branch destroyed the ad,
-                    // which is why "1 load → then nothing" was the symptom:
-                    // the splash refill landed after splash was gone, got
-                    // destroyed, and every subsequent show found null.
+
                     nativeAd?.destroy()
                     nativeAd = nativeAds
                     loadingSince = 0L
-                    // Screens that asked mid-load check their own lifecycle in their callback.
+
                     settleWaiters(loaded = true)
 
                     if (context.isActivityDestroyedCompat()) {
-                        // Originating activity is gone — cache only, skip
-                        // observer/log calls that need a live context.
                         return@forNativeAd
                     }
 
@@ -178,7 +133,6 @@ class EmbeddedTeaser() {
                         context.recordAdEvent("native", "loaded")
                     } catch (e: Exception) {
                     }
-
 
                     Log.e("NativeAds", "Google Load: nativeAd")
                 }
@@ -213,7 +167,6 @@ class EmbeddedTeaser() {
         adLoader.loadAd(AdRequest.Builder().build())
     }
 
-    //================================================================================BigNAtive
     fun presentBigNative(
         context: Activity,
         layout: FrameLayout,
@@ -222,17 +175,14 @@ class EmbeddedTeaser() {
         imageView: ImageView? = null,
         ln: LinearLayout? = null
     ) {
-
         val adsPreference = SpotsLocker.getInstance(context)
 
-        // 🔥 1. Activity lifecycle safety
         if (context.isFinishing || context.isDestroyed) return
 
-        // 🔥 2. Network + Ads ON + EmbeddedTeaserRibbon master switch
         if (!isNetworkConnected(context)
             || !adsPreference.getBoolean("IsAdsON")
             || !adsPreference.getBoolean("NativeAd")
-            // Per-screen visibility: a screen whose ScreenAds entry is off gets no native.
+
             || !DisplayTeaserProfile.resolve(context, context.javaClass.simpleName).show
         ) {
             layout.removeAllViews()
@@ -244,7 +194,6 @@ class EmbeddedTeaser() {
             return
         }
 
-        // 🔥 3. Counter logic
         if (nativeCounter < adsPreference.getInt("NativeCounter")) {
             nativeCounter++
             layout.removeAllViews()
@@ -257,8 +206,6 @@ class EmbeddedTeaser() {
         }
         nativeCounter = 0
 
-
-        // 🔥 4. UI loading state
         layout.visible()
         shimmer?.startShimmer()
         shimmer?.isVisible = true
@@ -267,12 +214,11 @@ class EmbeddedTeaser() {
 
         when (SpotSort.fromString(adsPreference.getString("IsAdType"))) {
             SpotSort.GOOGLE -> {
-                layout.post {  // 🔥 UI thread safe
+                layout.post {
                     try {
                         if (context.isFinishing || context.isDestroyed) return@post
 
                         if (nativeAd != null) {
-
                             val rootView: View = if (isButtonTop == true) {
                                 val binding =
                                     GmsBignativetopBinding.inflate(context.layoutInflater)
@@ -308,7 +254,6 @@ class EmbeddedTeaser() {
                             return@post
                         }
 
-                        // 🔥 GOOGLE FAIL → fallback
                         if (adsPreference.getBoolean("IsFail_FB")) {
                             presentFBNativeFallback(context, layout, imageView, shimmer)
                         } else {
@@ -355,7 +300,6 @@ class EmbeddedTeaser() {
         context: Activity
     ) {
         binding.apply {
-
             binding.mainNativeadView.mediaView = adMedia
             binding.mainNativeadView.headlineView = adHeadline
             binding.mainNativeadView.bodyView = adBody
@@ -364,7 +308,6 @@ class EmbeddedTeaser() {
 
             (binding.mainNativeadView.headlineView as TextView).text = nativeAd.headline
             binding.mainNativeadView.mediaView?.mediaContent = nativeAd.mediaContent
-
 
             binding.mainNativeadView.bodyView?.apply {
                 visibility = if (nativeAd.body == null) View.GONE else View.VISIBLE
@@ -381,9 +324,6 @@ class EmbeddedTeaser() {
                 (binding.mainNativeadView.callToActionView as TextView).text = nativeAd.callToAction
             }
 
-
-            // Remote Config ad colours (with the layout's own theme as the fallback), the rating line
-            // and the CTA glow — the reference app's EmbeddedSpotGuise.
             EmbeddedSpotGuise.bind(binding.mainNativeadView, nativeAd)
             binding.mainNativeadView.setNativeAd(nativeAd)
         }
@@ -395,7 +335,6 @@ class EmbeddedTeaser() {
         context: Activity
     ) {
         binding.apply {
-
             binding.mainNativeadView.mediaView = adMedia
             binding.mainNativeadView.headlineView = adHeadline
             binding.mainNativeadView.bodyView = adBody
@@ -404,7 +343,6 @@ class EmbeddedTeaser() {
 
             (binding.mainNativeadView.headlineView as TextView).text = nativeAd.headline
             binding.mainNativeadView.mediaView?.mediaContent = nativeAd.mediaContent
-
 
             binding.mainNativeadView.bodyView?.apply {
                 visibility = if (nativeAd.body == null) View.GONE else View.VISIBLE
@@ -421,16 +359,11 @@ class EmbeddedTeaser() {
                 (binding.mainNativeadView.callToActionView as TextView).text = nativeAd.callToAction
             }
 
-
-            // Remote Config ad colours (with the layout's own theme as the fallback), the rating line
-            // and the CTA glow — the reference app's EmbeddedSpotGuise.
             EmbeddedSpotGuise.bind(binding.mainNativeadView, nativeAd)
             binding.mainNativeadView.setNativeAd(nativeAd)
         }
     }
 
-
-    // Helper function for FB fallback
     private fun presentFBNativeFallback(
         context: Activity,
         layout: FrameLayout,
@@ -504,20 +437,15 @@ class EmbeddedTeaser() {
         activity: Activity,
         adSize: String? = null
     ) {
-        // ✅ Make sure container is visible
         viewGroup.isVisible = true
 
-        // Unregister any old ad view
         nativeAd.unregisterView()
 
-        // ✅ Inflate layout with ViewBinding
         val binding = MetaNativeBinding.inflate(LayoutInflater.from(activity), viewGroup, false)
 
-        // Clear old views and add new ad view
         viewGroup.removeAllViews()
         viewGroup.addView(binding.root)
 
-        // ✅ Add AdChoicesView
         val adOptionsView = AdOptionsView(activity, nativeAd, binding.nativview)
         binding.adChoicesContainer.removeAllViews()
         binding.adChoicesContainer.addView(adOptionsView, 0)
@@ -540,7 +468,7 @@ class EmbeddedTeaser() {
         (binding.nativeAdCallToAction as TextView).apply {
             setTextColor(Color.parseColor(btntxtColor))
         }
-        // ✅ Bind ad data to views
+
         binding.nativeAdTitle.text = nativeAd.advertiserName
         binding.nativeAdBody.text = nativeAd.adBodyText
         binding.nativeAdSocialContext.text = nativeAd.adSocialContext
@@ -553,7 +481,6 @@ class EmbeddedTeaser() {
             binding.nativeAdCallToAction.isVisible = false
         }
 
-        // ✅ Register clickable views
         val clickableViews = listOf(binding.nativeAdTitle, binding.nativeAdCallToAction)
 
         nativeAd.registerViewForInteraction(
@@ -561,8 +488,6 @@ class EmbeddedTeaser() {
         )
     }
 
-    //================================================================================BigNAtive
-//================================================================================MidNAtive
     fun presentMidNative(
         context: Activity,
         layout: FrameLayout,
@@ -571,10 +496,9 @@ class EmbeddedTeaser() {
         ln: LinearLayout? = null
     ) {
         val adsPref = SpotsLocker.getInstance(context)
-        // 🔥 1. Activity lifecycle safety
+
         if (context.isFinishing || context.isDestroyed) return
 
-        // Check network & ad toggle + EmbeddedTeaserRibbon master switch
         if (!isNetworkConnected(context)
             || !adsPref.getBoolean("IsAdsON")
             || !adsPref.getBoolean("NativeAd")
@@ -589,7 +513,6 @@ class EmbeddedTeaser() {
             return
         }
 
-        // MidNative counter logic
         if (nativeCounter < adsPref.getInt("MidNativeCounter")) {
             nativeCounter += 1
             layout.removeAllViews()
@@ -608,7 +531,6 @@ class EmbeddedTeaser() {
         ln?.gone()
         layout.visible()
 
-
         when (SpotSort.fromString(adsPref.getString("IsAdType"))) {
             SpotSort.GOOGLE -> {
                 layout.post {
@@ -623,12 +545,11 @@ class EmbeddedTeaser() {
                             )
 
                             layout.removeAllViews()
-                            // Stop shimmer before adding real ad
+
                             shimmer?.stopShimmer()
                             shimmer?.isVisible = false
                             layout.addView(binding.root)
 
-                            // Log load
                             context.recordKeyEvent("NativeAds_showMidNative_Google")
 
                             if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(context)
@@ -638,10 +559,10 @@ class EmbeddedTeaser() {
                             }
 
                             nativeAd = null
-                            fetchNativeADs(context) // preload next Google ad
+                            fetchNativeADs(context)
                             return@post
                         }
-                        // Google failed → fallback
+
                         if (adsPref.getBoolean("IsFail_FB")) {
                             presentMidFBNativeFallback(context, layout, shimmer, imageView)
                         } else {
@@ -660,11 +581,9 @@ class EmbeddedTeaser() {
                     }
                 }
 
-
             }
 
             SpotSort.FACEBOOK -> {
-
                 presentMidFBNativeFallback(context, layout, shimmer, imageView)
             }
 
@@ -754,20 +673,15 @@ class EmbeddedTeaser() {
         activity: Activity,
         adSize: String? = null
     ) {
-        // ✅ Make sure container is visible
         viewGroup.isVisible = true
 
-        // Unregister any old ad view
         nativeAd.unregisterView()
 
-        // ✅ Inflate layout with ViewBinding
         val binding = MetaMidNativeBinding.inflate(LayoutInflater.from(activity), viewGroup, false)
 
-        // Clear old views and add new ad view
         viewGroup.removeAllViews()
         viewGroup.addView(binding.root)
 
-        // ✅ Add AdChoicesView
         val adOptionsView = AdOptionsView(activity, nativeAd, binding.nativview)
         binding.adChoicesContainer.removeAllViews()
         binding.adChoicesContainer.addView(adOptionsView, 0)
@@ -792,7 +706,6 @@ class EmbeddedTeaser() {
             setTextColor(Color.parseColor(btntxtColor))
         }
 
-        // ✅ Bind ad data to views
         binding.nativeAdTitle.text = nativeAd.advertiserName
         binding.nativeAdBody.text = nativeAd.adBodyText
         binding.nativeAdSocialContext.text = nativeAd.adSocialContext
@@ -805,7 +718,6 @@ class EmbeddedTeaser() {
             binding.nativeAdCallToAction.isVisible = false
         }
 
-        // ✅ Register clickable views
         val clickableViews = listOf(binding.nativeAdTitle, binding.nativeAdCallToAction)
 
         nativeAd.registerViewForInteraction(
@@ -826,7 +738,6 @@ class EmbeddedTeaser() {
 
             (binding.mainNativeadView.headlineView as TextView).text = nativeAd.headline
 
-
             binding.mainNativeadView.bodyView?.apply {
                 visibility = if (nativeAd.body == null) View.GONE else View.VISIBLE
                 (binding.mainNativeadView.bodyView as TextView).text = nativeAd.body
@@ -842,14 +753,11 @@ class EmbeddedTeaser() {
                 (binding.mainNativeadView.callToActionView as TextView).text = nativeAd.callToAction
             }
 
-            // Remote Config ad colours (with the layout's own theme as the fallback), the rating line
-            // and the CTA glow — the reference app's EmbeddedSpotGuise.
             EmbeddedSpotGuise.bind(binding.mainNativeadView, nativeAd)
             binding.mainNativeadView.setNativeAd(nativeAd)
         }
     }
 
-    // Extension helpers
     fun View.visible() {
         this.visibility = View.VISIBLE
     }
@@ -870,7 +778,6 @@ class EmbeddedTeaser() {
         }
     }
 
-
     fun presentMidNative2(
         context: Activity,
         layout: FrameLayout,
@@ -879,10 +786,9 @@ class EmbeddedTeaser() {
         ln: LinearLayout? = null
     ) {
         val adsPref = SpotsLocker.getInstance(context)
-        // 🔥 1. Activity lifecycle safety
+
         if (context.isFinishing || context.isDestroyed) return
 
-        // Check network & ad toggle
         if (!isNetworkConnected(context) || !adsPref.getBoolean("IsAdsON") || !adsPref.getBoolean("NativeAd")
             || !DisplayTeaserProfile.resolve(context, context.javaClass.simpleName).show
         ) {
@@ -895,7 +801,6 @@ class EmbeddedTeaser() {
             return
         }
 
-        // MidNative counter logic
         if (nativeCounter < adsPref.getInt("MidNativeCounter")) {
             nativeCounter += 1
             layout.removeAllViews()
@@ -927,12 +832,11 @@ class EmbeddedTeaser() {
                             )
 
                             layout.removeAllViews()
-                            // Stop shimmer before adding real ad
+
                             shimmer?.stopShimmer()
                             shimmer?.isVisible = false
                             layout.addView(binding.root)
 
-                            // Log load
                             context.recordKeyEvent("NativeAds_showMidNative2_Google")
 
                             if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(context)
@@ -942,10 +846,10 @@ class EmbeddedTeaser() {
                             }
 
                             nativeAd = null
-                            fetchNativeADs(context) // preload next Google ad
+                            fetchNativeADs(context)
                             return@post
                         }
-                        // Google failed → fallback
+
                         layout.removeAllViews()
                         shimmer?.stopShimmer()
                         shimmer?.isVisible = false
@@ -959,7 +863,6 @@ class EmbeddedTeaser() {
                         wipeToEmpty(layout, shimmer)
                     }
                 }
-
 
             }
 
@@ -986,7 +889,6 @@ class EmbeddedTeaser() {
         context: Activity
     ) {
         binding.apply {
-
             binding.mainNativeadView.mediaView = adMedia
             binding.mainNativeadView.headlineView = adHeadline
             binding.mainNativeadView.bodyView = adBody
@@ -995,7 +897,6 @@ class EmbeddedTeaser() {
 
             (binding.mainNativeadView.headlineView as TextView).text = nativeAd.headline
             binding.mainNativeadView.mediaView?.mediaContent = nativeAd.mediaContent
-
 
             binding.mainNativeadView.bodyView?.apply {
                 visibility = if (nativeAd.body == null) View.GONE else View.VISIBLE
@@ -1012,13 +913,9 @@ class EmbeddedTeaser() {
                 (binding.mainNativeadView.callToActionView as TextView).text = nativeAd.callToAction
             }
 
-
-            // Remote Config ad colours (with the layout's own theme as the fallback), the rating line
-            // and the CTA glow — the reference app's EmbeddedSpotGuise.
             EmbeddedSpotGuise.bind(binding.mainNativeadView, nativeAd)
             binding.mainNativeadView.setNativeAd(nativeAd)
         }
     }
-
 
 }

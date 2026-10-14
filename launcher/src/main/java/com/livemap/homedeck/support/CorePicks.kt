@@ -6,25 +6,15 @@ import com.livemap.homedeck.entities.CoreStats
 import kotlin.math.ln
 import kotlin.math.pow
 
-/**
- * Ranked "suggested apps" for the drawer search before any query is typed.
- *
- * Driven only by the launcher's own launch log ([CoreStats]). When that log is too thin, the
- * list is topped up with recent installs and then with apps declaring one of
- * [PADDING_CATEGORIES]. Side-effect free.
- */
 object CorePicks {
-
     const val LIMIT = 8
 
-    /** Below this count the suggestions card stays hidden. */
     const val MIN_TO_SHOW = 4
 
     private const val FRESH_INSTALL_WINDOW_MS = 14L * 24 * 60 * 60 * 1000
 
     private const val DECAY_HALF_LIFE_MS = 3 * 24 * 60 * 60 * 1000.0
 
-    /** Top-up categories, applied in this order. */
     val PADDING_CATEGORIES = listOf(
         ApplicationInfo.CATEGORY_SOCIAL,
         ApplicationInfo.CATEGORY_NEWS,
@@ -34,17 +24,14 @@ object CorePicks {
         ApplicationInfo.CATEGORY_PRODUCTIVITY,
     )
 
-    /** Extra package metadata used for padding. */
     class Facts(val firstInstallTime: Long, val category: Int)
 
-    /** Recency weight (halves every three days) plus a logarithmic launch-count bonus. */
     fun score(usage: CoreStats, now: Long): Double {
         val elapsed = maxOf(0L, now - usage.lastLaunched)
         val countBonus = 0.35 * ln(1.0 + usage.launchCount)
         return 0.5.pow(elapsed / DECAY_HALF_LIFE_MS) + countBonus
     }
 
-    /** At most [limit] entries of [installed], strongest first, no package repeated. */
     fun rank(
         installed: List<CoreHome>,
         usage: List<CoreStats>,

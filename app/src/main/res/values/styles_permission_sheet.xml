@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Text styles for the permission sheet's illustrations (design "Permission Sheet" 2a–2d). -->
 <resources>
     <style name="Ps.IllTitle" parent="android:Widget.TextView">
         <item name="android:layout_width">wrap_content</item>
@@ -10,13 +9,11 @@
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
     </style>
-
     <style name="Ps.IllSub" parent="Ps.IllTitle">
         <item name="android:fontFamily">@font/figtree_medium</item>
         <item name="android:textColor">@color/ps_muted</item>
         <item name="android:textSize">9.5sp</item>
     </style>
-
     <style name="Ps.RevealLabel" parent="android:Widget.TextView">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -26,7 +23,6 @@
         <item name="android:textAllCaps">true</item>
         <item name="android:textSize">11sp</item>
     </style>
-
     <style name="Ps.SimTag" parent="android:Widget.TextView">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -35,7 +31,6 @@
         <item name="android:paddingVertical">4dp</item>
         <item name="android:textSize">11sp</item>
     </style>
-
     <style name="Ps.SimState" parent="android:Widget.TextView">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -43,7 +38,6 @@
         <item name="android:fontFamily">@font/figtree_bold</item>
         <item name="android:textSize">11sp</item>
     </style>
-
     <style name="Ps.SimNumber" parent="android:Widget.TextView">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -52,7 +46,6 @@
         <item name="android:textSize">22sp</item>
         <item name="android:textDirection">ltr</item>
     </style>
-
     <style name="Ps.SimChip" parent="android:Widget.TextView">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -63,7 +56,6 @@
         <item name="android:textColor">@android:color/white</item>
         <item name="android:textSize">11sp</item>
     </style>
-
     <style name="Ps.Avatar" parent="android:Widget.TextView">
         <item name="android:layout_width">30dp</item>
         <item name="android:layout_height">30dp</item>

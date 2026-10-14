@@ -26,7 +26,6 @@ class StashedBadgesFeed(
     recyclerView: MyRecyclerView,
     itemClick: (Any) -> Unit
 ) : MyRecyclerViewAdapter(activity, recyclerView, itemClick) {
-
     private var iconPadding = 0
 
     init {

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="launcher_hint_overlay_title">Cuir \"Seall os cionn appaichean eile\" air</string>
-    <string name="launcher_hint_overlay_description">Bheir sinn air ais thu dìreach cho luath ’s a bhios e air.</string>
-    <string name="launcher_hint_default_home_title">Tagh %1$s mar an Dachaigh</string>
-    <string name="launcher_hint_default_home_description">Tagh e san liosta gus an sgrìn dhachaigh agad a shuidheachadh.</string>
-    <string name="launcher_hint_default_sms_title">Suidhich mar an app SMS agad</string>
-    <string name="launcher_hint_default_sms_description">Brùth air \"Suidhich mar am bunaiteach\" gus crìochnachadh.</string>
+    <string name="launcher_hint_overlay_title">Cuir an comas \"Seall os cionn appaichean eile\"</string>
+    <string name="launcher_hint_overlay_description">Cho luath ’s a chuireas tu air e, tillidh sinn thu an seo.</string>
+    <string name="launcher_hint_default_home_title">Dèan %1$s dhen sgrìn dhachaigh</string>
+    <string name="launcher_hint_default_home_description">Lorg san liosta e is suidhich e mar an sgrìn dhachaigh.</string>
+    <string name="launcher_hint_default_sms_title">Dèan an app SMS agad dheth</string>
+    <string name="launcher_hint_default_sms_description">Airson crìochnachadh, brùth air \"Suidhich mar am bunaiteach\".</string>
     <string name="launcher_hint_mock_row">An App Dachaigh Bunaiteach</string>
     <string name="launcher_hint_mock_toggle_row">Cead</string>
     <string name="launcher_hint_overlay_row">Ceadaich sealladh os cionn appaichean eile</string>

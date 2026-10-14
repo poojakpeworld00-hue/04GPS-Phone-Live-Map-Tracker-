@@ -23,7 +23,6 @@ import com.livemap.homedeck.entities.MainDisplayLatticeElement
 )
 @TypeConverters(Converters::class)
 abstract class ProgramsDb : RoomDatabase() {
-
     abstract fun CoreHomesDao(): CoreHomesDao
 
     abstract fun MainDisplayLatticeElementsDao(): MainDisplayLatticeElementsDao
@@ -35,7 +34,6 @@ abstract class ProgramsDb : RoomDatabase() {
     companion object {
         private var db: ProgramsDb? = null
 
-        /** The launcher's own launch log for the search's suggested apps. */
         private val MIGRATION_5_6 = object : Migration(5, 6) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(

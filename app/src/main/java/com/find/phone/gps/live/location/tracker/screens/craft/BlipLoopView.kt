@@ -8,16 +8,9 @@ import android.util.AttributeSet
 import android.view.View
 import com.find.phone.gps.live.location.tracker.R
 
-/**
- * One radar ring running the design's `ping` keyframes (scale .25 → 1, opacity .9 → 0,
- * ease-out, infinite). Stagger several rings with [pingDelay]; the ring is drawn as a
- * stroke of [pingStrokeWidth] (and an optional fill), so the whole view scales together.
- * Starts on attach, stops on detach, and shows nothing when animations are off.
- */
 class BlipLoopView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null,
 ) : View(context, attrs) {
-
     private val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val durationMs: Long
@@ -32,7 +25,7 @@ class BlipLoopView @JvmOverloads constructor(
         durationMs = a.getInt(R.styleable.BlipLoopView_pingDuration, 2800).toLong()
         delayMs = a.getInt(R.styleable.BlipLoopView_pingDelay, 0).toLong()
         a.recycle()
-        // The first frame of `ping` is scale .25 / opacity .9; hidden until the loop starts.
+
         alpha = 0f
     }
 

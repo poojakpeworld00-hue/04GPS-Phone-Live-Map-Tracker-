@@ -31,7 +31,6 @@ private const val DRAWER_STYLE_VERTICAL = 0
 private const val DRAWER_STYLE_PAGED = 1
 
 class HomePrefsDeck : HomeBaseDeck() {
-
     private val binding by viewBinding(HdActivitySettingsBinding::inflate)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -94,8 +93,6 @@ class HomePrefsDeck : HomeBaseDeck() {
 
     private fun setupCustomizeColors() {
         binding.prefsColorCustomizationHolderUi.setOnClickListener {
-            // see HomeBaseDeck.withFossifyPackageNameSpoofed — startCustomizationActivity()
-            // carries its own copy of the anti-rebrand check, separate from the one in onCreate()
             withFossifyPackageNameSpoofed { startCustomizationActivity() }
         }
     }
@@ -143,12 +140,6 @@ class HomePrefsDeck : HomeBaseDeck() {
         }
     }
 
-    /**
-     * The drawer on/off switch. Off is the classic no-drawer home: HomeDeck puts every app on
-     * a page the next time it resumes and stops answering the swipe-up; the drawer's own rows are
-     * hidden here because nothing reads them. Icons already on the pages are left where they are
-     * when the drawer is turned back on.
-     */
     private fun setupAppDrawerEnabled() {
         fun refresh() {
             val enabled = launcherConfig.isDrawerEnabled
@@ -163,7 +154,6 @@ class HomePrefsDeck : HomeBaseDeck() {
         }
         refresh()
         binding.prefsAppDrawerEnabledHolderUi.setOnClickListener {
-            // Turning the drawer back on restores the style it had before it went off.
             if (launcherConfig.isDrawerEnabled) {
                 launcherConfig.drawerStyleWhenOn = launcherConfig.drawerMode
                 launcherConfig.drawerMode = SliderWay.NONE
@@ -340,13 +330,6 @@ class HomePrefsDeck : HomeBaseDeck() {
         )
     }
 
-    /**
-     * The host app version, shown on the About screen.
-     *
-     * Read off the package manager rather than a BuildConfig constant: the module has its own
-     * BuildConfig, and its version is the launcher library version, which is not what a user
-     * looking at "About" is asking for.
-     */
     private fun hostVersionName(): String = runCatching {
         packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
     }.getOrDefault("")

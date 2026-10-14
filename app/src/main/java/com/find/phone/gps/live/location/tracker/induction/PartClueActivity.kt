@@ -22,17 +22,7 @@ import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement.loop
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement.pvh
 import com.find.phone.gps.live.location.tracker.helpers.WardenRail
 
-/**
- * Hint dialog 5a: the "pick this app" card drawn over the system *Default home app* list. The
- * card mirrors this app's row and runs the design's 2.4 s tap loop — the hand moves in and
- * presses, the ripple spreads, the radio ring turns primary and its dot fills, the row glows —
- * then resets. Enters with `fadein .45s cubic-bezier(.2,.9,.3,1.1)`.
- *
- * A translucent activity in its own task (see the manifest), so it sits over Settings rather than
- * joining this app's task behind it. It goes away on the first touch, after [AUTO_FINISH_MS], or when the caller comes back to front.
- */
 class PartClueActivity : AppCompatActivity() {
-
     private val autoFinish = Runnable { if (!isFinishing) finish() }
     private val animators = mutableListOf<Animator>()
 
@@ -41,10 +31,6 @@ class PartClueActivity : AppCompatActivity() {
         setContentView(R.layout.screen_home_hint)
         WardenRail.log(TAG, "hint shown over the home-app list")
 
-        // Focusable on purpose: a FLAG_NOT_FOCUSABLE window here left the app with no focused
-        // window while it was the top task, and the input dispatcher ANR-killed the process on
-        // the system list. The first touch dismisses the card, so the list is never blocked.
-
         val root = findViewById<View>(R.id.stackMain)
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -52,7 +38,6 @@ class PartClueActivity : AppCompatActivity() {
             insets
         }
 
-        // The row mirrors the entry the user is looking for: this app's label.
         runCatching {
             findViewById<TextView>(R.id.coachRowNameTv)?.text =
                 packageManager.getApplicationLabel(applicationInfo).toString().trim()
@@ -66,7 +51,6 @@ class PartClueActivity : AppCompatActivity() {
         root.postDelayed(autoFinish, AUTO_FINISH_MS)
     }
 
-    /** `fadein`: opacity 0 → 1, translateY 12 → 0, scale .97 → 1, 450 ms with a slight overshoot. */
     private fun enter(card: View) {
         if (CraftMovement.animationsDisabled(this)) return
         val rise = dp(12f)
@@ -87,10 +71,8 @@ class PartClueActivity : AppCompatActivity() {
         }
     }
 
-    /** The 2.4 s loop: `tap`, `ripple`, `rring`, `rdot` and `glowrow`, all in phase. */
     private fun beginTapLoop() {
         if (CraftMovement.animationsDisabled(this)) {
-            // Final frame: the hand resting on a selected radio.
             findViewById<View>(R.id.clueRadioRingOn)?.alpha = 1f
             findViewById<View>(R.id.clueRadioDot)?.apply { scaleX = 1f; scaleY = 1f }
             return
@@ -101,7 +83,6 @@ class PartClueActivity : AppCompatActivity() {
         val dot = findViewById<View>(R.id.clueRadioDot)
         val glow = findViewById<View>(R.id.clueRowGlow)
 
-        // tap: rests at (10,12); in at 38%, pressed (scale .86) at 48%, released by 62%, back out.
         val restX = dp(10f)
         val restY = dp(12f)
         animators += loop(
@@ -111,25 +92,25 @@ class PartClueActivity : AppCompatActivity() {
             pvh(View.SCALE_X, CraftMovement.EASE_IN_OUT, 0f to 1f, .38f to 1f, .48f to .86f, .62f to 1f, 1f to 1f),
             pvh(View.SCALE_Y, CraftMovement.EASE_IN_OUT, 0f to 1f, .38f to 1f, .48f to .86f, .62f to 1f, 1f to 1f),
         )
-        // ripple: scale .3 → 1.4, opacity 0 → .5 (50%) → 0, from 44% to 70%.
+
         animators += loop(
             ripple, CYCLE_MS, 0L,
             pvh(View.SCALE_X, CraftMovement.EASE_OUT, 0f to .3f, .44f to .3f, .70f to 1.4f, 1f to 1.4f),
             pvh(View.SCALE_Y, CraftMovement.EASE_OUT, 0f to .3f, .44f to .3f, .70f to 1.4f, 1f to 1.4f),
             pvh(View.ALPHA, CraftMovement.EASE_OUT, 0f to 0f, .44f to 0f, .50f to .5f, .70f to 0f, 1f to 0f),
         )
-        // rring: the ring turns primary between 46% and 54%, back after 90%.
+
         animators += loop(
             ringOn, CYCLE_MS, 0L,
             pvh(View.ALPHA, CraftMovement.EASE, 0f to 0f, .46f to 0f, .54f to 1f, .90f to 1f, 1f to 0f),
         )
-        // rdot: the dot fills over the same window.
+
         animators += loop(
             dot, CYCLE_MS, 0L,
             pvh(View.SCALE_X, CraftMovement.EASE, 0f to 0f, .46f to 0f, .54f to 1f, .90f to 1f, 1f to 0f),
             pvh(View.SCALE_Y, CraftMovement.EASE, 0f to 0f, .46f to 0f, .54f to 1f, .90f to 1f, 1f to 0f),
         )
-        // glowrow: a 6dp cyan halo breathes around the row, ease-in-out.
+
         animators += loop(
             glow, CYCLE_MS, 0L,
             pvh(View.ALPHA, CraftMovement.EASE_IN_OUT, 0f to 0f, .5f to 1f, 1f to 0f),
@@ -154,13 +135,10 @@ class PartClueActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "DefaultHomeHint"
 
-        /** Long enough to find one row in a list of launchers. */
         private const val AUTO_FINISH_MS = 12_000L
 
-        /** One pass of the tap loop. */
         private const val CYCLE_MS = 2400L
 
-        /** The card entrance curve, `cubic-bezier(.2,.9,.3,1.1)`. */
         private val ENTER = PathInterpolator(0.2f, 0.9f, 0.3f, 1.1f)
 
         private var visible: PartClueActivity? = null

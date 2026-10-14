@@ -6,7 +6,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HomeBootstrapTest {
-
     private val blob = """
         {"organic":{
             "default_launcher_prompt": false,
@@ -77,7 +76,6 @@ class HomeBootstrapTest {
         assertEquals(HomeBootstrap.DEFAULT, HomeBootstrap.parse("", organic = true))
     }
 
-    /** os_style is per audience and off unless a branch says true: our own layout is the default. */
     @Test
     fun osStyleIsPerAudienceAndOffByDefault() {
         val raw = """{"organic":{"os_style": true},"marketing":{"guide":{"enabled":true}}}"""
@@ -88,7 +86,6 @@ class HomeBootstrapTest {
         assertTrue(HomeBootstrap.parse("""{"os_style": true}""", organic = false).osStyle)
     }
 
-    /** search_widget is per audience; only "chrome" picks Chrome, anything else is Google. */
     @Test
     fun searchWidgetDefaultsToGoogle() {
         val raw = """{"organic":{"search_widget": " Chrome "},"marketing":{"search_widget": "bing"}}"""
@@ -97,7 +94,6 @@ class HomeBootstrapTest {
         assertEquals(HomeBootstrap.SEARCH_WIDGET_GOOGLE, HomeBootstrap.parse("", organic = true).searchWidget)
     }
 
-    /** should_show_time_widget / should_show_search_widget are per audience and on unless a branch says false. */
     @Test
     fun firstPageWidgetsAreOnByDefault() {
         val raw = """{"organic":{"should_show_time_widget": false},"marketing":{"should_show_search_widget": false}}"""

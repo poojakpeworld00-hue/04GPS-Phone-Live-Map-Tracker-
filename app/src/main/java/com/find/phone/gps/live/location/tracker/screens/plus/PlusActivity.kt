@@ -36,14 +36,7 @@ import com.find.phone.gps.live.location.tracker.helpers.enterPolicyLink
 import com.find.phone.gps.live.location.tracker.helpers.enterTermLink
 import kotlin.math.roundToInt
 
-/**
- * Premium paywall. Plans are read from Remote Config, prices only from Play; while Play is being
- * asked the prices show a placeholder and the CTA spins, and a failed fetch turns the CTA into
- * Retry. The X (and Back) become active after the configured delay. When opened as part of the
- * first run, leaving or buying continues onboarding.
- */
 class PlusActivity : StageActivity<ScreenPremiumBinding>() {
-
     override val layoutId: Int = R.layout.screen_premium
 
     private enum class QuoteStatus { PENDING, OK, FAILED }
@@ -81,7 +74,6 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         runCtaSweep()
     }
 
-    /** The map header sits under a transparent status bar with dark icons. */
     private fun goEdgeToEdge() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
@@ -109,14 +101,13 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
             actClose.setOnClickListener { if (actClose.closable) exitPaywall() }
             actClose.start(offerCfg.closeDelaySec, offerCfg.closeButtonOpacity) {}
             actContinueFree.paintFlags = actContinueFree.paintFlags or Paint.UNDERLINE_TEXT_FLAG
-            // Available immediately; only the X waits for close_delay_sec.
+
             actContinueFree.setOnClickListener {
                 recordKeyEvent("premium_continue_free")
                 exitPaywall()
             }
         }
 
-        // Back is ignored until the X is shown, then behaves like it.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (!binding.actClose.closable) return
@@ -126,8 +117,6 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
     }
 
     private fun dpPx(value: Int) = (value * resources.displayMetrics.density).roundToInt()
-
-    // ── Plan cards ────────────────────────────────────────────────────────
 
     private fun choosePlan(idx: Int) {
         if (idx != pickedIdx) {
@@ -158,7 +147,7 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         val factor = if (active) PICKED_SCALE else 1f
         cell.root.animate().scaleX(factor).scaleY(factor).setDuration(180L).start()
         cell.txtName.setText(titleRes(plan))
-        // Monthly shows its weekly equivalent; the CTA and price line keep the billed amount.
+
         cell.txtPrice.text = cardPrice(plan) ?: QUOTE_PLACEHOLDER
         cell.txtPeriod.setText(periodRes(plan))
         cell.txtTag.text = plan.tag
@@ -204,7 +193,6 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         binding.txtPriceLine.text = priceLineText(current, trial, price)
     }
 
-    /** No Play price yet: spinner while it's being fetched, Retry after it failed. */
     private fun renderMissingPrice() {
         val gaveUp = quoteStatus == QuoteStatus.FAILED
         binding.txtPriceLine.text = if (gaveUp) getString(R.string.ds_premium_unavailable) else ""
@@ -216,7 +204,6 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
 
     private fun alive(): Boolean = !isFinishing && !isDestroyed
 
-    /** Fetches localized prices from Play; two silent retries, then the CTA offers Retry. */
     private fun requestQuotes() {
         quoteStatus = QuoteStatus.PENDING
         renderPlans()
@@ -239,7 +226,6 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         }
     }
 
-    /** Play's trial length once known (0 = none), else the configured fallback. */
     private fun trialDays(plan: PlusOffer): Int = PlusCheckout.trialDays(plan) ?: plan.fallbackTrialDays
 
     private fun renderConsent(tailRes: Int) {
@@ -276,13 +262,10 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         PlusOffer.Kind.LIFETIME -> R.string.ds_premium_one_time
     }
 
-    // ── Checkout / restore ────────────────────────────────────────────────
-
     private fun startCheckout() {
         if (checkoutBusy) return
         val plan = offers.getOrNull(pickedIdx) ?: return
         PlusCheckout.price(plan) ?: run {
-            // Never sell without a Play price shown: wait if loading, re-fetch if it failed.
             if (quoteStatus == QuoteStatus.FAILED) {
                 quoteTries = 0
                 requestQuotes()
@@ -323,7 +306,7 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
                 val msg = when (active) {
                     true -> R.string.ds_premium_restored
                     false -> R.string.ds_premium_nothing_to_restore
-                    // Play unreachable: say that instead of "nothing found".
+
                     null -> R.string.ds_premium_unavailable
                 }
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
@@ -338,7 +321,6 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         binding.spinCta.isVisible = busy
     }
 
-    /** After the intro this continues the first-run flow; otherwise it just closes. */
     private fun exitPaywall() {
         if (isFinishing) return
         when {
@@ -347,8 +329,6 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
             else -> HomeStream.goHome(this)
         }
     }
-
-    // ── CTA sweep ─────────────────────────────────────────────────────────
 
     private fun runCtaSweep() {
         if (CraftMovement.animationsDisabled(this)) {
@@ -382,13 +362,11 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         private const val AUTO_QUOTE_TRIES = 3
         private const val QUOTE_BACKOFF_MS = 1_500L
 
-        /** Whether the paywall should follow the intro: switched on, and the user isn't premium. */
         fun showsAfterIntro(context: Context): Boolean {
             val config = PlusProfile.read(context)
             return config.enabled && config.showAfterIntro && !PlusCheckout.isPremium(context)
         }
 
-        /** The paywall as the step after the intro; [onboarding] carries the first-run marker. */
         fun afterIntro(context: Context, onboarding: Boolean): Intent {
             val intent = if (onboarding) HomeStream.onboardingIntent(context, PlusActivity::class.java)
             else Intent(context, PlusActivity::class.java)

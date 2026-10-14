@@ -50,11 +50,6 @@ fun Context.enterActivity(intent: Intent, isShowAd: Boolean = true) {
     }
 }
 
-/**
- * Configure-lambda overload — drop-in replacement for the old `launch<T> {}`
- * helper. Build the Intent inline, then route through the standard
- * interstitial-aware launcher.
- */
 inline fun <reified T : Activity> Context.enterActivity(
     clearTop: Boolean = false,
     isShowAd: Boolean = true,
@@ -69,10 +64,9 @@ inline fun <reified T : Activity> Context.enterActivity(
 
 fun View.sparkClick(onClick: (View?) -> Unit) {
     setOnClickListener { view ->
-        // Haptic feedback
+
         performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
 
-        // Click animation: shrink and restore
         view.animate()
             .scaleX(0.95f)
             .scaleY(0.95f)
@@ -86,7 +80,6 @@ fun View.sparkClick(onClick: (View?) -> Unit) {
                     .setInterpolator(AccelerateDecelerateInterpolator())
                     .start()
 
-                // Call your click listener after animation
                 onClick.invoke(view)
             }.start()
     }

@@ -54,17 +54,11 @@ fun View.setupDrawerBackground(
     }
 }
 
-// the drawer sits on a translucent background over the wallpaper, so the search bar is
-// forced to the same fixed white-on-translucent skin instead of the theme colors.
-// must be called after MySearchMenu.updateColors(), which re-applies the theme tint.
 fun MySearchMenu.enactDrawerSkin() {
     val res = com.livemap.homedeck.R.drawable.hd_drawer_search_bg
     val dp = resources.displayMetrics.density
     setBackgroundColor(Color.TRANSPARENT)
-    // A quiet One UI-style pill: flat translucent white, fully rounded, no shadow. At the bottom of
-    // a One UI-styled sheet (launcher_config.os_style) it is compact and centred the way One UI's
-    // Finder bar is; everywhere else - our own setup, or at the top - it spans the sheet. setupViews runs from a global-layout hook, so every size
-    // below is written only when it differs.
+
     val pillHeight = (46 * dp).toInt()
     binding.searchBarContainer.apply {
         val height = pillHeight + paddingTop + paddingBottom
@@ -108,14 +102,6 @@ fun MySearchMenu.enactDrawerSkin() {
     }
 }
 
-/**
- * Insets a full-bleed layout by the system bars and any display cutout.
- *
- * The onboarding and splash screens draw edge to edge behind transparent bars, so without this
- * their chrome — the progress bar and Skip at the top, the CTA at the bottom — sits underneath
- * the status and navigation bars. Padding the root keeps its background full-bleed while the
- * content stays inside the safe area, which is also what the design's own device frame shows.
- */
 fun View.padBySystemBars() {
     ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
         val insets = windowInsets.getInsets(

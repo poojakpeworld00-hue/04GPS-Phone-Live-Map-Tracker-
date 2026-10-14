@@ -14,19 +14,7 @@ import androidx.core.graphics.ColorUtils
 import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 
-/**
- * The ad call-to-action drawn like the app's primary button (`Ds.Button.Primary`): 18dp corners,
- * a top-left → bottom-right gradient, Figtree Bold, and — for a full-width CTA — the same 56dp
- * height and primary-coloured shadow, so "Install" under an ad and "Get Started" under it read
- * as one family.
- *
- * Colours stay Remote Config driven. The native theme's `btnColor` is the gradient start; an
- * optional `btnColorEnd` is its end, and when that key is absent the end is a lighter tone of
- * the start (so a single RC colour still renders as a gradient). Without any RC colour the
- * design's own primary → cyan pair is used. `btnText` remains the label colour.
- */
 object SpotButtonTheme {
-
     private const val RADIUS_DP = 18f
     private const val FULL_HEIGHT_DP = 56f
 
@@ -42,12 +30,11 @@ object SpotButtonTheme {
         fun shape(a: Int, b: Int) = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(a, b))
             .apply { cornerRadius = radius }
 
-        // A pressed state a shade darker, like ds_btn_primary_selector_r18.
         val background = StateListDrawable().apply {
             addState(intArrayOf(android.R.attr.state_pressed), shape(darker(start), darker(end)))
             addState(intArrayOf(), shape(start, end))
         }
-        cta.backgroundTintList = null // the ported layouts tint their flat shape; the gradient owns the fill now
+        cta.backgroundTintList = null
         cta.background = background
         cta.typeface = ResourcesCompat.getFont(ctx, R.font.figtree_bold) ?: cta.typeface
         cta.setTextColor(parse(pref.getString("NativebtntxtColor")) ?: Color.WHITE)
@@ -69,7 +56,6 @@ object SpotButtonTheme {
         try { Color.parseColor(it) } catch (_: IllegalArgumentException) { null }
     }
 
-    /** The gradient end derived from a single RC colour: the same hue, lifted in lightness. */
     private fun lighter(color: Int): Int {
         val hsl = FloatArray(3)
         ColorUtils.colorToHSL(color, hsl)

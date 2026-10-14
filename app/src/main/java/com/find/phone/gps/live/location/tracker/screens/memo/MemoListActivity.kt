@@ -48,12 +48,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-/**
- * Reminder list split into upcoming and finished entries, each with an on/off switch. After the
- * first reminder is saved this screen also hosts the "turn on reminders" prompt.
- */
 class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
-
     override val layoutId: Int = R.layout.screen_reminder_list
 
     private var onNumberPicked: ((String) -> Unit)? = null
@@ -67,7 +62,6 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
     }
 
     private val notifAsk = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        // Posted so it runs after the resume triggered by the system dialog.
         val follow = postNotifAsk.also { postNotifAsk = null }
         window.decorView.post { follow?.invoke() }
     }
@@ -175,7 +169,6 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
     private fun handleSwitch(entry: MemoElement, isOn: Boolean) {
         val expiredOneOff = entry.repeatOrOnce == Repeat.ONCE && entry.dateTime <= System.currentTimeMillis()
         if (isOn && expiredOneOff) {
-            // A spent one-off needs a fresh time before it can be enabled again.
             rebuildList()
             openEditor(entry)
             return

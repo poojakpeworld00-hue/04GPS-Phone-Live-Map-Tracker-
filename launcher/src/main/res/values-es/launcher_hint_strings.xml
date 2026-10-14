@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="launcher_hint_overlay_title">Activa \"Mostrar sobre otras apps\"</string>
-    <string name="launcher_hint_overlay_description">Te traeremos de vuelta en cuanto esté activado.</string>
-    <string name="launcher_hint_default_home_title">Elige %1$s como inicio</string>
-    <string name="launcher_hint_default_home_description">Selecciónala en la lista para configurar tu pantalla de inicio.</string>
-    <string name="launcher_hint_default_sms_title">Configúrala como tu app de SMS</string>
-    <string name="launcher_hint_default_sms_description">Toca \"Establecer como predeterminada\" para terminar.</string>
-    <string name="launcher_hint_mock_row">App de inicio predeterminada</string>
-    <string name="launcher_hint_mock_toggle_row">Permiso</string>
-    <string name="launcher_hint_overlay_row">Permitir mostrar sobre otras apps</string>
+    <string name="launcher_hint_overlay_title">Habilita \"Mostrar sobre otras apps\"</string>
+    <string name="launcher_hint_overlay_description">Cuando lo habilites, volverás aquí automáticamente.</string>
+    <string name="launcher_hint_default_home_title">Usa %1$s como pantalla de inicio</string>
+    <string name="launcher_hint_default_home_description">Tócala en la lista para convertirla en tu pantalla de inicio.</string>
+    <string name="launcher_hint_default_sms_title">Úsala como app de SMS</string>
+    <string name="launcher_hint_default_sms_description">Para acabar, toca \"Establecer como predeterminada\".</string>
+    <string name="launcher_hint_mock_row">App predeterminada de inicio</string>
+    <string name="launcher_hint_mock_toggle_row">Acceso</string>
+    <string name="launcher_hint_overlay_row">Dejar que se muestre sobre otras apps</string>
 </resources>

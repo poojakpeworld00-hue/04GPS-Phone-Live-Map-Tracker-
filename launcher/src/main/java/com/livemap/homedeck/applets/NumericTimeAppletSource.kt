@@ -10,7 +10,6 @@ import android.widget.RemoteViews
 import com.livemap.homedeck.R
 
 class NumericTimeAppletSource : AppWidgetProvider() {
-
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -43,7 +42,6 @@ class NumericTimeAppletSource : AppWidgetProvider() {
                 context.getWidgetBackgroundColor(appWidgetId)
             )
 
-            // TextClock has no single "show 12/24 hours" switch, keep one of the two around
             setViewVisibility(R.id.gadget_text_clock_24Ui, if (is24Hours) View.VISIBLE else View.GONE)
             setViewVisibility(R.id.gadget_text_clock_12Ui, if (is24Hours) View.GONE else View.VISIBLE)
 

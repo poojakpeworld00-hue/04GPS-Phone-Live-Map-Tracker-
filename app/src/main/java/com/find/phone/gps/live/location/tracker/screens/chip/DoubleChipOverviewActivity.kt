@@ -28,12 +28,7 @@ import com.find.phone.gps.live.location.tracker.databinding.ScreenDualSimDashboa
 import com.find.phone.gps.live.location.tracker.helpers.isNightMode
 import java.util.Locale
 
-/**
- * Read-only overview of every active SIM: live signal gauge, radio generation, roaming, country,
- * SIM state, and which line is the default for calls, data and SMS.
- */
 class DoubleChipOverviewActivity : StageActivity<ScreenDualSimDashboardBinding>() {
-
     override val layoutId: Int = R.layout.screen_dual_sim_dashboard
 
     private var activeTab = 0

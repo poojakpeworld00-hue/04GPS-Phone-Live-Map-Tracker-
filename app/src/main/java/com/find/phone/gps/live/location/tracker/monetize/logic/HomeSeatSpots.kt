@@ -13,39 +13,9 @@ import com.find.phone.gps.live.location.tracker.BuildConfig
 import org.json.JSONArray
 import org.json.JSONObject
 
-/**
- * The launcher's full-screen ad placements, configured with QRScanner's keys so one Remote Config
- * shape serves both apps. Every key resolves `<placement>_<key>` first, then the global `<key>`:
- *
- * | key                                | meaning                                                   |
- * |------------------------------------|-----------------------------------------------------------|
- * | `<p>_ads_on`                       | `false` mutes the placement (default on)                  |
- * | `googleInter` / `googleFullNative` | the unit for that format (`googleFullNative` → `googleNative`) |
- * | `googleRewarded` / `googleAppopen` | units for the link-first follow-ups                       |
- * | `DirectLink`                       | one URL or a JSON array of URLs                           |
- * | `link_first_then`                  | e.g. `"reward,inter,app_open"`: open the DirectLink first, then these once it closes. Needs `IsCustomADS` |
- * | `link_first_show_all`              | `true` shows every follow-up that is ready; default is a waterfall (first that shows ends it) |
- * | `link_open_in`                     | `webview` / `custom_tab` / `browser`                      |
- * | `inter_fallback`                   | what an interstitial that cannot show falls back to, in order: `rewarded`, `full_native` (`custom` is QRScanner's house ad and is skipped here) |
- *
- * Placements (the launcher's gesture names are mapped the way QRScanner maps them):
- * `leftSwipe` → `leftPanel`, `rightSwipe` → `rightPanel`, `appLaunch` → `drawer`.
- *
- * Everything runs through [SliderSpotDriver], which owns per-unit loading and guarantees its
- * `proceed` runs exactly once — a gesture is never left stuck behind an ad.
- *
- * ```
- * adb logcat -s HomeSeatSpots SliderSpotDriver
- * ```
- */
 object HomeSeatSpots {
-
     private const val TAG = "HomeSeatSpots"
 
-    // `onboarding` is the "Next" of every onboarding screen (ShellPromoConfig.runOnboardInterstitial).
-    // `appExit` is the return to the launcher from an app it opened (CallerID's own placement).
-    // The last six are the places that were fixed before: they use the engine only when they have
-    // their own `ad_flow` / link chain (see hasOwnFlow).
     private val PLACEMENTS = listOf(
         "leftPanel", "rightPanel", "drawer", "onboarding", "recent", "appExit", "unlock",
         "splash", "back", "appOpen", "install", "uninstall", "charge", "discharge",
@@ -56,23 +26,10 @@ object HomeSeatSpots {
         "googleFullNative", "ad_flow", "ad_flow_show_all",
     )
 
-    /**
-     * Flat keys that share a placement's prefix but are not placement keys. They are ingested with
-     * their own types (a boolean, an int) elsewhere; storing them again as text would overwrite them.
-     */
     private val NOT_PLACEMENT_KEYS = setOf("recent_playstore", "recent_playstore_window_sec", "onboarding_home")
 
-    /** Whether [key] is one [PromoConfigLoader] must ingest for this class (legacy flat form). */
     fun isPlacementKey(key: String): Boolean =
         key !in NOT_PLACEMENT_KEYS && (key in GLOBAL_KEYS || PLACEMENTS.any { key.startsWith("${it}_") })
-
-    // ---------------- Where a placement's settings live ----------------
-    //
-    // The clean form is one `placements` object in the audience block:
-    //   "placements": { "drawer": { "ads_on": true, "DirectLink": [...], "link_first_then": "reward" }, … }
-    // The older flat form (`drawer_ads_on`, `drawer_DirectLink`, …) is still read, after it, so a config
-    // not yet migrated keeps working exactly as before. Global keys (`googleInter`, `link_first_then`,
-    // `inter_fallback`, …) stay flat: the whole ad layer reads them there.
 
     private var placementsRaw: String? = null
     private var placementsJson: JSONObject? = null
@@ -88,10 +45,6 @@ object HomeSeatSpots {
         }
     }
 
-    /**
-     * [name]'s own value for [key] as text (arrays / objects as JSON, booleans as "true"/"false"),
-     * from `placements.<name>.<key>`, else the flat `<name>_<key>`; null when neither is set.
-     */
     private fun own(vault: SpotsLocker, name: String, key: String): String? {
         val nested = placementsBlock(vault)?.optJSONObject(name)
             ?.takeIf { it.has(key) && !it.isNull(key) }?.get(key)?.toString()
@@ -99,7 +52,6 @@ object HomeSeatSpots {
             ?: vault.getString("${name}_$key")?.takeIf { it.isNotBlank() }
     }
 
-    /** The audience-block key [PromoConfigLoader] stores the `placements` object under. */
     const val PLACEMENTS_KEY = "placements"
 
     private fun normalize(placement: String?): String? = when (placement) {
@@ -109,11 +61,6 @@ object HomeSeatSpots {
         else -> placement
     }
 
-    /**
-     * The placement's own name, then its parent. An onboarding screen (`onboarding_welcome`, …) falls
-     * back to the shared `onboarding` keys, so one set configures every screen and a screen only
-     * needs keys of its own where it differs.
-     */
     private fun names(placement: String?): List<String> {
         val name = normalize(placement)?.takeIf { it.isNotBlank() } ?: return emptyList()
         return if (name.startsWith("onboarding_")) listOf(name, "onboarding") else listOf(name)
@@ -127,7 +74,6 @@ object HomeSeatSpots {
     private fun settleFullNative(vault: SpotsLocker, placement: String?): String =
         resolve(vault, placement, "googleFullNative").ifBlank { vault.getString("googleNative").orEmpty() }
 
-    /** `<placement>_ads_on` (or its parent's) set to `false` mutes it; default on. */
     fun placementEnabled(context: Context, placement: String?): Boolean {
         val vault = SpotsLocker.getInstance(context)
         val value = names(placement).firstNotNullOfOrNull { name -> own(vault, name, "ads_on")?.trim() }
@@ -144,7 +90,6 @@ object HomeSeatSpots {
         }.getOrDefault(emptyList())
     }
 
-    /** The follow-up names QRScanner uses, as runner formats. Unknown names are dropped. */
     private fun followUp(vault: SpotsLocker, placement: String?, step: String): DrawerAdSpec? =
         when (step.trim().lowercase()) {
             "reward", "rewarded" ->
@@ -154,7 +99,7 @@ object HomeSeatSpots {
             "app_open", "appopen" -> DrawerAdSpec(DrawerAdType.APPOPEN, resolve(vault, placement, "googleAppopen"))
             "full_native", "fullscreen_native", "fullnative", "full" ->
                 DrawerAdSpec(DrawerAdType.FULLSCREEN_NATIVE, settleFullNative(vault, placement))
-            // This app's house ad; needs `IsCustomADS`, like QRScanner's `custom` step.
+
             "custom", "custom_ads" ->
                 if (vault.getBoolean("IsCustomADS")) DrawerAdSpec(DrawerAdType.CUSTOM, "custom") else null
             "directlink", "direct_link", "browser" -> directLinks(vault, placement).takeIf { it.isNotEmpty() }
@@ -164,10 +109,6 @@ object HomeSeatSpots {
 
     private class LinkFirst(val links: List<String>, val openIn: StraightHrefOpener.Mode?, val then: DrawerAdFlow)
 
-    /**
-     * The link-first chain for [placement] — its links, then the follow-ups — or null when it is
-     * off (no order, no links, or no `IsCustomADS`).
-     */
     private fun linkFirst(vault: SpotsLocker, placement: String?): LinkFirst? {
         val order = resolve(vault, placement, "link_first_then")
             .split(',').map { it.trim() }.filter { it.isNotEmpty() }
@@ -188,11 +129,6 @@ object HomeSeatSpots {
     private fun fallbacks(vault: SpotsLocker, placement: String?): List<String> =
         resolve(vault, placement, "inter_fallback").split(',').map { it.trim().lowercase() }.filter { it.isNotEmpty() }
 
-    /**
-     * `<placement>_ad_flow` (or the global `ad_flow`): the no-link chain in any order, e.g.
-     * `"reward,app_open,inter"`, with `ad_flow_show_all` `true` = every ready one, else a
-     * waterfall. Null when not configured, so the placement keeps its default chain.
-     */
     private fun adFlow(vault: SpotsLocker, placement: String?): DrawerAdFlow? {
         val steps = resolve(vault, placement, "ad_flow").split(',').map { it.trim() }.filter { it.isNotEmpty() }
         if (steps.isEmpty()) return null
@@ -201,19 +137,12 @@ object HomeSeatSpots {
         return DrawerAdFlow(true, 0, sequence, showAll = showAll, startFromFirst = true, onDemand = true)
     }
 
-    /**
-     * Whether [placement] has a flow **of its own** — its own `ad_flow`, or its own link chain that
-     * can run. Global keys do not count: the places that used to be fixed (splash, back, app open,
-     * install / uninstall, charge / discharge) switch to the engine only when configured for it by
-     * name, so a global setting never changes them silently.
-     */
     fun hasOwnFlow(context: Context, placement: String): Boolean {
         val vault = SpotsLocker.getInstance(context)
         fun set(key: String) = names(placement).any { own(vault, it, key) != null }
         return set("ad_flow") || (set("link_first_then") && linkFirst(vault, placement) != null)
     }
 
-    /** The plain chain: the placement's interstitial, then each `inter_fallback` format in order. */
     private fun interFlow(vault: SpotsLocker, placement: String?): DrawerAdFlow {
         adFlow(vault, placement)?.let { return it }
         val sequence = buildList {
@@ -224,7 +153,6 @@ object HomeSeatSpots {
         return DrawerAdFlow(true, 0, sequence, showAll = false, startFromFirst = true, onDemand = true)
     }
 
-    /** App launch: a full-screen native, falling back to the placement's interstitial. */
     private fun fullNativeFlow(vault: SpotsLocker, placement: String?): DrawerAdFlow {
         adFlow(vault, placement)?.let { return it }
         val sequence = buildList {
@@ -236,10 +164,6 @@ object HomeSeatSpots {
         return DrawerAdFlow(true, 0, sequence, showAll = false, startFromFirst = true, onDemand = true)
     }
 
-    /**
-     * Whether [placement] wants the runner at all. False means the caller keeps its existing path
-     * (the app-wide preloaded interstitial): no link-first chain, and no unit of its own.
-     */
     fun hasOwnInter(context: Context, placement: String?): Boolean {
         val vault = SpotsLocker.getInstance(context)
         if (linkFirst(vault, placement) != null) return true
@@ -249,7 +173,6 @@ object HomeSeatSpots {
             fallbacks(vault, placement).any { followUp(vault, placement, it) != null }
     }
 
-    /** The interstitial placement: link-first when configured, else the placement's own interstitial. */
     fun showInterstitial(activity: Activity, placement: String?, proceed: () -> Unit) {
         val vault = SpotsLocker.getInstance(activity)
         if (!vault.getBoolean("IsAdsON") || !placementEnabled(activity, placement)) return proceed()
@@ -261,63 +184,44 @@ object HomeSeatSpots {
         SliderSpotDriver.run(activity, flow, pointerKey(placement), proceed)
     }
 
-    /** The app-launch placement: a full-screen native (QRScanner's choice for leaving to another app). */
     fun showFullNative(activity: Activity, placement: String?, proceed: () -> Unit) {
         val vault = SpotsLocker.getInstance(activity)
         if (!vault.getBoolean("IsAdsON") || !placementEnabled(activity, placement)) return proceed()
-        // A link-first chain configured for the drawer placement takes the app click too.
+
         if (execLinkFirst(activity, vault, placement, proceed)) return
         val flow = fullNativeFlow(vault, placement)
         log("$placement: full-native chain ${flow.sequence.map { "${it.type.key}(${it.adUnitId})" }}")
         SliderSpotDriver.run(activity, flow, pointerKey(placement), proceed)
     }
 
-    /**
-     * Runs [placement]'s link-first chain when one is configured; false when there is none.
-     *
-     * As in QRScanner, every link opens at once as a stack — last one on top, so the user closes
-     * them in the listed order and each close reveals the next. The follow-ups run once the whole
-     * stack is gone and the launcher is back in front.
-     */
     private fun execLinkFirst(activity: Activity, vault: SpotsLocker, placement: String?, proceed: () -> Unit): Boolean {
         val chain = linkFirst(vault, placement) ?: return false
-        // The follow-ups load while the user reads the links, so they are ready on the way back.
+
         SliderSpotDriver.preload(activity, chain.then)
         log("$placement: link-first → ${chain.links.size} link(s), then ${chain.then.sequence.map { it.type.key }}")
         val afterLinks = {
-            // Consumed by the foreground hook on a real return; cleared here for links that never opened.
             CoreOpenSpotBook.skipNextAppOpenAd = false
             if (chain.then.sequence.isEmpty()) proceed()
             else SliderSpotDriver.run(activity, chain.then, pointerKey(placement), proceed)
         }
-        // Suppress the global App Open on the return from the links: the follow-up chosen here is the ad.
+
         CoreOpenSpotBook.skipNextAppOpenAd = true
         val opened = chain.links.asReversed().count { StraightHrefOpener.open(activity, it, chain.openIn) }
         if (opened > 0) SliderSpotDriver.onReturnTo(activity, afterLinks) else afterLinks()
         return true
     }
 
-    /**
-     * One named ad for [placement] — `custom`, `rewarded`, `directlink`, … (the `inter_fallback`
-     * vocabulary) — then [proceed], whether or not it could show.
-     */
     fun presentStep(activity: Activity, placement: String?, step: String, proceed: () -> Unit) {
         val vault = SpotsLocker.getInstance(activity)
         val spec = followUp(vault, placement, step) ?: return proceed()
         SliderSpotDriver.run(activity, DrawerAdFlow(true, 0, listOf(spec), startFromFirst = true, onDemand = true), pointerKey(placement), proceed)
     }
 
-    /** Whether `inter_fallback` (for [placement], or global) names any step this app can show. */
     fun hasFallback(context: Context, placement: String?): Boolean {
         val vault = SpotsLocker.getInstance(context)
         return fallbacks(vault, placement).any { followUp(vault, placement, it) != null }
     }
 
-    /**
-     * QRScanner's InterFallbackAds: when an interstitial could not show, walk `inter_fallback`
-     * (`rewarded`, `full_native`, `custom`, `directlink`, in the configured order) and show the
-     * first that can. [proceed] runs exactly once, after it or straight away when nothing shows.
-     */
     fun execFallback(activity: Activity, placement: String?, proceed: () -> Unit) {
         val vault = SpotsLocker.getInstance(activity)
         val sequence = fallbacks(vault, placement).mapNotNull { followUp(vault, placement, it) }
@@ -326,7 +230,6 @@ object HomeSeatSpots {
         SliderSpotDriver.run(activity, DrawerAdFlow(true, 0, sequence, startFromFirst = true), pointerKey(placement), proceed)
     }
 
-    /** Runs [placement]'s `ad_flow` if it has one (false = none, the caller shows its own ad). */
     fun presentAdFlow(activity: Activity, placement: String, proceed: () -> Unit): Boolean {
         val vault = SpotsLocker.getInstance(activity)
         val flow = adFlow(vault, placement) ?: return false
@@ -335,10 +238,6 @@ object HomeSeatSpots {
         return true
     }
 
-    /**
-     * Runs [placement]'s link-first chain if it has one and ads are on. False means nothing was
-     * started and the caller shows its own ad; true means [proceed] will be called by the chain.
-     */
     fun presentLinkFirst(activity: Activity, placement: String, proceed: () -> Unit): Boolean {
         val vault = SpotsLocker.getInstance(activity)
         if (!vault.getBoolean("IsAdsON") || !placementEnabled(activity, placement)) return false

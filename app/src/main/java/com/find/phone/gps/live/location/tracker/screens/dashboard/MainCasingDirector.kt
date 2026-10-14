@@ -11,15 +11,7 @@ import com.find.phone.gps.live.location.tracker.monetize.render.InCoreRefreshBoo
 import com.find.phone.gps.live.location.tracker.consent.ConsentDrawerModal
 import com.find.phone.gps.live.location.tracker.screens.policy.DriftToolbox
 
-/**
- * Activity-scoped helpers for the home shell: result launchers (which must be registered before
- * the host is STARTED), the Remote Config driven permission sheet and the Play in-app update.
- * Created as a field of the host and reached through [MainCasingHolder].
- *
- * Registration happens in [onHostCreated]; visible prompting waits for [beginFirstRunPriming].
- */
 class MainCasingDirector(private val host: MainCasingHolder) {
-
     private val activity get() = host.hostActivity
 
     private var registered = false
@@ -52,8 +44,6 @@ class MainCasingDirector(private val host: MainCasingHolder) {
         }
     }
 
-    // ── host lifecycle ──
-
     fun onHostCreated() {
         registered = true
         InCoreRefreshBook.enlistLauncher(activity)
@@ -83,9 +73,6 @@ class MainCasingDirector(private val host: MainCasingHolder) {
         InCoreRefreshBook.destroy(activity)
     }
 
-    // ── in-app update ──
-
-    /** `In_App_Update_Show` gates the offer; `In_App_Update_Force_Show` picks IMMEDIATE over FLEXIBLE. */
     private fun maybeOfferUpdate() {
         if (!registered) return
         val store = SpotsLocker.getInstance(activity)
@@ -101,7 +88,6 @@ class MainCasingDirector(private val host: MainCasingHolder) {
         )
     }
 
-    /** Throttle for optional updates; stamps the time when a new check is allowed. */
     private fun recentlyChecked(store: SpotsLocker): Boolean {
         val elapsed = System.currentTimeMillis() - store.getLong(UPDATE_STAMP_KEY, 0L)
         if (elapsed in 0 until UPDATE_FRESH_MS) return true
@@ -118,11 +104,8 @@ class MainCasingDirector(private val host: MainCasingHolder) {
         }
     }
 
-    // ── permission sheet ──
-
     fun presentPermissionSheet() {
         ConsentDrawerModal.show(activity) {
-            // A close we caused ourselves defers the ask instead of counting as an answer.
             when {
                 selfRetired -> selfRetired = false
                 else -> userDismissedSheet = true
@@ -149,13 +132,10 @@ class MainCasingDirector(private val host: MainCasingHolder) {
     fun mustShowPermissionHint(): Boolean =
         userDismissedSheet && ConsentDrawerModal.hasPending(activity)
 
-    // ── overlay permission ──
-
     fun beginOverlayPermissionFlow() {
         val canAsk = DriftToolbox.isOfferable(activity) && !DriftToolbox.isGranted(activity)
         if (!canAsk) return
 
-        // We open Settings ourselves: skip the App Open ad once on the way back.
         CoreOpenSpotBook.skipNextAppOpenAd = true
 
         runCatching {
@@ -183,11 +163,9 @@ class MainCasingDirector(private val host: MainCasingHolder) {
         private const val UPDATE_STAMP_KEY = "last_inapp_update_check_at"
         private const val UPDATE_FRESH_MS = 6 * 60 * 60 * 1000L
 
-        /** Flags for the in-task reorder every [MainCasingHolder.bringHostToFront] uses. */
         const val REORDER_FLAGS =
             Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
 
-        /** Marks a [MainCasingHolder.bringHostToFront] intent as the app pulling itself back. */
         const val EXTRA_SELF_REORDER = "extra_self_reorder"
     }
 }

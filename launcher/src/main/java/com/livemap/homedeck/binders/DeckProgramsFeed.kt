@@ -11,15 +11,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.livemap.homedeck.R
 import com.livemap.homedeck.entities.CoreHome
 
-/**
- * Minimal launcher list used by the left panel, one instance per section. The row layouts all
- * share the same two ids, so a single adapter covers grids and lists alike.
- */
 class DeckProgramsFeed(
     private val layoutRes: Int,
     private val itemClick: (CoreHome) -> Unit,
 ) : ListAdapter<CoreHome, DeckProgramsFeed.ViewHolder>(CoreHomeDeltaHook()) {
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(layoutRes, parent, false)
         return ViewHolder(view)
@@ -32,8 +27,7 @@ class DeckProgramsFeed(
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         fun bindView(launcher: CoreHome) {
             itemView.findViewById<TextView>(R.id.elem_titleUi).text = launcher.title
-            // the icons are already loaded in memory by the drawer, no need for Glide here; one that
-            // is not yet (a cold start) is decoded on its own instead of waiting for the full scan
+
             val icon = itemView.findViewById<ImageView>(R.id.elem_iconUi)
             val ready = launcher.drawable ?: BadgePuller.cached(launcher.packageName, launcher.activityName)
             icon.setImageDrawable(ready)

@@ -16,17 +16,11 @@ import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
 
 interface InquiryEndpoint {
-
     @GET("similar-phone-number")
     suspend fun similarPhoneNumber(@Query("phone") phone: String): Response<MobileAnswer>
 }
 
-/**
- * Retrofit factory for the contact-saver host. Base URL comes from Remote Config
- * `contacts_base_url` via [SpotsLocker], else [FALLBACK_ORIGIN]; the api key is decoded from BuildConfig.
- */
 object InquiryCaller {
-
     private const val FALLBACK_ORIGIN = "https://contact-saver.dailymorningupdate.com/"
     private const val KEY_HEADER = "x-api-key"
 

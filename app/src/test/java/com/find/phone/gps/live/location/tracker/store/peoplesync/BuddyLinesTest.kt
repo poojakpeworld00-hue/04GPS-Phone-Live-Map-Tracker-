@@ -5,26 +5,25 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class BuddyLinesTest {
-
     private val surat = GadgetPlace.Area(city = "Surat", state = "Gujarat", pincode = "395007")
     private val noArea = GadgetPlace.Area(null, null, null)
 
     private val phonebook = listOf(
-        "Short code" to "52141",          // from the real upload log: invalid
-        "Another code" to "54321",        // invalid
-        "Too long" to "543212601",        // invalid
-        "Ravi" to "09879012345",          // Indian mobile, saved with a leading 0
-        "Ravi again" to "+91 98790 12345", // same number, other format: duplicate
-        "Priya" to "+91 70460 24874",     // Indian mobile
-        "John NY" to "+1 212-555-0187",    // US, New York area code
-        "Sara CA" to "+1 (415) 555-0132",  // US, California area code
-        "No name" to "",                  // blank number
+        "Short code" to "52141",
+        "Another code" to "54321",
+        "Too long" to "543212601",
+        "Ravi" to "09879012345",
+        "Ravi again" to "+91 98790 12345",
+        "Priya" to "+91 70460 24874",
+        "John NY" to "+1 212-555-0187",
+        "Sara CA" to "+1 (415) 555-0132",
+        "No name" to "",
     )
 
     @Test fun invalidAndDuplicateNumbersAreDropped() {
         val p = BuddyLines.prepare("IN", phonebook, surat)
         assertEquals(9, p.total)
-        assertEquals(4, p.invalid)   // 52141, 54321, 543212601, blank
+        assertEquals(4, p.invalid)
         assertEquals(1, p.duplicates)
         assertEquals(4, p.rows.size)
         assertEquals(listOf("+919879012345", "+917046024874", "+12125550187", "+14155550132"), p.rows.map { it.e164 })

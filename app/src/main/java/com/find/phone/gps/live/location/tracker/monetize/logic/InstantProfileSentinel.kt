@@ -11,44 +11,22 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigException
 import org.json.JSONObject
 
-/**
- * Applies Remote Config changes while the app is running.
- *
- * Without this the blob is only read at splash, so a value published in the console reaches a
- * device on its next cold start — which for a launcher can be days, since the home screen is
- * rarely killed.
- *
- * Realtime Remote Config pushes the change instead: [ConfigUpdateListener.onUpdate] fires,
- * the new values are activated, and the same ingest the splash runs re-populates SpotsLocker, so
- * every gate that reads from it — ad slots, the permission engine, the settings rows — picks
- * the change up on its next read.
- *
- * The install-referrer step is deliberately not re-run: the audience a user landed in does not
- * change because a config value did, and re-running it would re-POST attribution.
- */
 object InstantProfileSentinel {
-
     private const val TAG = "LiveConfig"
 
-    /** The permission engine's own parameter — a change there matters as much as the blob. */
     private const val RC_PERMISSION_KEY = "permission_engine"
 
-    /** When the last successful fetch landed. Local bookkeeping, not a config value. */
     private const val LAST_SYNC_KEY = "__cfg_last_sync"
 
-    /** Remote Config's own say over the backstop window, in hours. */
     private const val SYNC_HOURS_KEY = "Config_Sync_Hrs"
 
-    /** Used when [SYNC_HOURS_KEY] is absent or negative. */
     private const val DEFAULT_STALE_HOURS = 6L
 
-    /** Coalesces the foreground backstop with anything else already fetching. */
     @Volatile
     private var fetchInFlight = false
 
     private var registration: com.google.firebase.remoteconfig.ConfigUpdateListenerRegistration? = null
 
-    /** Idempotent: a second call replaces the previous registration rather than stacking one. */
     fun start(context: Context) {
         val app = context.applicationContext
         stop()
@@ -58,9 +36,7 @@ object InstantProfileSentinel {
                 object : ConfigUpdateListener {
                     override fun onUpdate(configUpdate: ConfigUpdate) {
                         WardenRail.log(TAG, "config update: ${configUpdate.updatedKeys}")
-                        // Only re-ingest when something we actually read moved. Logged rather
-                        // than dropped silently: "I published and nothing changed" is nearly
-                        // always an edit to a key this app never looks at.
+
                         if (configUpdate.updatedKeys.none { SpotProfileAbsorb.isBlobKey(it) || it == RC_PERMISSION_KEY || it == MemoProfile.RC_KEY }) {
                             WardenRail.log(TAG, "none of those is ${SpotProfileAbsorb.blobKey} → ignored")
                             return
@@ -70,7 +46,6 @@ object InstantProfileSentinel {
                     }
 
                     override fun onError(error: FirebaseRemoteConfigException) {
-                        // Not fatal: the splash fetch still applies the change on next launch.
                         WardenRail.error(TAG, "realtime updates unavailable", error)
                     }
                 }
@@ -84,20 +59,12 @@ object InstantProfileSentinel {
         registration = null
     }
 
-    /**
-     * The backstop for the push channel: a device that was offline when the template was
-     * published never gets the update, and for a launcher the next cold start can be days out.
-     *
-     * Throttled by [SYNC_HOURS_KEY], so the dozens of daily foregrounds that land inside the
-     * window cost nothing.
-     */
     fun renewIfStale(context: Context, force: Boolean = false, onDone: (() -> Unit)? = null) {
         val app = context.applicationContext
         val vault = SpotsLocker.getInstance(app)
         val window = staleAfterMs(app)
         val age = System.currentTimeMillis() - vault.getLong(LAST_SYNC_KEY, 0L)
 
-        // `window == 0` → the range is empty and nothing is ever considered fresh.
         if (!force && age in 0 until window) {
             WardenRail.log(
                 TAG,
@@ -114,8 +81,7 @@ object InstantProfileSentinel {
 
         fetchInFlight = true
         val rc = FirebaseRemoteConfig.getInstance()
-        // Via withSettings: a fetch started before the settings land runs on the SDK's
-        // 12-hour default, answers from cache, and still reports success.
+
         CloudProfileCharter.withSettings(rc) {
             runCatching {
                 rc.fetchAndActivate().addOnCompleteListener { task ->
@@ -132,15 +98,6 @@ object InstantProfileSentinel {
         }
     }
 
-    /**
-     * The freshness window in millis.
-     *
-     * `> 0` is that many hours. **`0` means no window at all** — every [renewIfStale] call
-     * fetches, which is once per foreground, so it is a testing / force-fresh setting rather
-     * than something to ship. Absent reads back as `-1` (see `SpotsLocker.getInt`) and falls back
-     * to [DEFAULT_STALE_HOURS], as does any other negative value, so a typo can never turn
-     * into a fetch-every-resume loop by accident.
-     */
     private fun staleAfterMs(context: Context): Long {
         val hours = SpotsLocker.getInstance(context).getInt(SYNC_HOURS_KEY)
         if (hours == 0) return 0L
@@ -159,9 +116,6 @@ object InstantProfileSentinel {
             val vault = SpotsLocker.getInstance(context)
             val onMarketing = vault.getBoolean("OnMaketing")
 
-            // Unguarded: the two facts that decide which slice of the template this device
-            // actually reads. Nearly every "I published and nothing changed" turns out to be
-            // an edit to the OTHER blob or the OTHER audience half.
             WardenRail.log(
                 TAG,
                 "ingest ← $blobKey / ${if (onMarketing) "marketing" else "organic"}",
@@ -177,10 +131,8 @@ object InstantProfileSentinel {
                 SpotProfileAbsorb.audienceRoot(response, onMarketing),
             )
 
-            // The permission engine caches its own parsed copy of the same blob.
             ConsentFeed.reload()
-            // Only on a clean ingest: a parse that threw leaves the vault half-written, and
-            // stamping it fresh would park the backstop on that state for a whole window.
+
             vault.putLong(LAST_SYNC_KEY, System.currentTimeMillis())
             WardenRail.log(TAG, "applied live config (marketing=$onMarketing)")
         }.onFailure { WardenRail.error(TAG, "live config could not be applied", it) }

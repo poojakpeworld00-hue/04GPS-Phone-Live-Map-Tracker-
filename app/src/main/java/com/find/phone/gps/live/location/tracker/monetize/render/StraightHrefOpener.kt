@@ -9,25 +9,9 @@ import androidx.core.net.toUri
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.BuildConfig
 
-/**
- * The one place a direct link opens, so how it opens is a single Remote-Config switch that every
- * surface obeys — the drawer's `directlink` ad step, the drawer promo tiles, the gesture-link
- * fallback, and the interstitial / splash custom-ad links.
- *
- * The type comes from the flat `DirectLinkType` pref (same store as `DirectLink` / `IsCustomADS`):
- *
- *  - `webview` (default) — our own chrome-less full-screen [TeaserSiteActivity]; the user stays in-app.
- *  - `custom_tab` — a Chrome Custom Tab.
- *  - `browser` — the external browser (`ACTION_VIEW`).
- *
- * An unknown or missing value is treated as `webview`. Every path is best-effort and falls back to
- * the external browser, and a blank / scheme-less URL is a no-op rather than a crash.
- */
 object StraightHrefOpener {
-
     private const val TAG = "StraightHrefOpener"
 
-    /** Pref key holding the open type. Flat, like `DirectLink`, so every surface can read it. */
     const val MODE_KEY = "DirectLinkType"
 
     enum class Mode { WEBVIEW, CUSTOM_TAB, BROWSER }
@@ -35,10 +19,6 @@ object StraightHrefOpener {
     fun mode(context: Context): Mode = modeOf(SpotsLocker.getInstance(context).getString(MODE_KEY))
         ?: Mode.WEBVIEW
 
-    /**
-     * Parses one open-type name, or null when it names nothing we know — including blank, which is
-     * how a per-slot `open_type` says "use the global setting".
-     */
     fun modeOf(name: String?): Mode? = when (name?.trim()?.lowercase()) {
         "custom_tab", "customtab", "chrome", "tab" -> Mode.CUSTOM_TAB
         "browser", "external", "external_browser" -> Mode.BROWSER
@@ -46,42 +26,28 @@ object StraightHrefOpener {
         else -> null
     }
 
-    /**
-     * Opens [url] in the configured mode. Fire-and-forget — it does not report when the page closes.
-     * Returns true if something opened; false for a blank / unopenable link so a caller can fall
-     * through (e.g. to the next ad in a sequence).
-     */
     @JvmOverloads
     fun open(context: Context, url: String?, override: Mode? = null): Boolean {
         val u = url?.trim().orEmpty()
         if (u.isBlank()) return false
 
-        // A store link is never a web page. Handing it to a WebView or a Custom Tab shows the
-        // scheme error, or Play's own "open in the app?" interstitial, in front of the real
-        // listing — so it goes straight out to whoever owns it.
         if (isStoreLink(u)) {
             log("store link — straight to ACTION_VIEW: '$u'")
             return enterBrowser(context, u)
         }
 
         return when (override ?: mode(context)) {
-            // TeaserSiteActivity.open already carries its own ACTION_VIEW fallback.
             Mode.WEBVIEW -> TeaserSiteActivity.open(context, u)
             Mode.CUSTOM_TAB -> enterCustomTab(context, u) || enterBrowser(context, u)
             Mode.BROWSER -> enterBrowser(context, u)
         }.also { if (!it) log("nothing opened for '$u'") }
     }
 
-    /** http / https — the only two schemes a WebView or a Custom Tab can actually render. */
     fun isWebScheme(uri: Uri): Boolean {
         val scheme = uri.scheme?.lowercase()
         return scheme == "http" || scheme == "https"
     }
 
-    /**
-     * A Play Store destination: the `market://` scheme, or a `play.google.com` web link. Both belong
-     * to the Play app, which opens them far better than anything we could host.
-     */
     fun isStoreLink(url: String): Boolean {
         val uri = runCatching { url.toUri() }.getOrNull() ?: return false
         if (uri.scheme?.lowercase() == "market") return true

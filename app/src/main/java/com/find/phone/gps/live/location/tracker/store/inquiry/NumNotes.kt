@@ -11,7 +11,6 @@ import com.google.i18n.phonenumbers.geocoding.PhoneNumberOfflineGeocoder
 import com.google.i18n.phonenumbers.PhoneNumberToTimeZonesMapper
 import java.util.Locale
 
-/** What libphonenumber knows about a number without going online. */
 data class NumNotes(
     val e164: String,
     val international: String,
@@ -19,7 +18,7 @@ data class NumNotes(
     val valid: Boolean,
     val lineType: RowGenre,
     val carrier: String?,
-    /** Offline geocoder area (state / telecom circle); null when it only knows the country. */
+
     val area: String?,
     val timeZone: String?,
 )
@@ -28,7 +27,6 @@ data class NumNotes(
 enum class RowGenre { MOBILE, FIXED_LINE, FIXED_OR_MOBILE, TOLL_FREE, PREMIUM, VOIP, OTHER }
 
 object NumNotesScanner {
-
     private const val UNKNOWN_REGION = "ZZ"
     private const val UNKNOWN_ZONE = "Etc/Unknown"
 
@@ -53,7 +51,6 @@ object NumNotesScanner {
             null
         }
 
-    /** Phone-book entry to (region, national digits); falls back to [fallbackIso] and raw digits. */
     fun split(raw: String, fallbackIso: String): Pair<String, String> {
         val number = parse(raw, fallbackIso) ?: return Pair(fallbackIso, raw.filter { it.isDigit() })
         val regionCode = lib.getRegionCodeForNumber(number)

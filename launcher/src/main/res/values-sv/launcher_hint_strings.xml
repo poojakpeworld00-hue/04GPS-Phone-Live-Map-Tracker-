@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="launcher_hint_overlay_title">Slå på \"Visa ovanpå andra appar\"</string>
-    <string name="launcher_hint_overlay_description">Vi tar dig direkt tillbaka så fort den är på.</string>
-    <string name="launcher_hint_default_home_title">Välj %1$s som startskärm</string>
-    <string name="launcher_hint_default_home_description">Välj den i listan för att ange din startskärm.</string>
-    <string name="launcher_hint_default_sms_title">Ange som din SMS-app</string>
-    <string name="launcher_hint_default_sms_description">Tryck på \"Ange som standard\" för att slutföra.</string>
-    <string name="launcher_hint_mock_row">Standardstartskärm</string>
-    <string name="launcher_hint_mock_toggle_row">Behörighet</string>
-    <string name="launcher_hint_overlay_row">Tillåt visning ovanpå andra appar</string>
+    <string name="launcher_hint_overlay_title">Aktivera \"Visa ovanpå andra appar\"</string>
+    <string name="launcher_hint_overlay_description">När det är aktiverat kommer du automatiskt tillbaka hit.</string>
+    <string name="launcher_hint_default_home_title">Använd %1$s som startskärm</string>
+    <string name="launcher_hint_default_home_description">Tryck på den i listan för att göra den till din startskärm.</string>
+    <string name="launcher_hint_default_sms_title">Använd som sms-app</string>
+    <string name="launcher_hint_default_sms_description">Slutför genom att trycka på \"Ange som standard\".</string>
+    <string name="launcher_hint_mock_row">Standardapp för startskärm</string>
+    <string name="launcher_hint_mock_toggle_row">Åtkomst</string>
+    <string name="launcher_hint_overlay_row">Låt appen visas ovanpå andra appar</string>
 </resources>

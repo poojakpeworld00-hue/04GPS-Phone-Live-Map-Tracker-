@@ -13,9 +13,9 @@ data class CoreApplet(
     var widthCells: Int,
     val heightCells: Int,
     val isShortcut: Boolean,
-    val className: String,      // identifier to know which app widget are we using
-    val providerInfo: AppWidgetProviderInfo?,       // used at widgets
-    val activityInfo: ActivityInfo?                 // used at shortcuts
+    val className: String,
+    val providerInfo: AppWidgetProviderInfo?,
+    val activityInfo: ActivityInfo?
 ) : AppletsListElement() {
     override fun getHashToCompare() = getStringToCompare().hashCode()
 

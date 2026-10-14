@@ -12,16 +12,10 @@ import androidx.core.content.res.ResourcesCompat
 import com.find.phone.gps.live.location.tracker.R
 import kotlin.math.ceil
 
-/**
- * The paywall's close control (design 10a, top-right on the light map): a dark 72% ink disc with
- * a white ring that drains over [start]'s seconds and the remaining count in the middle, then a
- * white X on the same disc, tappable. Fixed colours: the map under it is light in both themes.
- */
 class ShutTickerView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
 ) : View(context, attrs) {
-
     private val density = resources.displayMetrics.density
     private val track = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -55,7 +49,6 @@ class ShutTickerView @JvmOverloads constructor(
     private var left = 0f
     private var animator: ValueAnimator? = null
 
-    /** True once the countdown has run out and the X is showing. */
     var closable = false
         private set
 
@@ -64,13 +57,8 @@ class ShutTickerView @JvmOverloads constructor(
         contentDescription = context.getString(R.string.ds_cd_close)
     }
 
-    /** How opaque the control is, countdown and X alike (`premium.close_button_opacity`). */
     private var targetAlpha = 1f
 
-    /**
-     * Runs the countdown; [onClosable] fires when the X appears (straight away for 0 s).
-     * [opacity] is the control's alpha throughout, 1 = fully visible.
-     */
     fun start(seconds: Int, opacity: Float = 1f, onClosable: () -> Unit) {
         animator?.cancel()
         targetAlpha = opacity

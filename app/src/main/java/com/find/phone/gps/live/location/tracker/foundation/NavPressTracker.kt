@@ -17,14 +17,7 @@ import java.util.Collections
 import java.util.Locale
 import java.util.WeakHashMap
 
-/**
- * App-wide navigation analytics:
- *  - `screen_<name>` for every own Activity that does not extend [StageActivity] (which logs it itself);
- *  - `<screen>_back_press` for every own Activity, via a pass-through back callback;
- *  - `<screen>_home_press` when the user really leaves the app with Home / Recents.
- */
 object NavPressTracker : Application.ActivityLifecycleCallbacks {
-
     private const val OWN_PREFIX = "com.find.phone.gps.live.location.tracker"
     private const val LAUNCHER_PREFIX = "com.livemap.homedeck"
     private const val WINDOW_MS = 2_000L
@@ -39,12 +32,10 @@ object NavPressTracker : Application.ActivityLifecycleCallbacks {
 
     fun install(app: Application) = app.registerActivityLifecycleCallbacks(this)
 
-    /** The app itself is starting an Activity (internal screen, settings, share sheet, browser…). */
     fun markAppLaunch() {
         appLaunchAt = SystemClock.elapsedRealtime()
     }
 
-    /** Called from `onUserLeaveHint()` of the base activities. */
     fun onLeaveHint(activity: Activity) {
         val now = SystemClock.elapsedRealtime()
         if (now - appLaunchAt < WINDOW_MS) return

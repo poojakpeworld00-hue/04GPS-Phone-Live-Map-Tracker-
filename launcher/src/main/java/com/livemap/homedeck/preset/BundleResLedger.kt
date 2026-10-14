@@ -5,18 +5,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.zip.ZipFile
 
-/**
- * The resource *names* an installed launcher declares, read straight out of its APK's
- * `resources.arsc` (public file, `java.util.zip`, no permission, no library). Android's
- * `Resources` API can read any resource by name but cannot list them; this is the listing, so the
- * generic readers can look for "whatever this launcher calls its column count" instead of
- * knowing each OEM's names in advance. Values are then read through `Resources`, which resolves
- * them for this device's configuration and any RRO overlay in force.
- *
- * Only the four types the readers use are kept: `integer`, `dimen`, `bool`, `xml`.
- */
 class BundleResLedger private constructor(private val names: Map<String, Set<String>>) {
-
     fun names(type: String): Set<String> = names[type].orEmpty()
 
     val isEmpty: Boolean get() = names.values.all { it.isEmpty() }
@@ -34,7 +23,6 @@ class BundleResLedger private constructor(private val names: Map<String, Set<Str
         private const val ENTRY_FLAG_COMPACT = 0x0008
         private const val UTF8_FLAG = 0x100
 
-        /** Null when the APK cannot be opened or its table is not what this parser understands. */
         fun read(apkPath: String): BundleResLedger? = runCatching {
             val file = File(apkPath)
             if (!file.canRead()) return null
@@ -137,7 +125,6 @@ class BundleResLedger private constructor(private val names: Map<String, Set<Str
                 var at = start + stringsStart + buf.getInt(offAt)
                 if (at < 0 || at >= buf.limit()) { out.add(""); continue }
                 if (utf8) {
-                    // char count (u8, or u16 with the high bit), then byte count in the same form
                     var c = buf.get(at).toInt() and 0xFF; at += if (c and 0x80 != 0) 2 else 1
                     var b = buf.get(at).toInt() and 0xFF
                     if (b and 0x80 != 0) { b = ((b and 0x7F) shl 8) or (buf.get(at + 1).toInt() and 0xFF); at += 2 } else at += 1

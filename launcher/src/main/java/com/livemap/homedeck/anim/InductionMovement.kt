@@ -12,14 +12,7 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.LinearInterpolator
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 
-/**
- * Motion every onboarding screen shares: [enter] cascades the copy and CTA in, [hero] keeps the
- * illustration, its glow, ring and sparkles alive. Press feedback stays with
- * [GeneralTweens.setOnPressAnimatedClickListener]. Everything no-ops when the system animator
- * scale is 0 so a11y / battery-saver users land on the rest state immediately.
- */
 object InductionMovement {
-
     const val STAGGER_MS = 60L
     const val ENTER_MS = 350L
     private const val RISE_DP = 24f
@@ -42,20 +35,14 @@ object InductionMovement {
     private const val SLIDE_DP = 48f
     private const val MIN_HERO_DP = 150f
 
-    /** Delay of the [index]-th view in the cascade. Pure, so it is unit-tested. */
     fun staggerDelay(index: Int): Long = index * STAGGER_MS
 
-    /** Motion is skipped when the system animator scale is 0. Pure, so it is unit-tested. */
     fun mustAnimate(animatorDurationScale: Float): Boolean = animatorDurationScale > 0f
 
     private fun animatorScale(context: Context): Float = runCatching {
         Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
     }.getOrDefault(1f)
 
-    /**
-     * [hero] scales 0.92 -> 1 with a fade; [views] rise 24 dp with a fade, one after another.
-     * Pass views in visual order. Ad slots must not be passed - the ads SDK owns them.
-     */
     fun enter(hero: View?, vararg views: View) {
         val context = (hero ?: views.firstOrNull())?.context ?: return
         if (!mustAnimate(animatorScale(context))) return
@@ -86,11 +73,6 @@ object InductionMovement {
         }
     }
 
-    /**
-     * Keeps a hero alive: [art] floats and sways, [glow] breathes, [ring] turns slowly, [sparkles]
-     * twinkle out of phase. Every loop is cancelled when the first non-null view leaves the window,
-     * so screens do not have to track the animators.
-     */
     fun hero(art: View?, glow: View?, ring: View?, sparkles: List<View> = emptyList(), chips: List<View> = emptyList()) {
         val anchor = art ?: glow ?: ring ?: sparkles.firstOrNull() ?: chips.firstOrNull() ?: return
         if (!mustAnimate(animatorScale(anchor.context))) return
@@ -132,7 +114,7 @@ object InductionMovement {
         }
 
         chips.forEachIndexed { index, chip ->
-            // each chip drifts on its own phase so the cluster never moves as one block
+
             loops += loop(ObjectAnimator.ofFloat(chip, View.TRANSLATION_Y, 0f, -CHIP_FLOAT_DP * density), CHIP_MS + index * 500L, index * 300L)
             loops += loop(ObjectAnimator.ofFloat(chip, View.ROTATION, -CHIP_SWAY_DEG, CHIP_SWAY_DEG), CHIP_MS + 1400L + index * 300L, index * 700L)
         }
@@ -147,7 +129,6 @@ object InductionMovement {
         })
     }
 
-    /** A there-and-back loop: [period] covers both directions, so one leg is half of it. */
     private fun loop(animator: ObjectAnimator, period: Long, delay: Long): Animator = animator.apply {
         duration = period / 2
         startDelay = delay
@@ -157,10 +138,6 @@ object InductionMovement {
         start()
     }
 
-    /**
-     * Carousel page turn: [outgoing] slides out and fades, [incoming] slides in from the side and
-     * its [cascade] views replay the entrance. [forward] picks the direction.
-     */
     fun turn(outgoing: View, incoming: View, forward: Boolean, vararg cascade: View) {
         val density = incoming.resources.displayMetrics.density
         val shift = SLIDE_DP * density * if (forward) 1f else -1f
@@ -195,12 +172,6 @@ object InductionMovement {
         }
     }
 
-    /**
-     * Keeps [hero] sized to whatever height [stage] has left after the other children of [column],
-     * so the art fills a tall screen and gives way (down to [minDp]) when the bottom ad slot takes
-     * its share; below that the stage scrolls instead of squashing. Re-runs whenever the stage
-     * changes height - an ad filling is the usual cause.
-     */
     fun keepHeroFitted(stage: View, column: ViewGroup, hero: View, minDp: Float = MIN_HERO_DP) {
         fun fit() {
             val available = stage.height - stage.paddingTop - stage.paddingBottom
@@ -226,7 +197,6 @@ object InductionMovement {
         stage.post { fit() }
     }
 
-    /** Soft infinite breathe for hero rings. Caller cancels the returned animator in onDestroy. */
     fun pulse(view: View): Animator? {
         if (!mustAnimate(animatorScale(view.context))) return null
         return ObjectAnimator.ofPropertyValuesHolder(

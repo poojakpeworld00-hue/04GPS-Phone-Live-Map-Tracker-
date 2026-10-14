@@ -35,37 +35,17 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.find.phone.gps.live.location.tracker.R
 
-/**
- * Runs the app-drawer ad sequence: loads and holds each configured ad format itself (so it has a
- * real "is this ready?" signal, which the app's shared ad classes do not expose), then on an app
- * tap walks the sequence from a persistent pointer and shows the first ready ad.
- *
- * Owning the loads is what lets each format honour its own `ad_unit_id` from Remote Config and lets
- * a not-loaded / failing / disabled / id-less format be skipped cleanly to the next in the chain.
- * The pointer advances past whatever showed and wraps after the last item, so the sequence restarts
- * correctly once exhausted. Everything is best-effort: any failure falls through to [run]'s
- * `proceed`, so a tap never gets stuck behind an ad.
- */
 object SliderSpotDriver {
-
     private const val TAG = "SliderSpotDriver"
 
-    /** The pause between two chained full-screen ads in `show_all` mode. */
     private const val CHAIN_GAP_MS = 400L
 
-    /**
-     * Suffix on a flow's pointer key for where its direct-link URL rotation has got to. Each flow
-     * rotates its own list: one shared pointer let every surface advance the others' rotation.
-     */
     private const val DIRECTLINK_POINTER_SUFFIX = "_directlink_url_ptr"
 
-    /** A direct-link continuation older than this is dropped rather than acted on out of context. */
     private const val RETURN_STALE_MS = 10 * 60 * 1000L
 
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    // Keyed by ad-unit id: the launcher's placements (leftPanel / rightPanel / drawer) each carry
-    // their own unit, and one shared slot per format would serve one placement's ad on another.
     private val interAds = HashMap<String, InterstitialAd>()
     private val appOpenAds = HashMap<String, AppOpenAd>()
     private val rewardedAds = HashMap<String, RewardedAd>()
@@ -73,11 +53,9 @@ object SliderSpotDriver {
 
     private val loading = HashSet<String>()
 
-    /** The tapped app's package for [CoreStartPuller], for the run in progress (null = generic loader). */
     @Volatile
     private var loaderPackage: String? = null
 
-    /** Loads every loadable format in the sequence that is not already in hand. */
     fun preload(context: Context, flow: DrawerAdFlow) {
         flow.sequence.forEach { spec ->
             when (spec.type) {
@@ -85,7 +63,7 @@ object SliderSpotDriver {
                 DrawerAdType.APPOPEN -> fetchAppOpen(context, spec.adUnitId)
                 DrawerAdType.REWARDED -> fetchRewarded(context, spec.adUnitId)
                 DrawerAdType.FULLSCREEN_NATIVE -> fetchNative(context, spec.adUnitId)
-                DrawerAdType.DIRECTLINK, DrawerAdType.CUSTOM -> Unit // a URL / house ad, nothing to load
+                DrawerAdType.DIRECTLINK, DrawerAdType.CUSTOM -> Unit
             }
         }
     }
@@ -96,24 +74,16 @@ object SliderSpotDriver {
         DrawerAdType.REWARDED -> rewardedAds.containsKey(spec.adUnitId)
         DrawerAdType.FULLSCREEN_NATIVE -> nativeAds.containsKey(spec.adUnitId)
         DrawerAdType.DIRECTLINK -> spec.adUnitId.isNotBlank() || spec.urls.isNotEmpty()
-        // Nothing to preload; whether a house ad exists is decided when it renders (miss → next).
+
         DrawerAdType.CUSTOM -> true
     }
 
-    // ---------------- On-demand ----------------
-
-    /** Callbacks waiting on an in-flight load, keyed like [loading] ("inter:<unit>", …). */
     private val waiters = HashMap<String, MutableList<(Boolean) -> Unit>>()
 
-    /** Tells whoever waits on [key] whether its load succeeded. */
     private fun settle(key: String, ok: Boolean) {
         waiters.remove(key)?.forEach { runCatching { it(ok) } }
     }
 
-    /**
-     * Loads [spec] now and calls [then] with whether it is ready — or false after [timeoutMs]
-     * (the block's `loader_timeout_ms`), so a slow network cannot hold the user's action hostage.
-     */
     private fun fetchNow(context: Context, spec: DrawerAdSpec, timeoutMs: Long, then: (Boolean) -> Unit) {
         val prefix = when (spec.type) {
             DrawerAdType.INTER -> "inter"
@@ -129,24 +99,9 @@ object SliderSpotDriver {
         preload(context, DrawerAdFlow(true, 0, listOf(spec)))
     }
 
-    /**
-     * Walks the sequence and shows ads according to [DrawerAdFlow.showAll] /
-     * [DrawerAdFlow.startFromFirst]:
-     *
-     * - `showAll` — every ready ad in turn, each one's dismissal starting the next, then [proceed].
-     * - `startFromFirst` — the first ready ad, always trying the sequence from the top.
-     * - neither — the first ready ad, resuming from where the last tap left off.
-     *
-     * If nothing is ready the pointer is reset and [proceed] runs immediately. [proceed] is invoked
-     * exactly once.
-     */
     fun run(activity: Activity, flow: DrawerAdFlow, pointerKey: String, proceed: () -> Unit) =
         runFor(activity, flow, pointerKey, null, proceed)
 
-    /**
-     * [run] for an app tap: [loaderPackage] is the app about to open, whose icon and name the
-     * loader shows while an `on_demand` ad is fetched.
-     */
     fun runFor(
         activity: Activity,
         flow: DrawerAdFlow,
@@ -157,7 +112,7 @@ object SliderSpotDriver {
         this.loaderPackage = loaderPackage
         val done = once(proceed)
         val size = flow.sequence.size
-        // Rotating is only meaningful when one tap shows one ad and we want taps to take turns.
+
         val start = if (flow.showAll || flow.startFromFirst) 0 else {
             SpotsLocker.getInstance(activity).getInt(pointerKey, 0)
                 .let { if (it in 0 until size) it else 0 }
@@ -166,18 +121,6 @@ object SliderSpotDriver {
         attempt(activity, flow, order, 0, pointerKey, done)
     }
 
-    /**
-     * Tries the candidate at [order]`[k]`; if it is not ready, is skipped, or fails to show, moves
-     * on to the next candidate ("skip it and try the next ad in the sequence"). When the list is
-     * exhausted the pointer is reset to the start and [done] runs.
-     *
-     * In `show_all` mode a *successful* show also moves on to the next candidate, so one tap walks
-     * the whole chain; otherwise the pointer is advanced past the ad that showed and [done] runs, so
-     * the next tap resumes after it and wraps at the end.
-     *
-     * A direct link is the one step with no dismissal callback of its own — it hands the foreground
-     * to a WebView — so its continuation waits on the launcher coming back instead. See [onReturnTo].
-     */
     private fun attempt(
         activity: Activity,
         flow: DrawerAdFlow,
@@ -196,10 +139,6 @@ object SliderSpotDriver {
         val idx = order[k]
         val spec = flow.sequence[idx]
         if (!isReady(spec)) {
-            // The first format in line that is not loaded is fetched on the spot, behind a loader;
-            // after that on-demand is spent for this tap, so a tap never waits more than once
-            // (one timeout per step would stack). Any position counts, so `directlink → inter` can
-            // still load its interstitial after the link.
             if (flow.onDemand && spec.adUnitId.isNotBlank() && spec.type != DrawerAdType.DIRECTLINK) {
                 log("${spec.type.key} not ready — loading on demand")
                 CoreStartPuller.show(activity, loaderPackage)
@@ -207,7 +146,6 @@ object SliderSpotDriver {
                     CoreStartPuller.hide()
                     val spent = flow.copy(onDemand = false)
                     if (ok && !activity.isFinishing && !activity.isDestroyed) {
-                        // Ready now: retry this step, which shows it.
                         attempt(activity, spent, order, k, pointerKey, done)
                     } else {
                         attempt(activity, spent, order, k + 1, pointerKey, done)
@@ -224,8 +162,7 @@ object SliderSpotDriver {
             SpotsLocker.getInstance(activity).putInt(pointerKey, (idx + 1) % size)
         }
         val next = { attempt(activity, flow, order, k + 1, pointerKey, done) }
-        // Chaining full-screen ads back to back needs a beat: the dismissal callback fires while the
-        // previous ad's activity is still finishing, and showing into that window is refused.
+
         val afterShown: () -> Unit =
             if (flow.showAll) ({ mainHandler.postDelayed({ next() }, CHAIN_GAP_MS) }) else done
         log("attempting ${spec.type.key} (idx=$idx)${if (flow.showAll) " [show_all]" else ""}")
@@ -241,10 +178,6 @@ object SliderSpotDriver {
                     if (!enterLink(activity, spec, pointerKey + DIRECTLINK_POINTER_SUFFIX)) {
                         next()
                     } else {
-                        // The landing page is now on top, and it is the ad — it has to be read, not
-                        // raced. Launching the app (or the next ad in the chain) here would shove it
-                        // off the foreground the moment it appeared, so wait for the user to come
-                        // back to the launcher and carry on from there.
                         onReturnTo(activity) { afterShown() }
                     }
                 }
@@ -254,8 +187,6 @@ object SliderSpotDriver {
             next()
         }
     }
-
-    // ---------------- Interstitial ----------------
 
     private fun fetchInter(context: Context, unitId: String) {
         if (unitId.isBlank() || interAds.containsKey(unitId) || !loading.add("inter:$unitId")) return
@@ -293,8 +224,6 @@ object SliderSpotDriver {
         ad.show(activity)
     }
 
-    // ---------------- App Open ----------------
-
     private fun fetchAppOpen(context: Context, unitId: String) {
         if (unitId.isBlank() || appOpenAds.containsKey(unitId) || !loading.add("appopen:$unitId")) return
         AppOpenAd.load(
@@ -331,8 +260,6 @@ object SliderSpotDriver {
         ad.show(activity)
     }
 
-    // ---------------- Rewarded ----------------
-
     private fun fetchRewarded(context: Context, unitId: String) {
         if (unitId.isBlank() || rewardedAds.containsKey(unitId) || !loading.add("rewarded:$unitId")) return
         RewardedAd.load(
@@ -366,10 +293,8 @@ object SliderSpotDriver {
                 onFailed()
             }
         }
-        ad.show(activity) { /* reward earned — the sequence proceeds regardless */ }
+        ad.show(activity) {  }
     }
-
-    // ---------------- Fullscreen native ----------------
 
     private fun fetchNative(context: Context, unitId: String) {
         if (unitId.isBlank() || nativeAds.containsKey(unitId) || !loading.add("native:$unitId")) return
@@ -460,12 +385,6 @@ object SliderSpotDriver {
         view.setNativeAd(ad)
     }
 
-    // ---------------- House ad (custom_ads) ----------------
-
-    /**
-     * This app's own full-screen house ad over the current screen, with a close button — QRScanner's
-     * `custom` fallback step. No house ad (or `IsCustomADS` off) → [onFailed], so the chain moves on.
-     */
     private fun presentCustom(activity: Activity, onShown: () -> Unit, onFailed: () -> Unit) {
         val content = activity.findViewById<ViewGroup>(android.R.id.content) ?: return onFailed()
         val overlay = android.widget.FrameLayout(activity).apply {
@@ -494,16 +413,6 @@ object SliderSpotDriver {
         )
     }
 
-    // ---------------- Direct link ----------------
-
-    /**
-     * The direct link opens in the Remote-Config open type ([StraightHrefOpener]: WebView / Custom Tab
-     * / browser, default WebView), which falls back to `ACTION_VIEW` and ignores a blank / scheme-less
-     * link.
-     *
-     * Returns false when nothing was opened, so the caller can fall through to the next ad rather
-     * than sitting waiting for a return from a page that never appeared.
-     */
     private fun enterLink(activity: Activity, spec: DrawerAdSpec, urlPointerKey: String): Boolean {
         val url = chooseDirectLink(activity, spec, urlPointerKey)
         if (url.isBlank()) {
@@ -515,13 +424,6 @@ object SliderSpotDriver {
         return opened
     }
 
-    /**
-     * The next URL from the slot's rotation, or its single configured URL.
-     *
-     * Rotating here rather than at parse time matters: the config is read several times per trigger
-     * (preload, then run), so advancing on parse would skip most of the list. The pointer is
-     * persisted, so the rotation survives a restart instead of always replaying the first link.
-     */
     private fun chooseDirectLink(activity: Activity, spec: DrawerAdSpec, urlPointerKey: String): String {
         val urls = spec.urls
         if (urls.isEmpty()) return spec.adUnitId
@@ -533,19 +435,6 @@ object SliderSpotDriver {
         return urls[at]
     }
 
-    /**
-     * Runs [action] once, the next time [activity] comes back to the foreground.
-     *
-     * The direct link is the only step in the chain that cannot tell us when it is finished with the
-     * screen: there is no `onAdDismissed` for a WebView we launched. Watching the launcher's own
-     * resume is the signal — it fires whether the user pressed back, swiped away or was taken to the
-     * Play Store and returned.
-     *
-     * If [activity] is destroyed while they are away (the launcher recreated or reclaimed), the flow
-     * carries on when the next instance of the same screen resumes, because the continuation is
-     * the user's own action (the tapped app opening) and must not be lost. Coming back after
-     * [RETURN_STALE_MS] drops it instead: an app opening long after its tap would be out of context.
-     */
     fun onReturnTo(activity: Activity, action: () -> Unit) {
         val app = activity.application
         if (app == null) return action()
@@ -570,7 +459,6 @@ object SliderSpotDriver {
             }
 
             override fun onActivityResumed(a: Activity) {
-                // The original screen, or a new instance of it once the original is gone.
                 if (a === original || (original == null && a.javaClass == screen)) release(run = true)
             }
 
@@ -588,8 +476,6 @@ object SliderSpotDriver {
         log("directlink opened — holding the flow until the launcher returns")
     }
 
-    // ---------------- helpers ----------------
-
     private fun once(block: () -> Unit): () -> Unit {
         var called = false
         return {
@@ -601,7 +487,6 @@ object SliderSpotDriver {
     }
 
     private val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
-
 
     private fun log(message: String) {
         if (BuildConfig.DEBUG) Log.d(TAG, message)

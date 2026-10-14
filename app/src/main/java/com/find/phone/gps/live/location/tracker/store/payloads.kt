@@ -9,7 +9,7 @@ data class CallPlatePayload(
     val initials: String,
     val type: CallSort,
     val number: String = "",
-    /** True when a contact name resolved; false for unknown/unsaved numbers (→ "Identify"). */
+
     val identified: Boolean = true
 )
 
@@ -23,9 +23,7 @@ data class HumanElement(
     val inGroup: Boolean = false
 )
 
-/** Demo data used until real CallLog / Contacts providers are wired in. */
 object MockPayload {
-
     val recents: List<CallPlatePayload> = listOf(
         CallPlatePayload("Sarah Khan", "9:24", "Incoming · 4m 12s", "SK", CallSort.INCOMING),
         CallPlatePayload("+1 (800) 244-0199", "8:50", "Spam · Telemarketer", "!", CallSort.SPAM),

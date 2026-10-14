@@ -38,13 +38,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-/**
- * Unlocked number details: a small map header for the registered area, the identity card with
- * its quick actions, a facts grid and the list of alternative names (each extra one behind a
- * rewarded ad unless Premium). An offline note offers an in-place retry of the lookup.
- */
 class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
-
     override val layoutId: Int = R.layout.screen_number_detail
 
     private lateinit var digest: NumDigest
@@ -54,7 +48,6 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
     private var expandNames = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // The map library has to be set up before super.onCreate inflates the MapView.
         StreetCharts.init(this)
         super.onCreate(savedInstanceState)
     }
@@ -104,8 +97,6 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
             insets
         }
     }
-
-    // ── Card / facts / names ──────────────────────────────────────────────
 
     private fun cityRegion(d: NumDigest): String = listOfNotNull(d.city, d.state).distinct().joinToString(", ")
 
@@ -182,7 +173,7 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
         val everyName = knownNames
         binding.lvNamesBlock.isVisible = everyName.isNotEmpty()
         binding.lvNamesList.removeAllViews()
-        // Long lists start collapsed; "Show all" expands them.
+
         val listed = when {
             expandNames -> everyName
             else -> everyName.take(NAMES_PREVIEW)
@@ -243,7 +234,6 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
         row.spinReveal.isVisible = busy
     }
 
-    /** A completed rewarded ad uncovers (and remembers) one name. */
     private fun watchForName(row: CellDetailNameBinding, name: String) {
         if (adBusy) return
         setRevealBusy(row, true)
@@ -262,8 +252,6 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
         }
     }
 
-    // ── Map ───────────────────────────────────────────────────────────────
-
     private fun dropPin() {
         areaPulse?.also { old ->
             old.stop()
@@ -273,7 +261,6 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
         offsetPin()
     }
 
-    /** Centres the pin in the strip between the top bar and the overlapping card. */
     private fun offsetPin() {
         val density = resources.displayMetrics.density
         val topSpace = statusInset + (46 * density).roundToInt()
@@ -283,8 +270,6 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
             invalidate()
         }
     }
-
-    // ── Retry ─────────────────────────────────────────────────────────────
 
     private fun relookup() {
         binding.actRetry.isVisible = false
@@ -303,8 +288,6 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
             }
         }
     }
-
-    // ── Actions ───────────────────────────────────────────────────────────
 
     private fun textNumber() = safeStart(Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:${digest.e164}")))
 
@@ -340,8 +323,6 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
             Toast.makeText(this, R.string.ds_no_app, Toast.LENGTH_SHORT).show()
         }
     }
-
-    // ── Lifecycle ─────────────────────────────────────────────────────────
 
     override fun onResume() {
         super.onResume()

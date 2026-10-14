@@ -23,13 +23,7 @@ import com.find.phone.gps.live.location.tracker.databinding.CellCarrierCodeBindi
 import com.find.phone.gps.live.location.tracker.databinding.ScreenCarrierCodesBinding
 import com.find.phone.gps.live.location.tracker.helpers.isNightMode
 
-/**
- * SIM Tools "Carrier codes" (design 1c). Shows USSD / short codes for the detected carrier, grouped
- * by section; tapping one opens the dialer (ACTION_DIAL) with the code filled in — never dials
- * automatically. A carrier tab per SIM when two are present.
- */
 class FrameDialsActivity : StageActivity<ScreenCarrierCodesBinding>() {
-
     override val layoutId: Int = R.layout.screen_carrier_codes
 
     private data class SimTab(val slot: Int, val carrier: String)
@@ -38,7 +32,6 @@ class FrameDialsActivity : StageActivity<ScreenCarrierCodesBinding>() {
     private var selected = 0
 
     override fun initView() {
-        // Dark icons on the light canvas, light icons in dark mode.
         WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = !isNightMode(this)
         ViewCompat.setOnApplyWindowInsetsListener(binding.lvCodesRoot) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())

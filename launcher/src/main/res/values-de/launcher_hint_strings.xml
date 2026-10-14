@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="launcher_hint_overlay_title">\"Über anderen Apps anzeigen\" aktivieren</string>
-    <string name="launcher_hint_overlay_description">Wir bringen dich direkt zurück, sobald es aktiviert ist.</string>
-    <string name="launcher_hint_default_home_title">%1$s als Startbildschirm wählen</string>
-    <string name="launcher_hint_default_home_description">Wähle es in der Liste aus, um deinen Startbildschirm festzulegen.</string>
-    <string name="launcher_hint_default_sms_title">Als SMS-App festlegen</string>
-    <string name="launcher_hint_default_sms_description">Tippe auf \"Als Standard festlegen\", um abzuschließen.</string>
-    <string name="launcher_hint_mock_row">Standard-Startbildschirm-App</string>
-    <string name="launcher_hint_mock_toggle_row">Berechtigung</string>
-    <string name="launcher_hint_overlay_row">Anzeige über anderen Apps zulassen</string>
+    <string name="launcher_hint_overlay_title">Schalte \"Über anderen Apps anzeigen\" ein</string>
+    <string name="launcher_hint_overlay_description">Nach dem Einschalten kehrst du automatisch hierher zurück.</string>
+    <string name="launcher_hint_default_home_title">%1$s als Start-App festlegen</string>
+    <string name="launcher_hint_default_home_description">Tippe in der Liste darauf, um es als Startbildschirm zu nutzen.</string>
+    <string name="launcher_hint_default_sms_title">Als Standard-SMS-App nutzen</string>
+    <string name="launcher_hint_default_sms_description">Zum Abschließen \"Als Standard festlegen\" antippen.</string>
+    <string name="launcher_hint_mock_row">Standard-App für den Startbildschirm</string>
+    <string name="launcher_hint_mock_toggle_row">Zugriffsrecht</string>
+    <string name="launcher_hint_overlay_row">Einblenden über anderen Apps erlauben</string>
 </resources>

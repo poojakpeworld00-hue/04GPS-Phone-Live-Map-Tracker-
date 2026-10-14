@@ -11,15 +11,9 @@ import android.util.AttributeSet
 import android.view.View
 import com.find.phone.gps.live.location.tracker.R
 
-/**
- * The design's teardrop map pin: a square with `border-radius: 50% 50% 50% 0` rotated -45°
- * (point down), filled with the 135° signal gradient (or a solid colour) and a white dot in
- * the middle. The view's bounds are the pin's bounding box; the shadow is drawn by the paint.
- */
 class TackContourView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null,
 ) : View(context, attrs) {
-
     private val body = Paint(Paint.ANTI_ALIAS_FLAG)
     private val dot = Paint(Paint.ANTI_ALIAS_FLAG)
     private val border = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
@@ -52,13 +46,12 @@ class TackContourView @JvmOverloads constructor(
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         val side = minOf(w, h).toFloat()
-        // Inset so the -45° rotation (diagonal ≈ 1.21 × side for the pointed corner) and the
-        // soft shadow both stay inside the view — a software layer clips to its bounds.
+
         val inset = side * (if (shadowColor != 0) 0.2f else 0.1f)
         rect.set(inset, inset, side - inset, side - inset)
         val r = rect.width() / 2f
         path.reset()
-        // Rounded on three corners, square on the bottom-left: that corner becomes the tip.
+
         path.addRoundRect(rect, floatArrayOf(r, r, r, r, r, r, 0f, 0f), Path.Direction.CW)
         body.shader = if (startColor != endColor) {
             LinearGradient(rect.left, rect.top, rect.right, rect.bottom, startColor, endColor, Shader.TileMode.CLAMP)

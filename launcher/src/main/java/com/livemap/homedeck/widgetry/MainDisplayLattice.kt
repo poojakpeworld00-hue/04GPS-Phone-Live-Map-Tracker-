@@ -90,15 +90,13 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
     private lateinit var binding: HdHomeScreenGridBinding
     private var columnCount = context.launcherConfig.homeColumnCount
     private var dockSlotCount = context.launcherConfig.dockColumnCount
-    // Dock cells are narrowed when there are more slots than columns; icons in them shrink to match.
+
     private var dockCellWidth = 0
     private var dockIconSize = 0
     private var dockIconMargin = 0
 
-    /** 255 unless a page is travelling - see [inPageTransit]; icons and labels are drawn at it. */
     private var pageTransitAlpha = 255
 
-    /** Reused so a travelling page costs no allocation per icon per frame. */
     private val pageTransitPaint = Paint(Paint.FILTER_BITMAP_FLAG)
     private var rowCount = context.launcherConfig.homeRowCount
     private var pageIndicatorsYPos = 0
@@ -157,12 +155,8 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
     private var draggingLeftFolderAt: Long? = null
     private var draggingEnteredNewFolderAt: Long? = null
 
-    // apply fake margins at the home screen. Real ones would cause the icons be cut at dragging at screen sides
     var sideMargins = Rect()
 
-    // Swapped in from a background refetch while the main thread draws and edits it: a
-    // copy-on-write list makes every walk see a stable snapshot instead of throwing
-    // ConcurrentModificationException mid-draw.
     @Volatile
     private var gridItems: MutableList<MainDisplayLatticeElement> =
         java.util.concurrent.CopyOnWriteArrayList<MainDisplayLatticeElement>()
@@ -170,38 +164,16 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
     private var draggedItemCurrentCoords = Pair(-1, -1)
     private var widgetViews = ArrayList<MineCoreAppletHolderView>()
 
-    /**
-     * Told the bottom edge (px, from the top of the first row) of the first page's time widget
-     * whenever it changes; 0 when there is none on the top row. The default-home banner hangs below
-     * it. Called on the main thread.
-     */
     var onTimeWidgetBottomChanged: ((Int) -> Unit)? = null
     private var reportedTimeWidgetBottom = -1
 
-    /**
-     * Told where the first page sits horizontally (px; 0 = in view, -width = one page to the
-     * left) on every frame it moves, so a view that belongs to that page - the default-home
-     * banner - slides with it like a widget instead of staying on every page. Called on the main
-     * thread, from the draw pass.
-     */
     var onFirstPageScrolled: ((Float) -> Unit)? = null
     private var reportedFirstPageX = Float.NaN
 
-    /** The grid row each placed widget view belongs to, so a view whose row is gone can be found - see [dropOrphanWidgetViews]. */
     private val widgetViewItemIds = java.util.WeakHashMap<MineCoreAppletHolderView, Long>()
 
-    /** Items whose binding has already been asked for, so a refusal is not asked again each frame. */
     private val bindAttempted = HashSet<Long>()
 
-    /**
-     * Rows whose bind is waiting on the system "Create widget?" dialog (or a configure screen).
-     *
-     * [wireWidget] gives the row its widget id before asking, so while the dialog is up the row
-     * looks bound to [sketchInto], which placed a view for it; the dialog's answer then placed a
-     * second one. Only one of two views per row is ever moved by the paging, so the other froze
-     * where it was - the first page's search bar, showing on every page. Only the dialog path did
-     * this: an allowed bind answers synchronously, before any frame is drawn.
-     */
     private val bindPending = HashSet<Long>()
 
     val appWidgetHost = MineCoreAppletHolder(context, WIDGET_HOST_ID)
@@ -211,13 +183,11 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
     var itemClickListener: ((MainDisplayLatticeElement) -> Unit)? = null
     var itemLongClickListener: ((MainDisplayLatticeElement) -> Unit)? = null
 
-
     init {
         ViewCompat.setAccessibilityDelegate(this, accessibilityHelper)
 
         val customTypeface = FontHelper.getTypeface(context)
-        // The home profile's label size (the launcher we replaced drew its labels at it) when one
-        // was resolved; the layout's own size otherwise. sp either way, so the system font size applies.
+
         val profileLabelSp = context.launcherConfig.labelTextSp
         val labelTextSize = if (profileLabelSp > 0f) {
             profileLabelSp * context.resources.displayMetrics.scaledDensity
@@ -250,8 +220,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             style = Paint.Style.STROKE
         }
 
-        // HyperOS-style dots: small filled discs and nothing else - no outline, no tray. Alpha is
-        // applied per frame from the pager's fade, which is what carries them over a wallpaper.
         emptyPageIndicatorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = context.resources.getColor(android.R.color.white)
             style = Paint.Style.FILL
@@ -316,13 +284,12 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         ensureBackgroundThread {
             val started = android.os.SystemClock.elapsedRealtime()
             val providers = appWidgetManager.installedProviders
-            // A refetch hands back fresh rows; an icon already loaded for the same row keeps its
-            // drawable, so only what is new is decoded - not every icon on every page again.
+
             val loaded = gridItems
                 .filter { it.type == ITEM_TYPE_ICON && it.drawable != null }
                 .associateBy { Pair(it.id, it.packageName) }
             val items = context.homeScreenGridItemsDB.getAllItems() as ArrayList<MainDisplayLatticeElement>
-            // After the fake uninstall nothing of ours is ever drawn again, whatever wrote the row.
+
             if (context.launcherConfig.selfIconHidden) {
                 val own = context.packageName
                 items.filter { AutoErasure.isOurRow(it, own) }.forEach { stray ->
@@ -353,9 +320,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                     providers.firstOrNull { it.provider.className == item.className }
             }
 
-            // What is on screen is drawn first: the dock, the page in view and folder contents,
-            // then the page itself - the time, the search bar and the dock no longer wait for
-            // every icon on every other page. The rest follow nearest page first, drawn once more.
             val missing = items.filter { it.type == ITEM_TYPE_ICON && it.drawable == null }
             val page = pager.getCurrentPage()
             val (now, later) = missing.partition { it.docked || it.parentId != null || it.page == page }
@@ -376,10 +340,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    /**
-     * Loads [icons] in parallel - an icon is an inflate, a render and a shape each, and they do not
-     * depend on one another - and returns once all are in.
-     */
     private fun decodeIcons(icons: List<MainDisplayLatticeElement>) {
         if (icons.isEmpty()) return
         val pool = Executors.newFixedThreadPool(
@@ -394,15 +354,8 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    /** The top system inset, kept so [topReserve] can be applied on top of it at any time. */
     private var insetTop = 0
 
-    /**
-     * Space kept free above the first row, in px, for a card drawn over the top of the workspace —
-     * the "Setup Not Complete" banner. Without it that card lands on the first row (the clock),
-     * because the grid is transparent and starts right under the status bar. Changing it re-lays
-     * the cells out; items keep their grid positions.
-     */
     var topReserve = 0
         set(value) {
             if (field == value) return
@@ -426,7 +379,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             iconMargin =
                 (context.resources.getDimension(R.dimen.launcher_icon_side_margin) * 5 / columnCount).toInt()
             isFirstDraw = true
-            // pseudo widgets keep their id, it is only used as a tag and is not reallocated here
+
             gridItems
                 .filter { it.type == ITEM_TYPE_WIDGET && it.pseudoWidgetLayout() == null }
                 .forEach { appWidgetHost.deleteAppWidgetId(it.widgetId) }
@@ -462,25 +415,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    /**
-     * Takes any already-placed search pill off the grid.
-     *
-     * Its row is deleted straight from the database — see HomeDeck.purgeSeededSearchBarIfNeeded,
-     * which has to work before this view has loaded any items — and the next fetch reflects that.
-     * But a pseudo widget placed earlier in this process is a *child view* of this layout, and a
-     * redraw does not take a child away. Without this the pill would stay on screen until the
-     * launcher was restarted, on exactly the one run where it is being removed.
-     */
-    /**
-     * Takes off the grid every widget view whose row is no longer in [gridItems].
-     *
-     * A row can be deleted without the grid being told - HomeDeck.renewLaunchers drops every
-     * row of an app that left the app list, and a layout rebuild clears the seeded widgets. A
-     * refetch then hands back the rows without it, but a widget view is a *child* of this layout and
-     * stays. The per-frame positioning only walks [gridItems], so that view was never moved again:
-     * it froze where it was - usually page 1's search bar - and showed on every page, under the
-     * icons. Runs on the main thread after each refetch.
-     */
     private fun dropOrphanWidgetViews() {
         val live = gridItems.mapNotNullTo(HashSet()) { it.id }
         val orphans = orphanWidgetViews(widgetViews.associateWith { widgetViewItemIds[it] }, live)
@@ -653,7 +587,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         redrawGrid()
     }
 
-    // figure out at which cell was the item dropped, if it is empty
     fun itemDraggingStopped() {
         widgetViews.forEach {
             it.hasLongPressed = false
@@ -695,7 +628,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 allGridItems = otherGridItems
             )
             binding.lvResizeFrameUi.beVisible()
-            binding.lvResizeFrameUi.z = 1f     // make sure the frame isnt behind the widget itself
+            binding.lvResizeFrameUi.z = 1f
             binding.lvResizeFrameUi.onClickListener = {
                 concealResizeLines()
             }
@@ -785,10 +718,9 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             val xIndex = gridCells.x
             val yIndex = gridCells.y
 
-            // check if the destination cell is empty
             var isDroppingPositionValid = true
             val wantedCell = Pair(xIndex, yIndex)
-            // No moving folder into the dock
+
             if (draggedHomeGridItem?.type == ITEM_TYPE_FOLDER && yIndex == rowCount - 1) {
                 isDroppingPositionValid = false
             } else {
@@ -892,7 +824,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 xIndex = gridCells.x
                 yIndex = gridCells.y
 
-                // check if the destination cell is empty or a folder
                 isDroppingPositionValid = true
                 val wantedCell = Pair(xIndex, yIndex)
                 gridItems.filterVisibleOnCurrentPageOnly().filter { it.id != draggedItem?.id }
@@ -1024,7 +955,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         } else {
             xIndex
         }
-        // we are moving an existing home screen item from one place to another
+
         if (draggedHomeGridItem != null) {
             draggedHomeGridItem.apply {
                 val oldParentId = parentId
@@ -1100,7 +1031,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 }
             }
         } else if (draggedItem != null) {
-            // we are dragging a new item at the home screen from the All Apps fragment
             val newHomeScreenGridItem = MainDisplayLatticeElement(
                 id = null,
                 left = finalXIndex,
@@ -1225,7 +1155,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 }
 
                 ensureBackgroundThread {
-                    // store the new widget at creating it, else just move the existing one
                     if (widgetItem.id == null) {
                         val itemId = context.homeScreenGridItemsDB.insert(widgetItem)
                         widgetItem.id = itemId
@@ -1261,7 +1190,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                             page = pager.getCurrentPage()
                         }
 
-
                         if (widgetItem.page != oldPage && oldPage != 0) {
                             if (gridItems.none { it.page == oldPage && it.parentId == null }) {
                                 erasePage(oldPage)
@@ -1284,7 +1212,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         redrawGrid()
     }
 
-    // pseudo widgets are inflated by us, there is no provider to look up or bind to
     private fun MainDisplayLatticeElement.pseudoWidgetLayout() = when (className) {
         PSEUDO_WIDGET_CLOCK -> R.layout.hd_pseudo_widget_digital_clock
         PSEUDO_WIDGET_SEARCH -> R.layout.hd_pseudo_widget_search_bar
@@ -1293,16 +1220,11 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         else -> null
     }
 
-    /** The phone's clock app (its alarms screen, which every clock app answers); nothing when there is none. */
     private fun enterClock() {
         val intent = Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching { context.startActivity(intent) }.onFailure { timber.log.Timber.w(it, "MainDisplayLattice: no clock app") }
     }
 
-    /**
-     * Google search from our drawn bar: the Google app's search (or its voice search from the mic);
-     * the phone's web search where the Google app is missing; our own apps search as a last resort.
-     */
     private fun enterGoogleSearch(voice: Boolean) {
         val google = "com.google.android.googlequicksearchbox"
         val attempts = listOf(
@@ -1321,7 +1243,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
 
         if (item.pseudoWidgetLayout() != null) {
-            // still allocate an id, it is what identifies the host view in widgetViews
             item.widgetId = appWidgetHost.allocateAppWidgetId()
             ensureBackgroundThread {
                 context.homeScreenGridItemsDB.reviseWidgetId(item.widgetId, item.id!!)
@@ -1349,8 +1270,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             ) { canBind ->
                 item.id?.let { bindPending.remove(it) }
                 if (canBind) {
-                    // A setup screen Android lets a launcher skip (Google's search bar) is skipped:
-                    // the widget works as placed, and the screen would only interrupt the first run.
                     if (appWidgetProviderInfo.configure != null &&
                         !com.livemap.homedeck.preset.MainAppletSower.configurationOptional(appWidgetProviderInfo)
                     ) {
@@ -1384,8 +1303,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         appWidgetProviderInfo: AppWidgetProviderInfo?,
         item: MainDisplayLatticeElement,
     ) {
-        // One view per row, whatever path got here twice: a second view would be the one the
-        // paging never moves (see bindPending), frozen on every page.
         widgetViews.filter { (item.id != null && widgetViewItemIds[it] == item.id) || it.tag == item.widgetId }
             .forEach { stale ->
                 removeView(stale)
@@ -1393,12 +1310,11 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 widgetViewItemIds.remove(stale)
             }
         val pseudoWidgetLayout = item.pseudoWidgetLayout()
-        // we have to pass the base context here, else there will be errors with the themes
+
         val widgetView = if (pseudoWidgetLayout != null) {
             MineCoreAppletHolderView((context as HomeDeck).baseContext).apply {
                 View.inflate(context, pseudoWidgetLayout, this)
                 when (item.className) {
-                    // The reference opened its AI chat here; we open the apps search panel instead.
                     PSEUDO_WIDGET_SEARCH -> setOnClickListener { (this@MainDisplayLattice.context as HomeDeck).onFlingLeft() }
                     PSEUDO_WIDGET_TIME -> setOnClickListener { enterClock() }
                     PSEUDO_WIDGET_GOOGLE_SEARCH -> {
@@ -1408,9 +1324,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 }
             }
         } else {
-            // createView already binds the id and pushes the views the service is holding;
-            // calling setAppWidget again resets the host view to its blank default and throws
-            // those views away, which is why a restored widget drew as an empty rectangle.
             appWidgetHost.createView(
                 (context as HomeDeck).baseContext,
                 item.widgetId,
@@ -1420,7 +1333,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
 
         widgetView.tag = item.widgetId
         widgetView.itemId = item.id
-        // One view per row: a second one would be the one left behind, never moved again.
+
         val stale = widgetViews.filter { it.tag == item.widgetId || (item.id != null && it.itemId == item.id) }
         stale.forEach { removeView(it) }
         widgetViews.removeAll(stale.toSet())
@@ -1441,9 +1354,8 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         widgetViews.add(widgetView)
         item.id?.let { widgetViewItemIds[widgetView] = it }
 
-        // remove the drawable so that it gets refreshed on long press
         item.drawable = null
-        // Delete existing widget if it has already been loaded to the list
+
         gridItems.removeIf { it.id == item.id }
         gridItems.add(item)
         (context as HomeDeck).wipeWidgetsSearch()
@@ -1464,8 +1376,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         val widgetDpWidth = (widgetWidth / density).toInt()
         val widgetDpHeight = (widgetHeight / density).toInt()
 
-        // pseudo widgets are never bound to a provider, telling the AppWidgetManager about
-        // their size would throw
         if (widgetView.appWidgetInfo != null) relayWidgetSize(widgetView, widgetDpWidth, widgetDpHeight)
 
         widgetView.layoutParams?.width = widgetWidth
@@ -1473,16 +1383,8 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         return Size(widgetWidth, widgetHeight)
     }
 
-    /** Last size (dp) each widget view was told, so the system hears about a size only when it changes. */
     private val reportedWidgetSizes = java.util.WeakHashMap<AppWidgetHostView, Pair<Int, Int>>()
 
-    /**
-     * Tells the widget's provider its size. This sits on the draw path, so it is sent once per
-     * size, not per frame (it is a binder call into system_server). A widget id the system no
-     * longer knows - its app removed or updated, the binding lost - makes the service throw
-     * ("Bundle.putAll on a null object"); that is caught and not retried, instead of taking the
-     * launcher down on every frame.
-     */
     private fun relayWidgetSize(widgetView: AppWidgetHostView, dpWidth: Int, dpHeight: Int) {
         val size = dpWidth to dpHeight
         if (reportedWidgetSizes[widgetView] == size) return
@@ -1506,7 +1408,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         )
     }
 
-    // convert stuff like 102x192 to grid cells like 0x1
     private fun getClosestGridCells(center: Point): Point? {
         return cells.entries.firstOrNull { (_, cell) -> center.x == cell.centerX() && center.y == cell.centerY() }?.key
     }
@@ -1523,16 +1424,8 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
 
     private fun getFakeHeight() = height - sideMargins.top - sideMargins.bottom
 
-    /** Grid items whose drawing already threw once; logged once, then skipped quietly. */
     private val brokenItems = HashSet<Long>()
 
-    /**
-     * One home-screen item must never take the whole frame down: an exception while drawing or
-     * placing it (a third-party widget, a bad row in the database) skips just that item for this
-     * frame. The canvas is put back to the save level it had, so whatever the item left half-done
-     * (a translate, a clip) cannot shift the items drawn after it. Without this the exception
-     * escaped the draw pass on every frame - FailureWarden caught the first few, then saw a loop.
-     */
     private inline fun guardItem(canvas: Canvas, item: MainDisplayLatticeElement, draw: () -> Unit) {
         val saveCount = canvas.saveCount
         try {
@@ -1558,9 +1451,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             val offsetX = sideMargins.left + (this@MainDisplayLattice.width * xFactor).toInt()
             val offsetY = sideMargins.top
             cells[item.getTopLeft(rowCount)]!!.withOffset(offsetX, offsetY) {
-                // A page does not only slide: it settles back to full size as it arrives and eases
-                // down as it leaves, which is what makes the movement read as one surface rather
-                // than a strip of icons being dragged past.
                 canvas.inPageTransit(xFactor) { canvas.sketchItemInCell(item, this) }
             }
         }
@@ -1619,11 +1509,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 }
         }
 
-        // A widget gets its host view the first pass its item is here, and is repositioned on
-        // every pass after. This used to be gated on the first draw, which a widget restored from
-        // the database missed - the items arrive on a background thread, usually after that draw -
-        // so it was never given a view and the home kept a hole where it belonged until something
-        // else forced a full redraw, which took 15-25 seconds.
         val firstPageX = -pager.getCurrentViewPositionInFullPageSpace() * width
         if (firstPageX != reportedFirstPageX) {
             reportedFirstPageX = firstPageX
@@ -1639,10 +1524,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 }
                 val placed = placedWidgetView(widgetViews, { it.tag }, { widgetViewItemIds[it] }, item.widgetId, item.id)
                 if (placed != null) {
-                    // A refetch that read the database before a fresh bind wrote its id hands back
-                    // the row still at -1 (first install: the time and search bar are bound while
-                    // several refetches are in flight). Matched by the tag alone, its view was
-                    // never moved again and showed on every page; the view holds the real id.
                     val tag = placed.tag as? Int
                     if (tag != null && tag != item.widgetId) {
                         timber.log.Timber.w("MainDisplayLattice: row %s had widget id %d, its view %d - kept the view's", item.id, item.widgetId, tag)
@@ -1651,13 +1532,12 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                     reviseWidgetPositionAndSize(placed, item)
                     return@forEach
                 }
-                // Seeded widgets carry no id yet: they have to be bound before they can be drawn,
-                // and a bind the user refuses must not be retried on every frame.
+
                 if (item.widgetId < 0) {
                     if (bindAttempted.add(item.id ?: return@forEach)) wireWidget(item)
                     return@forEach
                 }
-                // Has an id but is still waiting on the bind dialog: its answer places the view.
+
                 if (item.id in bindPending) return@forEach
                 val providerInfo = item.providerInfo
                     ?: appWidgetManager!!.installedProviders
@@ -1676,40 +1556,31 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             post { onTimeWidgetBottomChanged?.invoke(timeWidgetBottom) }
         }
 
-        // The page indicator shows while a page is dragged or settling and fades out after, the
-        // way HyperOS does it. Everything here is derived from the pager's position each frame -
-        // no state of its own, so it can never be left mid-way.
         if (pager.mustDisplayPageChangeIndicator()) {
             val pageCount = pager.getPageCount()
             val step = pageIndicatorRadius * 2 + pageIndicatorMargin
             val rowWidth = (pageCount - 1) * step + 2 * pageIndicatorRadius
             val firstCenterX = (getFakeWidth() - rowWidth) / 2 + sideMargins.left + pageIndicatorRadius
             val centerY = pageIndicatorsYPos.toFloat() + sideMargins.top
-            // At rest the whole row is drawn at PAGE_INDICATOR_RESTING_ALPHA; moving a page
-            // brings it to full. getIndicatorsEmphasis is what the settle animation fades back.
+
             val emphasis = pager.getIndicatorsEmphasis()
             val strength = PAGE_INDICATOR_RESTING_ALPHA + (255 - PAGE_INDICATOR_RESTING_ALPHA) * emphasis
             val fadeIn = pager.getIndicatorsFadeIn()
             val alpha = (strength * fadeIn).toInt().coerceIn(0, 255)
-            // Grows into place over the same 120 ms as the fade, so the row arrives rather than blinks.
+
             val appear = PAGE_INDICATOR_APPEAR_SCALE + (1f - PAGE_INDICATOR_APPEAR_SCALE) * fadeIn
 
-            // Where the current page sits between the dots: whole while resting, fractional while
-            // a page is being dragged or is settling. Every mark in the row is drawn from it.
             val position = pager.getCurrentViewPositionInFullPageSpace().coerceIn(0f, (pageCount - 1).toFloat())
 
             emptyPageIndicatorPaint.alpha = alpha * PAGE_INDICATOR_INACTIVE_ALPHA / 255
             for (page in 0 until pageCount) {
                 val cx = firstCenterX + page * step
-                // A dot swells a little as the capsule arrives over it and settles back after -
-                // the row moves with the page instead of only the one mark on it.
+
                 val nearness = (1f - abs(position - page)).coerceAtLeast(0f)
                 val radius = pageIndicatorInactiveRadius * (1f + PAGE_INDICATOR_DOT_SWELL * nearness) * appear
                 canvas.drawCircle(cx, centerY, radius, emptyPageIndicatorPaint)
             }
 
-            // The capsule: at rest a short pill, longest half-way between two dots, and never
-            // long enough to touch the one it is moving towards.
             val fraction = position - floor(position)
             val stretch = 1f - abs(2f * fraction - 1f)
             val maxHalfLength = step / 2f - 1f
@@ -1722,7 +1593,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 cx - halfLength, centerY - capsuleRadius, cx + halfLength, centerY + capsuleRadius,
                 capsuleRadius, capsuleRadius, currentPageIndicatorPaint,
             )
-            // Keep drawing while the row is still fading in.
+
             if (pager.getIndicatorsFadeIn() < 1f) {
                 postOnAnimation { redrawGrid() }
             }
@@ -1783,7 +1654,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                         (draggedItemCurrentCoords.second).toFloat()
                     )
                 ) {
-
                     val center = folder.getItemsGridCenters().minBy {
                         abs(it.second - draggedItemCurrentCoords.first + sideMargins.left) + abs(it.third - draggedItemCurrentCoords.second + sideMargins.top)
                     }
@@ -1799,7 +1669,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                         dragShadowCirclePaint
                     )
                 } else {
-                    // draw a circle under the current cell
                     val center = gridCenters.minBy {
                         abs(it.x - draggedItemCurrentCoords.first + sideMargins.left) + abs(it.y - draggedItemCurrentCoords.second + sideMargins.top)
                     }
@@ -1821,7 +1690,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                     }
                 }
 
-                // show the app icon itself at dragging, move it above the finger a bit to make it visible
                 val drawableX = (draggedItemCurrentCoords.first - iconSize / 1.5f).toInt()
                 val drawableY = (draggedItemCurrentCoords.second - iconSize / 1.2f).toInt()
                 val newDrawable = if (draggedItem?.type == ITEM_TYPE_FOLDER) {
@@ -1837,7 +1705,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 )
                 newDrawable?.draw(canvas)
             } else if (draggedItem!!.type == ITEM_TYPE_WIDGET) {
-                // at first draw we are loading the widget from the database at some exact spot, not dragging it
                 if (!isFirstDraw) {
                     val center = gridCenters.minBy {
                         abs(it.x - draggedItemCurrentCoords.first + sideMargins.left) + abs(it.y - draggedItemCurrentCoords.second + sideMargins.top)
@@ -1862,7 +1729,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                         )
                     }
 
-                    // show the widget preview itself at dragging
                     draggedItem!!.drawable?.also { drawable ->
                         val aspectRatio = drawable.minimumHeight / drawable.minimumWidth.toFloat()
                         val drawableX =
@@ -1900,12 +1766,10 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         } else {
             0
         }
-        // The profile's icon scale is applied through the margin, so labels, hit rects and drag
-        // shadows - all measured from cell + margin - move with the icon instead of overlapping it.
+
         val baseMargin = (context.resources.getDimension(R.dimen.launcher_icon_side_margin) * 5 / columnCount).toInt()
         val cell = min(cellWidth, cellHeight)
-        // The previous launcher's icon size, when known, is drawn at exactly that many dp (the
-        // margin absorbs the rest of the cell); otherwise the grid's own icon scaled by the profile.
+
         val profileIconDp = context.launcherConfig.iconSizeDp
         val scaledIcon = if (profileIconDp > 0) {
             (profileIconDp * context.resources.displayMetrics.density).toInt().coerceIn(1, cell)
@@ -1914,18 +1778,13 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
         iconMargin = ((cell - scaledIcon) / 2).coerceAtLeast(0)
         iconSize = cell - 2 * iconMargin
-        // Set below, once the dock's own icon size is known - the dots belong in the gap it leaves.
-        // The dock (last row) is DOCK_COLUMN_COUNT slots spread over the full width, each holding
-        // a cell of the grid's own size so icons, hit rects and drops need no dock special case;
-        // dock cells beyond that count simply do not exist, so nothing can be dropped there.
+
         dockSlotCount = context.launcherConfig.dockColumnCount.coerceIn(1, MAX_DOCK_SLOTS)
         val dockColumnCount = dockSlotCount
         val dockSlotWidth = getFakeWidth() / dockColumnCount
-        // A dock wider than the grid (five slots over four columns) gets narrower cells, and the
-        // icon inside shrinks with them; a dock no wider keeps the grid's own cell.
+
         dockCellWidth = min(cellWidth, dockSlotWidth)
-        // The dock draws the profile's own dock size when it has one (One UI's label-less hotseat
-        // is larger than its workspace icons), else the grid icon; either way centred in its cell.
+
         val dockDp = context.launcherConfig.dockIconSizeDp
         dockIconSize = if (dockDp > 0) {
             (dockDp * context.resources.displayMetrics.density).toInt().coerceIn(1, min(dockCellWidth, cellHeight))
@@ -1933,10 +1792,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             min(iconSize, dockCellWidth - 2 * iconMargin).coerceAtLeast(1)
         }
         dockIconMargin = ((dockCellWidth - dockIconSize) / 2).coerceAtLeast(0)
-        // The page dots sit between what the last row of labels actually reaches and the top of
-        // the dock's icons, centred in that band. Measuring from the labels rather than from the
-        // row's edge is what keeps them clear of a name that wraps to two lines, which is taller
-        // than the cell holding it and used to crowd them.
+
         val dockRowTop = (rowCount - 1) * cellHeight
         val dockIconTop = dockRowTop + cellHeight - dockBottomMargin - dockIconSize
         val labelBottom = if (context.launcherConfig.showHomeAppLabels) {
@@ -1986,8 +1842,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
     }
 
     fun fragmentCollapsed() {
-        // the grid fades out behind an expanding fragment, bring it back right away so that
-        // it is visible during the closing animation
         animate().cancel()
         alpha = 1f
         widgetViews.forEach {
@@ -1995,7 +1849,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    // get the clickable area around the icon, it includes text too
     fun getClickableRect(item: MainDisplayLatticeElement): Rect {
         if (cells.isEmpty()) {
             stuffCellSizes()
@@ -2012,14 +1865,12 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             val cell = cells[item.getTopLeft(rowCount)] ?: return Rect(0, 0, 0, 0)
             clickableLeft = cell.left + sideMargins.left
             clickableTop = if (item.docked) {
-                // Same margin the dock draws with, so the target sits on the icon - see sketchItemInCell.
                 dockCellY + cellHeight - dockIconSize - dockBottomMargin
             } else {
                 cell.top - iconMargin
             } + sideMargins.top
         }
         val additionalHeight = if (!item.docked && context.launcherConfig.showHomeAppLabels) {
-            // The label's own height, so every item's target is the same and matches what is drawn.
             (LABEL_MAX_LINES * (textPaint.fontMetrics.bottom - textPaint.fontMetrics.top)).toInt()
         } else 0
         val size = if (item.docked) dockIconSize else iconSize
@@ -2032,7 +1883,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         )
     }
 
-    // drag the center of the widget, not the top left corner
     private fun getWidgetOccupiedRect(item: Point): Rect {
         val left = item.x - floor((draggedItem!!.getWidthInCells() - 1) / 2.0).toInt()
         val rect = Rect(
@@ -2076,7 +1926,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             }
         }
 
-        // if a folder is open, we only want to allow clicks on items in the folder
         if (currentlyOpenFolder != null) {
             return null
         }
@@ -2117,7 +1966,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
 
     private fun MainDisplayLatticeElement.outOfBounds(): Boolean {
         return ((!docked && (left >= columnCount || right >= columnCount))
-                // a dock slot past the slot count has no cell (an install docked before the dock shrank)
+
                 || (docked && right >= dockSlotCount)
                 || (!docked && (top >= rowCount - 1 || bottom >= rowCount - 1))
                 || (type == ITEM_TYPE_WIDGET && (bottom - top > rowCount - 1 || right - left > columnCount - 1))
@@ -2164,10 +2013,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             val viewLocation = IntArray(2)
             getLocationOnScreen(viewLocation)
 
-            // home screen
             if (virtualViewId == -1) {
-                // The host app label, not a module string: a screen reader announcing the home
-                // screen should name the app the user installed.
                 node.text = runCatching {
                     context.applicationInfo.loadLabel(context.packageManager).toString()
                 }.getOrElse { context.getString(R.string.launcher_app_launcher_name) }
@@ -2271,7 +2117,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
 
     fun getCurrentIconSize(): Int = iconSize
 
-
     fun setSwipeMovement(diffX: Float) {
         if (draggedItem == null) {
             pager.setSwipeMovement(diffX)
@@ -2282,13 +2127,10 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         pager.finalizeSwipe()
     }
 
-    /** See AnimatingLatticeSwiper.flingSwipe. */
     fun flingSwipe(towardsNext: Boolean): Boolean = draggedItem == null && pager.flingSwipe(towardsNext)
 
-    /** The first page - the home page, the only one the left-edge (host) panel opens from. */
     fun isOnFirstPage() = pager.getCurrentPage() == 0 && !pager.isPaging()
 
-    /** The last page, the only one the right-edge (apps) panel opens from. */
     fun isOnLastPage() = pager.getCurrentPage() >= getMaxPage() && !pager.isPaging()
 
     fun enterFolder(folder: MainDisplayLatticeElement) {
@@ -2323,9 +2165,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         if (item.id != draggedItem?.id) {
             val drawableX = cell.left + (if (item.docked) dockIconMargin else iconMargin)
 
-            // A folder's tile is composed from its children each time; an app icon is drawn from
-            // the bitmap rasterised for it once (see iconBitmap) - re-rendering an adaptive icon
-            // for every icon on two pages per frame is what made a page swipe crawl.
             val drawable = if (item.type == ITEM_TYPE_FOLDER) {
                 item.toFolder().generateDrawable()
             } else {
@@ -2377,17 +2216,12 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    /** Null while the page is in place, so the common case draws the bitmap with no paint at all. */
     private fun transitPaint(): Paint? = if (pageTransitAlpha >= 255) {
         null
     } else {
         pageTransitPaint.apply { alpha = pageTransitAlpha }
     }
 
-    /**
-     * The item's icon as a bitmap of [size] px, rasterised once and kept on the item until its
-     * drawable or the size changes. Null when the item has no drawable yet.
-     */
     private fun MainDisplayLatticeElement.iconBitmap(size: Int): Bitmap? {
         val source = drawable ?: return null
         if (size <= 0) return null
@@ -2401,7 +2235,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         return bitmap
     }
 
-    /** Label layouts by title and paint, built once per cell width; cleared when the cells are re-measured. */
     private val labelLayouts = HashMap<String, StaticLayout>()
 
     private fun labelLayout(title: String, paint: TextPaint): StaticLayout {
@@ -2416,11 +2249,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    /**
-     * Draws [block] as the page it belongs to is travelling: scaled down and faded in proportion
-     * to how far off centre it is ([xFactor] 0 in place, 1 a full page away). The dock is drawn
-     * outside this, so it stays put the way a dock does.
-     */
     private fun Canvas.inPageTransit(xFactor: Float, block: () -> Unit) {
         val progress = min(abs(xFactor), 1f)
         if (progress == 0f) {
@@ -2688,10 +2516,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
     }
 
     companion object {
-        /**
-         * The view placed for the grid row [itemId]: matched by the row first, since the row's
-         * [widgetId] can be stale after a refetch that raced its bind; by the widget id otherwise.
-         */
         internal fun <V> placedWidgetView(
             views: List<V>,
             tagOf: (V) -> Any?,
@@ -2701,36 +2525,21 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         ): V? = views.firstOrNull { itemId != null && itemIdOf(it) == itemId }
             ?: views.firstOrNull { tagOf(it) == widgetId }
 
-        /**
-         * The views in [viewItemIds] whose grid row id is not in [liveItemIds]. A view with no row
-         * recorded is kept: it is never guessed at.
-         */
         internal fun <V> orphanWidgetViews(viewItemIds: Map<V, Long?>, liveItemIds: Set<Long>): List<V> =
             viewItemIds.filter { (_, id) -> id != null && id !in liveItemIds }.keys.toList()
 
-        /** How far the active page dot stretches towards the next dot half-way through a swipe, as a share of the dot pitch. */
-        /**
-         * A home label is one line on every device and grid: a name that wraps pushes past the
-         * cell that holds it, which crowds the page dots under the last row and leaves rows of
-         * unequal height. What does not fit is ellipsised, as the drawer already does.
-         */
         private const val LABEL_MAX_LINES = 1
 
         private const val PAGE_INDICATOR_STRETCH = 0.6f
         private const val PAGE_INDICATOR_INACTIVE_ALPHA = 112
-        /**
-         * What the row is worth when nobody is touching it; the rest of the way is the swipe's.
-         * High enough that white dots still read over a pale wallpaper, which is where the halo
-         * below carries most of the contrast.
-         */
+
         private const val PAGE_INDICATOR_RESTING_ALPHA = 210f
-        /** How far a page shrinks and fades as it slides out; small on purpose. */
+
         private const val PAGE_TRANSIT_SCALE = 0.08f
         private const val PAGE_TRANSIT_FADE = 0.45f
 
-        /** How much a dot grows as the capsule arrives over it. */
         private const val PAGE_INDICATOR_DOT_SWELL = 0.18f
-        /** The row's size as it appears, growing into place rather than blinking on. */
+
         private const val PAGE_INDICATOR_APPEAR_SCALE = 0.75f
         private const val FOLDER_OPEN_HOLD_THRESHOLD = 500L
         private const val FOLDER_CLOSE_HOLD_THRESHOLD = 300L
@@ -2738,10 +2547,6 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
     }
 }
 
-/**
- * Helper class responsible for managing current page and providing utilities for animating page changes,
- * as well as partial dragigng between pages
- */
 private class AnimatingLatticeSwiper(
     private val getMaxPage: () -> Int,
     private val redrawGrid: () -> Unit,
@@ -2751,17 +2556,13 @@ private class AnimatingLatticeSwiper(
     private val getPrevPageBound: () -> Int,
     private val pageChangeStarted: () -> Unit,
 ) {
-
     companion object {
         private const val PAGE_CHANGE_HOLD_THRESHOLD = 500L
 
-        /** A whole page's settle; a partly dragged page gets its share of this. */
         private const val PAGE_SETTLE_MS = 220L
 
-        /** A page walked from a swipe queued while the previous one settled. */
         private const val PAGE_SETTLE_QUEUED_MS = 160L
 
-        /** Floor, so a page released almost in place still visibly lands. */
         private const val PAGE_SETTLE_MIN_MS = 80L
         private const val PAGE_INDICATORS_FADE_DELAY = 600L
         private const val PAGE_INDICATORS_FADE_IN = 120L
@@ -2780,15 +2581,14 @@ private class AnimatingLatticeSwiper(
     private var pageChangeAnimLeftPercentage = 0f
     private var pageChangeEnabled = true
     private var pageChangeIndicatorsAlpha = 0f
-    /** When the indicator last became visible, for its fade-in; see [getIndicatorsFadeIn]. */
+
     private var indicatorsShownAt = 0L
     private var pageChangeSwipedPercentage = 0f
-    /** Flings that arrived while a page was settling, net: >0 pages ahead, <0 pages back; see [flingSwipe]. */
+
     private var pendingStep = 0
 
     fun getCurrentPage() = currentPage
 
-    /** True while a page is being dragged or is still settling - a horizontal gesture is paging. */
     fun isPaging() = isSwiped() || isAnimatingPageChange() || !pageChangeEnabled
 
     fun isItemOnCurrentPage(item: MainDisplayLatticeElement) = item.page == currentPage
@@ -2796,7 +2596,6 @@ private class AnimatingLatticeSwiper(
     fun isItemOnLastPage(item: MainDisplayLatticeElement) = item.page == lastPage
 
     fun getPageCount() = max(getMaxPage(), currentPage) + 1
-
 
     fun isOutsideOfPageRange() = currentPage > getMaxPage()
 
@@ -2807,19 +2606,12 @@ private class AnimatingLatticeSwiper(
 
     fun isAnimatingPageChange() = pageChangeAnimLeftPercentage != 0f
 
-    /**
-     * The dots are part of the home screen, not a passing hint: they stay while there is more
-     * than one page, dim at rest and at full strength while a page is being dragged or settling -
-     * the way MIUI / HyperOS keeps them above the dock.
-     */
     fun mustDisplayPageChangeIndicator() =
         getPageCount() > 1 || isSwiped() || isAnimatingPageChange() || pageChangeIndicatorsAlpha != 0f
 
-    /** 0..1: how "live" the indicator is - resting dim, full while the user is moving pages. */
     fun getIndicatorsEmphasis(): Float =
         if (isSwiped() || isAnimatingPageChange()) 1f else pageChangeIndicatorsAlpha
 
-    /** 0..1 over the first [PAGE_INDICATORS_FADE_IN] ms after the indicator appears. */
     fun getIndicatorsFadeIn(): Float =
         ((SystemClock.uptimeMillis() - indicatorsShownAt).toFloat() / PAGE_INDICATORS_FADE_IN).coerceIn(0f, 1f)
 
@@ -2892,25 +2684,15 @@ private class AnimatingLatticeSwiper(
         }
     }
 
-    /**
-     * A fling while a page is being dragged commits it in the fling's direction whatever distance
-     * the drag covered, the way every launcher pages. A fling while a page is still settling from
-     * the previous swipe is queued and played the moment that one lands, so quick consecutive
-     * swipes walk the pages one after another instead of being dropped. A fling that runs against
-     * the drag is consumed too and the release settles the page by distance. In all of these the
-     * gesture belongs to paging; only false (nothing moving, nothing dragged) lets the caller
-     * hand the fling to a side panel.
-     */
     fun flingSwipe(towardsNext: Boolean): Boolean {
         if (isAnimatingPageChange() || !pageChangeEnabled) {
-            // Every swipe counts: three quick flings walk three pages; one back cancels one ahead.
             pendingStep += if (towardsNext) 1 else -1
             return true
         }
         if (!isSwiped()) {
             return false
         }
-        // Negative = the finger went left = the next page is being pulled in (see setSwipeMovement).
+
         if ((pageChangeSwipedPercentage < 0f) != towardsNext) {
             return true
         }
@@ -3008,7 +2790,6 @@ private class AnimatingLatticeSwiper(
     }
 
     private val startFadingIndicators: Runnable = Runnable {
-        // To rest, not to nothing: on a multi-page home the dots stay, only quieter.
         ValueAnimator.ofFloat(1f, 0f)
             .apply {
                 addUpdateListener {
@@ -3077,15 +2858,9 @@ private class AnimatingLatticeSwiper(
         }
         ValueAnimator.ofFloat(startingAt, 0f)
             .apply {
-                // Timed by what is left to travel: left at the framework's 300 ms, a page the finger
-                // had already dragged most of the way still took the full time for its last
-                // stretch, and the next swipe waited behind it - paging read as slow. A page walked
-                // from swipes queued while this one settled goes quicker still.
                 val full = if (pendingStep != 0) PAGE_SETTLE_QUEUED_MS else PAGE_SETTLE_MS
                 duration = (full * startingAt).toLong().coerceAtLeast(PAGE_SETTLE_MIN_MS)
-                // Settles rather than bounces: a page that springs past its edge and comes back
-                // is the part of this that looked wrong. A shorter tail than (0.2, 0, 0, 1), which
-                // spent its last third crawling the final few pixels.
+
                 interpolator = PathInterpolator(0.2f, 0f, 0.2f, 1f)
                 addUpdateListener {
                     if (it.animatedValue != 0f) {
@@ -3100,8 +2875,7 @@ private class AnimatingLatticeSwiper(
                         pageChangeEnabled = true
                         lastPage = currentPage
                         wipePageChangeFlags()
-                        // Swipes made while this page was settling, played one page at a time from
-                        // rest; any that would run past the first or last page are dropped.
+
                         val step = pendingStep.sign
                         if (step > 0 && currentPage < getMaxPage() || step < 0 && currentPage > 0) {
                             pendingStep -= step

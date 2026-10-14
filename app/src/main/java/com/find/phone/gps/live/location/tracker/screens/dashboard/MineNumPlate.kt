@@ -23,24 +23,12 @@ import com.find.phone.gps.live.location.tracker.databinding.CellMyNumberSimBindi
 import com.find.phone.gps.live.location.tracker.screens.chip.MineNumActivity
 import com.find.phone.gps.live.location.tracker.helpers.ChipNumDiary
 
-/**
- * The "My number" card in the drawer header (design 1a, "SIMs visible"): the phone's own SIMs with
- * their number, carrier and region (no name).
- *
- * Phone access is asked here, when the user taps the card's button, so the system dialog appears
- * next to the feature that needs it. Denied twice (Android stops showing its dialog), the button
- * opens this app's settings instead. The card is hidden on a phone with no ready SIM.
- *
- * The host activity owns the permission launcher (it must be registered before the view exists)
- * and forwards its result to [onPermissionResult].
- */
 class MineNumPlate(
     private val activity: AppCompatActivity,
     private val views: PartMyNumberCardBinding,
     private val prefs: LockerBook,
     private val requestPermissions: (Array<String>) -> Unit,
 ) {
-
     init {
         views.actMyNumber.setOnClickListener { onButton() }
         views.actManage.setOnClickListener {
@@ -49,7 +37,6 @@ class MineNumPlate(
         }
     }
 
-    /** Redraws from the current SIM / permission state; call on view creation and on resume. */
     fun render() {
         val context: Context = activity
         if (!MineChipNums.hasReadySim(context)) {
@@ -61,10 +48,10 @@ class MineNumPlate(
         val lines = MineChipNums.read(context)
         val showing = lines.isNotEmpty()
         views.actMyNumber.isVisible = !showing
-        // SIMs visible → offer "Manage" (the My number page); otherwise the "Show" button.
+
         views.actManage.isVisible = showing
         views.actMyNumber.setText(if (isPermanentlyDenied()) R.string.my_number_settings else R.string.my_number_show)
-        // Only the "ask for access" state needs the subtitle; once the SIMs show, the rows say it all.
+
         views.txtMyNumberSub.isVisible = !showing
         views.txtMyNumberSub.setText(R.string.my_number_sub)
 
@@ -96,7 +83,6 @@ class MineNumPlate(
         }
     }
 
-    /** Asked before and Android no longer shows its dialog: only Settings can grant it now. */
     private fun isPermanentlyDenied(): Boolean {
         val permission = MineChipNums.PERMISSIONS.first()
         return !MineChipNums.isGranted(activity) &&
@@ -116,7 +102,6 @@ class MineNumPlate(
 
     private fun wireRow(inflater: LayoutInflater, context: Context, line: MineChipNums.SimLine) =
         CellMyNumberSimBinding.inflate(inflater, views.chipcardRows, false).apply {
-            // Badge "SIM1" / "SIM2": slot 1 filled primary, the rest a light tint.
             val primarySlot = line.slot <= 1
             txtSimBadge.text = context.getString(R.string.my_number_sim_badge, line.slot)
             txtSimBadge.setBackgroundResource(
@@ -137,7 +122,6 @@ class MineNumPlate(
             }
             actCopySim.isVisible = number != null
 
-            // Secondary line: "carrier · region", e.g. "Jio · Gujarat, India".
             val region = line.region
             txtSimRegion.text = if (!region.isNullOrBlank()) "${line.carrier} · $region" else line.carrier
             txtSimRegion.isVisible = txtSimRegion.text.isNotBlank()

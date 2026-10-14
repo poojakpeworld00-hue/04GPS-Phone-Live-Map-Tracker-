@@ -19,11 +19,6 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import java.util.Calendar
 
-/**
- * New / edit reminder (reminders design 3). Title and time are required; number and note are
- * optional. "When" chips set the time in one tap; Date / Time open the system pickers. [onSave]
- * gets the finished reminder (new id for a new one); [onDelete] only exists when editing.
- */
 class MemoAmendDrawer(
     private val activity: Activity,
     private val existing: MemoElement?,
@@ -45,7 +40,7 @@ class MemoAmendDrawer(
             inputTitle.setText(existing.title)
             inputNumber.setText(existing.number)
             inputNote.setText(existing.note)
-            // A done or past one-off comes back as "in an hour" rather than a time already gone.
+
             val at = if (existing.dateTime > System.currentTimeMillis()) existing.dateTime else existing.baseTime
             pick.timeInMillis = at
             repeat = existing.repeatOrOnce
@@ -84,7 +79,7 @@ class MemoAmendDrawer(
             R.id.pillHour -> pick.timeInMillis = roundUp(now.timeInMillis + 60 * 60_000L)
             R.id.pillTonight -> pick.atHour(now, 20, if (now.get(Calendar.HOUR_OF_DAY) >= 20) 1 else 0)
             R.id.pillTomorrow -> pick.atHour(now, 9, 1)
-            else -> Unit // Custom keeps the current pick until the pickers change it
+            else -> Unit
         }
         listOf(binding.pillHour, binding.pillTonight, binding.pillTomorrow, binding.pillCustom).forEach {
             val on = it === view
@@ -101,7 +96,6 @@ class MemoAmendDrawer(
         set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
     }
 
-    /** Next 5-minute mark, so "in 1 hour" reads 7:35 rather than 7:32. */
     private fun roundUp(millis: Long): Long {
         val step = 5 * 60_000L
         return ((millis + step - 1) / step) * step
@@ -146,7 +140,7 @@ class MemoAmendDrawer(
         val title = binding.inputTitle.text?.toString()?.trim().orEmpty()
         if (title.isEmpty()) return presentError(R.string.rem_err_title)
         val at = pick.timeInMillis
-        // A one-off must be in the future; a repeating one just starts at its next time.
+
         if (repeat == Repeat.ONCE && at <= System.currentTimeMillis() + 30_000L) return presentError(R.string.rem_err_past)
 
         val item = (existing ?: MemoElement(title = title, dateTime = at)).copy(

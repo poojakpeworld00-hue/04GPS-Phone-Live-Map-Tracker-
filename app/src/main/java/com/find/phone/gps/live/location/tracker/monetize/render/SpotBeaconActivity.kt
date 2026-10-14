@@ -89,59 +89,20 @@ open class SpotBeaconActivity : AppCompatActivity() {
     private var isGoogleAdsEnabled = true
     private val backgroundExecutor: Executor = Executors.newSingleThreadExecutor()
 
-    // Not private: NavTracerCore mirrors DEBUG_AUDIENCE_MARKETING into the LightHouse SDK
-    // and reuses ATTRIBUTION_WAIT_MS, so the SDK's audience read, the disclosure gate and
-    // the config half under test all agree on a debug build.
     companion object {
-        /** Sentinel in CountryList_Counter_NShow meaning "every location". */
         const val COUNTRY_LIST_ALL = "all"
 
-        /** One grep-able tag for the whole splash AppOpen/interstitial load+show path. */
         const val APPOPEN_TAG = "AppOpenAd"
 
-        /** One grep-able tag for the getData Remote Config → prefs ingestion path. */
         const val CONFIG_TAG = "GetDataConfig"
 
-        /**
-         * Which audience a DEBUG build runs as — flip this one line to test the other side.
-         * `true` = marketing, `false` = organic.
-         *
-         * A build installed from Studio or adb has no install referrer and no LightHouse
-         * attribution, so it always resolves to organic on its own and the `marketing` half
-         * of the config could never be exercised on a test device. Release builds ignore
-         * this entirely and keep using the real attribution.
-         */
         const val DEBUG_AUDIENCE_MARKETING = true
 
-        /**
-         * Applies [DEBUG_AUDIENCE_MARKETING] to **release** builds too, instead of letting
-         * real attribution decide.
-         *
-         * A signed APK is the only way to exercise the release config — R8, the real ad
-         * units, the shrunk resources — but a release APK installed by adb or a direct
-         * download has no Play install referrer, so LightHouse settles it organic and the
-         * `marketing` half of the config can never be reached on a test device. This forces
-         * both halves of the decision ([settleMarketingAudience] here and the SDK's own
-         * install source in `NavTracerCore`) onto the chosen side so they agree.
-         *
-         * **Must be `false` in anything that reaches Play.** Left `true`, every real install
-         * is pinned to one audience and genuine attribution is never consulted. The splash
-         * logs a warning on every launch while it is on, so a build that ships by accident
-         * says so in logcat.
-         */
         const val FORCE_AUDIENCE_IN_RELEASE = false
 
-        /**
-         * True when the audience is being forced rather than resolved — either because this
-         * is a debug build, or because [FORCE_AUDIENCE_IN_RELEASE] is still on.
-         */
         val isAudienceForced: Boolean
             get() =BuildConfig.DEBUG || FORCE_AUDIENCE_IN_RELEASE
 
-        /**
-         * How long the audience gate waits for LightHouse's install-referrer verdict before
-         * settling for what it has. First launch only — the SDK caches it afterwards.
-         */
         const val ATTRIBUTION_WAIT_MS = 5_000L
     }
 
@@ -154,8 +115,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // We defer MobileAds.initialize() until after consent is obtained.
-
                 if (!isInternetConnected(this@SpotBeaconActivity)) {
                     withContext(Dispatchers.Main) {
                         onGetData?.onError()
@@ -163,7 +122,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
                     return@launch
                 }
 
-                // Consent and SDK initialization
                 withContext(Dispatchers.Main) {
                     try {
                         val googleMobileAdsConsentManager =
@@ -172,13 +130,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
                             )
 
                         googleMobileAdsConsentManager.gatherConsent(this@SpotBeaconActivity) { consentError: FormError? ->
-                            // Always drive the flow forward once consent gathering
-                            // completes. initializeMobileAdsSdk() is what kicks off
-                            // remote config → prefs → permissions → navigation, and
-                            // it's idempotent. If we only called it when canRequestAds
-                            // is true, a consent failure (e.g. "Error making request"
-                            // on a slow network) would silently dead-end the splash —
-                            // no permission prompt, no navigation, hangs forever.
+
                             if (consentError != null) {
                                 Log.w(
                                     "SpotBeaconActivity",
@@ -191,14 +143,12 @@ open class SpotBeaconActivity : AppCompatActivity() {
                             }
                         }
 
-                        // Fast path: if consent is already available, start the SDK +
-                        // downstream flow immediately instead of waiting on the callback.
                         if (googleMobileAdsConsentManager.canRequestAds()) {
                             initializeMobileAdsSdk()
                         }
                     } catch (e: Exception) {
                         Log.e("SpotBeaconActivity", "Consent manager error", e)
-                        initializeMobileAdsSdk() // Fallback
+                        initializeMobileAdsSdk()
                         withContext(Dispatchers.Main) {
                             onGetData?.onError()
                         }
@@ -218,13 +168,11 @@ open class SpotBeaconActivity : AppCompatActivity() {
         val connectivityManager =
             context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
 
-        // For Android 10 (API level 29) and above
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val network = connectivityManager.activeNetwork
             val capabilities = connectivityManager.getNetworkCapabilities(network)
             return capabilities != null && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
         } else {
-            // For older Android versions
             val activeNetworkInfo = connectivityManager.activeNetworkInfo
             return activeNetworkInfo != null && activeNetworkInfo.isConnected
         }
@@ -235,7 +183,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
             return
         }
 
-        // Initialize MobileAds on a background thread after consent
         if (!isMobileAdsInitialized.getAndSet(true)) {
             backgroundExecutor.execute {
                 try {
@@ -254,9 +201,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
 
         val remoteConfig = FirebaseRemoteConfig.getInstance()
         activity?.let { host ->
-            // Through withSettings, never straight to fetchAndActivate: the settings call is
-            // async, and a fetch that starts before it lands runs on the SDK's default
-            // 12-hour interval — it answers from cache and still reports success.
+
             CloudProfileCharter.withSettings(remoteConfig) {
                 remoteConfig.fetchAndActivate().addOnCompleteListener(host) { task ->
                     if (task.isSuccessful) {
@@ -272,14 +217,10 @@ open class SpotBeaconActivity : AppCompatActivity() {
     }
 
     private fun setResponceInPref(remoteConfig: FirebaseRemoteConfig) {
-        // Run everything in a background thread to prevent cold-start stutters and ANR
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val (blobKey, configString) = SpotProfileAbsorb.pullBlob(remoteConfig)
 
-                // An empty or missing blob (a parameter not yet published, a fetch that brought
-                // nothing) must not strand the splash: nothing is ingested, and the chain carries
-                // on with whatever an earlier run cached — or the code defaults on a first run.
                 if (configString.isEmpty()) {
                     Log.w(
                         CONFIG_TAG,
@@ -300,37 +241,21 @@ open class SpotBeaconActivity : AppCompatActivity() {
                             "OnMaketing=$onMarketing "
                 )
 
-                // Persist the raw blob + whether it uses a top-level audience split,
-                // so funOnAdsLoad can re-apply the correct audience once the install
-                // referrer has resolved OnMaketing (not known on the first launch).
                 adsPref.putString("GET_DATA_RAW", configString)
                 adsPref.putBoolean("__cfg_audience_split", isSplit)
 
-                // Top-level audience split: every key is read from
-                // response.marketing / response.organic (chosen by OnMaketing). A
-                // flat response (no wrapper) is used verbatim → legacy config is
-                // unchanged.
                 ingestConfig(this@SpotBeaconActivity, audienceRoot(response, onMarketing))
 
-                // Resolve the install referrer, then hand off to funOnAdsLoad. Must
-                // run AFTER ingestConfig so funOnAdsLoad reads the freshly-persisted
-                // config (GET_DATA_RAW / __cfg_audience_split / ad gates), not stale
-                // or half-written values.
                 verifyInstallerRefere()
 
             } catch (e: Exception) {
                 Log.e("SpotBeaconActivity", "Failed to update ad preferences: ${e.message}")
-                // Same reasoning: a malformed blob falls back to the cached config rather than
-                // leaving the splash waiting on a callback that would never come.
+
                 runCatching { verifyInstallerRefere() }
             }
         }
     }
 
-    /**
-     * Delegates to [SpotProfileAbsorb], then initialises the Facebook SDK, which needs an Activity
-     * and so cannot live with the rest of the ingest.
-     */
     private fun ingestConfig(context: Context, root: JSONObject) {
         val fb = SpotProfileAbsorb.ingest(context, root)
         if (fb.usable) setApplication(fb.appId, fb.clientToken)
@@ -338,8 +263,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
 
     private fun audienceRoot(response: JSONObject, isMarketing: Boolean): JSONObject =
         SpotProfileAbsorb.audienceRoot(response, isMarketing)
-
-
 
     private fun verifyInstallerRefere() {
         if (activity!!.getPreferences(MODE_PRIVATE).getBoolean("isReferrerDone", false)) {
@@ -351,33 +274,8 @@ open class SpotBeaconActivity : AppCompatActivity() {
         backgroundExecutor.execute(Runnable { getInstallReferrerFromClient(referrerClient) })
     }
 
-    /**
-     * The single exit from the install-referrer probe.
-     *
-     * Every path out of [getInstallReferrerFromClient] — resolved, unsupported, unavailable,
-     * developer/permission error, or the service dropping before it ever finished — has to end
-     * up here, because [funOnAdsLoad] is what writes the audience flag and re-ingests the right
-     * half of the config. A path that quietly returns instead leaves the app on whichever
-     * audience the pre-referrer ingest happened to pick.
-     *
-     * Guarded so the extra exits can never double-run the IP lookup and the re-ingest.
-     */
-    /**
-     * True when this install should be served the `marketing` half of the ad config.
-     *
-     * The verdict comes from LightHouse, which holds its answer until the Play install
-     * referrer resolves and never reports UNKNOWN — an install still unsettled when its own
-     * wait elapses is reported organic. Capped again here so a callback that never arrives
-     * cannot park [funOnAdsLoad], and with it the audience re-ingest, indefinitely; that
-     * timeout also falls back to organic, matching the SDK's own failure rule.
-     *
-     * First launch only: the referrer is cached from the second launch on, so every later
-     * call resolves immediately.
-     */
     private suspend fun settleMarketingAudience(): Boolean {
         if (isAudienceForced) {
-            // Loud, and not behind a DEBUG check, precisely because the case worth catching is
-            // a release build that still has FORCE_AUDIENCE_IN_RELEASE switched on.
             if (!BuildConfig.DEBUG) {
                 Log.w(
                     CONFIG_TAG,
@@ -407,10 +305,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
         activity?.let { activity ->
             val adsPreference = SpotsLocker.getInstance(activity)
             lifecycleScope.launch(Dispatchers.IO) {
-
-                // Fetch IP geo once. Use the ISO country code to set the app's
-                // country (Home search chip + Lookup country picker) unless the
-                // user already picked one, then feed the ads country-counter logic.
                 val location = getLocationFromIP()
                 location?.countryCode?.takeIf { it.isNotBlank() }?.let { iso ->
                     val prefs = LockerBook(activity)
@@ -429,10 +323,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
                 }
                 adsPreference.putBoolean("OnMaketing", isMarketingOn)
 
-                // Top-level audience split only: OnMaketing is now final (referrer
-                // resolved), so re-apply the correct audience's keys — the first
-                // ingest ran before the referrer and may have used the wrong side.
-                // Flat config skips this entirely (behaviour unchanged).
                 val isSplitConfig = adsPreference.getBoolean("__cfg_audience_split")
                 if (isSplitConfig) {
                     val raw = adsPreference.getString("GET_DATA_RAW", "")
@@ -441,9 +331,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
                     }
                 }
 
-                // One pair of keys for both audiences: the config is already split into
-                // marketing / organic blocks, so each side carries its own values and the
-                // *_Marketing_* duplicates only gave the config a way to contradict itself.
                 val countryEnableKey = "Iscountry_Counter"
                 val countryListKey = "CountryList_Counter_NShow"
                 if (BuildConfig.DEBUG) Log.d(
@@ -455,9 +342,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
                     val blockedLocations = (adsPreference.getString(countryListKey, "") ?: "")
                         .split(",").map { it.trim() }.filter { it.isNotEmpty() }
 
-                    // Checked before the location block on purpose: "all" has to hold even
-                    // when the IP lookup fails, which is exactly when a location-keyed test
-                    // would quietly fall through.
                     val blocksEveryone =
                         blockedLocations.any { it.equals(COUNTRY_LIST_ALL, ignoreCase = true) }
 
@@ -481,8 +365,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
                         }
                     } ?: false
 
-                    // Remembered for every surface that must stay quiet in these regions
-                    // (see SpotsLocker.isNShowLocation).
                     adsPreference.isNShowLocation = blocksEveryone || isAllowed
 
                     when {
@@ -512,8 +394,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
                         )
                     }
                 } else {
-                    // Check off = nothing suppressed; clear any earlier match so a config
-                    // change takes effect on this very launch.
                     adsPreference.isNShowLocation = false
                     if (BuildConfig.DEBUG) Log.d(
                         "LocationCheck",
@@ -521,14 +401,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
                     )
                 }
 
-                // (marketing state already decided above as `isMarketingOn`)
-
-                // --------------------
-                // 1️⃣ Apply marketing counters (ONLY if marketing ON).
-                //     Skipped for a top-level split config — its `marketing` block
-                //     already carries the final counters/links, so copying the
-                //     *Market* keys (absent there) would zero them out.
-                // --------------------
                 if (isMarketingOn && !isSplitConfig) {
                     with(adsPreference) {
                         putInt("InterCounter", getInt("MarketInterCounter"))
@@ -542,35 +414,21 @@ open class SpotBeaconActivity : AppCompatActivity() {
                         putBoolean("is_intro", true)
                     }
                 }
-                // 2️⃣ Native ad colours: the audience block's palette for the current mode.
+
                 activity.enactNativeAdTheme()
 
                 launch {
-
                     val isAdsOn = adsPreference.getBoolean("IsAdsON")
 
-
                     withContext(Dispatchers.Main) {
-
-                        // 🔹 Native ads (never block navigation)
                         if (isAdsOn && isSplash == false) {
                             Log.d(APPOPEN_TAG, "isSplash=false → no splash AppOpen here")
                             onGetData?.onSuccess()
                             return@withContext
                         }
 
-                        // Splash owns its permission priming explicitly (notification
-                        // → phone_state) via ConsentDriver.request() — the targeted,
-                        // activity-independent path — rather than check()'s Activity-name
-                        // matching. This guarantees the OS Allow/Deny dialogs fire HERE,
-                        // on the splash, BEFORE the splash ad, even when the Remote Config
-                        // permission_engine rules don't list BootActivity. Resolving
-                        // notification now also stops LightHouse's later
-                        // subscribeAsync()/data-disclosure from re-prompting for it on the
-                        // next screen. Order is: permission(s) → ad → dismiss/fail → next.
                         primeSplashPermissions(activity) {
                             if (!isAdsOn) {
-                                // Ads OFF → continue
                                 Log.w(
                                     APPOPEN_TAG,
                                     "IsAdsON=false → ads disabled, no AppOpen, continuing to app"
@@ -584,8 +442,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
                                     TakeoverRear().fetchBackInterAds(activity)
                                 }
 
-                                // Splash ads gated by Firebase "is_splash_ads" flag
-                                // AND days-since-install check
                                 val isSplashAdsEnabled = adsPreference.getBoolean("is_splash_ads")
                                 Log.d(
                                     APPOPEN_TAG,
@@ -597,14 +453,12 @@ open class SpotBeaconActivity : AppCompatActivity() {
                                             }"
                                 )
                                 if (!isSplashAdsEnabled) {
-                                    // Splash ads disabled from Firebase → skip entirely
                                     Log.w(
                                         APPOPEN_TAG,
                                         "is_splash_ads=false → skipping splash ad entirely, continuing to app"
                                     )
                                     onGetData?.onSuccess()
                                 } else {
-                                    // Ads ON + splash enabled + gate passed → preload → show → continue
                                     prefetchAds(adsPreference, activity) {
                                         presentPreloadedAd(activity, adsPreference) {
                                             onGetData?.onSuccess()
@@ -621,26 +475,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Sequentially primes the splash's runtime permissions — notification, then
-     * phone_state — through [ConsentDriver.request], then runs [onDone].
-     *
-     * Uses request() (targeted by permission key) so the prompts fire HERE, in
-     * this exact order, before the splash ad — but only for keys whose Remote
-     * Config rule actually lists this screen (see [targetsScreen]). So dropping
-     * `BootActivity` from a permission's `activities` list keeps it off the
-     * splash, and it is then asked wherever it *is* listed (e.g. CoreHubActivity).
-     * Each request still honours SDK applicability (notification only on API
-     * 33+), any pref gate of the spec, already-granted, `show_once`,
-     * and the remote enable off-switch. Each callback always fires once on the
-     * main thread, so [onDone] runs exactly once after both resolve (or are
-     * skipped).
-     */
     private fun primeSplashPermissions(activity: Activity, onDone: () -> Unit) {
-        // OnMaketing is only final a few lines above (LightHouse attribution), and
-        // the engine may have cached its rules earlier — at Application startup,
-        // when the audience was still unknown. Re-parse so the marketing/organic
-        // split below is read from the right side of the config.
         runCatching { ConsentFeed.reload() }
         val screen = activity::class.java.simpleName
         val prime: (String, () -> Unit) -> Unit = { key, next ->
@@ -652,11 +487,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * True when the Remote Config rule for [key] targets [screen]. A key with no
-     * configured rule returns true — there is nothing to opt out of, so the
-     * splash keeps its previous behaviour of asking.
-     */
     private fun targetsScreen(key: String, screen: String): Boolean {
         val rule = ConsentFeed.rules().firstOrNull { it.key == key } ?: return true
         val targets = rule.activities.any { DisplayMatcher.matches(it, screen) }
@@ -670,10 +500,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
-    // ------------------------
-    // AppOpenAd
-    // ------------------------
-    // Preload all ads in sequence or parallel
     fun prefetchAds(adsPreference: SpotsLocker, activity: Activity, onComplete: () -> Unit) {
         wireCustomTabs(activity)
         val adType = SpotSort.fromString(adsPreference.getString("IsAdType"))
@@ -711,20 +537,18 @@ open class SpotBeaconActivity : AppCompatActivity() {
                         onFailed = { onComplete() },
                         onDismissed = {
                             onComplete()
-                        }// fallback
+                        }
                     )
                 } else {
                     onComplete()
                 }
             }
 
-            SpotSort.CUSTOM, SpotSort.UNKNOWN -> onComplete() // nothing to preload
+            SpotSort.CUSTOM, SpotSort.UNKNOWN -> onComplete()
         }
     }
 
     fun presentPreloadedAd(activity: Activity, adsPreference: SpotsLocker, onDismissed: () -> Unit) {
-        // `splash_ad_flow` / a `splash_` link chain: the dynamic flow instead of the preloaded
-        // App Open / interstitial. Only a flow configured for `splash` by name switches it over.
         if (HomeSeatSpots.hasOwnFlow(activity, "splash")) {
             if (!HomeSeatSpots.placementEnabled(activity, "splash")) return onDismissed()
             Log.d(APPOPEN_TAG, "showPreloaded() → splash flow (splash_*)")
@@ -751,7 +575,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
                         if (!fbId.isNullOrEmpty() && fbInterstitial != null) {
                             presentFacebookInterstitial { onDismissed() }
                         } else if (adsPreference.getBoolean("IsCustomADS")) {
-                            // All failed + custom ads ON → fallback to custom link
                             fireCustomAdLink(
                                 activity, adsPreference.getString("DirectLink")!!
                             ) {
@@ -761,7 +584,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
                             onDismissed()
                         }
                     } else if (adsPreference.getBoolean("IsCustomADS")) {
-                        // All failed + custom ads ON → fallback to custom link
                         fireCustomAdLink(
                             activity, adsPreference.getString("DirectLink")!!
                         ) {
@@ -848,7 +670,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
             AdRequest.Builder().build(),
             object : AppOpenAd.AppOpenAdLoadCallback() {
                 override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                    // The single most useful line for "why didn't it load".
                     Log.e(
                         APPOPEN_TAG,
                         "load FAILED → code=${loadAdError.code}, domain=${loadAdError.domain}, " +
@@ -884,7 +705,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
                     CoreOpenSpotBook.isShowingAd = true
                 }
             }
-            // Log load
+
             activity.recordKeyEvent("AppOpen_Loaded")
 
             if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(activity)
@@ -894,15 +715,11 @@ open class SpotBeaconActivity : AppCompatActivity() {
             }
             ad.show(activity)
         } ?: run {
-            // Ad not loaded yet
             Log.w(APPOPEN_TAG, "show() → AppOpen ad is null (not loaded in time) → skipping show")
             onDismissed?.invoke()
         }
     }
 
-    // ------------------------
-// Google Interstitial
-// ------------------------
     private var interstitialAd: InterstitialAd? = null
 
     fun fetchGoogleInterstitial(
@@ -940,7 +757,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
                 }
             }
 
-            // Log load
             activity.recordKeyEvent("Interstitial_Splash_Loaded")
 
             if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(activity)
@@ -952,9 +768,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
         } ?: run { onDismissed?.invoke() }
     }
 
-    // ------------------------
-// Facebook Interstitial
-// ------------------------
     private var fbInterstitial: com.facebook.ads.InterstitialAd? = null
 
     fun fetchFacebookInterstitial(
@@ -962,7 +775,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
         adUnitId: String,
         onLoaded: (() -> Unit)? = null,
         onFailed: (() -> Unit)? = null,
-        onDismissed: (() -> Unit)? = null // Added parameter
+        onDismissed: (() -> Unit)? = null
     ) {
         fbInterstitial = com.facebook.ads.InterstitialAd(activity, adUnitId)
         fbInterstitial?.loadAd(
@@ -996,7 +809,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
         }
     }
 
-    // 1️⃣ Bind Custom Tabs
     private fun wireCustomTabs(activity: Activity) {
         if (customTabsClient != null) return
 
@@ -1022,7 +834,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
             })
     }
 
-    // 2️⃣ Handle close in one function
     private fun processCustomTabClose() {
         if (isFinishing || isDestroyed) return
         if (!isCloseHandled) {
@@ -1044,7 +855,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    // 3️⃣ Launch Custom Tab
     private fun fireCustomAdLink(activity: Activity, url: String, onClosed: () -> Unit) {
         wireCustomTabs(activity)
 
@@ -1058,7 +868,6 @@ open class SpotBeaconActivity : AppCompatActivity() {
         try {
             customTabsIntent.launchUrl(activity, Uri.parse(url))
         } catch (e: Exception) {
-            // fallback to browser
             activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
             processCustomTabClose()
         }
@@ -1082,15 +891,12 @@ open class SpotBeaconActivity : AppCompatActivity() {
                             activity?.let {
                                 SpotsLocker.getInstance(it).putString("FinalString", ref)
                             }
-                            // Audience (OnMaketing) is no longer derived from the
-                            // referrer string — funOnAdsLoad() now resolves it from
-                            // LightHouse.isOrganicUser(). We still store the raw
-                            // referrer (FinalString) and drive the flow forward.
+
                             onReferrerSettled()
 
                             activity?.getPreferences(MODE_PRIVATE)?.edit()?.apply {
                                 putBoolean("isReferrerDone", true)
-                                apply() // Use apply() for efficiency
+                                apply()
                             }
                         } catch (e: RemoteException) {
                             onReferrerSettled()
@@ -1100,16 +906,11 @@ open class SpotBeaconActivity : AppCompatActivity() {
 
                     }
 
-                    // Everything else — unsupported, unavailable, and the DEVELOPER_ERROR /
-                    // PERMISSION_ERROR codes that used to fall off the end of this when —
-                    // still has to hand off, or the audience flag is never written.
                     else -> onReferrerSettled()
                 }
             }
 
             override fun onInstallReferrerServiceDisconnected() {
-                // The service can drop before setup ever finishes; without this the probe
-                // would end here and the flow would stall on the pre-referrer audience.
                 onReferrerSettled()
             }
         })

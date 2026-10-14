@@ -8,7 +8,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CorePicksTest {
-
     private val day = 24 * 60 * 60 * 1000L
     private val now = 100 * day
 
@@ -21,9 +20,9 @@ class CorePicksTest {
     fun recentAndFrequentOutrankStaleAndOneOff() {
         val installed = listOf("a", "b", "c", "d").map { app(it) }
         val usage = listOf(
-            used("a", 2, 1 * day),      // twice, yesterday
-            used("b", 20, 30 * day),    // often, a month ago
-            used("c", 1, 7 * day),      // once, a week ago
+            used("a", 2, 1 * day),
+            used("b", 20, 30 * day),
+            used("c", 1, 7 * day),
         )
         val ranked = CorePicks.rank(installed, usage, facts(), now, limit = 8).map { it.packageName }
         assertEquals(listOf("a", "b", "c"), ranked.take(3))

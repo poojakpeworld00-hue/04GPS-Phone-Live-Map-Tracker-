@@ -7,11 +7,9 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.find.phone.gps.live.location.tracker.databinding.CellContactFavBinding
 
-/** The Favorites row (design 8a): 56dp gradient avatars with a locate badge and the first name. */
 class PinnedAdapter(
     private val onLocate: (BuddyNum) -> Unit,
 ) : ListAdapter<BuddyNum, PinnedAdapter.VH>(Diff) {
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
         VH(CellContactFavBinding.inflate(LayoutInflater.from(parent.context), parent, false))
 

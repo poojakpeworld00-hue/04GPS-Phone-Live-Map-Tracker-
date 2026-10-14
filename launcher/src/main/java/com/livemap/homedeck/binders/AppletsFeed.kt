@@ -25,7 +25,6 @@ class AppletsFeed(
     val widgetsFragmentListener: AppletsFragmentObserver,
     val itemClick: () -> Unit
 ) : RecyclerView.Adapter<AppletsFeed.ViewHolder>() {
-
     private var textColor = activity.getProperTextColor()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

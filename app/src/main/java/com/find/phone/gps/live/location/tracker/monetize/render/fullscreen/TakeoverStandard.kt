@@ -30,13 +30,7 @@ import com.find.phone.gps.live.location.tracker.monetize.render.isNetworkConnect
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.find.phone.gps.live.location.tracker.R
 class TakeoverStandard {
-
     companion object {
-
-        /**
-         * The app-wide interstitial's own placement name, so its link-first / `ad_flow` /
-         * `inter_fallback` keys live under `app_…` like every other placement's.
-         */
         private const val APP_PLACEMENT = "app"
 
         private var _isInterShow: Boolean = false
@@ -47,12 +41,6 @@ class TakeoverStandard {
             }
         private var googleInterAd: InterstitialAd? = null
 
-        /**
-         * Whether a show right now would play an interstitial that is already loaded. In Google
-         * preload mode that means the preloaded ad is in hand; any other setup (on-demand,
-         * Facebook, custom) is left to [presentInterAds] to decide. For moments that must not sit
-         * behind a loader or fall back to another format — they show a ready ad or nothing.
-         */
         fun hasReadyInter(context: Context): Boolean {
             val pref = SpotsLocker.getInstance(context)
             val googlePreload = SpotSort.fromString(pref.getString("IsAdType")) == SpotSort.GOOGLE &&
@@ -61,7 +49,7 @@ class TakeoverStandard {
         }
         private var preloadedFbAd: com.facebook.ads.InterstitialAd? = null
         private var isFbPreloading = false
-        // Forwarding callbacks — set just before ad.show(), fired by the preload listener
+
         private var fbOnDismissed: (() -> Unit)? = null
         private var fbOnFail: (() -> Unit)? = null
         var isOpened = false
@@ -73,7 +61,7 @@ class TakeoverStandard {
             onTabClosed?.invoke()
             onTabClosed = null
 
-            freeSession(context) // 🔥 ADD THIS
+            freeSession(context)
         }
         private var customTabsClient: CustomTabsClient? = null
         private var customTabsSession: CustomTabsSession? = null
@@ -111,7 +99,7 @@ class TakeoverStandard {
                             fbOnDismissed = null
                         }
                         override fun onInterstitialDismissed(ad: com.facebook.ads.Ad?) {
-                            prefetchFbAd(context)   // replenish
+                            prefetchFbAd(context)
                             fbOnDismissed?.invoke()
                             fbOnDismissed = null
                             fbOnFail = null
@@ -131,8 +119,6 @@ class TakeoverStandard {
                 return
             }
 
-            // `DirectLinkType` webview / browser: StraightHrefOpener owns those. Only the custom tab
-            // path below needs the close tracking, so it alone stays here.
             if (StraightHrefOpener.mode(context) != StraightHrefOpener.Mode.CUSTOM_TAB) {
                 StraightHrefOpener.open(context, url)
                 onClosed()
@@ -158,7 +144,6 @@ class TakeoverStandard {
             }
         }
 
-        // Use CustomTabsSession to track tab close
         private fun getSession(
             context: Context,
             onReady: (CustomTabsSession?) -> Unit
@@ -169,7 +154,6 @@ class TakeoverStandard {
             }
 
             serviceConnection = object : CustomTabsServiceConnection() {
-
                 override fun onCustomTabsServiceConnected(
                     name: ComponentName,
                     client: CustomTabsClient
@@ -203,11 +187,9 @@ class TakeoverStandard {
                     addCategory(Intent.CATEGORY_BROWSABLE)
                 }
                 context.startActivity(intent)
-//                safeLog("browser_opened")
+
             } catch (e: Exception) {
-//                context.safeLog("browser_open_failed")
             } finally {
-                // Ensure callback is always called
                 isOpened = false
                 onTabClosed?.invoke()
                 onTabClosed = null
@@ -215,19 +197,14 @@ class TakeoverStandard {
             }
         }
 
-
     }
 
-
-    // ----------------------------------------------------------------------
-    // LOAD INTER AD (Google)
-    // ----------------------------------------------------------------------
     fun fetchInterAds(activity: Activity) {
         val pref = SpotsLocker.getInstance(activity)
         if (!pref.getBoolean("IsAdsON")) return
-        // Firebase "InterAds" master switch — disable interstitial loading entirely
+
         if (!pref.getBoolean("InterAds")) return
-        // Only preload when is_preload_ads = true; on-demand path loads at show time
+
         if (!pref.getBoolean("is_preload_ads")) return
 
         val adType = SpotSort.fromString(pref.getString("IsAdType"))
@@ -259,16 +236,10 @@ class TakeoverStandard {
         }
     }
 
-    // ----------------------------------------------------------------------
-    // PUBLIC SHOW METHOD
-    // ----------------------------------------------------------------------
     fun presentInterAds(activity: Activity?, adsClose: () -> Unit) {
         presentAdInternal(activity, adsClose)
     }
 
-    // ----------------------------------------------------------------------
-    // MAIN INTER AD SHOW
-    // ----------------------------------------------------------------------
     private fun presentAdInternal(activity: Activity?, adsClose: () -> Unit) {
         val act = activity ?: return adsClose()
         act.safeLog("inter_request_start")
@@ -280,16 +251,14 @@ class TakeoverStandard {
             if (hasClosed) return
             hasClosed = true
             act.safeLog("inter_closed_$reason")
-            adsClose()   // OPEN NEXT ACTIVITY INSTANTLY
+            adsClose()
         }
 
-        // Network check
         if (!isNetworkConnected(act)) return safeClose("no_network")
         if (!pref.getBoolean("IsAdsON")) return safeClose("ads_off")
-        // Firebase "InterAds" master switch — skip showing interstitials entirely
+
         if (!pref.getBoolean("InterAds")) return safeClose("inter_ads_disabled")
 
-        // Counter logic
         val target = pref.getInt("InterCounter")
         if (interCounter != target) {
             interCounter++
@@ -299,12 +268,11 @@ class TakeoverStandard {
         interCounter = 0
         act.safeLog("inter_counter_triggered")
 
-        // `app_link_first_then` + `app_DirectLink`: the links first, then the listed follow-ups.
         if (HomeSeatSpots.presentLinkFirst(act, APP_PLACEMENT) { safeClose("link_first") }) {
             act.safeLog("inter_link_first")
             return
         }
-        // `app_ad_flow`: the whole chain, in the configured order, instead of the interstitial.
+
         if (HomeSeatSpots.presentAdFlow(act, APP_PLACEMENT) { safeClose("ad_flow") }) {
             act.safeLog("inter_ad_flow")
             return
@@ -313,12 +281,9 @@ class TakeoverStandard {
         val isPreload = pref.getBoolean("is_preload_ads")
 
         when (SpotSort.fromString(pref.getString("IsAdType"))) {
-
             SpotSort.GOOGLE -> {
                 act.safeLog("inter_type_google")
                 if (isPreload) {
-                    // A preloaded ad has no load time of its own; `Inter_Loader_Ms` can still put a
-                    // short loader in front of it. Nothing to put it in front of when none is ready.
                     if (googleInterAd != null) {
                         WholeDisplayWheel.beforeShow(act) { presentGoogleInterstitial(act, pref, ::safeClose) }
                     } else {
@@ -365,22 +330,17 @@ class TakeoverStandard {
         }
     }
 
-    // ----------------------------------------------------------------------
-    // GOOGLE INTERSTITIAL
-    // ----------------------------------------------------------------------
     private fun presentGoogleInterstitial(
         activity: Activity,
         pref: SpotsLocker,
         safeClose: (String) -> Unit
     ) {
-
         val inter = googleInterAd
         if (inter == null) {
             activity.safeLog("google_inter_null")
             return processGoogleFail(activity, pref, safeClose)
         }
 
-        // Log load
         activity.recordKeyEvent("google_inter_show_attempt")
 
         if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(activity)
@@ -390,7 +350,6 @@ class TakeoverStandard {
         }
 
         inter.fullScreenContentCallback = object : FullScreenContentCallback() {
-
             override fun onAdShowedFullScreenContent() {
                 super.onAdShowedFullScreenContent()
                 isInterShow = true
@@ -424,9 +383,6 @@ class TakeoverStandard {
         }
     }
 
-    // ----------------------------------------------------------------------
-    // GOOGLE ON-DEMAND (is_preload_ads = false)
-    // ----------------------------------------------------------------------
     private fun fetchAndShowGoogleOnDemand(
         activity: Activity,
         pref: SpotsLocker,
@@ -460,9 +416,6 @@ class TakeoverStandard {
         )
     }
 
-    // ----------------------------------------------------------------------
-    // FACEBOOK PRELOADED SHOW (is_preload_ads = true)
-    // ----------------------------------------------------------------------
     private fun presentPreloadedFbAd(
         activity: Activity,
         onDismissed: () -> Unit,
@@ -475,7 +428,7 @@ class TakeoverStandard {
             return
         }
         preloadedFbAd = null
-        // Wire forwarding callbacks (listener was set at load time in prefetchFbAd)
+
         fbOnDismissed = onDismissed
         fbOnFail = onFail
         try {
@@ -500,7 +453,6 @@ class TakeoverStandard {
         val customEnabled = pref.getBoolean("IsCustomADS")
 
         if (fbEnabled) {
-
             activity.safeLog("google_fail_try_facebook")
 
             fetchAndShowFacebookInter(
@@ -512,7 +464,6 @@ class TakeoverStandard {
                 }
             )
         } else if (HomeSeatSpots.hasFallback(activity, APP_PLACEMENT)) {
-            // `inter_fallback`: rewarded / full-screen native / … before giving up on the slot.
             activity.safeLog("google_fail_fallback_chain")
             HomeSeatSpots.execFallback(activity, APP_PLACEMENT) { safeClose("google_fail_fallback") }
         } else {
@@ -523,9 +474,6 @@ class TakeoverStandard {
         }
     }
 
-    // ----------------------------------------------------------------------
-    // FACEBOOK INTERSTITIAL
-    // ----------------------------------------------------------------------
     fun fetchAndShowFacebookInter(
         context: Context,
         onDismissed: () -> Unit,
@@ -540,14 +488,11 @@ class TakeoverStandard {
 
         val inter = com.facebook.ads.InterstitialAd(context, fbId)
 
-        // ⬅ FULLSCREEN LOADER (only if Activity)
-        // Show loader only if isLoader == true
         if (context is Activity) WholeDisplayWheel.show(context, isLoader)
 
         inter.loadAd(
             inter.buildLoadAdConfig()
                 .withAdListener(object : InterstitialAdListener {
-
                     override fun onAdLoaded(ad: Ad?) {
                         context.safeLog("facebook_inter_loaded")
                         context.recordAdEvent("interstitial", "loaded", network = "facebook")
@@ -609,9 +554,6 @@ class TakeoverStandard {
         else safeClose("fb_fail_no_custom")
     }
 
-    // ----------------------------------------------------------------------
-    // SAFE LOG WRAPPER
-    // ----------------------------------------------------------------------
     private fun Context.safeLog(event: String) {
         try {
             recordKeyEvent(event)

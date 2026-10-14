@@ -9,10 +9,6 @@ import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
-/**
- * The invalid-number sheet (design 11d), in place of a toast: which number doesn't match which
- * country's format, then Edit number (back to the field) or Change country (the picker).
- */
 class BrokenNumDrawer(
     activity: Activity,
     private val number: String,

@@ -58,13 +58,10 @@ class SliderPlane(
     context: Context,
     attributeSet: AttributeSet
 ) : HomePlane<HdAllAppsFragmentBinding>(context, attributeSet), AllProgramsObserver {
-
     companion object {
-        /** The search cards are four across whatever the drawer's own column count (One UI's Finder is too). */
         private const val SEARCH_COLUMNS = 4
         private const val SEARCH_MAX_RESULTS = 8
 
-        /** Rows of app cells inflated while idle so the first fling recycles instead of inflating. */
         private const val PREWARM_ROWS = 4
         private const val SEARCH_MAX_SHORTCUTS = 4
     }
@@ -76,16 +73,13 @@ class SliderPlane(
 
     private var appList = emptyList<CoreHome>()
 
-    /** The layout [appList] was last submitted for - see [gotLaunchers]. */
     @Volatile
     private var lastShape: List<Any>? = null
 
-    /** Everything in the config that changes how the same list is laid out. */
     private fun layoutKey(): List<Any> = with(context.launcherConfig) {
         listOf(drawerMode, drawerColumnCount, drawerRowCount, showDrawerAppLabels)
     }
 
-    /** True when both lists hold the same apps in the same order, with identical names, tints and icon objects. */
     private fun isSameList(a: List<CoreHome>, b: List<CoreHome>): Boolean {
         if (a.size != b.size) return false
         for ((left, right) in a.zip(b)) {
@@ -99,21 +93,8 @@ class SliderPlane(
         return true
     }
 
-    /**
-     * [setupViews] runs on every resume — HomeDeck.onResume re-runs it once the layout settles —
-     * and everything in it is an assignment except the scroll listener, which appends. Left
-     * unguarded the grid ends up with one listener per resume, each doing the `hasFocus` check on
-     * every scrolled frame.
-     */
     private var scrollHookInstalled = false
 
-    /**
-     * The drawer's native slot. Built here rather than in the layout because it is not a sibling of
-     * the grid: [HomesFeed] hosts it in a full-span row of the grid — at the row
-     * `launcher.screens.app_drawer.ad_row_position` names — so it scrolls away with the apps.
-     * Starts GONE — the host's ad wiring reveals it only once a fill arrives, and until then the row
-     * it lives in wraps to nothing.
-     */
     private val adSlot by lazy {
         FrameLayout(context).apply {
             layoutParams = ViewGroup.LayoutParams(
@@ -125,8 +106,6 @@ class SliderPlane(
 
     private var gridAdapter: HomesFeed? = null
 
-    // The paged (Samsung-style) drawer: one grid per page in the ViewPager2, dots underneath.
-    // Which of the two surfaces is live follows Config.drawerMode - see mountSurface.
     private var pagerAdapter: SliderLeavesFeed? = null
     private var visiblePaged: Boolean? = null
     private var downX = -1
@@ -138,9 +117,6 @@ class SliderPlane(
         this.activity = activity
         this.binding = HdAllAppsFragmentBinding.bind(this)
 
-        // the slot's row spans the whole width; every other position is a single app icon. Which
-        // position that is comes from the launcherConfig, so it is asked of the adapter rather than fixed
-        // here — see submitList.
         val layoutManager = binding.everyAppsGridUi.layoutManager as MyGridLayoutManager
         layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
             override fun getSpanSize(position: Int) =
@@ -159,22 +135,6 @@ class SliderPlane(
         })
     }
 
-    /**
-     * Requests the drawer's slot afresh.
-     *
-     * Driven by `HomeDeck.presentFragment` on every open rather than once from [setupFragment],
-     * for the same reason as `ProgramsDeckPlane.renewAds`: the drawer is built at boot and then
-     * only parked below the screen, so a single request there would pin one creative for the life
-     * of the process.
-     *
-     * [adSlot] is a stable view that the adapter re-parents into whichever holder owns the ad row,
-     * so it can be refreshed while it is detached — a fill that lands then is already in place by
-     * the time the row scrolls back in.
-     *
-     * Whether the refresh happens at all is the console's call — see
-     * [HomeSpotsProfile.reloadAdOnOpen]. The drawer is opened far more often than either panel, so
-     * it is the placement most likely to want the flag off.
-     */
     fun renewAds() {
         HomeBook.ads.wireNativeOnOpen(activity, HomeSpotsProfile.KEY_APP_DRAWER, adSlot)
     }
@@ -193,7 +153,7 @@ class SliderPlane(
         val columnsChanged = (manager as MyGridLayoutManager).spanCount != context.launcherConfig.drawerColumnCount
         if (!columnsChanged && visiblePaged == pagedMode) return
         onConfigurationChanged()
-        // Item size changed: redraw every cell.
+
         scrollAdapter()?.notifyDataSetChanged()
     }
 
@@ -218,7 +178,6 @@ class SliderPlane(
             }
 
             MotionEvent.ACTION_MOVE -> {
-                // Some devices stream ACTION_MOVE through a whole long press; only a real position change counts.
                 val moved = prevPointer.first != event.x || prevPointer.second != event.y
                 if (ignoreTouches && moved) {
                     touchDownY = -1
@@ -234,35 +193,19 @@ class SliderPlane(
         return steal
     }
 
-    /**
-     * Hands the gesture to the sheet when the user drags down past the slop from a grid already at
-     * its top (a resting finger's drift must not cancel an icon long press). On the pager the pull
-     * also has to be mostly vertical so a page swipe is not taken over.
-     */
     private fun claimPullDown(event: MotionEvent): Boolean {
         if (touchDownY == -1) return false
         val dy = event.y.toInt() - touchDownY
         val vertical = !pagedMode || abs(dy) > abs(event.x.toInt() - downX)
         if (dy <= pullSlop || !vertical || !gridAtTop()) return false
-        // Hiding the keyboard is costly; only when the search field owns focus.
+
         if (binding.huntBarUi.hasFocus()) activity?.hideKeyboard()
         activity?.beginHandlingTouches(touchDownY)
         touchDownY = -1
         return true
     }
 
-    /**
-     * Whether the grid is scrolled all the way to its top, read off the first laid-out child.
-     *
-     * Not `computeVerticalScrollOffset() == 0`: that is an estimate, and GridLayoutManager skips
-     * zero-height children when it looks for the first visible row. The ad row is exactly that
-     * while its slot is GONE - which is every open until a fill arrives, and always when the
-     * placement is off - so with the row at position 0 the estimate reads one row of "scrolled
-     * away" for a grid that has never moved, and the pull-down never intercepted. The reference
-     * app asks its scroll view for `scrollY == 0`; this is the same question put to the grid.
-     */
     private fun gridAtTop(): Boolean {
-        // Pages never scroll vertically: the sheet is always at its top.
         if (pagedMode) return true
         val grid = binding.everyAppsGridUi
         val first = grid.getChildAt(0) ?: return true
@@ -271,15 +214,6 @@ class SliderPlane(
             layoutManager.getDecoratedTop(first) >= grid.paddingTop
     }
 
-    /**
-     * Shows [appLaunchers]. Every resume hands the drawer the launcher list twice (the cached one,
-     * then the scan's), and almost always nothing has changed. The scrolling grid diffs that to
-     * nothing, but the paged drawer rebuilds every page and jumps back to the first, which showed
-     * as all the icons repainting each time the user came back - twice when an App Open Ad closed
-     * over the launcher. So a list identical to the one on screen, for a drawer laid out the same
-     * way, is not resubmitted. [force] resubmits anyway: a config change that moves rows (the ad
-     * row) without changing the apps.
-     */
     fun gotLaunchers(appLaunchers: List<CoreHome>, force: Boolean = false) {
         val sorted = appLaunchers.sortedWith(appLauncherComparator)
         val shape = layoutKey()
@@ -290,7 +224,6 @@ class SliderPlane(
         mountSurface(appList)
     }
 
-    /** The current launcher entry (with its decoded icon) for each of [apps], by package and activity; dropped if gone. */
     private fun resolveCurrent(apps: List<CoreHome>, current: List<CoreHome>): List<CoreHome> {
         val exact = current.associateBy { it.packageName to it.activityName }
         val firstOfPackage = HashMap<String, CoreHome>()
@@ -300,18 +233,14 @@ class SliderPlane(
         }
     }
 
-    // held here rather than read back off the RecyclerView, which hands it back as a plain
-    // RecyclerView.Adapter
     private fun scrollAdapter() = gridAdapter
 
-    // Gated here rather than inside fireApp: the left panel launches apps through the same
-    // extension, and this placement is the *drawer's*. Shared by the scrolling grid and every page.
     private val tileClick: (Any) -> Unit = { picked ->
         val app = picked as CoreHome
-        // fireApp applies the launch promo itself; sponsored tiles go straight to their landing page.
+
         when {
             BackedSquares.isSponsored(app) -> activity?.let { host -> BackedSquares.open(host, app) }
-            // Our own entry opens the host panel rather than routing back through LAUNCHER.
+
             app.packageName == context.applicationContext.packageName -> activity?.enterHostApp(app.activityName)
             else -> activity?.fireApp(app.packageName, app.activityName, HomeSpotsProfile.DRAWER_LAUNCH)
         }
@@ -326,8 +255,6 @@ class SliderPlane(
             val layoutManager = binding.everyAppsGridUi.layoutManager as MyGridLayoutManager
             layoutManager.spanCount = context.launcherConfig.drawerColumnCount
 
-            // One surface at a time. The slot is a single view, so the surface that goes away
-            // must let go of it: its adapter is dropped and rebuilt on the way back.
             if (visiblePaged != paged) {
                 visiblePaged = paged
                 binding.everyAppsGridUi.beVisibleIf(!paged)
@@ -362,10 +289,6 @@ class SliderPlane(
         }
     }
 
-    /**
-     * Cuts the list into pages of `drawerColumnCount` x `drawerRowCount`. The native slot takes a
-     * full row of the first page, at the row the console names, so that page holds one row fewer.
-     */
     private fun splitIntoPages(apps: List<CoreHome>): List<List<CoreHome>> {
         if (apps.isEmpty()) return emptyList()
         val cfg = context.launcherConfig
@@ -403,7 +326,6 @@ class SliderPlane(
         }
     }
 
-    /** Back to the first page, the way the scrolling drawer goes back to its top on close. */
     fun rewindToFirstPage() {
         if (binding.everyAppsPagerUi.adapter != null) binding.everyAppsPagerUi.setCurrentItem(0, false)
     }
@@ -425,7 +347,6 @@ class SliderPlane(
             scrollHookInstalled = true
             binding.everyAppsGridUi.addOnScrollListener(object : OnScrollListener() {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                    // Hiding is expensive, only do it if focused
                     if (binding.huntBarUi.hasFocus() && dy > 0 && binding.everyAppsGridUi.computeVerticalScrollOffset() > 0) {
                         activity?.hideKeyboard()
                     }
@@ -459,17 +380,11 @@ class SliderPlane(
         }
     }
 
-    /**
-     * Puts the search bar at the top (the default) or the bottom of the sheet, the way One UI 6.1
-     * moved its Finder bar, and re-anchors the grid, the pager, its dots and the placeholder around
-     * it. Pure RelativeLayout rules, so the same layout serves both.
-     */
     private var anchoredBottom: Boolean? = null
 
     private fun anchorSearchBar() {
         val bottom = context.launcherConfig.drawerSearchAtBottom
-        // setupViews runs from a global-layout hook; re-anchoring on every pass would request a
-        // layout from inside a layout and starve the UI thread. Only a real change touches the rules.
+
         if (anchoredBottom == bottom) return
         anchoredBottom = bottom
         val barId = binding.huntBarUi.id
@@ -493,7 +408,7 @@ class SliderPlane(
         binding.everyAppsPageDotsUi.reanchor(if (bottom) aboveBar else toParentBottom)
         binding.everyAppsPagerUi.reanchor(if (bottom) toParentTop else belowBar, RelativeLayout.ABOVE to dotsId)
         binding.lvNoResultsPlaceholderUi.reanchor(if (bottom) toParentTop else belowBar)
-        // Result cards always start at the top of the sheet; the bar only decides where the panel ends.
+
         binding.huntPanelUi.reanchor(
             if (bottom) toParentTop else belowBar,
             if (bottom) aboveBar else toParentBottom,
@@ -502,14 +417,6 @@ class SliderPlane(
         binding.huntBarUi.requestLayout()
     }
 
-    /**
-     * A bottom search bar sits on the navigation bar (and the keyboard, once it opens). The grid
-     * already carries exactly that clearance as bottom padding from setupEdgeToEdge - the window
-     * root consumes the insets, so they cannot be read here - and padding a search menu itself
-     * re-dispatches insets without settling. So the bar mirrors the grid's padding as a margin,
-     * re-checked on every layout and written only when it differs (as padding: the menu's own
-     * layout does not honour a bottom margin).
-     */
     private fun watchBottomClearance() {
         if (!clearanceHooked) {
             clearanceHooked = true
@@ -527,8 +434,7 @@ class SliderPlane(
         if (bar.paddingBottom != wanted) {
             bar.setPadding(bar.paddingLeft, bar.paddingTop, bar.paddingRight, wanted)
         }
-        // With the bar at the bottom nothing sits above the list, so its first row gets a gap of its
-        // own below the status bar. Kept here, on every layout, because inset passes rewrite padding.
+
         val grid = binding.everyAppsGridUi
         val topGap = if (bottom) resources.getDimensionPixelSize(R.dimen.launcher_drawer_list_top_gap) else 0
         if (grid.paddingTop != topGap) {
@@ -537,18 +443,10 @@ class SliderPlane(
         pinDotsAbovePill(bottom)
     }
 
-    /**
-     * The page dots sit a fixed gap above the search *pill*, not above the search bar: the bar is an
-     * app-bar layout with toolbar chrome above the pill, so anchoring to its edge left the dots
-     * floating, and the pages above them short by as much. A negative bottom margin lets the dots
-     * (and the pager anchored above them) reclaim that chrome. Applied only on a real change.
-     */
     private fun pinDotsAbovePill(bottom: Boolean) {
         val dots = binding.everyAppsPageDotsUi
         val params = dots.layoutParams as? RelativeLayout.LayoutParams ?: return
-        // setupEdgeToEdge pads the dots by the navigation-bar inset for the top-bar layout, where
-        // they sit on the nav bar. Under a bottom bar that clearance is already the bar's own
-        // (syncBottomClearance), so here the dots keep only the layout's 8 dp.
+
         if (bottom) {
             val own = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.medium_margin)
             if (dots.paddingBottom != own) dots.setPadding(dots.paddingLeft, dots.paddingTop, dots.paddingRight, own)
@@ -560,7 +458,6 @@ class SliderPlane(
         }
     }
 
-    /** Negative margin that pulls the dots down to a fixed gap above the search pill; null until measurable. */
     private fun pillLiftMargin(): Int? {
         val bar = binding.huntBarUi
         val pill = bar.binding.toolbarContainer
@@ -607,13 +504,6 @@ class SliderPlane(
         binding.huntBarUi.closeSearch()
     }
 
-    /**
-     * Closes the drawer's search if it is open.
-     *
-     * Called as the drawer is dismissed rather than instead of dismissing it: Back closes the
-     * drawer in a single press (see HomeDeck.onBackPressedCompat), and this only makes sure the
-     * next open does not come back with the last query still in the bar.
-     */
     fun rewindSearch() {
         if (binding.huntBarUi.isSearchOpen) {
             binding.huntBarUi.closeSearch()
@@ -649,13 +539,6 @@ class SliderPlane(
         refreshEmptyState()
     }
 
-    // ---- Search panel -------------------------------------------------------------------------
-    //
-    // While the search bar is open the grid / pages step aside for two cards, the way One UI's
-    // Finder does it: "Suggested apps" (CorePicks over the launcher's own launch log) until
-    // something is typed, then "Searched apps" with the matched prefix tinted and, under it, the
-    // top match's app shortcuts.
-
     private var finderAdapter: HomesFeed? = null
     private var suggested: List<CoreHome>? = null
     private var suggestToken = 0
@@ -688,7 +571,7 @@ class SliderPlane(
         }
         grid.itemAnimator = null
         grid.isNestedScrollingEnabled = false
-        // Rows breathe the way the Finder's do; the item layout alone packs them tighter.
+
         val rowGap = resources.getDimensionPixelSize(R.dimen.launcher_search_card_row_gap)
         grid.addItemDecoration(object : RecyclerView.ItemDecoration() {
             override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
@@ -702,7 +585,6 @@ class SliderPlane(
         }
     }
 
-    /** The launcher's own launch log ranked, off the main thread; the card fills in when it lands. */
     private fun loadSuggestions() {
         val ticket = ++suggestToken
         val snapshot = appList
@@ -735,7 +617,6 @@ class SliderPlane(
     }
 
     private fun drawSuggestedCard(adapter: HomesFeed, items: List<CoreHome>) {
-        // Re-resolved against the current list: icons may have been refreshed since ranking.
         val picks = resolveCurrent(suggested.orEmpty(), items)
         binding.huntAppsTitleUi.setText(R.string.launcher_suggested_apps)
         adapter.highlight = ""
@@ -760,7 +641,6 @@ class SliderPlane(
         drawShortcutCard(hits.firstOrNull())
     }
 
-    /** Enabled dynamic + manifest shortcuts of [packageName]; empty without host permission or on failure. */
     private fun shortcutsOf(launcherApps: LauncherApps, packageName: String): List<ShortcutInfo> {
         val found = runCatching {
             if (!launcherApps.hasShortcutHostPermission()) return@runCatching null
@@ -772,7 +652,6 @@ class SliderPlane(
         return found.filter { it.isEnabled }.take(SEARCH_MAX_SHORTCUTS)
     }
 
-    /** Shortcut list for the top match, shown under the app's name. */
     private fun drawShortcutCard(app: CoreHome?) {
         val card = binding.huntShortcutsCardUi
         val list = binding.huntShortcutsListUi
@@ -807,18 +686,6 @@ class SliderPlane(
         if (activity?.launcherConfig?.shutAppDrawer == true) activity?.shutAppDrawer(delayed = true)
     }
 
-    /**
-     * Puts the ad row where `launcher.screens.app_drawer.ad_row_position` asks for it — counted in
-     * rows of apps above it, so the same console value reads the same at any column count.
-     *
-     * Inserted into the list rather than concatenated ahead of it, because the position is not
-     * fixed; [HomesFeed.AD_SLOT] is the marker the adapter renders as the slot's row.
-     *
-     * A position past the end lands the row after the last app instead of being dropped: an
-     * over-large console value should still show the ad, at the bottom, rather than silently
-     * turning the placement off. The list is left alone entirely while it is empty — a lone ad row
-     * under "No items found" is not a drawer.
-     */
     private fun insertAdRow(apps: List<CoreHome>): MutableList<CoreHome> {
         val rows = apps.toMutableList()
         if (rows.isEmpty()) return rows

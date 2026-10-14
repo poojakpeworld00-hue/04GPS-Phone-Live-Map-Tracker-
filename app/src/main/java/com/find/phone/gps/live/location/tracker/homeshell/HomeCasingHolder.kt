@@ -13,37 +13,19 @@ import com.google.android.material.snackbar.Snackbar
 import com.livemap.homedeck.screens.HomeDeck
 import java.util.WeakHashMap
 
-/**
- * [MainCasingHolder] for the launcher module's home screen.
- *
- * [HomeDeck] is the module's Activity, so it cannot implement our interface the way the old
- * in-app launcher did. This object stands in for it, one per HomeDeck instance, and the shell
- * fragments find it through [of].
- *
- * It must be created from [RingHomeGateway.onLauncherStart]: that runs inside the launcher's
- * `onCreate`, and [MainCasingDirector] registers its result launchers on construction, which only
- * works before the Activity is STARTED.
- */
 class HomeCasingHolder private constructor(private val panel: HomeDeck) : MainCasingHolder {
-
     override val hostActivity: AppCompatActivity get() = panel
 
     override val homeShellController = MainCasingDirector(this)
 
-    /** Set by [HomeCasingFragment] as the right-hand panel slides in and out. */
     var shellVisible = false
 
     private var updateReadySnackbar: Snackbar? = null
 
     override val isShellOnScreen: Boolean get() = shellVisible
 
-    /** Back inside the panel with the shell's own tab history exhausted just closes it. */
     override fun onShellBackExhausted() = panel.shutHostPanel()
 
-    /**
-     * With the panel open the shell's own Snackbar is right; with it shut the shell is parked off
-     * screen, so the home grid carries the prompt or a downloaded update has nowhere to install from.
-     */
     override fun showUpdateReadyPrompt() {
         if (updateReadySnackbar?.isShown == true) return
         updateReadySnackbar = Snackbar
@@ -52,7 +34,6 @@ class HomeCasingHolder private constructor(private val panel: HomeDeck) : MainCa
             .also { it.show() }
     }
 
-    /** Back from a Settings round trip (overlay / FSI grant): land in the panel, not on the grid. */
     override fun bringHostToFront() {
         runCatching {
             panel.startActivity(
@@ -64,7 +45,6 @@ class HomeCasingHolder private constructor(private val panel: HomeDeck) : MainCa
     }
 
     companion object {
-
         private val hosts = WeakHashMap<Activity, HomeCasingHolder>()
 
         fun attach(panel: HomeDeck) {

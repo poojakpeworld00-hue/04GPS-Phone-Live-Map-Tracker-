@@ -7,9 +7,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.util.Calendar
 
-/** Device-local reminder storage: one JSON array in SharedPreferences. */
 object MemoShelf {
-
     private const val FILE = "reminder_prefs"
     private const val LIST_KEY = "reminders"
     private const val SEEDED_KEY = "reminder_defaults_seeded"
@@ -63,10 +61,6 @@ object MemoShelf {
         return cal.timeInMillis
     }
 
-    /**
-     * One-time seeding of `default_config_list` (when `is_default_config` is on and storage is
-     * empty). Seeds are disabled so nothing fires until the user saves one.
-     */
     fun plantDefaultsIfNeeded(context: Context) {
         val sp = store(context)
         if (sp.getBoolean(SEEDED_KEY, false)) return

@@ -16,20 +16,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-/**
- * One-time tutorial coach-mark shown on top of the system "display over other
- * apps" Settings page. A hand taps the toggle to show the user what to flip.
- *
- * Three knobs (see code):
- *  - shown ONCE  -> [LockerBook.isOverlayTutorialShown]
- *  - lasts 3 sec -> [AUTO_DISMISS_MS]
- *  - the HAND    -> [beginHandHint] animating R.id.imgHand
- *
- * It never navigates; [PolicyPortalActivity] owns the flow. This screen just finishes
- * itself: on grant detected, after the timeout, or on tap.
- */
 class DriftPortalActivity : AppCompatActivity() {
-
     companion object {
         private const val AUTO_DISMISS_MS = 3_000L
         private const val POLL_MS = 500L
@@ -46,19 +33,16 @@ class DriftPortalActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.screen_overlay_permission)
 
-        // Tutorial is shown only once, ever.
         if (prefs.isOverlayTutorialShown) {
             finish()
             return
         }
         prefs.isOverlayTutorialShown = true
 
-        // Tapping anywhere outside the card dismisses the hint.
         findViewById<View>(R.id.stackMain)?.setOnClickListener { finish() }
 
         beginHandHint()
 
-        // Auto-dismiss after the tutorial duration.
         autoDismissJob = lifecycleScope.launch {
             delay(AUTO_DISMISS_MS)
             if (!isFinishing && !isDestroyed) finish()
@@ -67,7 +51,7 @@ class DriftPortalActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Close the moment the toggle is flipped on so the caller's UI shows.
+
         pollJob?.cancel()
         pollJob = lifecycleScope.launch {
             while (isActive) {
@@ -91,7 +75,6 @@ class DriftPortalActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    /** Looping "tap" gesture: the hand nudges up into the toggle and shrinks. */
     private fun beginHandHint() {
         val hand = findViewById<ImageView>(R.id.imgHand) ?: return
         val up = dp(2f)

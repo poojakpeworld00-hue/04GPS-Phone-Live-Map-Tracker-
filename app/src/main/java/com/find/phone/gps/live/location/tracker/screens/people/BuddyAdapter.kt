@@ -9,21 +9,17 @@ import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.databinding.CellContactHeaderBinding
 import com.find.phone.gps.live.location.tracker.databinding.CellContactRowBinding
 
-/** The A–Z list (design 8a): letter headings, then that letter's contact cards with Locate and Call. */
 class BuddyAdapter(
     private val onLocate: (BuddyNum) -> Unit,
     private val onCall: (BuddyNum) -> Unit,
 ) : ListAdapter<BuddyAdapter.Item, RecyclerView.ViewHolder>(Diff) {
-
     sealed class Item {
         data class Header(val letter: String) : Item()
         data class Row(val contact: BuddyNum) : Item()
     }
 
-    /** Adapter position of each letter heading, for the rail. */
     val letterPositions = LinkedHashMap<String, Int>()
 
-    /** Groups [contacts] (already sorted) under their letters. */
     fun lodgeContacts(contacts: List<BuddyNum>, onDone: () -> Unit = {}) {
         val items = ArrayList<Item>(contacts.size + 27)
         val positions = LinkedHashMap<String, Int>()
@@ -63,7 +59,7 @@ class BuddyAdapter(
             binding.txtInitial.text = contact.initials
             binding.txtInitial.setBackgroundResource(AVATARS[contact.avatar])
             binding.txtName.text = contact.name
-            // A contact saved without a name already shows its number as the name.
+
             val number = contact.number.takeIf { it != contact.name }
             binding.txtNumber.text = listOfNotNull(contact.label.takeIf { it.isNotBlank() }, number).joinToString(" · ")
             binding.actLocate.setOnClickListener { onLocate(contact) }
@@ -87,7 +83,6 @@ class BuddyAdapter(
         private const val TYPE_HEADER = 0
         private const val TYPE_ROW = 1
 
-        /** The six avatar gradients of the design, indexed by [BuddyNum.avatar]. */
         val AVATARS = intArrayOf(
             R.drawable.lv_avatar_g0, R.drawable.lv_avatar_g1, R.drawable.lv_avatar_g2,
             R.drawable.lv_avatar_g3, R.drawable.lv_avatar_g4, R.drawable.lv_avatar_g5,

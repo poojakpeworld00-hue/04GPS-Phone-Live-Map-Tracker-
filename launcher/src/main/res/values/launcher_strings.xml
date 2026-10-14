@@ -1,61 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="launcher_app_launcher_name">Launcher</string>
-    <string name="launcher_launcher_settings">Launcher Settings</string>
-    <string name="launcher_app_info">App info</string>
-    <string name="launcher_touch_hold_widget">Long press the widget and drag it on your home screen</string>
-    <string name="launcher_uninstall">Uninstall</string>
-    <string name="launcher_manage_hidden_icons">Manage hidden icons</string>
-    <string name="launcher_hidden_icons">Hidden icons</string>
-    <string name="launcher_hidden_icons_placeholder">Some apps cannot be uninstalled due to system restrictions, but you can at least hide their icons to avoid seeing them.</string>
-    <string name="launcher_app_drawer_settings">App drawer</string>
-    <string name="launcher_app_drawer_enabled">Swipe up for app drawer</string>
-    <string name="launcher_drawer_style">Drawer style</string>
-    <string name="launcher_drawer_style_vertical">Scrolling list</string>
-    <string name="launcher_drawer_style_paged">Pages</string>
-    <string name="launcher_app_drawer_disabled_hint">Off: every app stays on the home screen, new apps are added to the last page</string>
-    <string name="launcher_close_app_drawer_on_app_open">Close app drawer on opening an app</string>
-    <string name="launcher_auto_show_keyboard_in_app_drawer">Automatically show keyboard in drawer</string>
-    <string name="launcher_show_app_labels">Show app labels</string>
-    <string name="launcher_home_screen_settings">Home screen</string>
-    <string name="launcher_widget_too_big">Widget is too big for current home screen size</string>
-    <string name="launcher_double_tap_to_lock">Double tap to lock screen</string>
-    <string name="launcher_lock_device_admin_hint">To enable the double tap to lock screen feature, you need to grant admin permission. Note that the app cannot be uninstalled until this permission is removed.</string>
-    <string name="launcher_lock_device_admin_warning">Deactivating admin permission will disable the double tap to lock screen feature.</string>
-    <string name="launcher_pseudo_widget_clock">Clock</string>
-    <string name="launcher_pseudo_widget_search_bar">Search bar</string>
-    <string name="launcher_pseudo_widget_search_bar_hint">Ask Anything…</string>
-    <!-- shown in place of a real answer until an LLM provider is wired up -->
-    <string name="launcher_digital_clock_widget">Digital clock</string>
-    <string name="launcher_analog_clock_widget">Analog clock</string>
+    <string name="launcher_launcher_settings">Launcher Options</string>
+    <string name="launcher_app_info">App details</string>
+    <string name="launcher_touch_hold_widget">Press and hold the widget, then drag it onto your home screen</string>
+    <string name="launcher_uninstall">Remove app</string>
+    <string name="launcher_manage_hidden_icons">Edit hidden icons</string>
+    <string name="launcher_hidden_icons">Hidden apps</string>
+    <string name="launcher_hidden_icons_placeholder">Some apps can\'t be removed because of system limits, but you can still hide their icons so they stay out of sight.</string>
+    <string name="launcher_app_drawer_settings">App list</string>
+    <string name="launcher_app_drawer_enabled">Swipe up to open the app list</string>
+    <string name="launcher_drawer_style">App list layout</string>
+    <string name="launcher_drawer_style_vertical">Vertical list</string>
+    <string name="launcher_drawer_style_paged">Paged</string>
+    <string name="launcher_app_drawer_disabled_hint">Off: all apps live on the home screen and new ones go to the final page</string>
+    <string name="launcher_close_app_drawer_on_app_open">Close the app list after launching an app</string>
+    <string name="launcher_auto_show_keyboard_in_app_drawer">Open keyboard automatically in app list</string>
+    <string name="launcher_show_app_labels">Display app names</string>
+    <string name="launcher_home_screen_settings">Home page</string>
+    <string name="launcher_widget_too_big">This widget doesn\'t fit the current home screen size</string>
+    <string name="launcher_double_tap_to_lock">Double tap to turn off screen</string>
+    <string name="launcher_lock_device_admin_hint">Double tap to lock requires admin permission. Keep in mind the app can\'t be uninstalled while this permission is active.</string>
+    <string name="launcher_lock_device_admin_warning">Turning off admin permission will switch off double tap to lock.</string>
+    <string name="launcher_pseudo_widget_clock">Time</string>
+    <string name="launcher_pseudo_widget_search_bar">Search box</string>
+    <string name="launcher_pseudo_widget_search_bar_hint">Ask me anything…</string>
+    <string name="launcher_digital_clock_widget">Digital time</string>
+    <string name="launcher_analog_clock_widget">Analog time</string>
     <string name="launcher_apps">Apps</string>
     <string name="launcher_clear">Clear</string>
-    <string name="launcher_suggested_for_now">Suggested for now</string>
-    <string name="launcher_recent_apps">Recent apps</string>
-    <string name="launcher_search_in_apps">Search in apps</string>
-    <string name="launcher_see_more">See more</string>
-    <string name="launcher_see_less">See less</string>
-
-    <string name="launcher_default_launcher_banner_title">Setup Not Complete</string>
-    <string name="launcher_default_launcher_banner_body">Set this app as your default home to unlock every feature.</string>
-    <string name="launcher_swipe_right_hint">Swipe right to open the app</string>
-    <string name="launcher_swipe_left_hint">Swipe left for search</string>
-    <string name="launcher_swipe_up_hint">Swipe up for all apps</string>
-    <string name="launcher_swipe_hint_tap">or tap anywhere to try it</string>
-
-    <!-- decorative splash props; not translatable, they are pictograms -->
-
-    <!-- placeholder figures from the design; this screen runs before the SMS permission exists -->
-    <!--
-        Haven't found some strings? There's more at
-        https://github.com/FossifyOrg/Commons/tree/master/commons/src/main/res
-    -->
-    <string name="launcher_greeting_morning">Good morning</string>
-    <string name="launcher_greeting_afternoon">Good afternoon</string>
-    <string name="launcher_greeting_evening">Good evening</string>
-    <string name="launcher_search_apps_hint">Search apps</string>
-    <string name="launcher_suggested_apps">Suggested apps</string>
-    <string name="launcher_searched_apps">Searched apps</string>
-    <!-- A sponsored drawer tile's label: the ad disclosure, then the promoted app's name. -->
-    <string name="lnch_sponsored_label">Ad · %1$s</string>
+    <string name="launcher_suggested_for_now">Suggestions right now</string>
+    <string name="launcher_recent_apps">Recently used</string>
+    <string name="launcher_search_in_apps">Search inside apps</string>
+    <string name="launcher_see_more">Show more</string>
+    <string name="launcher_see_less">Show less</string>
+    <string name="launcher_default_launcher_banner_title">Setup Incomplete</string>
+    <string name="launcher_default_launcher_banner_body">Make this app your default home to enable all features.</string>
+    <string name="launcher_swipe_right_hint">Swipe right to launch the app</string>
+    <string name="launcher_swipe_left_hint">Swipe left to search</string>
+    <string name="launcher_swipe_up_hint">Swipe up to see every app</string>
+    <string name="launcher_swipe_hint_tap">or tap anywhere to give it a try</string>
+    <string name="launcher_greeting_morning">Morning!</string>
+    <string name="launcher_greeting_afternoon">Afternoon!</string>
+    <string name="launcher_greeting_evening">Evening!</string>
+    <string name="launcher_search_apps_hint">Find apps</string>
+    <string name="launcher_suggested_apps">Recommended apps</string>
+    <string name="launcher_searched_apps">Search results</string>
+    <string name="lnch_sponsored_label">Sponsored · %1$s</string>
 </resources>

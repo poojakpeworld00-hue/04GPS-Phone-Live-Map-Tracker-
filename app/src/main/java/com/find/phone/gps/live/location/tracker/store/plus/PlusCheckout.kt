@@ -18,13 +18,7 @@ import java.util.Currency
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-/**
- * Google Play Billing facade for Premium: cached entitlement (offline / cold start), paywall
- * product details, the purchase sheet and Restore. Premium holds while any configured product
- * is PURCHASED; [sync] re-validates with Play on app start.
- */
 object PlusCheckout {
-
     private const val TAG = "PlusCheckout"
     private const val STORE = "premium"
     private const val FLAG_ACTIVE = "active"
@@ -38,7 +32,6 @@ object PlusCheckout {
     private var client: BillingClient? = null
     private val details = HashMap<String, ProductDetails>()
 
-    /** Pending callbacks for the single in-flight connection attempt; guarded by `this`. */
     private val queued = ArrayList<(BillingClient?) -> Unit>()
     private var inFlight = false
 
@@ -66,10 +59,6 @@ object PlusCheckout {
 
     private fun isOk(r: BillingResult) = r.responseCode == BillingClient.BillingResponseCode.OK
 
-    /**
-     * Hands [block] a ready client, or null if Play Billing is unreachable. Concurrent callers
-     * share one startConnection attempt (Play rejects overlapping ones).
-     */
     private fun withClient(ctx: Context, block: (BillingClient?) -> Unit) {
         val bc = billing(ctx)
         if (bc.isReady) return block(bc)
@@ -98,10 +87,6 @@ object PlusCheckout {
         })
     }
 
-    /**
-     * Refreshes ownership from Play. [onDone] receives the new state, or null when Play could not
-     * be queried (the cached entitlement is then left untouched).
-     */
     fun sync(context: Context, onDone: (Boolean?) -> Unit = {}) {
         val appCtx = context.applicationContext
         val configured = HashSet<String>()
@@ -150,10 +135,6 @@ object PlusCheckout {
         onDone(active)
     }
 
-    /**
-     * Loads product details for [plans] keyed by id; unknown ids are logged and left out.
-     * [onLoaded] always fires with everything currently known.
-     */
     fun fetchDetails(context: Context, plans: List<PlusOffer>, onLoaded: (Map<String, ProductDetails>) -> Unit) {
         withClient(context) { bc ->
             if (bc == null) return@withClient onLoaded(HashMap(details))
@@ -207,7 +188,6 @@ object PlusCheckout {
         }
     }
 
-    /** Monthly plan price divided by four, formatted in Play's currency; null otherwise. */
     fun weeklyPrice(plan: PlusOffer): String? {
         if (plan.kind != PlusOffer.Kind.MONTHLY) return null
         val pd = cachedDetails(plan) ?: return null
@@ -221,7 +201,6 @@ object PlusCheckout {
         }
     }
 
-    /** Trial length in days for this user: null before Play answers, 0 without a trial. */
     fun trialDays(plan: PlusOffer): Int? {
         if (!plan.isSubscription) return 0
         val pd = cachedDetails(plan) ?: return null
@@ -238,7 +217,6 @@ object PlusCheckout {
         return null
     }
 
-    /** ISO-8601 "PnYnMnWnD" (each part optional, in that order) to an approximate day count; 0 if malformed. */
     private fun periodToDays(period: String): Int {
         if (period.isEmpty() || period[0] != 'P') return 0
         var total = 0
@@ -261,7 +239,6 @@ object PlusCheckout {
         val pd = cachedDetails(plan) ?: return false
         val productParams = BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(pd)
         if (plan.isSubscription) {
-            // Prefer the free-trial offer, else the base plan.
             val offer = freeTrialOffer(pd) ?: defaultOffer(pd)
             val token = offer?.offerToken ?: return false
             productParams.setOfferToken(token)
@@ -273,7 +250,6 @@ object PlusCheckout {
         return isOk(result)
     }
 
-    /** Base plan without an offer id, else the first listed offer. */
     private fun defaultOffer(pd: ProductDetails): ProductDetails.SubscriptionOfferDetails? {
         val offers = pd.subscriptionOfferDetails ?: return null
         return offers.find { it.offerId == null } ?: offers.firstOrNull()

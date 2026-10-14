@@ -13,11 +13,9 @@ import com.find.phone.gps.live.location.tracker.databinding.CellRecentSearchBind
 import com.find.phone.gps.live.location.tracker.screens.finder.Realms
 import java.util.concurrent.TimeUnit
 
-/** Recent-search rows (design 3b): the pin tile cycles tint / green / purple down the list. */
 class FreshHuntAdapter(
     private val onClick: (FreshHunt) -> Unit,
 ) : RecyclerView.Adapter<FreshHuntAdapter.VH>() {
-
     private val items = mutableListOf<FreshHunt>()
 
     @SuppressLint("NotifyDataSetChanged")

@@ -10,10 +10,7 @@ import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
 class OpeningAdapter(
     private val pages: List<OpeningFolio>,
 ) : RecyclerView.Adapter<OpeningAdapter.VH>() {
-
     inner class VH(val binding: CellOnboardingBinding) : RecyclerView.ViewHolder(binding.root) {
-
-        /** Looping animators of the current scene; cancelled on recycle. */
         private val anims = mutableListOf<Animator>()
 
         fun bind(page: OpeningFolio) {
@@ -21,8 +18,7 @@ class OpeningAdapter(
             val container = binding.lvArtContainer
             container.removeAllViews()
             LayoutInflater.from(container.context).inflate(page.sceneRes, container, true)
-            // The self-animating views (ping rings, roads, typing) start on attach; the
-            // element loops that need ids (floaty, spin, fade-in, blink, glow) are wired here.
+
             anims += OpeningTweens.attach(container)
             binding.txtTitle.setText(page.titleRes)
             binding.txtDesc.setText(page.descRes)

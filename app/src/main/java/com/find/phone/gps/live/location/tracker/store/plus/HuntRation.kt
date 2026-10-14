@@ -5,14 +5,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/**
- * The free user's daily search allowance (design 9a / 9b): `free_search_limit` new searches a
- * day plus whatever rewarded ads have added today; it all resets at local midnight. Premium, or
- * a limit of 0 in Remote Config, means no limit. Only new lookups count — reopening a saved
- * result doesn't.
- */
 object HuntRation {
-
     private const val PREFS = "search_quota"
     private const val KEY_DAY = "day"
     private const val KEY_USED = "used"
@@ -25,7 +18,6 @@ object HuntRation {
 
     fun used(context: Context): Int = today(context).first
 
-    /** Searches still available today (free allowance + ad bonus − used). */
     fun remaining(context: Context): Int {
         val (used, bonus) = today(context)
         return (limit(context) + bonus - used).coerceAtLeast(0)
@@ -33,20 +25,17 @@ object HuntRation {
 
     fun canSearch(context: Context): Boolean = isUnlimited(context) || remaining(context) > 0
 
-    /** A new lookup started. */
     fun consume(context: Context) {
         if (isUnlimited(context)) return
         val (used, bonus) = today(context)
         save(context, used + 1, bonus)
     }
 
-    /** A rewarded ad was watched on the limit sheet. */
     fun grantRewarded(context: Context) {
         val (used, bonus) = today(context)
         save(context, used, bonus + PlusProfile.read(context).rewardedExtraSearches)
     }
 
-    /** (used, bonus) for today; yesterday's counts are dropped. */
     private fun today(context: Context): Pair<Int, Int> {
         val p = prefs(context)
         if (p.getString(KEY_DAY, null) != dayKey()) return 0 to 0

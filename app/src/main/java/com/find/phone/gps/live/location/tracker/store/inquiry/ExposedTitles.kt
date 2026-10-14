@@ -3,9 +3,7 @@ package com.find.phone.gps.live.location.tracker.store.inquiry
 import android.content.Context
 import java.util.Locale
 
-/** Names unlocked through a rewarded ad, remembered per number as "e164|name" tokens. */
 object ExposedTitles {
-
     private const val STORE_NAME = "revealed_names"
     private const val SET_KEY = "entries"
 

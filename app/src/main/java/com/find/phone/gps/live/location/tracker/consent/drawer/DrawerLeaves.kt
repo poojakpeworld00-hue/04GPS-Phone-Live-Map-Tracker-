@@ -11,16 +11,10 @@ import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.store.chip.MineChipNums
 import com.find.phone.gps.live.location.tracker.consent.ConsentToolbox
 
-/**
- * One page of the permission sheet: what it asks for and how it reads.
- *
- * The order of [all] is the order the sheet walks through: Notifications → SIM info → Contacts →
- * Location (design "Permission Sheet", Flow).
- */
 enum class DrawerFolio(
-    /** Analytics / [com.find.phone.gps.live.location.tracker.consent.ConsentLocker] key. */
+
     val key: String,
-    /** Everything the main button asks for in one Android prompt. */
+
     val permissions: Array<String>,
     @StringRes val shortName: Int,
     @StringRes val title: Int,
@@ -45,19 +39,14 @@ enum class DrawerFolio(
     ),
     LOCATION(
         "location",
-        // Both, so Android 12+ offers the precise/approximate choice; approximate is enough.
+
         arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
         R.string.ps_location_name, R.string.ps_location_title, R.string.ps_location_body,
         R.layout.pmt_ill_location,
     );
 
-    /** The permission whose grant counts as "this page is done". */
     val primaryPermission: String? get() = permissions.firstOrNull()
 
-    /**
-     * Done when every permission it asks for is granted — except Location, where approximate
-     * alone is enough.
-     */
     fun isGranted(context: Context): Boolean {
         fun granted(p: String) = ContextCompat.checkSelfPermission(context, p) == PackageManager.PERMISSION_GRANTED
         return when (this) {
@@ -67,11 +56,6 @@ enum class DrawerFolio(
     }
 
     companion object {
-        /**
-         * The pages this device should see. Notifications only exist on Android 13+ and only while
-         * the permission engine may offer them ([ConsentToolbox.isOfferable] covers its Remote Config
-         * switch); on Android 12 and lower the counter becomes 1/3.
-         */
         fun all(context: Context): List<DrawerFolio> = entries.filter {
             it != NOTIFICATIONS || (it.permissions.isNotEmpty() && ConsentToolbox.isOfferable(context, it.key))
         }

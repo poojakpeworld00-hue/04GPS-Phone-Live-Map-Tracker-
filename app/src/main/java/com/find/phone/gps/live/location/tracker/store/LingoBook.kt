@@ -7,29 +7,9 @@ import androidx.core.os.LocaleListCompat
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.find.phone.gps.live.location.tracker.helpers.CoreLocker
 
-/**
- * Applies a per-app language using the AndroidX AppCompat locale APIs.
- * Persistence is handled by AppCompat (see AppLocalesMetadataHolderService in the manifest).
- */
 object LingoBook {
-
     private const val TAG = "LingoBook"
 
-    /**
-     * Sets the app language, and survives the system refusing to.
-     *
-     * On Android 14+ the framework restarts the app's activities to apply a locale, and it
-     * throws `IllegalStateException: Can't change activity type once set … activityType=home`
-     * when that restart would touch the home task — which is every call this app makes once
-     * the user has made the launcher their default home.
-     *
-     * That throw used to escape into whatever called this. On the language picker it landed
-     * between the ad callback and the navigation that followed it, so the first run stopped
-     * dead on the language screen with no crash and nothing on screen to explain it.
-     *
-     * Swallowing it costs the language change on that path — the saved tag stays in CoreLocker
-     * and takes effect the next time a call succeeds — but never the flow the caller was in.
-     */
     fun apply(languageTag: String) {
         try {
             AppCompatDelegate.setApplicationLocales(
@@ -42,17 +22,6 @@ object LingoBook {
         }
     }
 
-    /**
-     * Applies the saved app language ([CoreLocker.selectedLanguage]) when the active
-     * configuration is not already on it. No-op when nothing has been chosen yet.
-     *
-     * Call it **before** `super.onCreate`, so the views inflate with the right resources.
-     *
-     * Shared by [com.find.phone.gps.live.location.tracker.foundation.StageActivity] and the launcher home —
-     * which does not extend it, so without its own call a language chosen during onboarding
-     * would not reach the launcher (or the caller panel's tabs inside it) until the Activity
-     * was recreated for some other reason.
-     */
     fun enactSaved(context: Context) {
         val savedLang = CoreLocker.selectedLanguage(context)
         if (savedLang.isEmpty()) return

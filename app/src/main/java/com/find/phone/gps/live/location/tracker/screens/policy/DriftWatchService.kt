@@ -7,16 +7,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 
-/**
- * Polls for the "display over other apps" permission while the system Settings
- * screen is shown, then broadcasts [ACTION_OVERLAY_GRANTED] and stops itself.
- *
- * Replaces the in-activity coroutine watcher: the work outlives the activity's
- * resumed state (it keeps polling while we sit behind Settings) and is owned by
- * the system service lifecycle instead of a Job.
- */
 class DriftWatchService : Service() {
-
     private val handler = Handler(Looper.getMainLooper())
 
     private val poll = object : Runnable {

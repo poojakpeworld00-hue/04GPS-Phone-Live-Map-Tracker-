@@ -9,12 +9,10 @@ import android.view.View
 import androidx.core.content.ContextCompat
 import com.find.phone.gps.live.location.tracker.R
 
-/** The limit sheet's usage ring (design 9b): 8dp track with the used share in amber, from 12 o'clock. */
 class RationLoopView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
 ) : View(context, attrs) {
-
     private val stroke = 8 * resources.displayMetrics.density
     private val track = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -29,7 +27,6 @@ class RationLoopView @JvmOverloads constructor(
     }
     private val oval = RectF()
 
-    /** 0..1 of the allowance used. */
     var fraction: Float = 1f
         set(value) {
             field = value.coerceIn(0f, 1f)

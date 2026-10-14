@@ -3,10 +3,6 @@ package com.find.phone.gps.live.location.tracker.store.inquiry
 import androidx.annotation.Keep
 import java.util.Locale
 
-/**
- * Body of contact-saver `similar-phone-number`. Top-level fields win; per-item fields are a
- * fallback for legacy servers. All fields stay nullable because Gson bypasses Kotlin defaults.
- */
 @Keep
 data class MobileAnswer(
     val success: Boolean? = null,
@@ -18,7 +14,6 @@ data class MobileAnswer(
 ) {
     val ok: Boolean get() = success ?: false
 
-    /** Distinct (case-insensitive) non-blank names, server order preserved. */
     val names: List<String>
         get() {
             val seen = HashSet<String>()
@@ -62,7 +57,6 @@ data class MobilePayload(
     val location: MobilePlace? = null,
 )
 
-/** Registration area of a number (not a live position). */
 @Keep
 data class MobilePlace(
     val city: String? = null,

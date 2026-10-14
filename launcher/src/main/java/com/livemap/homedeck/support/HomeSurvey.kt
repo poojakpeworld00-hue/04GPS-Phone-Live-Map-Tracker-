@@ -22,23 +22,15 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import kotlin.math.max
 
-/**
- * Produces the full launcher list (apps plus rendered icons) and stores it in [BadgeStash].
- * Can run ahead of the launcher via [prewarm]; an unchanged installed set short-circuits.
- */
 object HomeSurvey {
-
     private const val GMS_PACKAGE = "com.google.android.gms"
 
-    /** Minimum gap between two partial hand-offs during a cold scan. */
     private const val HANDOFF_GAP_MS = 150L
 
     private const val TINT_GRID = 16
 
-    /** Serialises concurrent scans so a second caller can reuse the first one's result. */
     private val scanGate = Any()
 
-    /** Fire and forget; safe to call from any thread and any number of times. */
     fun prewarm(context: Context) {
         val appContext = context.applicationContext
         val worker = Thread { runCatching { scan(appContext) } }
@@ -46,7 +38,6 @@ object HomeSurvey {
         worker.start()
     }
 
-    /** Label-only list of launchable apps: a single PackageManager query, no icon work. */
     @SuppressLint("WrongConstant")
     fun quick(context: Context): List<CoreHome> = with(context) {
         val hiddenKeys = hiddenIconsDB.getHiddenIcons().map { it.getIconIdentifier() }
@@ -54,10 +45,6 @@ object HomeSurvey {
             .map { entry -> labelOnly(entry, entry.loadLabel(packageManager).toString()) }
     }
 
-    /**
-     * Full list with icons. [onQuick] receives the label-only list when nothing is cached,
-     * [onProgress] receives partial lists during a cold scan; both on the calling thread.
-     */
     @SuppressLint("WrongConstant")
     fun scan(
         context: Context,
@@ -130,7 +117,7 @@ object HomeSurvey {
 
             Timber.d("HomeSurvey: ${collected.size} launchers, ${collected.size - keepable.size} icons decoded in ${SystemClock.elapsedRealtime() - startedAt} ms")
             launchersDB.insertAll(collected)
-            // Signature goes last so a failure above forces a retry on the next resume.
+
             BadgeStash.installedSignature = fingerprint
             BadgeStash.sourceDirs = apkDirs
             collected
@@ -204,7 +191,6 @@ object HomeSurvey {
         )
     }
 
-    /** Sorted component/APK-path lines plus the hidden set, compared on every resume. */
     private fun fingerprintOf(entries: List<ResolveInfo>, hiddenKeys: List<String>): String {
         val installedPart = entries
             .map { "${it.activityInfo.packageName}/${it.activityInfo.name}/${it.activityInfo.applicationInfo.sourceDir}" }
@@ -214,7 +200,6 @@ object HomeSurvey {
         return listOf(installedPart, hiddenPart).joinToString("\u0000")
     }
 
-    /** Placeholder tint: mean colour over a coarse grid of at most [TINT_GRID]² samples. */
     private fun sampledTint(bitmap: Bitmap): Int {
         val w = bitmap.width
         val h = bitmap.height

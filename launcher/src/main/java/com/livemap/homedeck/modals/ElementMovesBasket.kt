@@ -21,15 +21,6 @@ import com.livemap.homedeck.databinding.HdItemActionsTrayBinding
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * The long-press card on a home icon, a drawer tile or a widget, laid out as One UI does it: the
- * app's own shortcuts as rows on top, the launcher's actions as a row of labelled icons under them.
- *
- * It sits above the item it belongs to, or below it when there is no room above, so the item stays
- * in view - the framework PopupMenu it replaces was anchored to a point and usually covered it.
- * Focusable like that PopupMenu: a tap outside or Back closes it, and a drag that started with the
- * long press still reaches the launcher, which closes this when the finger moves.
- */
 class ElementMovesBasket(
     private val activity: Activity,
     private val shortcuts: List<Shortcut>,
@@ -50,8 +41,6 @@ class ElementMovesBasket(
         ViewGroup.LayoutParams.WRAP_CONTENT,
         true,
     ).apply {
-        // A transparent background is what lets a focusable PopupWindow close on an outside tap;
-        // the card draws its own rounded one.
         setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         isOutsideTouchable = true
         elevation = dp(12).toFloat()
@@ -60,10 +49,6 @@ class ElementMovesBasket(
 
     val isShowing: Boolean get() = window.isShowing
 
-    /**
-     * Shows the card for an item spanning [itemTop]..[itemBottom] on screen, centred on [centerX]
-     * and kept [R.dimen.lnch_tray_screen_margin] inside the screen.
-     */
     fun show(anchor: View, centerX: Float, itemTop: Float, itemBottom: Float) {
         build()
         val res = activity.resources
@@ -97,8 +82,7 @@ class ElementMovesBasket(
             pivotY = if (y == above) height.toFloat() else 0f
         }
         window.showAtLocation(anchor, Gravity.NO_GRAVITY, x, y)
-        // Started once the popup's window is attached: an animator started on the view before
-        // that never ran, and the card stayed at alpha 0 - a window that took touches but showed nothing.
+
         binding.root.post {
             binding.root.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(160)
                 .withEndAction { binding.root.alpha = 1f; binding.root.scaleX = 1f; binding.root.scaleY = 1f }

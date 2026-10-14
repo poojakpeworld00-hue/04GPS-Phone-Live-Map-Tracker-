@@ -34,14 +34,7 @@ import com.find.phone.gps.live.location.tracker.databinding.ScreenPackageResultB
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.helpers.OsModalAide
 
-/**
- * Shown after another app is added or removed. An added app gets a check of the sensitive
- * permissions it requests (and which are already granted); a removed one gets a confirmation plus
- * the free storage and memory read from the device. The label/icon of a removed package come from
- * [ParcelSpecificsStash] since the package itself no longer exists.
- */
 class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
-
     override val layoutId: Int = R.layout.screen_package_result
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -55,7 +48,6 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
     }
 
     override fun initView() {
-        // Leaving via Recents ends it; there is nothing to return to here.
         lifecycle.addObserver(OsModalAide(this) { finishAndRemoveTask() })
         WindowCompat.setDecorFitsSystemWindows(window, false)
         applyEdgeInsets()
@@ -77,7 +69,6 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
         super.onDestroy()
     }
 
-    /** Back works exactly like Done. */
     override fun performBack() = dismissScreen()
 
     private fun applyEdgeInsets() {
@@ -131,8 +122,6 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
         return targetPkg.substringAfterLast('.').replaceFirstChar { it.uppercase() }
     }
 
-    // ---------------- scan ----------------
-
     private fun runScan() {
         val stages = when (isInstallEvent) {
             true -> listOf(R.string.pkgres_privacy_step_read, R.string.pkgres_privacy_step_sensitive, R.string.pkgres_privacy_step_allowed)
@@ -156,7 +145,7 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
             else -> showCleanupOutcome()
         }
         binding.parcelProgress.visibility = View.GONE
-        // No rows (nothing sensitive requested): keep the card hidden, the subtitle explains.
+
         binding.parcelChecks.takeIf { it.childCount > 0 }?.run {
             visibility = View.VISIBLE
             alpha = 0f
@@ -208,7 +197,6 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
         }
     }.getOrNull()
 
-    /** Each sensitive group the app requests, paired with whether anything in it is granted. */
     private fun requestedSensitive(): List<Pair<Int, Boolean>> {
         val pkg = queryPackage() ?: return emptyList()
         val wanted = pkg.requestedPermissions ?: return emptyList()
@@ -240,14 +228,11 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
 
     private fun humanBytes(bytes: Long): String = Formatter.formatShortFileSize(this, bytes)
 
-    // ---------------- buttons ----------------
-
     private fun bindActions() {
         binding.parcelClose.setOnClickListener { dismissScreen() }
         binding.parcelDone.setOnClickListener { dismissScreen() }
         val open = binding.parcelOpen
         if (!isInstallEvent) {
-            // A removed app has nothing to review; Done takes the whole row.
             open.visibility = View.GONE
             val done = binding.parcelDone
             (done.layoutParams as? android.widget.LinearLayout.LayoutParams)?.also { lp ->
@@ -257,7 +242,7 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
             return
         }
         open.setText(R.string.pkgres_privacy_review)
-        open.isEnabled = false // enabled once the scan finishes
+        open.isEnabled = false
         open.setOnClickListener { openTargetSettings() }
     }
 
@@ -307,7 +292,7 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
         if (exiting) return
         exiting = true
         listOf<View>(binding.parcelClose, binding.parcelDone, binding.parcelOpen).forEach { it.isEnabled = false }
-        // `install_*` / `uninstall_*`: an interstitial first when configured, then finish.
+
         val placement = if (isInstallEvent) "install" else "uninstall"
         if (!HomeSeatSpots.hasOwnFlow(this, placement)) {
             finishIfAlive()

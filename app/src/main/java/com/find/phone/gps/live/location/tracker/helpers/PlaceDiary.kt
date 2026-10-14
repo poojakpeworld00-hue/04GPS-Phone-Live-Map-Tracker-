@@ -28,23 +28,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Locale
 import kotlin.coroutines.resume
 
-/**
- * DEBUG ONLY. Logs where the phone is: the permission level, which location sources are on, the
- * cached positions (with their age), then a fresh fix with its accuracy and the street address it
- * resolves to. Filter: `adb logcat -s PlaceDiary`
- *
- * On Infinix / Transsion phones debug logs are hidden by default; first run
- *
- *     adb shell setprop log.tag.PlaceDiary D
- *
- * A cached position can be hours old and from another place; the fresh fix is the one to trust.
- * Approximate permission (Android 12+) blurs every position to about 2-3 km on purpose.
- */
 object PlaceDiary {
-
     private const val TAG = "PlaceDiary"
 
-    /** Per source; GPS needs open sky and can take a while on a cold start. */
     private const val FIX_TIMEOUT_MS = 20_000L
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -74,15 +60,12 @@ object PlaceDiary {
         val enabled = manager.allProviders.filter { runCatching { manager.isProviderEnabled(it) }.getOrDefault(false) }
         Log.d(TAG, "providers all=${manager.allProviders} enabled=$enabled")
 
-        // Cached positions: instant, but possibly stale.
         enabled.forEach { provider ->
             @SuppressLint("MissingPermission")
             val last = runCatching { manager.getLastKnownLocation(provider) }.getOrNull()
             Log.d(TAG, "lastKnown[$provider] = ${last?.let(::describe) ?: "none"}")
         }
 
-        // A fresh, high-accuracy position: fused (GPS + Wi-Fi + cell, Android 12+), then GPS, then
-        // network.
         val order = buildList {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) add(LocationManager.FUSED_PROVIDER)
             add(LocationManager.GPS_PROVIDER)
@@ -138,8 +121,6 @@ object PlaceDiary {
         suspendCancellableCoroutine { cont ->
             runCatching {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    // High accuracy: the default request is balanced power, which answers from
-                    // Wi-Fi / cell at about ±100 m without turning GPS on.
                     val signal = CancellationSignal()
                     cont.invokeOnCancellation { signal.cancel() }
                     val request = LocationRequest.Builder(0L)

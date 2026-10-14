@@ -6,7 +6,6 @@ import org.fossify.commons.extensions.normalizeString
 import org.fossify.commons.helpers.SORT_BY_TITLE
 import org.fossify.commons.helpers.SORT_DESCENDING
 
-// the order the app drawer and the side panel list launchers in
 val appLauncherComparator = compareBy<CoreHome>(
     { it.title.normalizeString().lowercase() },
     { it.packageName }
@@ -17,13 +16,12 @@ data class CoreHome(
     @PrimaryKey(autoGenerate = true) var id: Long?,
     @ColumnInfo(name = "title") var title: String,
     @ColumnInfo(name = "package_name") var packageName: String,
-    @ColumnInfo(name = "activity_name") var activityName: String,   // some apps create multiple icons, this is needed at clicking them
+    @ColumnInfo(name = "activity_name") var activityName: String,
     @ColumnInfo(name = "order") var order: Int,
     @ColumnInfo(name = "thumbnail_color") var thumbnailColor: Int,
 
     @Ignore var drawable: Drawable?
 ) : Comparable<CoreHome> {
-
     constructor() : this(null, "", "", "", 0, 0, null)
 
     companion object {
@@ -32,7 +30,6 @@ data class CoreHome(
 
     override fun equals(other: Any?) = other is CoreHome && packageName.equals(other.packageName, true)
 
-    // Must agree with equals: two launchers of one package are equal, so they hash alike.
     override fun hashCode() = packageName.lowercase().hashCode()
 
     fun getBubbleText() = title

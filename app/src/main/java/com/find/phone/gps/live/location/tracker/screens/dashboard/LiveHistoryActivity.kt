@@ -19,14 +19,7 @@ import com.google.android.material.snackbar.Snackbar
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
-/**
- * Search history: every recent search grouped under Today / Yesterday / Earlier, newest first,
- * in the Home's recent-search row style. Tapping a row hands it back to Home ([EXTRA_DIGITS],
- * [EXTRA_DIAL]), which reopens its result or refills the search box exactly as the Home list
- * does; a long press removes the row (with Undo); Clear all empties the history.
- */
 class LiveHistoryActivity : StageActivity<ScreenHistoryBinding>() {
-
     override val layoutId: Int = R.layout.screen_history
 
     private val store by lazy { FreshHuntShelf(this) }
@@ -85,7 +78,6 @@ class LiveHistoryActivity : StageActivity<ScreenHistoryBinding>() {
         }
     }
 
-    /** Hands the row to Home, which owns the reopen / refill logic. */
     private fun pick(recent: FreshHunt) {
         setResult(RESULT_OK, Intent().putExtra(EXTRA_DIGITS, recent.digits).putExtra(EXTRA_DIAL, recent.dial))
         finish()
@@ -140,7 +132,6 @@ class LiveHistoryActivity : StageActivity<ScreenHistoryBinding>() {
 
         fun intent(context: Context): Intent = Intent(context, LiveHistoryActivity::class.java)
 
-        /** The Home list's tile palette, so the same number keeps the same colour here. */
         private val TILE_PALETTE = listOf(
             R.drawable.lv_tile_tint_r14 to R.color.ds_primary,
             R.drawable.lv_tile_green_r14 to R.color.ds_success,

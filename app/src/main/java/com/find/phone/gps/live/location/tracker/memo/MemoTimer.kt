@@ -7,12 +7,7 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import java.util.concurrent.TimeUnit
 
-/**
- * Maps each stored reminder to a unique WorkManager job named `reminder_<id>` (REPLACE policy).
- * Only the id travels with the job; the worker reloads the reminder when it runs.
- */
 object MemoTimer {
-
     private const val TAG = "reminder"
     private const val MINUTE_MS = 60_000L
 
@@ -20,7 +15,6 @@ object MemoTimer {
 
     private fun work(context: Context) = WorkManager.getInstance(context)
 
-    /** Picks the fire time: the stored one if still ahead, else the next repeat, else null. */
     private fun fireTime(item: MemoElement, now: Long): Long? =
         item.dateTime.takeIf { it > now } ?: Repeat.nextAfter(item.repeatOrOnce, item.baseTime, now)
 

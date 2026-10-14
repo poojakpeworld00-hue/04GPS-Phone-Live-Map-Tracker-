@@ -9,14 +9,9 @@ import androidx.core.content.ContextCompat
 import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement.dp
 
-/**
- * The Location page's street grid (design 2d): white streets every 84dp in both directions, each
- * 8% of the cell wide — the design's two crossed repeating `linear-gradient` stripes.
- */
 class ChartAvenuesView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null,
 ) : View(context, attrs) {
-
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = ContextCompat.getColor(context, R.color.ps_map_road)
     }

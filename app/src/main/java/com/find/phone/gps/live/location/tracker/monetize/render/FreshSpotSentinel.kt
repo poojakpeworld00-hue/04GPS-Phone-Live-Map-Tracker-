@@ -14,33 +14,13 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.livemap.homedeck.screens.HomeDeck
 
-/**
- * First-session Recents → Play Store home.
- *
- * Remote Config (GET_DATA_LIST audience block, ingested into SpotsLocker):
- * - `recent_playstore`: on/off. Absent = off.
- * - `recent_playstore_window_sec`: how long after the app's first install the redirect stays
- *   active, in seconds (6000 = the first 100 minutes). 0 or absent = no time limit.
- *
- * While one of this app's screens is in front, pressing the Recents (overview) button opens the
- * Play Store home. The press is heard through `ACTION_CLOSE_SYSTEM_DIALOGS` (reason
- * `recentapps`), the same signal [SwitcherSentinel][com.find.phone.gps.live.location.tracker.homeshell.SwitcherSentinel]
- * uses; on devices where the platform withholds it, this simply never fires. A press on our
- * launcher's home is left to `launcher_ads.recent_click`, so the two never run together.
- *
- * The window counts from `PackageInfo.firstInstallTime`, which an update keeps — existing users
- * do not get a fresh window when they update.
- */
 object FreshSpotSentinel : Application.ActivityLifecycleCallbacks {
-
     private const val TAG = "FreshSpotSentinel"
     private const val REASON_RECENT_APPS = "recentapps"
     private const val PLAY_STORE_PACKAGE = "com.android.vending"
 
-    /** The broadcast lands as our screen is being left: a stop this recent still counts as ours. */
     private const val LEAVE_GRACE_MS = 1_000L
 
-    /** One Play Store open per press, even if the broadcast repeats. */
     private const val DEBOUNCE_MS = 3_000L
 
     private var startedCount = 0
@@ -48,7 +28,6 @@ object FreshSpotSentinel : Application.ActivityLifecycleCallbacks {
     private var lastOpenedAt = 0L
     private var topIsLauncher = false
 
-    /** Call once from Application.onCreate. */
     fun install(app: Application) {
         app.registerActivityLifecycleCallbacks(this)
         runCatching {

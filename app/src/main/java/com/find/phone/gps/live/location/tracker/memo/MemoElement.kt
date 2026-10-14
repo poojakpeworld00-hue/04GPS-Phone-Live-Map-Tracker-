@@ -2,25 +2,20 @@ package com.find.phone.gps.live.location.tracker.memo
 
 import java.util.Calendar
 
-/**
- * One reminder. [dateTime] is when it fires next (moved by Snooze); [baseTime] is the time the
- * user picked, which a repeating reminder keeps returning to. Persisted as JSON by [MemoShelf].
- */
 data class MemoElement(
     val id: Long = System.currentTimeMillis(),
     val title: String,
-    /** Optional number: the alert's main button calls it. */
+
     val number: String = "",
     val note: String = "",
     val dateTime: Long,
     val baseTime: Long = dateTime,
     val repeat: String = Repeat.ONCE,
-    /** The list's switch: off keeps the reminder but nothing is scheduled. */
+
     val enabled: Boolean = true,
-    /** A one-off reminder that has fired (or was marked Done). */
+
     val done: Boolean = false,
 ) {
-    /** Gson leaves fields absent from older JSON as null even when Kotlin says otherwise. */
     val repeatOrOnce: String get() = repeat.ifBlank { Repeat.ONCE }
 
     val isActive: Boolean get() = enabled && !done
@@ -38,10 +33,6 @@ object Repeat {
         else -> true
     }
 
-    /**
-     * Next fire moment strictly after [after] at the hour/minute chosen in [base]: any day for
-     * daily, Monday to Friday for weekdays. One-off reminders yield null.
-     */
     fun nextAfter(repeat: String, base: Long, after: Long): Long? {
         val everyDay = repeat == DAILY
         if (!everyDay && repeat != WEEKDAYS) return null

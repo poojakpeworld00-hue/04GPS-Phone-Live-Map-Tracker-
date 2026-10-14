@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The long-press actions card (ElementMovesBasket), One UI style. Night values in values-night. -->
     <color name="lnch_tray_bg">#F5F6F8</color>
     <color name="lnch_tray_text">#1C1C1E</color>
     <color name="lnch_tray_text_secondary">#606265</color>

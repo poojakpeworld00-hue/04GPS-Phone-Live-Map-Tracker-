@@ -18,7 +18,6 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.R
 import java.io.InputStream
 
-
 fun isNightMode(context: Context): Boolean {
     val mode = context.resources.configuration.uiMode and
             Configuration.UI_MODE_NIGHT_MASK
@@ -36,14 +35,12 @@ fun Activity.setStatusBar(
 }
 
 fun Activity.setTransparentStatusBarWhiteText() {
-
-    // Make status bar transparent
     window.statusBarColor = Color.TRANSPARENT
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
         val controller = window.insetsController
         controller?.setSystemBarsAppearance(
-            0, // ❌ remove LIGHT_STATUS_BARS
+            0,
             WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
         )
     } else {
@@ -51,12 +48,11 @@ fun Activity.setTransparentStatusBarWhiteText() {
         window.decorView.systemUiVisibility =
             View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
                     View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-        // ⚠️ DO NOT add LIGHT_STATUS_BAR → keeps icons WHITE
+
     }
 }
 
 fun Activity.setTransparentStatusBarDarkText() {
-
     window.statusBarColor = Color.TRANSPARENT
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -98,7 +94,6 @@ fun Context.rateApp() {
     }
 }
 
-/** Open privacy policy link via Chrome Custom Tabs (if available) */
 fun Context.enterPolicyLink() {
     try {
         val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -112,7 +107,7 @@ fun Context.enterPolicyLink() {
             )
             putExtra("android.support.customtabs.extra.EXTRA_ENABLE_INSTANT_APPS", true)
 
-            setPackage("com.android.chrome") // Optional: Use Chrome
+            setPackage("com.android.chrome")
             data =
                 Uri.parse(SpotsLocker.getInstance(this@enterPolicyLink).getString("PrivacyPolicy"))
         }
@@ -122,7 +117,6 @@ fun Context.enterPolicyLink() {
     }
 }
 
-/** Open privacy policy link via Chrome Custom Tabs (if available) */
 fun Context.enterTermLink() {
     try {
         val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -136,7 +130,7 @@ fun Context.enterTermLink() {
             )
             putExtra("android.support.customtabs.extra.EXTRA_ENABLE_INSTANT_APPS", true)
 
-            setPackage("com.android.chrome") // Optional: Use Chrome
+            setPackage("com.android.chrome")
             data =
                 Uri.parse(SpotsLocker.getInstance(this@enterTermLink).getString("TermLink"))
         }
@@ -146,7 +140,6 @@ fun Context.enterTermLink() {
     }
 }
 
-/** Share app via other apps */
 fun Context.spreadApp() {
     val appPackageName = packageName
     val shareText = getString(
@@ -160,10 +153,6 @@ fun Context.spreadApp() {
     startActivity(Intent.createChooser(shareIntent, getString(R.string.share_app_via)))
 }
 
-/**
- * Open an asset image — tries .webp first, falls back to .png.
- * Usage: enterThemeAsset(assets, "theme/th_1/background")
- */
 fun enterThemeAsset(am: AssetManager, basePath: String): InputStream? {
     return try {
         am.open("$basePath.webp")

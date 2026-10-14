@@ -3,52 +3,7 @@ package com.livemap.homedeck.preset
 import org.json.JSONArray
 import org.json.JSONObject
 
-/**
- * The table that turns a [HomeThumbprint] into a [MainPreset]: which launcher build on which
- * device class ships which factory grid. Read from Remote Config `home_profile_rules` and, when
- * that is empty or broken, from [DEFAULT_RULES_JSON] — the same shape, so a console row can be
- * pasted straight from here.
- *
- * ### Blob
- *
- * Either a bare array of rules or `{"disabled": false, "rules": [...]}`. `disabled: true` keeps
- * the launcher on its own defaults for every new install.
- *
- * ```json
- * { "match":   { "package": "com.sec.android.app.launcher", "sw_dp_min": 720 },
- *   "profile": { "id": "samsung_tablet", "home_cols": 6, "home_rows": 5, "drawer_mode": "paged", ... } }
- * ```
- *
- * Every `match` key is optional and a rule matches when all of its present keys do:
- * `package` / `manufacturer` / `model` / `device` / `product` (string or array, exact; manufacturer
- * is also tried against the brand), `model_prefix` (case-insensitive), `version_code_min` / `_max`
- * (the launcher's own versionCode), `os_version_min` / `_max` (the OEM skin version as
- * [MakerPlatformEdition.toNumber] encodes it - One UI 6.1 = 60100, ColorOS 14.0.0 = 140000),
- * `os_version_prefix` (raw string), `sdk_min` / `_max`, `sw_dp_min` / `_max`, `density_min` /
- * `_max`, `width_dp_min` / `_max`, `height_dp_min` / `_max`, `nav_mode` (0/1/2). The rule with the
- * most present keys wins; among equals the first in the array does, so generic device-class rows
- * go first and brand fallbacks last.
- * A `profile` states only what differs from [MainPreset.AOSP]: `home_cols`, `home_rows`,
- * `dock_size`, `drawer_mode` (vertical / paged / none), `drawer_cols`, `drawer_rows` (paged),
- * `drawer_search`, `drawer_search_position` (top / bottom), `home_labels`, `drawer_labels`,
- * `icon_scale` (0.5 - 1.5, 1.0 = ours), `label_sp` (app-label text size, 8 - 20; absent = ours),
- * `icon_dp` / `dock_icon_dp` / `drawer_icon_dp` (24 - 120; dock and drawer default to the workspace icon) or
- * the same three as `*_width_fraction` of the display's short side (0.05 - 0.5), used where the dp is unknown,
- * `icon_inset` (0.5 - 1.0: the share of the item the launcher fills with icon art; the drawn dp is scaled by it),
- * `legacy_icon_tray` (`white` / `dominant`: what a wrapped single-bitmap icon sits on).
- *
- * One UI 7+ phones: the launcher's `GridList.phoneGridList` is `[4x6, 5x6]` with 4x6 first (4x5 and
- * 5x5 were dropped), and `PhoneItemStyleFactory` draws the 4x6 label at 11 dp x min(font scale, 1.3)
- * - read from One UI Home 17.5.05 (One UI 8.5) itself, since neither is in its resources. Its icon is a
- * fraction of the window width picked by screen zoom (`PhoneItemStyleFactory.getDefaultIconSize`, 4x6:
- * 0.161 / 0.164 / 0.168 / 0.170 / 0.172 for 420 / 450 / 480 / 510 / 540 dpi -> `icon_width_fraction_by_dpi`),
- * and the default "medium" icon size draws it at 0.95 of that (`AbsItemStyleFactory.adjustMediumItemSizeLevel`
- * -> `icon_inset` 0.95). Checked on Galaxy A35s: 420 dpi stock art 161 px vs ours ~162 px.
- * The flat `icon_width_fraction` 0.164 stays for a density the table lacks.
- * `legacy_icon_tray` white: One UI wraps a legacy icon on a white tray.
- */
 object MainPresetLaws {
-
     class Rule(val match: Match, val profile: MainPreset)
 
     class Match(
@@ -75,7 +30,6 @@ object MainPresetLaws {
         val heightDpMax: Int? = null,
         val navMode: Int? = null,
     ) {
-        /** Count of stated constraints; decides between several matching rules. */
         val specificity: Int = booleanArrayOf(
             packages.isNotEmpty(),
             manufacturers.isNotEmpty(),
@@ -160,7 +114,6 @@ object MainPresetLaws {
     const val KEY_HEIGHT_DP_MAX = "height_dp_max"
     const val KEY_NAV_MODE = "nav_mode"
 
-    /** Null when [raw] is blank or unparsable; an empty rule list is still a table. */
     fun parse(raw: String, source: PresetFeed): Table? {
         val text = raw.trim().takeUnless { it.isEmpty() } ?: return null
         return runCatching {
@@ -206,7 +159,6 @@ object MainPresetLaws {
     private fun trimmedOrNull(node: JSONObject, key: String): String? =
         node.optString(key).trim().takeIf { it.isNotEmpty() }
 
-    /** Accepts a single string or an array of strings; blanks are dropped. */
     private fun stringSet(node: JSONObject, key: String): Set<String> {
         val raw = node.optJSONArray(key)?.let { arr -> List(arr.length()) { arr.optString(it) } }
             ?: listOf(node.optString(key))
@@ -217,7 +169,6 @@ object MainPresetLaws {
     private fun optionalLong(node: JSONObject, key: String): Long? = node.optLong(key).takeIf { stated(node, key) }
     private fun optionalInt(node: JSONObject, key: String): Int? = node.optInt(key).takeIf { stated(node, key) }
 
-    /** Every launcher package the built-in table names — used to pick the OEM home among several installed. */
     val knownLaunchers: Set<String> by lazy {
         builtIn.rules.flatMap { it.match.packages }.toSet()
     }
@@ -228,12 +179,6 @@ object MainPresetLaws {
         parse(DEFAULT_RULES_JSON, PresetFeed.BUILT_IN) ?: Table(disabled = false, rules = emptyList())
     }
 
-    /**
-     * The table this app ships with. Numbers are each launcher's factory default for the device
-     * class, counted the way the OEM advertises them (columns × rows above the dock). Mirrored in
-     * `docs/remote-config/home_profile_rules.json`; a wrong row is corrected in the console, not
-     * here, and this copy follows in the next release.
-     */
     const val DEFAULT_RULES_JSON = """
 [
   { "match": { "sw_dp_min": 720 },
