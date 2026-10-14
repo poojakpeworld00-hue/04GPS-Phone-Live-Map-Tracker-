@@ -17,59 +17,57 @@ import java.util.concurrent.TimeUnit
 
 interface InquiryEndpoint {
 
-    /** [phone] is E.164 ("+917046024874"). */
     @GET("similar-phone-number")
     suspend fun similarPhoneNumber(@Query("phone") phone: String): Response<MobileAnswer>
 }
 
 /**
- * The contact-saver client. The origin is Remote Config `contacts_base_url` (ingested into
- * [SpotsLocker]), falling back to [DEFAULT_BASE_URL] when it is absent or malformed; the key is
- * `lookup.apiKey` from local.properties, XORed into BuildConfig.
+ * Retrofit factory for the contact-saver host. Base URL comes from Remote Config
+ * `contacts_base_url` via [SpotsLocker], else [FALLBACK_ORIGIN]; the api key is decoded from BuildConfig.
  */
 object InquiryCaller {
 
-    private const val DEFAULT_BASE_URL = "https://contact-saver.dailymorningupdate.com/"
-    private const val HEADER_API_KEY = "x-api-key"
+    private const val FALLBACK_ORIGIN = "https://contact-saver.dailymorningupdate.com/"
+    private const val KEY_HEADER = "x-api-key"
 
-    private val http: OkHttpClient by lazy {
-        val apiKey = Muddle.s(BuildConfig.LOOKUP_API_KEY)
-        OkHttpClient.Builder()
+    @Volatile private var memo: Pair<String, InquiryEndpoint>? = null
+
+    private val client: OkHttpClient by lazy {
+        val secret = Muddle.s(BuildConfig.LOOKUP_API_KEY)
+        val builder = OkHttpClient.Builder()
             .connectTimeout(8, TimeUnit.SECONDS)
             .readTimeout(10, TimeUnit.SECONDS)
             .addInterceptor { chain ->
-                chain.proceed(chain.request().newBuilder().header(HEADER_API_KEY, apiKey).build())
+                val signed = chain.request().newBuilder().header(KEY_HEADER, secret).build()
+                chain.proceed(signed)
             }
-            .appendHttpInspector(HEADER_API_KEY)
-            .apply {
-                if (BuildConfig.DEBUG) {
-                    addInterceptor(HttpLoggingInterceptor().apply {
-                        level = HttpLoggingInterceptor.Level.BODY
-                        redactHeader(HEADER_API_KEY)
-                    })
-                }
-            }
-            .build()
+            .appendHttpInspector(KEY_HEADER)
+        if (BuildConfig.DEBUG) {
+            val logger = HttpLoggingInterceptor()
+            logger.level = HttpLoggingInterceptor.Level.BODY
+            logger.redactHeader(KEY_HEADER)
+            builder.addInterceptor(logger)
+        }
+        builder.build()
     }
 
-    @Volatile private var cached: Pair<String, InquiryEndpoint>? = null
-
     fun api(context: Context): InquiryEndpoint {
-        val base = baseUrl(context)
-        cached?.takeIf { it.first == base }?.let { return it.second }
-        val api = Retrofit.Builder()
-            .baseUrl(base)
-            .client(http)
+        val origin = resolveOrigin(context)
+        val hit = memo
+        if (hit != null && hit.first == origin) return hit.second
+        return Retrofit.Builder()
+            .baseUrl(origin)
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(InquiryEndpoint::class.java)
-        cached = base to api
-        return api
+            .also { memo = origin to it }
     }
 
-    private fun baseUrl(context: Context): String {
-        val remote = SpotsLocker.getInstance(context).getString("contacts_base_url")?.trim().orEmpty()
-        val withSlash = if (remote.endsWith("/")) remote else "$remote/"
-        return if (remote.isNotEmpty() && withSlash.toHttpUrlOrNull() != null) withSlash else DEFAULT_BASE_URL
+    private fun resolveOrigin(context: Context): String {
+        val configured = SpotsLocker.getInstance(context).getString("contacts_base_url")?.trim() ?: ""
+        if (configured.isEmpty()) return FALLBACK_ORIGIN
+        val normalized = configured.takeIf { it.endsWith("/") } ?: "$configured/"
+        return normalized.takeIf { it.toHttpUrlOrNull() != null } ?: FALLBACK_ORIGIN
     }
 }

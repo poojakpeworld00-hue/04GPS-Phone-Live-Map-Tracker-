@@ -8,6 +8,7 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -20,6 +21,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.animation.OvershootInterpolator
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -33,44 +35,35 @@ import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.helpers.OsModalAide
 
 /**
- * The screen shown when another app is installed or removed (launched by [ParcelHappeningSentinel]).
- *
- *  - **Install → privacy check.** Reads the new app's requested permissions, groups the sensitive
- *    ones (location, camera, microphone, contacts, SMS, …) and shows which are already allowed,
- *    with a shortcut into the app's permission settings.
- *  - **Uninstall → system optimizing.** Confirms the app is gone, then shows the storage and
- *    memory the phone has available now.
- *
- * A short stepped progress plays first, but everything the results show is read from the device —
- * nothing is invented or claimed to have been done that was not. A removed package is already gone,
- * so its label and icon come from [ParcelSpecificsStash].
+ * Shown after another app is added or removed. An added app gets a check of the sensitive
+ * permissions it requests (and which are already granted); a removed one gets a confirmation plus
+ * the free storage and memory read from the device. The label/icon of a removed package come from
+ * [ParcelSpecificsStash] since the package itself no longer exists.
  */
 class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
 
     override val layoutId: Int = R.layout.screen_package_result
 
-    private val installed: Boolean by lazy { intent.getBooleanExtra(EXTRA_INSTALLED, true) }
-    private val affectedPackage: String by lazy { intent.getStringExtra(EXTRA_PACKAGE).orEmpty() }
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var exiting = false
 
-    /** For a removed app the package is gone, so its label/icon come from the cache. */
-    private val cachedMeta by lazy {
-        if (installed) null else ParcelSpecificsStash.read(this, affectedPackage)
+    private val isInstallEvent: Boolean by lazy { intent.getBooleanExtra(EXTRA_INSTALLED, true) }
+    private val targetPkg: String by lazy { intent.getStringExtra(EXTRA_PACKAGE).orEmpty() }
+
+    private val stashedMeta by lazy {
+        if (!isInstallEvent) ParcelSpecificsStash.read(this, targetPkg) else null
     }
 
-    private val handler = Handler(Looper.getMainLooper())
-
-    private var closed = false
-
     override fun initView() {
-        // Recents closes it: an install/uninstall screen is not something to come back to.
+        // Leaving via Recents ends it; there is nothing to return to here.
         lifecycle.addObserver(OsModalAide(this) { finishAndRemoveTask() })
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        enactInsets()
-        wireHeader()
-        wireButtons()
-        fillAd()
-        playEntrance()
-        execCheck()
+        applyEdgeInsets()
+        paintHeader()
+        bindActions()
+        mountBodyNative()
+        animateArrival()
+        runScan()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -80,87 +73,91 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
     }
 
     override fun onDestroy() {
-        handler.removeCallbacksAndMessages(null)
+        mainHandler.removeCallbacksAndMessages(null)
         super.onDestroy()
     }
 
-    private fun enactInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.parcelContent) { _, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            binding.parcelHero.updatePadding(top = bars.top)
-            (binding.parcelActions.layoutParams as? androidx.constraintlayout.widget.ConstraintLayout.LayoutParams)
-                ?.let {
-                    it.bottomMargin = dp(16) + bars.bottom
-                    binding.parcelActions.layoutParams = it
-                }
+    /** Back works exactly like Done. */
+    override fun performBack() = dismissScreen()
+
+    private fun applyEdgeInsets() {
+        val content = binding.parcelContent
+        ViewCompat.setOnApplyWindowInsetsListener(content) { _, insets ->
+            val sys = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            binding.parcelHero.updatePadding(top = sys.top)
+            val lp = binding.parcelActions.layoutParams as? ConstraintLayout.LayoutParams
+            if (lp != null) {
+                lp.bottomMargin = toPx(16) + sys.bottom
+                binding.parcelActions.layoutParams = lp
+            }
             insets
         }
-        ViewCompat.requestApplyInsets(binding.parcelContent)
+        ViewCompat.requestApplyInsets(content)
     }
 
-    private fun wireHeader() = with(binding) {
-        parcelHero.setBackgroundResource(R.drawable.bgx_pkgres_hero_installed)
-        parcelBadge.setBackgroundResource(R.drawable.bgx_pkgres_badge_installed)
-        parcelBadgeIcon.setImageResource(if (installed) R.drawable.icn_shield_check else R.drawable.icn_check)
-        parcelStatus.apply {
-            setBackgroundResource(R.drawable.bgx_pkgres_status_installed)
-            setText(if (installed) R.string.pkgres_privacy_status else R.string.pkgres_optimize_status)
-            setTextColor(getColor(R.color.pkgres_installed))
+    private fun loadIcon(): Drawable? {
+        if (isInstallEvent) {
+            return runCatching { packageManager.getApplicationIcon(targetPkg) }.getOrNull()
         }
-        parcelTitle.text = getString(
-            if (installed) R.string.pkgres_privacy_title else R.string.pkgres_optimize_title,
-            settleLabel(),
-        )
-        parcelSubtitle.text = ""
-
-        // Icon: from the PackageManager for an installed app, from the pre-uninstall cache for a
-        // removed one (the package is gone). Empty tile only if neither has it.
-        val icon = if (installed) {
-            runCatching { packageManager.getApplicationIcon(affectedPackage) }.getOrNull()
-        } else {
-            cachedMeta?.iconFile
-                ?.let { runCatching { BitmapFactory.decodeFile(it.absolutePath) }.getOrNull() }
-                ?.let { BitmapDrawable(resources, it) }
-        }
-        parcelAppIcon.setImageDrawable(icon)
+        val file = stashedMeta?.iconFile ?: return null
+        val bmp = runCatching { BitmapFactory.decodeFile(file.absolutePath) }.getOrNull() ?: return null
+        return BitmapDrawable(resources, bmp)
     }
 
-    private fun settleLabel(): String {
-        if (installed) {
-            runCatching {
-                val info = packageManager.getApplicationInfo(affectedPackage, 0)
-                return packageManager.getApplicationLabel(info).toString()
+    private fun paintHeader() {
+        val heading = if (isInstallEvent) R.string.pkgres_privacy_title else R.string.pkgres_optimize_title
+        binding.run {
+            parcelHero.setBackgroundResource(R.drawable.bgx_pkgres_hero_installed)
+            parcelBadge.setBackgroundResource(R.drawable.bgx_pkgres_badge_installed)
+            parcelBadgeIcon.setImageResource(if (isInstallEvent) R.drawable.icn_shield_check else R.drawable.icn_check)
+            with(parcelStatus) {
+                setBackgroundResource(R.drawable.bgx_pkgres_status_installed)
+                setText(if (isInstallEvent) R.string.pkgres_privacy_status else R.string.pkgres_optimize_status)
+                setTextColor(getColor(R.color.pkgres_installed))
             }
+            parcelTitle.text = getString(heading, appLabel())
+            parcelSubtitle.text = ""
+            parcelAppIcon.setImageDrawable(loadIcon())
         }
-        return cachedMeta?.label?.takeIf { it.isNotBlank() }
-            ?: intent.getStringExtra(EXTRA_LABEL)?.takeIf { it.isNotBlank() }
-            ?: affectedPackage.substringAfterLast('.').replaceFirstChar { it.uppercase() }
     }
 
-    // ---------------- The check ----------------
-
-    /** The stepped progress, then the results. The steps are paced; the results are real. */
-    private fun execCheck() {
-        val steps = if (installed) {
-            listOf(R.string.pkgres_privacy_step_read, R.string.pkgres_privacy_step_sensitive, R.string.pkgres_privacy_step_allowed)
-        } else {
-            listOf(R.string.pkgres_optimize_step_removed, R.string.pkgres_optimize_step_storage, R.string.pkgres_optimize_step_memory)
-        }
-        steps.forEachIndexed { i, step ->
-            handler.postDelayed({
-                binding.parcelStep.setText(step)
-                binding.parcelProgressBar.setProgressCompat((i + 1) * 100 / steps.size, true)
-            }, STEP_MS * i)
-        }
-        handler.postDelayed({ presentResults() }, STEP_MS * steps.size)
+    private fun appLabel(): String {
+        val live = if (isInstallEvent) runCatching {
+            packageManager.getApplicationLabel(packageManager.getApplicationInfo(targetPkg, 0)).toString()
+        }.getOrNull() else null
+        if (live != null) return live
+        stashedMeta?.label?.takeIf { it.isNotBlank() }?.let { return it }
+        intent.getStringExtra(EXTRA_LABEL)?.takeIf { it.isNotBlank() }?.let { return it }
+        return targetPkg.substringAfterLast('.').replaceFirstChar { it.uppercase() }
     }
 
-    private fun presentResults() {
+    // ---------------- scan ----------------
+
+    private fun runScan() {
+        val stages = when (isInstallEvent) {
+            true -> listOf(R.string.pkgres_privacy_step_read, R.string.pkgres_privacy_step_sensitive, R.string.pkgres_privacy_step_allowed)
+            false -> listOf(R.string.pkgres_optimize_step_removed, R.string.pkgres_optimize_step_storage, R.string.pkgres_optimize_step_memory)
+        }
+        val total = stages.size
+        for (pos in 0 until total) {
+            val label = stages[pos]
+            mainHandler.postDelayed({
+                binding.parcelStep.setText(label)
+                binding.parcelProgressBar.setProgressCompat((pos + 1) * 100 / total, true)
+            }, STAGE_STEP_MS * pos)
+        }
+        mainHandler.postDelayed({ showOutcome() }, STAGE_STEP_MS * total)
+    }
+
+    private fun showOutcome() {
         if (isFinishing || isDestroyed) return
-        if (installed) presentPrivacyResults() else presentOptimizeResults()
+        when {
+            isInstallEvent -> showPermissionOutcome()
+            else -> showCleanupOutcome()
+        }
         binding.parcelProgress.visibility = View.GONE
-        // An app asking for nothing sensitive has no rows: the subtitle says so, no empty card.
-        if (binding.parcelChecks.childCount > 0) binding.parcelChecks.apply {
+        // No rows (nothing sensitive requested): keep the card hidden, the subtitle explains.
+        binding.parcelChecks.takeIf { it.childCount > 0 }?.run {
             visibility = View.VISIBLE
             alpha = 0f
             animate().alpha(1f).setDuration(260L).start()
@@ -168,169 +165,163 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
         binding.parcelOpen.isEnabled = true
     }
 
-    private fun presentPrivacyResults() {
-        val groups = sensitiveGroups()
-        val allowed = groups.count { it.second }
-        binding.parcelTitle.text = getString(R.string.pkgres_privacy_done_title, settleLabel())
-        binding.parcelSubtitle.text = if (groups.isEmpty()) {
-            getString(R.string.pkgres_privacy_summary_none)
-        } else {
-            getString(R.string.pkgres_privacy_summary, groups.size, allowed)
+    private fun showPermissionOutcome() {
+        val found = requestedSensitive()
+        binding.parcelTitle.text = getString(R.string.pkgres_privacy_done_title, appLabel())
+        binding.parcelSubtitle.text = when {
+            found.isEmpty() -> getString(R.string.pkgres_privacy_summary_none)
+            else -> getString(R.string.pkgres_privacy_summary, found.size, found.count { it.second })
         }
-        groups.forEach { (label, isAllowed) ->
-            addRow(
-                getString(label),
-                getString(if (isAllowed) R.string.pkgres_privacy_allowed else R.string.pkgres_privacy_not_allowed),
-                if (isAllowed) R.color.pkgres_removed else R.color.pkgres_installed,
-            )
+        for ((labelRes, granted) in found) {
+            val state = if (granted) R.string.pkgres_privacy_allowed else R.string.pkgres_privacy_not_allowed
+            val dot = if (granted) R.color.pkgres_removed else R.color.pkgres_installed
+            appendRow(getString(labelRes), getString(state), dot)
         }
     }
 
-    private fun presentOptimizeResults() {
-        binding.parcelTitle.text = getString(R.string.pkgres_optimize_done_title, settleLabel())
+    private fun showCleanupOutcome() {
+        binding.parcelTitle.text = getString(R.string.pkgres_optimize_done_title, appLabel())
         binding.parcelSubtitle.setText(R.string.pkgres_optimize_summary)
-        addRow(getString(R.string.pkgres_optimize_row_removed), getString(R.string.pkgres_optimize_removed), R.color.pkgres_installed)
+        appendRow(getString(R.string.pkgres_optimize_row_removed), getString(R.string.pkgres_optimize_removed), R.color.pkgres_installed)
 
         runCatching {
-            val stat = StatFs(Environment.getDataDirectory().path)
-            addRow(
-                getString(R.string.pkgres_optimize_row_storage),
-                getString(R.string.pkgres_of_total, size(stat.availableBytes), size(stat.totalBytes)),
-                R.color.pkgres_installed,
-            )
+            val fs = StatFs(Environment.getDataDirectory().path)
+            val summary = getString(R.string.pkgres_of_total, humanBytes(fs.availableBytes), humanBytes(fs.totalBytes))
+            appendRow(getString(R.string.pkgres_optimize_row_storage), summary, R.color.pkgres_installed)
         }
         runCatching {
-            val info = ActivityManager.MemoryInfo()
-            (getSystemService(ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(info)
-            addRow(
-                getString(R.string.pkgres_optimize_row_memory),
-                getString(R.string.pkgres_of_total, size(info.availMem), size(info.totalMem)),
-                R.color.pkgres_installed,
+            val mem = ActivityManager.MemoryInfo()
+            (getSystemService(ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(mem)
+            val summary = getString(R.string.pkgres_of_total, humanBytes(mem.availMem), humanBytes(mem.totalMem))
+            appendRow(getString(R.string.pkgres_optimize_row_memory), summary, R.color.pkgres_installed)
+        }
+    }
+
+    private fun queryPackage(): PackageInfo? = runCatching {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            packageManager.getPackageInfo(
+                targetPkg, PackageManager.PackageInfoFlags.of(PackageManager.GET_PERMISSIONS.toLong())
             )
-        }
-    }
-
-    /**
-     * The sensitive permission groups the new app asks for, each with whether any permission in it
-     * is already granted. Groups the app does not request are left out.
-     */
-    private fun sensitiveGroups(): List<Pair<Int, Boolean>> {
-        val info = runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                packageManager.getPackageInfo(
-                    affectedPackage, PackageManager.PackageInfoFlags.of(PackageManager.GET_PERMISSIONS.toLong())
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                packageManager.getPackageInfo(affectedPackage, PackageManager.GET_PERMISSIONS)
-            }
-        }.getOrNull() ?: return emptyList()
-
-        val requested = info.requestedPermissions ?: return emptyList()
-        val granted = requested.filterIndexed { i, _ -> isGranted(info, i) }.toSet()
-        return SENSITIVE.mapNotNull { (label, permissions) ->
-            val asked = permissions.filter { it in requested }
-            if (asked.isEmpty()) null else label to asked.any { it in granted }
-        }
-    }
-
-    private fun isGranted(info: PackageInfo, index: Int): Boolean {
-        val flags = info.requestedPermissionsFlags ?: return false
-        return index < flags.size && flags[index] and PackageInfo.REQUESTED_PERMISSION_GRANTED != 0
-    }
-
-    private fun addRow(title: String, value: String, dotColor: Int) {
-        val row = LayoutInflater.from(this).inflate(R.layout.cell_pkgres_check, binding.parcelChecks, false)
-        row.findViewById<TextView>(R.id.parcelRowTitle).text = title
-        row.findViewById<TextView>(R.id.parcelRowValue).text = value
-        row.findViewById<View>(R.id.parcelRowDot).background.mutate().setTint(getColor(dotColor))
-        binding.parcelChecks.addView(row)
-    }
-
-    private fun size(bytes: Long): String = Formatter.formatShortFileSize(this, bytes)
-
-    // ---------------- Actions ----------------
-
-    private fun wireButtons() = with(binding) {
-        parcelClose.setOnClickListener { close() }
-        parcelDone.setOnClickListener { close() }
-        if (installed) {
-            // Review permissions: the new app's own settings page, where each one can be changed.
-            parcelOpen.setText(R.string.pkgres_privacy_review)
-            parcelOpen.isEnabled = false // until the check has run
-            parcelOpen.setOnClickListener { enterNewAppSettings() }
         } else {
-            // Nothing to review once it is removed — let Done fill the row.
-            parcelOpen.visibility = View.GONE
-            (parcelDone.layoutParams as? android.widget.LinearLayout.LayoutParams)?.let {
-                it.marginEnd = 0
-                parcelDone.layoutParams = it
-            }
+            @Suppress("DEPRECATION")
+            packageManager.getPackageInfo(targetPkg, PackageManager.GET_PERMISSIONS)
+        }
+    }.getOrNull()
+
+    /** Each sensitive group the app requests, paired with whether anything in it is granted. */
+    private fun requestedSensitive(): List<Pair<Int, Boolean>> {
+        val pkg = queryPackage() ?: return emptyList()
+        val wanted = pkg.requestedPermissions ?: return emptyList()
+        val held = HashSet<String>()
+        wanted.forEachIndexed { idx, perm -> if (flagGranted(pkg, idx)) held += perm }
+        val out = ArrayList<Pair<Int, Boolean>>()
+        for ((labelRes, members) in PRIVACY_GROUPS) {
+            val requestedHere = members.filter { it in wanted }
+            if (requestedHere.isNotEmpty()) out += labelRes to requestedHere.any { it in held }
+        }
+        return out
+    }
+
+    private fun flagGranted(pkg: PackageInfo, idx: Int): Boolean {
+        val bits = pkg.requestedPermissionsFlags ?: return false
+        if (idx >= bits.size) return false
+        return bits[idx] and PackageInfo.REQUESTED_PERMISSION_GRANTED != 0
+    }
+
+    private fun appendRow(heading: String, detail: String, dotColor: Int) {
+        val holder = binding.parcelChecks
+        LayoutInflater.from(this).inflate(R.layout.cell_pkgres_check, holder, false).also { row ->
+            row.findViewById<TextView>(R.id.parcelRowTitle).text = heading
+            row.findViewById<TextView>(R.id.parcelRowValue).text = detail
+            row.findViewById<View>(R.id.parcelRowDot).background.mutate().setTint(getColor(dotColor))
+            holder.addView(row)
         }
     }
 
-    private fun enterNewAppSettings() {
-        runCatching {
-            startActivity(
-                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", affectedPackage, null))
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            )
-        }
-        concludeSafely()
-    }
+    private fun humanBytes(bytes: Long): String = Formatter.formatShortFileSize(this, bytes)
 
-    /** The icon settles in and the copy rises — the screen arrives rather than snapping on. */
-    private fun playEntrance() = with(binding) {
-        parcelAppIcon.scaleX = 0.6f
-        parcelAppIcon.scaleY = 0.6f
-        parcelAppIcon.animate()
-            .scaleX(1f).scaleY(1f)
-            .setInterpolator(OvershootInterpolator(2.2f))
-            .setDuration(420L)
-            .start()
-        parcelBadge.alpha = 0f
-        parcelBadge.animate().alpha(1f).setStartDelay(260L).setDuration(220L).start()
-        listOf<View>(parcelStatus, parcelTitle, parcelSubtitle, parcelBody)
-            .forEachIndexed { index, view ->
-                view.alpha = 0f
-                ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, dp(12).toFloat(), 0f).apply {
-                    startDelay = 90L * index
-                    duration = 320L
-                    start()
-                }
-                view.animate().alpha(1f).setStartDelay(90L * index).setDuration(320L).start()
+    // ---------------- buttons ----------------
+
+    private fun bindActions() {
+        binding.parcelClose.setOnClickListener { dismissScreen() }
+        binding.parcelDone.setOnClickListener { dismissScreen() }
+        val open = binding.parcelOpen
+        if (!isInstallEvent) {
+            // A removed app has nothing to review; Done takes the whole row.
+            open.visibility = View.GONE
+            val done = binding.parcelDone
+            (done.layoutParams as? android.widget.LinearLayout.LayoutParams)?.also { lp ->
+                lp.marginEnd = 0
+                done.layoutParams = lp
             }
-    }
-
-    private fun fillAd() {
-        if (!HomeSpotsProfile.packageResultSettings(this).bodyNative) return
-        binding.spotNativeFrame.visibility = View.VISIBLE
-        EmbeddedTeaser().presentMidNative2(this, binding.spotNativeFrame, binding.spotShimmer)
-    }
-
-    private fun close() {
-        if (closed) return
-        closed = true
-        binding.parcelClose.isEnabled = false
-        binding.parcelDone.isEnabled = false
-        binding.parcelOpen.isEnabled = false
-        // `install_*` / `uninstall_*` (`ad_flow` or a link chain): a close ad, then the screen goes.
-        val placement = if (installed) "install" else "uninstall"
-        if (HomeSeatSpots.hasOwnFlow(this, placement)) {
-            HomeSeatSpots.showInterstitial(this, placement) { concludeSafely() }
             return
         }
-        concludeSafely()
+        open.setText(R.string.pkgres_privacy_review)
+        open.isEnabled = false // enabled once the scan finishes
+        open.setOnClickListener { openTargetSettings() }
     }
 
-    /** Back behaves as Done, so the screen has one way out. */
-    override fun performBack() = close()
-
-    private fun concludeSafely() {
-        if (!isFinishing) finish()
+    private fun openTargetSettings() {
+        val details = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", targetPkg, null))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { startActivity(details) }
+        finishIfAlive()
     }
 
-    private fun dp(value: Int) = Math.round(value * resources.displayMetrics.density)
+    private fun fadeRise(view: View, order: Int) {
+        val delayMs = 90L * order
+        view.alpha = 0f
+        ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, toPx(12).toFloat(), 0f).apply {
+            startDelay = delayMs
+            duration = 320L
+            start()
+        }
+        view.animate().alpha(1f).setStartDelay(delayMs).setDuration(320L).start()
+    }
+
+    private fun animateArrival() {
+        with(binding.parcelAppIcon) {
+            scaleX = 0.6f
+            scaleY = 0.6f
+            animate()
+                .scaleX(1f).scaleY(1f)
+                .setInterpolator(OvershootInterpolator(2.2f))
+                .setDuration(420L)
+                .start()
+        }
+        binding.parcelBadge.alpha = 0f
+        binding.parcelBadge.animate().alpha(1f).setStartDelay(260L).setDuration(220L).start()
+        val rising = listOf<View>(binding.parcelStatus, binding.parcelTitle, binding.parcelSubtitle, binding.parcelBody)
+        rising.forEachIndexed { order, view -> fadeRise(view, order) }
+    }
+
+    private fun mountBodyNative() {
+        val wanted = HomeSpotsProfile.packageResultSettings(this).bodyNative
+        if (wanted) {
+            binding.spotNativeFrame.visibility = View.VISIBLE
+            EmbeddedTeaser().presentMidNative2(this, binding.spotNativeFrame, binding.spotShimmer)
+        }
+    }
+
+    private fun dismissScreen() {
+        if (exiting) return
+        exiting = true
+        listOf<View>(binding.parcelClose, binding.parcelDone, binding.parcelOpen).forEach { it.isEnabled = false }
+        // `install_*` / `uninstall_*`: an interstitial first when configured, then finish.
+        val placement = if (isInstallEvent) "install" else "uninstall"
+        if (!HomeSeatSpots.hasOwnFlow(this, placement)) {
+            finishIfAlive()
+            return
+        }
+        HomeSeatSpots.showInterstitial(this, placement) { finishIfAlive() }
+    }
+
+    private fun finishIfAlive() {
+        if (isFinishing) return
+        finish()
+    }
+
+    private fun toPx(value: Int) = Math.round(value * resources.displayMetrics.density)
 
     companion object {
         const val EXTRA_INSTALLED = "package_installed"
@@ -339,11 +330,9 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
         const val EXTRA_VERSION = "package_version"
         const val EXTRA_CLASS = "package_class"
 
-        /** How long each progress step shows; three steps, so the check reads for about 2 s. */
-        private const val STEP_MS = 700L
+        private const val STAGE_STEP_MS = 700L
 
-        /** The permission groups a user would care about, as Settings names them. */
-        private val SENSITIVE: List<Pair<Int, List<String>>> = listOf(
+        private val PRIVACY_GROUPS: List<Pair<Int, List<String>>> = listOf(
             R.string.pkgres_perm_location to listOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION,

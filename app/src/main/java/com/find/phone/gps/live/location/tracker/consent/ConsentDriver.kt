@@ -8,49 +8,21 @@ import com.find.phone.gps.live.location.tracker.helpers.WardenRail
 import java.lang.ref.WeakReference
 
 /**
- * Global, Firebase-controlled permission engine.
- *
- * A single entry point — [check] — is the trigger. Call it from wherever you
- * want the flow to run (a button click, a specific screen's onResume, etc.):
- *
- * ```
- * someButton.setOnClickListener { ConsentDriver.check(this) }
- * ```
- *
- * It is NOT auto-triggered anymore; [init] (called once from the Application)
- * only warms the Remote Config so the config is ready by the time you trigger.
- *
- * For the Activity it is called with, the engine:
- *  1. reads the `permission_engine` Remote Config (via [ConsentFeed]),
- *  2. finds rules that target this Activity by simple name ([DisplayMatcher]),
- *  3. drops permissions that are already granted, not applicable on this SDK, or
- *     already shown when `show_once` is set,
- *  4. orders the rest by `priority` ([ConsentBacklog]),
- *  5. waits each rule's `delay` ([ConsentTimer]) then shows the request
- *     ([ConsentHome]) — advancing to the next only after the previous
- *     one completes (sequential flow).
- *
- * All state is guarded so repeated `onResume` calls, fast screen switches, and
- * Activity teardown can't double-prompt or leak.
+ * Remote-Config-driven permission engine. [check] runs the queue of rules that target the given
+ * Activity (by simple name), skipping granted / inapplicable / already-shown permissions, ordered
+ * by priority and spaced by each rule's delay, one request at a time. [request] asks a single
+ * permission by key regardless of Activity targeting. [init] only warms Remote Config.
  */
 object ConsentDriver {
 
     private const val TAG = "ConsentDriver"
 
-    private val scheduler = ConsentTimer()
+    private val timer = ConsentTimer()
 
-    /** The Activity whose queue is currently being processed. */
-    private var activeRef: WeakReference<Activity>? = null
-    private var running = false
+    private var ownerRef: WeakReference<Activity>? = null
+    private var busy = false
+    private var doneCallback: (() -> Unit)? = null
 
-    /** Fired once when the current run finishes normally (see [check]). */
-    private var pendingOnComplete: (() -> Unit)? = null
-
-    /**
-     * One-time startup hook. Kicks a fresh Remote Config fetch so the newest
-     * configuration is active as early as possible. Safe to call from
-     * `Application.onCreate` (after `FirebaseApp.initializeApp`).
-     */
     fun init(context: Context) {
         try {
             ConsentFeed.renewFromRemote()
@@ -59,219 +31,188 @@ object ConsentDriver {
         }
     }
 
+    private fun Activity.isGoneOrGoing(): Boolean = isFinishing || isDestroyed
+
+    private fun shortPermName(spec: ConsentSchema): String = spec.androidPermission.substringAfterLast('.')
+
     /**
-     * Trigger the permission flow for [activity].
-     *
-     * [onComplete] (optional) fires **once, on the main thread, when the flow is
-     * done** — i.e. after every configured permission has been asked, or
-     * immediately when there was nothing to ask. Use it to redirect:
-     *
-     * ```
-     * ConsentDriver.check(this) {
-     *     startActivity(Intent(this, NextActivity::class.java))
-     *     finish()
-     * }
-     * ```
-     *
-     * It does NOT fire when a run is interrupted (a different Activity triggers
-     * the engine, or the Activity is torn down mid-flow) — in those cases a
-     * redirect would be inappropriate.
+     * Starts the flow for [activity]. [onComplete] fires once on normal completion (or right away
+     * when nothing needs asking); it is dropped if the run is interrupted.
      */
     @JvmStatic
     @JvmOverloads
     fun check(activity: Activity, onComplete: (() -> Unit)? = null) {
         try {
-            if (activity.isFinishing || activity.isDestroyed) {
-                fireComplete(onComplete)
+            if (activity.isGoneOrGoing()) {
+                invokeSafely(onComplete)
                 return
             }
-            val name = activity::class.java.simpleName
+            val screen = activity::class.java.simpleName
 
-            // Already working on this exact Activity → let it finish; don't stack.
-            val current = activeRef?.get()
-            if (running && current === activity) return
-            // A different Activity is now in the foreground → abandon the old run.
-            if (running && current !== activity) abort()
-
-            // From here on, completion is owned by complete()/abort().
-            pendingOnComplete = onComplete
-
-            val allRules = ConsentFeed.rules()
-            val matched = if (allRules.isEmpty()) emptyList()
-            else DisplayMatcher.rulesFor(name, allRules)
-            if (matched.isEmpty()) {
-                WardenRail.log(TAG, "No permission rules for $name")
-                complete()
-                return
+            if (busy) {
+                val owner = ownerRef?.get()
+                if (owner === activity) return
+                reset(fire = false)
             }
 
-            val prefs = ConsentLocker(activity)
-            val pending = matched.filter { rule -> isStillNeeded(activity, rule, prefs) }
-            if (pending.isEmpty()) {
-                WardenRail.log(TAG, "All configured permissions already satisfied on $name")
-                complete()
+            doneCallback = onComplete
+
+            val rules = ConsentFeed.rules()
+            val targeted = when {
+                rules.isEmpty() -> emptyList()
+                else -> DisplayMatcher.rulesFor(screen, rules)
+            }
+            if (targeted.isEmpty()) {
+                WardenRail.log(TAG, "No permission rules for $screen")
+                reset(fire = true)
                 return
             }
 
-            WardenRail.log(TAG, "Queueing ${pending.size} permission(s) for $name")
-            running = true
-            activeRef = WeakReference(activity)
-            processNext(ConsentBacklog(pending))
+            val locker = ConsentLocker(activity)
+            val outstanding = targeted.filter { needsAsking(activity, it, locker) }
+            if (outstanding.isEmpty()) {
+                WardenRail.log(TAG, "All configured permissions already satisfied on $screen")
+                reset(fire = true)
+                return
+            }
+
+            WardenRail.log(TAG, "Queueing ${outstanding.size} permission(s) for $screen")
+            busy = true
+            ownerRef = WeakReference(activity)
+            advance(ConsentBacklog(outstanding))
         } catch (e: Exception) {
             WardenRail.error(TAG, "check() failed", e)
-            abort()
+            reset(fire = false)
         }
     }
 
     /**
-     * Requests a single permission by config [key] on demand, **independent of
-     * the Activity-matching used by [check]**.
-     *
-     * Use this for an explicit trigger point (e.g. the FSI "Enable" button)
-     * where you want exactly one permission asked — regardless of whether the
-     * current Activity is listed in that permission's `activities` — and then to
-     * continue. This is why the FSI screens can prime `notification` even though
-     * the Remote Config only lists Splash/Main for it.
-     *
-     * [onComplete] always fires once, on the main thread, when done: after the
-     * OS dialog resolves, or immediately when the permission is already granted,
-     * not applicable on this SDK, gated off, or its `show_once` was already used.
+     * Asks exactly one permission by config [key], ignoring Activity targeting. A rule that exists
+     * but is disabled acts as a remote off-switch; a missing rule still asks. [onComplete] always
+     * fires exactly once.
      */
     @JvmStatic
     @JvmOverloads
     fun request(activity: Activity, key: String, onComplete: (() -> Unit)? = null) {
         try {
-            if (activity.isFinishing || activity.isDestroyed) {
-                fireComplete(onComplete); return
-            }
+            if (activity.isGoneOrGoing()) return invokeSafely(onComplete)
             val spec = ConsentToolbox.spec(key)
-            if (spec == null) {
-                WardenRail.log(TAG, "request(): unknown permission key '$key' — skipped")
-                fireComplete(onComplete); return
+                ?: return run {
+                    WardenRail.log(TAG, "request(): unknown permission key '$key' — skipped")
+                    invokeSafely(onComplete)
+                }
+            val nothingToAsk = when {
+                !ConsentToolbox.isApplicableOnThisSdk(spec) -> true
+                !ConsentToolbox.isPrefGateOpen(activity, spec) -> true
+                else -> ConsentToolbox.isGranted(activity, spec)
             }
-            if (!ConsentToolbox.isApplicableOnThisSdk(spec) ||
-                !ConsentToolbox.isPrefGateOpen(activity, spec) ||
-                ConsentToolbox.isGranted(activity, spec)
-            ) {
-                fireComplete(onComplete); return
-            }
+            if (nothingToAsk) return invokeSafely(onComplete)
 
-            // Config lookup: rule is keyed by permission (not by Activity), so a
-            // targeted request works from any screen. When the rule exists but is
-            // disabled in Remote Config, honour that and skip — this is the remote
-            // off-switch for the FSI notification prime. (A missing rule = no
-            // config for this key → still ask, driven by the spec alone.)
             val rule = ConsentFeed.rules().firstOrNull { it.key == key }
             if (rule != null && !rule.enabled) {
                 WardenRail.log(TAG, "request(): '$key' disabled in config — skipped")
-                fireComplete(onComplete); return
+                return invokeSafely(onComplete)
             }
-            val prefs = ConsentLocker(activity)
-            if (rule?.showOnce == true && prefs.wasShown(key)) {
-                fireComplete(onComplete); return
-            }
+            val oneShot = rule?.showOnce == true
+            val locker = ConsentLocker(activity)
+            if (oneShot && locker.wasShown(key)) return invokeSafely(onComplete)
 
-            prefs.flagAsked(key)
-            if (rule?.showOnce == true) prefs.flagShown(key)
+            locker.flagAsked(key)
+            if (oneShot) locker.flagShown(key)
 
-            val shortName = spec.androidPermission.substringAfterLast('.')
-            activity.recordKeyEvent("Permission_${shortName}_Show")
+            activity.recordKeyEvent("Permission_${shortPermName(spec)}_Show")
             WardenRail.log(TAG, "request(): asking '$key' on ${activity::class.java.simpleName}")
 
             ConsentHome.launch(activity, spec.androidPermission) { granted ->
                 activity.recordPermissionResult(spec.androidPermission, granted)
                 WardenRail.log(TAG, "request(): '$key' granted=$granted")
-                fireComplete(onComplete)
+                invokeSafely(onComplete)
             }
         } catch (e: Exception) {
             WardenRail.error(TAG, "request() failed", e)
-            fireComplete(onComplete)
+            invokeSafely(onComplete)
         }
     }
 
-    /** Drops permissions that don't need requesting right now. */
-    private fun isStillNeeded(
-        activity: Activity,
-        rule: ConsentClause,
-        prefs: ConsentLocker,
-    ): Boolean {
+    private fun needsAsking(activity: Activity, rule: ConsentClause, locker: ConsentLocker): Boolean {
+        val spec = ConsentToolbox.spec(rule.key)
+        return when {
+            spec == null -> {
+                WardenRail.log(TAG, "Unknown permission key '${rule.key}' — skipped")
+                false
+            }
+            !ConsentToolbox.isApplicableOnThisSdk(spec) -> false
+            !ConsentToolbox.isPrefGateOpen(activity, spec) -> {
+                WardenRail.log(TAG, "Pref gate '${spec.enabledPrefGate}' closed — '${rule.key}' skipped")
+                false
+            }
+            ConsentToolbox.isGranted(activity, spec) -> false
+            else -> !(rule.showOnce && locker.wasShown(rule.key))
+        }
+    }
+
+    private fun advance(queue: ConsentBacklog) {
+        val rule = queue.poll()
+        if (rule == null) {
+            reset(fire = true)
+            return
+        }
         val spec = ConsentToolbox.spec(rule.key)
         if (spec == null) {
-            WardenRail.log(TAG, "Unknown permission key '${rule.key}' — skipped")
-            return false
+            advance(queue)
+            return
         }
-        if (!ConsentToolbox.isApplicableOnThisSdk(spec)) return false
-        if (!ConsentToolbox.isPrefGateOpen(activity, spec)) {
-            WardenRail.log(TAG, "Pref gate '${spec.enabledPrefGate}' closed — '${rule.key}' skipped")
-            return false
+
+        val host = ownerRef?.get()
+        if (host == null || host.isGoneOrGoing()) {
+            reset(fire = false)
+            return
         }
-        if (ConsentToolbox.isGranted(activity, spec)) return false
-        if (rule.showOnce && prefs.wasShown(rule.key)) return false
-        return true
+        if (ConsentToolbox.isGranted(host, spec)) {
+            advance(queue)
+            return
+        }
+
+        timer.schedule(rule.delayMs) { askNow(queue, rule, spec) }
     }
 
-    private fun processNext(queue: ConsentBacklog) {
-        val rule = queue.poll() ?: run { complete(); return }
-        val spec = ConsentToolbox.spec(rule.key) ?: run { processNext(queue); return }
-
-        val activity = activeRef?.get()
-        if (activity == null || activity.isFinishing || activity.isDestroyed) {
-            abort(); return
+    private fun askNow(queue: ConsentBacklog, rule: ConsentClause, spec: ConsentSchema) {
+        val act = ownerRef?.get()
+        if (act == null || act.isGoneOrGoing()) {
+            reset(fire = false)
+            return
         }
-        // Re-verify — the user may have granted it via Settings meanwhile.
-        if (ConsentToolbox.isGranted(activity, spec)) {
-            processNext(queue); return
+        if (ConsentToolbox.isGranted(act, spec)) {
+            advance(queue)
+            return
         }
 
-        scheduler.schedule(rule.delayMs) {
-            val act = activeRef?.get()
-            if (act == null || act.isFinishing || act.isDestroyed) {
-                abort(); return@schedule
-            }
-            if (ConsentToolbox.isGranted(act, spec)) {
-                processNext(queue); return@schedule
-            }
+        val locker = ConsentLocker(act)
+        locker.flagAsked(rule.key)
+        if (rule.showOnce) locker.flagShown(rule.key)
 
-            val prefs = ConsentLocker(act)
-            prefs.flagAsked(rule.key)
-            if (rule.showOnce) prefs.flagShown(rule.key)
+        act.recordKeyEvent("Permission_${shortPermName(spec)}_Show")
 
-            // Analytics — mirrors the app's existing permission events
-            // (Permission_<NAME>_Show / _Allow / _Deny).
-            val shortName = spec.androidPermission.substringAfterLast('.')
-            act.recordKeyEvent("Permission_${shortName}_Show")
-
-            WardenRail.log(TAG, "Requesting '${rule.key}' on ${act::class.java.simpleName}")
-            ConsentHome.launch(act, spec.androidPermission) { granted ->
-                // Report on the same Activity context that launched the request.
-                (activeRef?.get() ?: act).recordPermissionResult(spec.androidPermission, granted)
-                WardenRail.log(TAG, "Result '${rule.key}' granted=$granted")
-                // Sequential: only now advance to the next permission.
-                processNext(queue)
-            }
+        WardenRail.log(TAG, "Requesting '${rule.key}' on ${act::class.java.simpleName}")
+        ConsentHome.launch(act, spec.androidPermission) { granted ->
+            (ownerRef?.get() ?: act).recordPermissionResult(spec.androidPermission, granted)
+            WardenRail.log(TAG, "Result '${rule.key}' granted=$granted")
+            advance(queue)
         }
     }
 
-    /** Normal end of a run — resets state and fires [pendingOnComplete]. */
-    private fun complete() {
-        scheduler.clear()
-        running = false
-        activeRef = null
-        val cb = pendingOnComplete
-        pendingOnComplete = null
-        fireComplete(cb)
+    /** Clears run state; [fire] = normal completion (runs the stored callback), else interruption. */
+    private fun reset(fire: Boolean) {
+        timer.clear()
+        busy = false
+        ownerRef = null
+        val cb = doneCallback
+        doneCallback = null
+        if (fire) invokeSafely(cb)
     }
 
-    /** Interrupted end (teardown / hijack) — resets state, does NOT redirect. */
-    private fun abort() {
-        scheduler.clear()
-        running = false
-        activeRef = null
-        pendingOnComplete = null
-    }
-
-    private fun fireComplete(cb: (() -> Unit)?) {
-        if (cb == null) return
+    private fun invokeSafely(cb: (() -> Unit)?) {
+        cb ?: return
         try {
             cb()
         } catch (e: Exception) {

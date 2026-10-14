@@ -39,272 +39,303 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * Number Details (design 11c), once the result is unlocked: the registered area on a small
- * OpenStreetMap header, the card with the number, place, chips and Call · Message · Map · Copy,
- * the Location details grid, and Also known as — every name the lookup found, the best match
- * revealed by the unlock and each other one behind its own rewarded ad (Premium: all shown).
- * When the lookup server couldn't be reached a note offers Retry, which re-runs it in place.
+ * Unlocked number details: a small map header for the registered area, the identity card with
+ * its quick actions, a facts grid and the list of alternative names (each extra one behind a
+ * rewarded ad unless Premium). An offline note offers an in-place retry of the lookup.
  */
 class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
 
     override val layoutId: Int = R.layout.screen_number_detail
 
-    private lateinit var report: NumDigest
-    private var overlay: SectorThrobVeil? = null
-    private var revealing = false
-    private var topInset = 0
-    private var allNamesShown = false
+    private lateinit var digest: NumDigest
+    private var areaPulse: SectorThrobVeil? = null
+    private var statusInset = 0
+    private var adBusy = false
+    private var expandNames = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // osmdroid must be configured before the MapView is inflated (in super.onCreate).
+        // The map library has to be set up before super.onCreate inflates the MapView.
         StreetCharts.init(this)
         super.onCreate(savedInstanceState)
     }
 
     override fun initView() {
-        val given = IntentCompat.getSerializableExtra(intent, EXTRA_REPORT, NumDigest::class.java)
-        if (given == null) {
+        digest = IntentCompat.getSerializableExtra(intent, EXTRA_REPORT, NumDigest::class.java) ?: run {
             finish()
             return
         }
-        report = given
 
-        // The map runs under the status bar; the top bar sits below it.
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
-        val topPad = binding.chartTopBar.paddingTop
-        val mapHeight = binding.chartBox.layoutParams.height
-        ViewCompat.setOnApplyWindowInsetsListener(binding.infoRoot) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            binding.chartTopBar.updatePadding(top = topPad + bars.top)
-            binding.chartBox.updateLayoutParams { height = mapHeight + bars.top }
-            if (topInset != bars.top) {
-                topInset = bars.top
-                if (::report.isInitialized) centerPin()
-            }
-            v.updatePadding(left = bars.left, right = bars.right, bottom = bars.bottom)
-            insets
+        trackInsets()
+
+        with(binding) {
+            actBack.setOnClickListener { goBack() }
+            actShare.setOnClickListener { shareReport() }
+            actRetry.setOnClickListener { relookup() }
+            chartTap.setOnClickListener { openBigMap() }
+            actFullMap.setOnClickListener { openBigMap() }
+            CraftMovement.pressScale(actFullMap)
+            lvIdentityCard.clipToOutline = false
         }
 
-        binding.actBack.setOnClickListener { goBack() }
-        binding.actShare.setOnClickListener { share() }
-        binding.actRetry.setOnClickListener { retry() }
-        binding.chartTap.setOnClickListener { enterFullMap() }
-        binding.actFullMap.setOnClickListener { enterFullMap() }
-        CraftMovement.pressScale(binding.actFullMap)
-        binding.lvIdentityCard.clipToOutline = false
-
-        action(binding.lvActCall, R.drawable.lv_ic_call, R.string.ds_act_call, lead = true) { siteCall(report.e164) }
-        action(binding.lvActSms, R.drawable.lv_ic_message, R.string.ds_act_sms) { emitSms() }
-        action(binding.lvActMap, R.drawable.lv_ic_navigation, R.string.ds_act_map) { enterFullMap() }
-        action(binding.lvActCopy, R.drawable.lv_ic_copy, R.string.ds_act_copy) { cloneNumber() }
+        setupTile(binding.lvActCall, R.drawable.lv_ic_call, R.string.ds_act_call, primary = true) { siteCall(digest.e164) }
+        setupTile(binding.lvActSms, R.drawable.lv_ic_message, R.string.ds_act_sms) { textNumber() }
+        setupTile(binding.lvActMap, R.drawable.lv_ic_navigation, R.string.ds_act_map) { openBigMap() }
+        setupTile(binding.lvActCopy, R.drawable.lv_ic_copy, R.string.ds_act_copy) { copyNumber() }
 
         StreetCharts.style(binding.chartView, interactive = false)
-        bind()
-        siteOnMap()
+        renderAll()
+        dropPin()
     }
 
-    // ── Card, grid, names ─────────────────────────────────────────────────
+    private fun trackInsets() {
+        val baseTopPad = binding.chartTopBar.paddingTop
+        val baseMapHeight = binding.chartBox.layoutParams.height
+        ViewCompat.setOnApplyWindowInsetsListener(binding.infoRoot) { root, insets ->
+            val sb = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            binding.chartTopBar.updatePadding(top = baseTopPad + sb.top)
+            binding.chartBox.updateLayoutParams { height = baseMapHeight + sb.top }
+            if (statusInset != sb.top) {
+                statusInset = sb.top
+                if (::digest.isInitialized) offsetPin()
+            }
+            root.updatePadding(left = sb.left, right = sb.right, bottom = sb.bottom)
+            insets
+        }
+    }
 
-    private fun bind() {
-        val r = report
-        binding.txtIso.text = r.iso2
-        binding.txtNumber.text = r.international
-        binding.txtPlace.text = listOfNotNull(r.city, r.state).distinct().joinToString(", ").ifEmpty { r.countryName }
+    // ── Card / facts / names ──────────────────────────────────────────────
+
+    private fun cityRegion(d: NumDigest): String = listOfNotNull(d.city, d.state).distinct().joinToString(", ")
+
+    private fun renderAll() {
+        val d = digest
+        binding.txtIso.text = d.iso2
+        binding.txtNumber.text = d.international
+        binding.txtPlace.text = cityRegion(d).ifEmpty { d.countryName }
         binding.txtMapPlace.text = binding.txtPlace.text
 
-        when {
-            r.spam -> chip(R.string.ds_verdict_spam, R.drawable.lv_pill_danger, R.color.ds_danger)
-            r.valid -> chip(R.string.ds_result_valid_short, R.drawable.lv_pill_success_soft, R.color.ds_success)
-            else -> chip(R.string.ds_verdict_unverified, R.drawable.lv_pill_warn, R.color.ds_warn)
+        if (d.spam) {
+            verdictPill(R.string.ds_verdict_spam, R.drawable.lv_pill_danger, R.color.ds_danger)
+        } else if (d.valid) {
+            verdictPill(R.string.ds_result_valid_short, R.drawable.lv_pill_success_soft, R.color.ds_success)
+        } else {
+            verdictPill(R.string.ds_verdict_unverified, R.drawable.lv_pill_warn, R.color.ds_warn)
         }
-        val line = r.lineType.label(this)
-        binding.pillLine.text = line
-        binding.pillLine.isVisible = line != null
-        binding.lvOfflineCard.isVisible = !r.serverReached
+        val lineLabel = d.lineType.label(this)
+        binding.pillLine.text = lineLabel
+        binding.pillLine.isVisible = lineLabel != null
+        binding.lvOfflineCard.isVisible = !d.serverReached
 
-        cell(binding.boxCountry, R.string.ds_label_country, r.countryName)
-        cell(binding.boxPlace, R.string.ds_detail_city_region, listOfNotNull(r.city, r.state).distinct().joinToString(", "))
-        cell(binding.boxCarrier, R.string.ds_fact_carrier, r.carrier)
-        cell(binding.boxLine, R.string.ds_fact_line, line)
+        fillFact(binding.boxCountry, R.string.ds_label_country, d.countryName)
+        fillFact(binding.boxPlace, R.string.ds_detail_city_region, cityRegion(d))
+        fillFact(binding.boxCarrier, R.string.ds_fact_carrier, d.carrier)
+        fillFact(binding.boxLine, R.string.ds_fact_line, lineLabel)
 
-        wireNames()
+        renderNames()
     }
 
-    private fun chip(@StringRes text: Int, @DrawableRes pill: Int, color: Int) {
-        binding.pillVerdict.setText(text)
-        binding.pillVerdict.setBackgroundResource(pill)
-        binding.pillVerdict.setTextColor(ContextCompat.getColor(this, color))
+    private fun verdictPill(@StringRes caption: Int, @DrawableRes bg: Int, tint: Int) = with(binding.pillVerdict) {
+        setText(caption)
+        setBackgroundResource(bg)
+        setTextColor(ContextCompat.getColor(this@NumProfile2Activity, tint))
     }
 
-    private fun cell(cell: CellDetailCellBinding, @StringRes label: Int, value: String?) {
-        cell.txtLabel.setText(label)
-        val known = !value.isNullOrBlank()
-        cell.txtValue.text = if (known) value else getString(R.string.ds_not_available)
-        cell.txtValue.setTextColor(ContextCompat.getColor(this, if (known) R.color.ds_ink else R.color.ds_muted))
+    private fun fillFact(box: CellDetailCellBinding, @StringRes caption: Int, value: String?) {
+        box.txtLabel.setText(caption)
+        val missing = value.isNullOrBlank()
+        box.txtValue.text = if (missing) getString(R.string.ds_not_available) else value
+        box.txtValue.setTextColor(ContextCompat.getColor(this, if (missing) R.color.ds_muted else R.color.ds_ink))
     }
 
-    private fun action(tile: CellDetailActionBinding, @DrawableRes icon: Int, @StringRes label: Int, lead: Boolean = false, onClick: () -> Unit) {
-        tile.imgIcon.setImageResource(icon)
-        tile.txtLabel.setText(label)
-        if (lead) {
+    private fun setupTile(
+        tile: CellDetailActionBinding,
+        @DrawableRes glyph: Int,
+        @StringRes caption: Int,
+        primary: Boolean = false,
+        onTap: () -> Unit,
+    ) {
+        tile.imgIcon.setImageResource(glyph)
+        tile.txtLabel.setText(caption)
+        if (primary) {
             tile.badgeBox.setBackgroundResource(R.drawable.lv_tile_primary_r16)
             tile.imgIcon.setColorFilter(ContextCompat.getColor(this, R.color.white))
         }
         CraftMovement.pressScale(tile.lvActionRoot)
-        tile.lvActionRoot.setOnClickListener { onClick() }
+        tile.lvActionRoot.setOnClickListener { onTap() }
     }
 
-    /** Every name found: the best match came with the unlock; the others one ad each. */
-    private val names: List<String>
-        get() = listOfNotNull(report.name) + report.otherNames
+    private val knownNames: List<String>
+        get() = buildList {
+            digest.name?.let { add(it) }
+            addAll(digest.otherNames)
+        }
 
-    private fun isRevealed(index: Int, name: String): Boolean =
-        index == 0 && report.name != null || PlusCheckout.isPremium(this) || ExposedTitles.isRevealed(this, report.e164, name)
+    private fun nameVisible(position: Int, name: String): Boolean {
+        if (position == 0 && digest.name != null) return true
+        if (PlusCheckout.isPremium(this)) return true
+        return ExposedTitles.isRevealed(this, digest.e164, name)
+    }
 
-    private fun wireNames() {
-        val all = names
-        binding.lvNamesBlock.isVisible = all.isNotEmpty()
+    private fun renderNames() {
+        val everyName = knownNames
+        binding.lvNamesBlock.isVisible = everyName.isNotEmpty()
         binding.lvNamesList.removeAllViews()
-        // The lookup can return up to 100 names: the first few, then "Show all" on demand.
-        val shown = if (allNamesShown) all else all.take(NAMES_PREVIEW)
-        binding.actShowAllNames.isVisible = shown.size < all.size
-        binding.actShowAllNames.text = getString(R.string.ds_names_show_all, all.size)
-        binding.actShowAllNames.setOnClickListener {
-            allNamesShown = true
-            wireNames()
+        // Long lists start collapsed; "Show all" expands them.
+        val listed = when {
+            expandNames -> everyName
+            else -> everyName.take(NAMES_PREVIEW)
         }
-        shown.forEachIndexed { i, name ->
-            val item = CellDetailNameBinding.inflate(LayoutInflater.from(this), binding.lvNamesList, true)
-            item.txtName.text = name
-            item.lvNameDivider.isVisible = i < shown.lastIndex
-            presentName(item, name, isRevealed(i, name))
-            item.actReveal.setOnClickListener { unveilName(item, name) }
-        }
-        reviseRevealedCount()
-        if (all.indices.any { !isRevealed(it, all[it]) }) BonusTeaser.preload(this)
-    }
-
-    private fun presentName(item: CellDetailNameBinding, name: String, revealed: Boolean) {
-        item.txtName.setBlurred(!revealed)
-        item.txtRevealed.isVisible = revealed
-        item.actReveal.isVisible = !revealed
-        if (revealed) {
-            item.txtAvatar.text = initials(name)
-            item.txtAvatar.setBackgroundResource(BuddyAdapter.AVATARS[abs(name.hashCode()) % BuddyAdapter.AVATARS.size])
-        } else {
-            item.txtAvatar.text = ""
-            item.txtAvatar.setBackgroundResource(R.drawable.lv_circle_track)
-        }
-    }
-
-    private fun initials(name: String): String =
-        name.split(' ').filter { it.isNotBlank() }.take(2)
-            .mapNotNull { w -> w.firstOrNull { it.isLetterOrDigit() }?.uppercaseChar() }
-            .joinToString("")
-
-    private fun reviseRevealedCount() {
-        val all = names
-        val revealed = all.indices.count { isRevealed(it, all[it]) }
-        binding.txtRevealedCount.text = getString(R.string.ds_names_count, revealed, all.size)
-        binding.txtNamesNote.isVisible = revealed < all.size
-    }
-
-    /** One rewarded ad reveals one name (remembered); closing the ad early keeps it hidden. */
-    private fun unveilName(item: CellDetailNameBinding, name: String) {
-        if (revealing) return
-        revealing = true
-        item.txtReveal.isInvisible = true
-        item.spinReveal.isVisible = true
-        BonusTeaser().show(this) { result ->
-            revealing = false
-            item.txtReveal.isInvisible = false
-            item.spinReveal.isVisible = false
-            if (result != BonusTeaser.Result.EARNED) {
-                if (result == BonusTeaser.Result.NOT_EARNED) {
-                    Toast.makeText(this, R.string.ds_reward_not_earned, Toast.LENGTH_SHORT).show()
-                }
-                return@show
+        with(binding.actShowAllNames) {
+            isVisible = listed.size < everyName.size
+            text = getString(R.string.ds_names_show_all, everyName.size)
+            setOnClickListener {
+                expandNames = true
+                renderNames()
             }
-            ExposedTitles.reveal(this, report.e164, name)
-            presentName(item, name, revealed = true)
-            reviseRevealedCount()
+        }
+        val inflater = LayoutInflater.from(this)
+        for ((pos, name) in listed.withIndex()) {
+            val row = CellDetailNameBinding.inflate(inflater, binding.lvNamesList, true)
+            row.txtName.text = name
+            row.lvNameDivider.isVisible = pos < listed.lastIndex
+            styleName(row, name, nameVisible(pos, name))
+            row.actReveal.setOnClickListener { watchForName(row, name) }
+        }
+        refreshNameTally()
+        val anyHidden = everyName.indices.any { !nameVisible(it, everyName[it]) }
+        if (anyHidden) BonusTeaser.preload(this)
+    }
+
+    private fun styleName(row: CellDetailNameBinding, name: String, revealed: Boolean) {
+        row.txtName.setBlurred(!revealed)
+        row.txtRevealed.isVisible = revealed
+        row.actReveal.isVisible = !revealed
+        if (!revealed) {
+            row.txtAvatar.text = ""
+            row.txtAvatar.setBackgroundResource(R.drawable.lv_circle_track)
+            return
+        }
+        val palette = BuddyAdapter.AVATARS
+        row.txtAvatar.text = monogram(name)
+        row.txtAvatar.setBackgroundResource(palette[abs(name.hashCode()) % palette.size])
+    }
+
+    private fun monogram(name: String): String {
+        val sb = StringBuilder()
+        name.split(' ').filter { it.isNotBlank() }.take(2).forEach { word ->
+            word.firstOrNull { it.isLetterOrDigit() }?.let { sb.append(it.uppercaseChar()) }
+        }
+        return sb.toString()
+    }
+
+    private fun refreshNameTally() {
+        val everyName = knownNames
+        val shownCount = everyName.indices.count { nameVisible(it, everyName[it]) }
+        binding.txtRevealedCount.text = getString(R.string.ds_names_count, shownCount, everyName.size)
+        binding.txtNamesNote.isVisible = shownCount < everyName.size
+    }
+
+    private fun setRevealBusy(row: CellDetailNameBinding, busy: Boolean) {
+        adBusy = busy
+        row.txtReveal.isInvisible = busy
+        row.spinReveal.isVisible = busy
+    }
+
+    /** A completed rewarded ad uncovers (and remembers) one name. */
+    private fun watchForName(row: CellDetailNameBinding, name: String) {
+        if (adBusy) return
+        setRevealBusy(row, true)
+        BonusTeaser().show(this) { outcome ->
+            setRevealBusy(row, false)
+            when (outcome) {
+                BonusTeaser.Result.EARNED -> {
+                    ExposedTitles.reveal(this, digest.e164, name)
+                    styleName(row, name, revealed = true)
+                    refreshNameTally()
+                }
+                BonusTeaser.Result.NOT_EARNED ->
+                    Toast.makeText(this, R.string.ds_reward_not_earned, Toast.LENGTH_SHORT).show()
+                else -> Unit
+            }
         }
     }
 
     // ── Map ───────────────────────────────────────────────────────────────
 
-    private fun siteOnMap() {
-        overlay?.let { it.stop(); binding.chartView.overlays.remove(it) }
-        overlay = StreetCharts.place(binding.chartView, report, coarse = false)
-        centerPin()
+    private fun dropPin() {
+        areaPulse?.also { old ->
+            old.stop()
+            binding.chartView.overlays.remove(old)
+        }
+        areaPulse = StreetCharts.place(binding.chartView, digest, coarse = false)
+        offsetPin()
     }
 
-    /**
-     * The pin goes in the middle of the strip left visible between the top bar (under the status
-     * bar) and the card overlapping the header's bottom — half the difference below centre.
-     */
-    private fun centerPin() {
-        val d = resources.displayMetrics.density
-        val above = topInset + (46 * d).roundToInt()
-        val below = (34 * d).roundToInt()
-        binding.chartView.setMapCenterOffset(0, (above - below) / 2)
-        binding.chartView.invalidate()
+    /** Centres the pin in the strip between the top bar and the overlapping card. */
+    private fun offsetPin() {
+        val density = resources.displayMetrics.density
+        val topSpace = statusInset + (46 * density).roundToInt()
+        val bottomSpace = (34 * density).roundToInt()
+        with(binding.chartView) {
+            setMapCenterOffset(0, (topSpace - bottomSpace) / 2)
+            invalidate()
+        }
     }
 
     // ── Retry ─────────────────────────────────────────────────────────────
 
-    private fun retry() {
+    private fun relookup() {
         binding.actRetry.isVisible = false
         binding.spinRetry.isVisible = true
         lifecycleScope.launch {
-            // The E.164 number re-parses on its own; the region only matters when it doesn't.
-            val fresh = NumInquiry.run(this@NumProfile2Activity, report.e164, report.iso2, "")
+            val again = NumInquiry.run(this@NumProfile2Activity, digest.e164, digest.iso2, "")
             binding.actRetry.isVisible = true
             binding.spinRetry.isVisible = false
-            if (!fresh.serverReached) {
+            if (again.serverReached) {
+                val pinChanged = again.pin != digest.pin || again.precision != digest.precision
+                digest = again
+                renderAll()
+                if (pinChanged) dropPin()
+            } else {
                 Toast.makeText(this@NumProfile2Activity, R.string.ds_offline_note, Toast.LENGTH_SHORT).show()
-                return@launch
             }
-            val moved = fresh.pin != report.pin || fresh.precision != report.precision
-            report = fresh
-            bind()
-            if (moved) siteOnMap()
         }
     }
 
     // ── Actions ───────────────────────────────────────────────────────────
 
-    private fun emitSms() = launch(Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:${report.e164}")))
+    private fun textNumber() = safeStart(Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:${digest.e164}")))
 
-    private fun cloneNumber() {
-        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
-        clipboard.setPrimaryClip(ClipData.newPlainText(report.e164, report.international))
-        Toast.makeText(this, R.string.ds_copied, Toast.LENGTH_SHORT).show()
+    private fun copyNumber() {
+        (getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.let { cm ->
+            cm.setPrimaryClip(ClipData.newPlainText(digest.e164, digest.international))
+            Toast.makeText(this, R.string.ds_copied, Toast.LENGTH_SHORT).show()
+        }
     }
 
-    /** The area on a full-screen, interactive map (header Full view, a tap on the header, Map). */
-    private fun enterFullMap() = startActivity(ChartWholeActivity.intent(this, report))
+    private fun openBigMap() = startActivity(ChartWholeActivity.intent(this, digest))
 
-    private fun share() {
-        val r = report
-        val pin = r.pin
-        val link = if (pin != null) "https://www.google.com/maps/search/?api=1&query=${pin.lat},${pin.lng}"
-        else "https://www.google.com/maps/search/?api=1&query=${Uri.encode(r.placeLabel)}"
-        val text = listOfNotNull(
-            r.name?.let { getString(R.string.ds_share_name, it) },
-            getString(R.string.ds_share_number, r.international),
-            r.placeLabel.takeIf { it.isNotEmpty() }?.let { getString(R.string.ds_share_place, it) },
-            r.carrier?.let { getString(R.string.ds_share_carrier, it) },
-            link,
-        ).joinToString("\n")
-        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
-        launch(Intent.createChooser(send, getString(R.string.ds_share_title)))
+    private fun mapsLink(d: NumDigest): String = d.pin?.let { "https://www.google.com/maps/search/?api=1&query=${it.lat},${it.lng}" }
+        ?: "https://www.google.com/maps/search/?api=1&query=${Uri.encode(d.placeLabel)}"
+
+    private fun shareReport() {
+        val d = digest
+        val link = mapsLink(d)
+        val lines = mutableListOf<String>()
+        d.name?.let { lines += getString(R.string.ds_share_name, it) }
+        lines += getString(R.string.ds_share_number, d.international)
+        d.placeLabel.takeIf { it.isNotEmpty() }?.let { lines += getString(R.string.ds_share_place, it) }
+        d.carrier?.let { lines += getString(R.string.ds_share_carrier, it) }
+        lines += link
+        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, lines.joinToString("\n"))
+        safeStart(Intent.createChooser(send, getString(R.string.ds_share_title)))
     }
 
-    private fun launch(intent: Intent) {
+    private fun safeStart(target: Intent) {
         try {
-            startActivity(intent)
+            startActivity(target)
         } catch (_: ActivityNotFoundException) {
             Toast.makeText(this, R.string.ds_no_app, Toast.LENGTH_SHORT).show()
         }
@@ -314,16 +345,16 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
 
     override fun onResume() {
         super.onResume()
-        if (::report.isInitialized) binding.chartView.onResume()
+        if (::digest.isInitialized) binding.chartView.onResume()
     }
 
     override fun onPause() {
-        if (::report.isInitialized) binding.chartView.onPause()
+        if (::digest.isInitialized) binding.chartView.onPause()
         super.onPause()
     }
 
     override fun onDestroy() {
-        overlay?.stop()
+        areaPulse?.stop()
         super.onDestroy()
     }
 

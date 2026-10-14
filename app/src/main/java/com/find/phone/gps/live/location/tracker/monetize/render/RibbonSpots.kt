@@ -18,6 +18,8 @@ import com.find.phone.gps.live.location.tracker.monetize.model.SpotSort
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotIncomeGauge
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordAdEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordAdLoadError
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.facebook.ads.AdView as FbAdView
 
@@ -189,6 +191,7 @@ class RibbonTeaser {
                 )
                 // Log load
                 activity.recordKeyEvent("Banner_Load")
+                activity.recordAdEvent("banner", "loaded")
 
                 if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(activity)
 
@@ -203,6 +206,7 @@ class RibbonTeaser {
 
                 container.addView(googleBanner)
                 container.visibility = View.VISIBLE
+                activity.recordAdEvent("banner", "shown")
                 observer?.onAdLoaded()
 
             }
@@ -212,6 +216,7 @@ class RibbonTeaser {
                 shimmer?.visibility = View.GONE
                 try {
                     activity.recordKeyEvent("Banner_fail_Load")
+                    activity.recordAdLoadError("banner", error.code)
                 } catch (_: Exception) {
                 }
                 Log.e("RibbonTeaser", "Google Banner Failed: ${error.message}")
@@ -224,6 +229,10 @@ class RibbonTeaser {
             override fun onAdClicked() {
                 activity.recordKeyEvent("google_banner")
             }
+
+            override fun onAdImpression() {
+                activity.recordAdEvent("banner", "impression")
+            }
         }
 
         val request = if (isCollapsable) {
@@ -232,6 +241,7 @@ class RibbonTeaser {
             AdRequest.Builder().addNetworkExtrasBundle(AdMobAdapter::class.java, extras).build()
         } else AdRequest.Builder().build()
 
+        activity.recordAdEvent("banner", "req")
         googleBanner?.loadAd(request)
     }
 
@@ -313,6 +323,7 @@ class RibbonTeaser {
         if (facebookBanner == null) facebookBanner =
             FbAdView(activity, fbId, com.facebook.ads.AdSize.BANNER_HEIGHT_50)
 
+        activity.recordAdEvent("banner", "req", network = "facebook")
         facebookBanner?.loadAd(
             facebookBanner!!.buildLoadAdConfig()
                 .withAdListener(object : com.facebook.ads.AdListener {
@@ -326,6 +337,7 @@ class RibbonTeaser {
                         container.visibility = View.VISIBLE
                         observer?.onAdLoaded()
                         activity.recordKeyEvent("facebook_banner_load")
+                        activity.recordAdEvent("banner", "loaded", network = "facebook")
                     }
 
                     override fun onError(
@@ -336,6 +348,7 @@ class RibbonTeaser {
                         shimmer?.visibility = View.GONE
                         observer?.onAdFailed()
                         Log.e("RibbonTeaser", "FB Banner Failed: ${error?.errorMessage}")
+                        activity.recordAdLoadError("banner", error?.errorCode ?: -1, network = "facebook")
                         if (!disableInternalFallback) {
                             BespokeSpotsBook().fetchCustomAd(
                                 activity,
@@ -348,7 +361,9 @@ class RibbonTeaser {
                     override fun onAdClicked(ad: Ad?) {
                     }
 
-                    override fun onLoggingImpression(ad: Ad?) {}
+                    override fun onLoggingImpression(ad: Ad?) {
+                        activity.recordAdEvent("banner", "impression", network = "facebook")
+                    }
                 })
                 .build()
         )

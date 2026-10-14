@@ -11,6 +11,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.lifecycleScope
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile
 import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordPermissionResult
 import com.find.phone.gps.live.location.tracker.databinding.ScreenReminderIntroBinding
 import com.find.phone.gps.live.location.tracker.memo.MemoProfile
 import com.find.phone.gps.live.location.tracker.memo.grant.MemoConsent
@@ -44,7 +45,8 @@ class MemoOpeningActivity : CasingDeckActivity() {
     private var accessPollJob: Job? = null
 
     /** Whatever the answer, continue to the reminders setting (deferred past the resume). */
-    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        recordPermissionResult(Manifest.permission.POST_NOTIFICATIONS, granted)
         window.decorView.post { enterAccessOrNext() }
     }
 
@@ -95,8 +97,10 @@ class MemoOpeningActivity : CasingDeckActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             !NotificationManagerCompat.from(this).areNotificationsEnabled()
         ) {
+            recordKeyEvent("Permission_POST_NOTIFICATIONS_Show")
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
+            recordKeyEvent("Permission_POST_NOTIFICATIONS_Bypass")
             enterAccessOrNext()
         }
     }

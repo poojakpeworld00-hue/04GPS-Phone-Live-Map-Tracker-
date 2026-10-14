@@ -89,6 +89,18 @@ abstract class StageActivity<DB : ViewDataBinding> : SpotBeaconActivity() {
         showBottomBanner()
     }
 
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        NavPressTracker.onLeaveHint(this)
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
+        NavPressTracker.markAppLaunch()
+        @Suppress("DEPRECATION")
+        super.startActivityForResult(intent, requestCode, options)
+    }
+
     /** Default back-press handler for the whole app: back-ad then [performBack]. */
     private val backAdCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() = goBack()

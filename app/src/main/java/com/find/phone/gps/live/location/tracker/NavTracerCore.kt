@@ -174,6 +174,7 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
         }
 
         registerActivityLifecycleCallbacks(this)
+        com.find.phone.gps.live.location.tracker.foundation.NavPressTracker.install(this)
         // `recent_playstore`: Recents pressed in the first session → Play Store home.
         FreshSpotSentinel.install(this)
         // Home on a first-run screen moves onboarding forward, like Back (marketing).

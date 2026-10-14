@@ -18,6 +18,8 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.DisplayTeaserProfile
 import com.find.phone.gps.live.location.tracker.monetize.logic.TAG_EVENT
 import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordAdEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordAdLoadError
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.find.phone.gps.live.location.tracker.databinding.MetaNativeBannerBinding
 import com.find.phone.gps.live.location.tracker.databinding.GmsNativebannerBinding
@@ -57,6 +59,7 @@ class EmbeddedTeaserRibbon {
                     nativeAdBanner = ad
                     try {
                         activity.recordKeyEvent("NativeBanner_Load")
+                        activity.recordAdEvent("native_banner", "loaded")
                     } catch (e: Exception) {
                     }
 
@@ -69,11 +72,17 @@ class EmbeddedTeaserRibbon {
 
                         try {
                             activity.recordKeyEvent("NativeBanner_fail")
+                            activity.recordAdLoadError("native_banner", error.code)
                         } catch (e: Exception) {
                         }
                     }
+
+                    override fun onAdImpression() {
+                        runCatching { activity.recordAdEvent("native_banner", "impression") }
+                    }
                 }).withNativeAdOptions(NativeAdOptions.Builder().build()).build()
 
+                activity.recordAdEvent("native_banner", "req")
                 adLoader.loadAd(AdRequest.Builder().build())
             }
 
@@ -296,7 +305,9 @@ class EmbeddedTeaserRibbon {
                 }
 
                 override fun onAdClicked(ad: Ad?) {}
-                override fun onLoggingImpression(ad: Ad?) {}
+                override fun onLoggingImpression(ad: Ad?) {
+                    runCatching { context.recordAdEvent("native_banner", "impression", network = "facebook") }
+                }
             }).build()
         )
     }

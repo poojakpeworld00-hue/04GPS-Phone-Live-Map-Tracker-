@@ -2,12 +2,14 @@ package com.find.phone.gps.live.location.tracker.screens.memo
 
 import android.Manifest
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.widget.TextView
@@ -15,6 +17,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -46,223 +49,236 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
- * Reminders (design 2): Upcoming and Done, a switch per reminder, "+ New reminder". Opened from
- * the drawer. Also the host of the "Turn on reminders" prompt, which appears after the user saves
- * their first reminder (design 4), so the ask always comes with a reason.
+ * Reminder list split into upcoming and finished entries, each with an on/off switch. After the
+ * first reminder is saved this screen also hosts the "turn on reminders" prompt.
  */
 class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
 
     override val layoutId: Int = R.layout.screen_reminder_list
 
-    private var accessPollJob: Job? = null
-    private var pendingNumber: ((String) -> Unit)? = null
-    private var afterNotificationAsk: (() -> Unit)? = null
+    private var onNumberPicked: ((String) -> Unit)? = null
+    private var postNotifAsk: (() -> Unit)? = null
+    private var grantWatchJob: Job? = null
 
-    private val contactPicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        result.data?.getStringExtra(BuddyChooserActivity.EXTRA_NUMBER)?.let { pendingNumber?.invoke(it) }
-        pendingNumber = null
+    private val buddyPicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        val picked = res.data?.getStringExtra(BuddyChooserActivity.EXTRA_NUMBER)
+        if (picked != null) onNumberPicked?.invoke(picked)
+        onNumberPicked = null
     }
 
-    /** Whatever the answer, carry on: the reminder is saved either way. */
-    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        // Deferred: the result lands around the resume that follows the system dialog, and
-        // opening Settings inside it races onResume / onHostResume.
-        val next = afterNotificationAsk
-        afterNotificationAsk = null
-        window.decorView.post { next?.invoke() }
+    private val notifAsk = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        // Posted so it runs after the resume triggered by the system dialog.
+        val follow = postNotifAsk.also { postNotifAsk = null }
+        window.decorView.post { follow?.invoke() }
     }
 
     override fun initView() {
         WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = !isNightMode(this)
-        ViewCompat.setOnApplyWindowInsetsListener(binding.lvRemindersRoot) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.updatePadding(top = bars.top, bottom = bars.bottom)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.lvRemindersRoot) { root, insets ->
+            val sys = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            root.updatePadding(top = sys.top, bottom = sys.bottom)
             insets
         }
         binding.actBack.setOnClickListener { goBack() }
-        CraftMovement.pressScale(binding.actNewReminder)
-        binding.actNewReminder.setOnClickListener { enterSheet(null) }
+        binding.actNewReminder.let { addBtn ->
+            CraftMovement.pressScale(addBtn)
+            addBtn.setOnClickListener { openEditor(null) }
+        }
         recordKeyEvent("Reminders_Open")
 
-        // Bottom mid native (ScreenAds["MemoListActivity"].show turns it off).
         EmbeddedTeaser().presentMidNative(this, binding.spotNativeFrame, binding.spotShimmer)
         binding.spotNativeDivider.followAdContainer(binding.spotNativeFrame)
     }
 
     override fun onResume() {
         super.onResume()
-        accessPollJob?.cancel()
+        grantWatchJob?.cancel()
         MemoConsent.onHostResume(this)
         MemoShelf.plantDefaultsIfNeeded(this)
-        render()
+        rebuildList()
     }
 
     override fun onDestroy() {
-        accessPollJob?.cancel()
+        grantWatchJob?.cancel()
         MemoCueModal.retireIfShowing()
         super.onDestroy()
     }
 
-    // ───────────────────────────── list ─────────────────────────────
+    private fun rebuildList() {
+        val list = binding.listReminders
+        list.removeAllViews()
+        val everything = MemoShelf.load(this)
+        val (finished, pending) = everything.partition { it.done }
+        val upcomingSorted = pending.sortedBy { it.dateTime }
+        val finishedSorted = finished.sortedByDescending { it.dateTime }
 
-    private fun render() {
-        val container = binding.listReminders
-        container.removeAllViews()
-        val all = MemoShelf.load(this)
-        val upcoming = all.filter { !it.done }.sortedBy { it.dateTime }
-        val done = all.filter { it.done }.sortedByDescending { it.dateTime }
-
-        binding.blankState.isVisible = all.isEmpty()
-        if (upcoming.isNotEmpty()) {
-            container.addView(sectionLabel(R.string.rem_upcoming))
-            upcoming.forEach { container.addView(card(it)) }
-        }
-        if (done.isNotEmpty()) {
-            container.addView(sectionLabel(R.string.rem_done_section))
-            done.forEach { container.addView(card(it)) }
-        }
+        binding.blankState.isVisible = everything.isEmpty()
+        appendGroup(R.string.rem_upcoming, upcomingSorted)
+        appendGroup(R.string.rem_done_section, finishedSorted)
     }
 
-    private fun sectionLabel(res: Int) = TextView(this).apply {
-        setText(res)
+    private fun appendGroup(headerRes: Int, entries: List<MemoElement>) {
+        if (entries.isEmpty()) return
+        val list = binding.listReminders
+        list.addView(groupHeader(headerRes))
+        entries.forEach { list.addView(buildRow(it)) }
+    }
+
+    private fun groupHeader(textRes: Int): TextView = TextView(this).apply {
+        setText(textRes)
         isAllCaps = true
         letterSpacing = 0.08f
         textSize = 11f
         setTextColor(ContextCompat.getColor(context, R.color.ds_muted))
-        typeface = androidx.core.content.res.ResourcesCompat.getFont(context, R.font.figtree_bold)
+        typeface = ResourcesCompat.getFont(context, R.font.figtree_bold)
         layoutParams = ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            .apply { setMargins(dp(4), dp(10), 0, dp(8)) }
+            .apply { setMargins(px(4), px(10), 0, px(8)) }
     }
 
-    private fun card(item: MemoElement) = CellReminderBinding.inflate(LayoutInflater.from(this), binding.listReminders, false).apply {
-        txtTitle.text = item.title
-        txtWhen.text = MemoShaper.dayAndTime(this@MemoListActivity, item.dateTime)
-        txtNumber.text = item.number
-        txtNumber.isVisible = item.number.isNotBlank()
-        txtRepeat.text = MemoShaper.repeatLabel(this@MemoListActivity, item.repeatOrOnce)
+    private fun buildRow(entry: MemoElement): View {
+        val row = CellReminderBinding.inflate(LayoutInflater.from(this), binding.listReminders, false)
+        val ctx = this
+        with(row) {
+            txtTitle.text = entry.title
+            txtWhen.text = MemoShaper.dayAndTime(ctx, entry.dateTime)
+            txtNumber.text = entry.number
+            txtNumber.isVisible = entry.number.isNotBlank()
+            txtRepeat.text = MemoShaper.repeatLabel(ctx, entry.repeatOrOnce)
 
-        // A number makes it a call-back (phone, purple); otherwise a plain reminder (bell, blue).
-        val call = item.number.isNotBlank()
-        badgeTile.setBackgroundResource(if (call) R.drawable.lv_tile_purple_r12 else R.drawable.lv_tile_tint_r12)
-        badgeVw.setImageResource(if (call) R.drawable.lv_ic_call else R.drawable.pmt_ic_bell)
-        ImageViewCompat.setImageTintList(
-            badgeVw, ContextCompat.getColorStateList(this@MemoListActivity, if (call) R.color.ds_purple else R.color.ds_primary),
-        )
+            val isCallBack = entry.number.isNotBlank()
+            badgeTile.setBackgroundResource(if (isCallBack) R.drawable.lv_tile_purple_r12 else R.drawable.lv_tile_tint_r12)
+            badgeVw.setImageResource(if (isCallBack) R.drawable.lv_ic_call else R.drawable.pmt_ic_bell)
+            ImageViewCompat.setImageTintList(
+                badgeVw, ContextCompat.getColorStateList(ctx, if (isCallBack) R.color.ds_purple else R.color.ds_primary),
+            )
 
-        elemReminder.alpha = if (item.done) 0.6f else 1f
-        txtTitle.paintFlags = if (item.done) txtTitle.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-        else txtTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+            elemReminder.alpha = if (entry.done) 0.6f else 1f
+            val flags = txtTitle.paintFlags
+            txtTitle.paintFlags = when {
+                entry.done -> flags or Paint.STRIKE_THRU_TEXT_FLAG
+                else -> flags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+            }
 
-        lvSwEnabled.setOnCheckedChangeListener(null)
-        lvSwEnabled.isChecked = item.isActive
-        lvSwEnabled.setOnCheckedChangeListener { _, checked -> onToggle(item, checked) }
+            lvSwEnabled.setOnCheckedChangeListener(null)
+            lvSwEnabled.isChecked = entry.isActive
+            lvSwEnabled.setOnCheckedChangeListener { _, isOn -> handleSwitch(entry, isOn) }
 
-        elemReminder.setOnClickListener { enterSheet(item) }
-        elemReminder.setOnLongClickListener { affirmDelete(item); true }
-    }.root
+            elemReminder.setOnClickListener { openEditor(entry) }
+            elemReminder.setOnLongClickListener {
+                confirmRemoval(entry)
+                true
+            }
+        }
+        return row.root
+    }
 
-    private fun onToggle(item: MemoElement, on: Boolean) {
-        // Turning a finished one-off back on needs a new time: open it instead.
-        if (on && item.repeatOrOnce == Repeat.ONCE && item.dateTime <= System.currentTimeMillis()) {
-            render()
-            enterSheet(item)
+    private fun handleSwitch(entry: MemoElement, isOn: Boolean) {
+        val expiredOneOff = entry.repeatOrOnce == Repeat.ONCE && entry.dateTime <= System.currentTimeMillis()
+        if (isOn && expiredOneOff) {
+            // A spent one-off needs a fresh time before it can be enabled again.
+            rebuildList()
+            openEditor(entry)
             return
         }
-        MemoTimer.save(this, item.copy(enabled = on, done = false))
-        recordKeyEvent(if (on) "Reminder_Enable" else "Reminder_Disable")
-        render()
+        MemoTimer.save(this, entry.copy(enabled = isOn, done = false))
+        recordKeyEvent(if (isOn) "Reminder_Enable" else "Reminder_Disable")
+        rebuildList()
     }
 
-    // ───────────────────────────── edit / delete ─────────────────────────────
-
-    private fun enterSheet(item: MemoElement?) {
+    private fun openEditor(entry: MemoElement?) {
         MemoAmendDrawer(
             activity = this,
-            existing = item,
-            onPickContact = { onNumber ->
-                pendingNumber = onNumber
-                contactPicker.launch(BuddyChooserActivity.intent(this))
+            existing = entry,
+            onPickContact = { callback ->
+                onNumberPicked = callback
+                buddyPicker.launch(BuddyChooserActivity.intent(this))
             },
-            onSave = { saved, isNew -> onSaved(saved, isNew) },
-            onDelete = { affirmDelete(it) },
+            onSave = { saved, isNew -> persistEdit(saved, isNew) },
+            onDelete = { confirmRemoval(it) },
         ).show()
     }
 
-    private fun onSaved(item: MemoElement, isNew: Boolean) {
-        MemoTimer.save(this, item)
-        render()
-        val stored = MemoShelf.get(this, item.id) ?: item
-        Toast.makeText(this, getString(R.string.rem_saved, MemoShaper.dayAndTime(this, stored.dateTime)), Toast.LENGTH_SHORT).show()
-        recordKeyEvent(if (isNew) "Reminder_Create" else "Reminder_Edit")
-        if (isNew) {
-            CuePortal.onReminderCreated(this)
-            queryAfterSave(stored)
-        }
+    private fun persistEdit(entry: MemoElement, created: Boolean) {
+        MemoTimer.save(this, entry)
+        rebuildList()
+        val fresh = MemoShelf.get(this, entry.id) ?: entry
+        val whenText = MemoShaper.dayAndTime(this, fresh.dateTime)
+        Toast.makeText(this, getString(R.string.rem_saved, whenText), Toast.LENGTH_SHORT).show()
+        recordKeyEvent(if (created) "Reminder_Create" else "Reminder_Edit")
+        if (!created) return
+        CuePortal.onReminderCreated(this)
+        promptAfterFirstSave(fresh)
     }
 
-    /**
-     * After a save: the "Turn on reminders" prompt (Remote Config gated). Its button first asks
-     * for notifications when they are off (13+), then opens the reminders setting. When the
-     * prompt does not show but notifications are off, ask for those anyway: nothing can be shown
-     * without them.
-     */
-    private fun queryAfterSave(item: MemoElement) {
+    private fun promptAfterFirstSave(entry: MemoElement) {
         MemoConsent.prime(
             activity = this,
             returnTo = MemoListActivity::class.java,
-            reminderTitle = item.title,
-            reminderTime = MemoShaper.time(this, item.dateTime),
-            onReady = { if (needsNotificationPermission()) queryNotifications {} },
-            onSettingsOpened = { beginAccessPoll() },
-            onManage = { proceed -> if (needsNotificationPermission()) queryNotifications(proceed) else proceed() },
+            reminderTitle = entry.title,
+            reminderTime = MemoShaper.time(this, entry.dateTime),
+            onReady = { if (notificationsBlocked()) askNotifications {} },
+            onSettingsOpened = { watchForGrant() },
+            onManage = { proceed ->
+                when {
+                    notificationsBlocked() -> askNotifications(proceed)
+                    else -> proceed()
+                }
+            },
         )
     }
 
-    private fun needsNotificationPermission(): Boolean =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            !NotificationManagerCompat.from(this).areNotificationsEnabled()
-
-    private fun queryNotifications(then: () -> Unit) {
-        afterNotificationAsk = then
-        runCatching { notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS) }
-            .onFailure { afterNotificationAsk = null; then() }
+    private fun notificationsBlocked(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
+        return !NotificationManagerCompat.from(this).areNotificationsEnabled()
     }
 
-    /** The primary return path: Settings sits in this task, so this Activity may bring itself back. */
-    private fun beginAccessPoll() {
-        accessPollJob?.cancel()
-        accessPollJob = lifecycleScope.launch {
+    private fun askNotifications(next: () -> Unit) {
+        postNotifAsk = next
+        runCatching { notifAsk.launch(Manifest.permission.POST_NOTIFICATIONS) }
+            .onFailure {
+                postNotifAsk = null
+                next()
+            }
+    }
+
+    private fun watchForGrant() {
+        grantWatchJob?.cancel()
+        grantWatchJob = lifecycleScope.launch {
+            val host = this@MemoListActivity
             while (isActive) {
-                if (MemoConsent.isGranted(this@MemoListActivity)) {
-                    runCatching { startActivity(MemoConsent.returnIntent(this@MemoListActivity, MemoListActivity::class.java)) }
-                    break
+                if (!MemoConsent.isGranted(host)) {
+                    delay(500L)
+                    continue
                 }
-                delay(500L)
+                runCatching { startActivity(MemoConsent.returnIntent(host, MemoListActivity::class.java)) }
+                break
             }
         }
     }
 
-    private fun affirmDelete(item: MemoElement) {
-        val dialog = Dialog(this)
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        val view = DlgReminderDeleteBinding.inflate(layoutInflater)
-        dialog.setContentView(view.root)
-        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        dialog.window?.setLayout((resources.displayMetrics.widthPixels * 0.88f).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
-        view.txtDeleteBody.text = getString(R.string.rem_delete_body, item.title)
-        view.actCancel.setOnClickListener { dialog.dismiss() }
-        view.actConfirmDelete.setOnClickListener {
-            dialog.dismiss()
-            MemoTimer.delete(this, item.id)
-            recordKeyEvent("Reminder_Delete")
-            render()
+    private fun confirmRemoval(entry: MemoElement) {
+        val dlg = Dialog(this)
+        dlg.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        val content = DlgReminderDeleteBinding.inflate(layoutInflater)
+        dlg.setContentView(content.root)
+        dlg.window?.apply {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setLayout((resources.displayMetrics.widthPixels * 0.88f).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         }
-        dialog.show()
+        content.txtDeleteBody.text = getString(R.string.rem_delete_body, entry.title)
+        content.actCancel.setOnClickListener { dlg.dismiss() }
+        content.actConfirmDelete.setOnClickListener {
+            dlg.dismiss()
+            MemoTimer.delete(this, entry.id)
+            recordKeyEvent("Reminder_Delete")
+            rebuildList()
+        }
+        dlg.show()
     }
 
-    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
+    private fun px(value: Int) = (value * resources.displayMetrics.density).toInt()
 
     companion object {
-        fun intent(context: android.content.Context) = Intent(context, MemoListActivity::class.java)
+        fun intent(context: Context) = Intent(context, MemoListActivity::class.java)
     }
 }

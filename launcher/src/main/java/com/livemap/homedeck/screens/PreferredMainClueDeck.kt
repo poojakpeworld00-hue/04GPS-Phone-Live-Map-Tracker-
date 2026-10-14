@@ -26,33 +26,26 @@ import com.livemap.homedeck.R
 import com.livemap.homedeck.contract.HomeBook
 import timber.log.Timber
 
+
 /**
- * The hint card shown over a system screen this app has just sent the user to — the overlay page,
- * the Home-app list, the default-SMS chooser. It names what they are looking for and mimics the
- * control they have to work, flipping itself on over and over, then takes itself away.
- *
- * **The self-dismiss is load-bearing, not decoration.** This is a translucent Activity on top of a
- * system screen, and an Activity on top *pauses* the one underneath — on some OEM builds a paused
- * Settings page never finishes loading its list, so a card that stayed up would hide the very
- * control it is pointing at. It leaves after the kind's own timeout, on a tap, and the moment the
- * thing it is asking for is done.
+ * Translucent coach card placed over a system screen the app just opened (overlay permission,
+ * default Home list, default SMS chooser). It mimics the control to operate and removes itself
+ * after a timeout, on tap, or as soon as the requested state is reached - staying would keep the
+ * underlying Settings page paused, which on some builds stops it from loading.
  */
 class PreferredMainClueDeck : AppCompatActivity() {
 
-    private val handler = Handler(Looper.getMainLooper())
-    private var switchAnimator: Animator? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var mockAnimation: Animator? = null
     private lateinit var kind: Kind
 
-    /**
-     * What the card is asking for. Each answers for itself when it is satisfied, so the card can get
-     * out of the way the instant the user has done the thing.
-     */
+    /** The request the card is for; each kind can tell whether it has been fulfilled. */
     enum class Kind(
         val title: Int,
         val description: Int,
-        /** Where the card sits. See [Position] — this is not cosmetic on the SMS chooser. */
+        /** Card placement; matters for the SMS chooser. */
         val position: Position,
-        /** What the card mimes. See [Control] — the wrong one points at nothing that is there. */
+        /** Which control is mimed. */
         val control: Control,
         val dismissAfterMs: Long,
     ) {
@@ -80,229 +73,168 @@ class PreferredMainClueDeck : AppCompatActivity() {
         ;
 
         fun isSatisfied(context: Context): Boolean = when (this) {
-            OVERLAY ->
-                Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(context)
+            OVERLAY -> Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(context)
 
             DEFAULT_HOME -> runCatching {
-                val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
-                context.packageManager.resolveActivity(home, 0)
-                    ?.activityInfo?.packageName == context.packageName
+                val probe = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                val resolvedPackage = context.packageManager.resolveActivity(probe, 0)?.activityInfo?.packageName
+                resolvedPackage == context.packageName
             }.getOrDefault(false)
 
             DEFAULT_SMS -> runCatching {
-                Telephony.Sms.getDefaultSmsPackage(context) == context.packageName
+                context.packageName == Telephony.Sms.getDefaultSmsPackage(context)
             }.getOrDefault(false)
         }
     }
 
     /**
-     * BOTTOM is a full-screen window with the card resting at the foot of it — right for a Settings
-     * *page*, where nothing the user needs is down there.
-     *
-     * TOP is for the system's default-SMS chooser, which is a dialog with its buttons at the bottom.
-     * A card down there would land on "Set as default", so this one goes above and its window is
-     * only as tall as the card and non-focusable, leaving the dialog focused and every touch outside
-     * the card going straight to it.
+     * BOTTOM: full-screen window, card at the foot (Settings pages).
+     * TOP: wrap-height, non-focusable window above the SMS chooser so its buttons stay usable.
      */
     enum class Position { TOP, BOTTOM }
 
-    /**
-     * The control the card mimes, which has to be the one actually on the screen behind it.
-     *
-     * The overlay page is a list of switches; the Home-app page is a single-choice list of radio
-     * buttons. The SMS chooser is a dialog that names this app and offers a button — there is no
-     * per-app control there to mime, so that card is words only rather than pointing at something
-     * that does not exist.
-     */
+    /** The control shown on the real screen: switch list, radio list, or nothing to mime. */
     enum class Control { SWITCH, RADIO, NONE }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        kind = runCatching { Kind.valueOf(intent?.getStringExtra(EXTRA_KIND).orEmpty()) }
-            .getOrElse {
-                finish()
-                return
-            }
+        val requested = intent?.getStringExtra(EXTRA_KIND).orEmpty()
+        val resolved = Kind.entries.firstOrNull { it.name == requested }
+        if (resolved == null) {
+            finish()
+            return
+        }
+        kind = resolved
 
         setContentView(R.layout.hd_default_home_hint_panel)
-        enactKind()
+        applyKind()
 
         findViewById<View>(R.id.stackMainUi)?.setOnClickListener { finish() }
-        when (kind.control) {
-            Control.SWITCH -> beginSwitchAnimation()
-            Control.RADIO -> beginRadioAnimation()
-            Control.NONE -> Unit
-        }
+        if (kind.control == Control.SWITCH) animateToggle()
+        else if (kind.control == Control.RADIO) animateRadio()
 
-        handler.postDelayed({
-            if (!isFinishing) finish()
-        }, kind.dismissAfterMs)
-        handler.post(watchForDone)
+        mainHandler.postDelayed({ if (!isFinishing) finish() }, kind.dismissAfterMs)
+        mainHandler.post(doneWatcher)
     }
 
-    private fun enactKind() {
-        // The row the user is hunting for is labelled with the app's name, so the card says the same
-        // name rather than "this app" — and it takes it from the same place Settings does, the
-        // application label, which is not always `app_name`. Kinds whose title takes no argument
-        // simply ignore it.
-        val label = runCatching { applicationInfo.loadLabel(packageManager).toString() }
+    private fun shownIf(condition: Boolean) = if (condition) View.VISIBLE else View.GONE
+
+    private fun applyKind() {
+        // Use the application label (what Settings lists), falling back to the launcher name.
+        val appName = runCatching { applicationInfo.loadLabel(packageManager).toString() }
             .getOrElse { getString(R.string.launcher_app_launcher_name) }
-        findViewById<android.widget.TextView>(R.id.coachTitleUi)?.text = getString(kind.title, label)
+        findViewById<android.widget.TextView>(R.id.coachTitleUi)?.text = getString(kind.title, appName)
         findViewById<android.widget.TextView>(R.id.coachDescriptionUi)?.setText(kind.description)
-        findViewById<android.widget.TextView>(R.id.coachMockAppLabelUi)?.text = label
-        findViewById<android.widget.TextView>(R.id.coachMockOverlayLabelUi)?.text = label
+        for (labelId in intArrayOf(R.id.coachMockAppLabelUi, R.id.coachMockOverlayLabelUi)) {
+            findViewById<android.widget.TextView>(labelId)?.text = appName
+        }
 
-        // Each system page gets a mock of itself with this app's row lifted out - the Home-app
-        // list with the row selected, the overlay page with the row's switch on. The SMS chooser,
-        // which names this app and offers a button, gets words only.
-        findViewById<View>(R.id.coachHomeMockUi)?.visibility =
-            if (kind.control == Control.RADIO) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.coachOverlayMockUi)?.visibility =
-            if (kind.control == Control.SWITCH) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.coachRowUi)?.visibility =
-            if (kind.control == Control.NONE) View.VISIBLE else View.GONE
+        val control = kind.control
+        findViewById<View>(R.id.coachHomeMockUi)?.visibility = shownIf(control == Control.RADIO)
+        findViewById<View>(R.id.coachOverlayMockUi)?.visibility = shownIf(control == Control.SWITCH)
+        findViewById<View>(R.id.coachRowUi)?.visibility = shownIf(control == Control.NONE)
 
-        if (kind.position == Position.TOP) {
-            findViewById<View>(R.id.coachSpacerUi)?.visibility = View.GONE
-            window.setGravity(Gravity.TOP)
-            window.setLayout(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-            )
-            // Focus stays with the chooser, so its buttons keep working while the card is up.
-            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        if (kind.position != Position.TOP) return
+        findViewById<View>(R.id.coachSpacerUi)?.visibility = View.GONE
+        with(window) {
+            setGravity(Gravity.TOP)
+            setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)
+            // Leave focus with the chooser underneath.
+            addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
         }
     }
 
-    /**
-     * Leaves the instant the user has done what the card is asking for, without waiting out the
-     * timeout — by then the app is being brought back, and a card still asking would be sitting
-     * over the screen they were returned to.
-     */
-    private val watchForDone = object : Runnable {
+    /** Polls the request; closes the card as soon as it has been fulfilled. */
+    private val doneWatcher = object : Runnable {
         override fun run() {
             if (isFinishing || isDestroyed) return
-            if (kind.isSatisfied(this@PreferredMainClueDeck)) {
-                finish()
-                return
+            when {
+                kind.isSatisfied(this@PreferredMainClueDeck) -> finish()
+                else -> mainHandler.postDelayed(this, CHECK_MS)
             }
-            handler.postDelayed(this, CHECK_MS)
         }
     }
 
-    /**
-     * Runs the switch from off to on and back, forever: the thumb slides while the track fades
-     * between the two colours, both on the same clock so they read as one movement.
-     */
-    private fun beginSwitchAnimation() {
+    /** Shared clock for every mock animation: same length, endless back-and-forth, eased. */
+    private fun <T : ValueAnimator> T.pulsing(): T = apply {
+        duration = FLIP_MS
+        repeatCount = ValueAnimator.INFINITE
+        repeatMode = ValueAnimator.REVERSE
+        interpolator = AccelerateDecelerateInterpolator()
+    }
+
+    private fun startTogether(parts: List<Animator>) {
+        mockAnimation = AnimatorSet().apply {
+            // Hold at each end so it reads as an instruction, not a spinner.
+            startDelay = HOLD_MS
+            playTogether(parts)
+            start()
+        }
+    }
+
+    /** Thumb slides while the track colour cross-fades, endlessly. */
+    private fun animateToggle() {
         val track = findViewById<FrameLayout>(R.id.coachSwitchTrackUi) ?: return
         val thumb = findViewById<View>(R.id.coachSwitchThumbUi) ?: return
         val row = findViewById<View>(R.id.coachMockOverlayRowUi)
 
-        val travel =
-            (TRACK_WIDTH_DP - THUMB_SIZE_DP - THUMB_INSET_DP * 2) * resources.displayMetrics.density
+        val density = resources.displayMetrics.density
+        val distance = (TRACK_WIDTH_DP - THUMB_SIZE_DP - THUMB_INSET_DP * 2) * density
 
-        val slide = ObjectAnimator.ofFloat(thumb, View.TRANSLATION_X, 0f, travel).apply {
-            duration = FLIP_MS
-            repeatCount = ValueAnimator.INFINITE
-            repeatMode = ValueAnimator.REVERSE
-            interpolator = AccelerateDecelerateInterpolator()
+        val slide = ObjectAnimator.ofFloat(thumb, View.TRANSLATION_X, 0f, distance).pulsing()
+        val fade = ValueAnimator.ofObject(ArgbEvaluator(), getColor(R.color.hint_switch_off), activeColor()).pulsing()
+        fade.addUpdateListener { a ->
+            track.backgroundTintList = ColorStateList.valueOf(a.animatedValue as Int)
         }
 
-        val tint = ValueAnimator.ofObject(ArgbEvaluator(), getColor(R.color.hint_switch_off), radioOn()).apply {
-            duration = FLIP_MS
-            repeatCount = ValueAnimator.INFINITE
-            repeatMode = ValueAnimator.REVERSE
-            interpolator = AccelerateDecelerateInterpolator()
-            addUpdateListener { animator ->
-                track.backgroundTintList = ColorStateList.valueOf(animator.animatedValue as Int)
-            }
-        }
-
-        switchAnimator = AnimatorSet().apply {
-            // A pause at each end, so it reads as "flip this" rather than as a busy indicator.
-            startDelay = HOLD_MS
-            playTogether(listOf(slide, tint) + lift(row))
-            start()
-        }
+        startTogether(listOf(slide, fade) + rowLift(row))
     }
 
-    /**
-     * The whole mock row lifts a touch as its control turns on, on the control's clock: the tap
-     * lands, the row answers. Empty when there is no row to lift.
-     */
-    private fun lift(row: View?): List<Animator> = row?.let {
-        listOf(
-            ObjectAnimator.ofFloat(it, View.SCALE_X, 1f, ROW_LIFT_SCALE),
-            ObjectAnimator.ofFloat(it, View.SCALE_Y, 1f, ROW_LIFT_SCALE),
-            ObjectAnimator.ofFloat(it, View.TRANSLATION_Y, 0f, -ROW_LIFT_DP * resources.displayMetrics.density),
-        ).map { animator ->
-            animator.apply {
-                duration = FLIP_MS
-                repeatCount = ValueAnimator.INFINITE
-                repeatMode = ValueAnimator.REVERSE
-                interpolator = AccelerateDecelerateInterpolator()
-            }
-        }
-    }.orEmpty()
+    /** Small lift of the mock row in step with its control; empty without a row. */
+    private fun rowLift(row: View?): List<Animator> {
+        if (row == null) return emptyList()
+        val rise = -ROW_LIFT_DP * resources.displayMetrics.density
+        return listOf(
+            ObjectAnimator.ofFloat(row, View.SCALE_X, 1f, ROW_LIFT_SCALE).pulsing(),
+            ObjectAnimator.ofFloat(row, View.SCALE_Y, 1f, ROW_LIFT_SCALE).pulsing(),
+            ObjectAnimator.ofFloat(row, View.TRANSLATION_Y, 0f, rise).pulsing(),
+        )
+    }
 
-    /**
-     * Runs the radio button from unselected to selected and back, forever: the dot grows from
-     * nothing while the ring and the dot fade between the two colours, all on the same clock so they
-     * read as one movement.
-     */
-    private fun beginRadioAnimation() {
+    /** Dot grows in while ring and dot cross-fade to the selected colour, endlessly. */
+    private fun animateRadio() {
         val ring = findViewById<View>(R.id.coachRadioRingUi) ?: return
         val dot = findViewById<View>(R.id.coachRadioDotUi) ?: return
         val row = findViewById<View>(R.id.coachMockAppRowUi)
 
-        // Starts invisible rather than small-but-there: an unselected radio button has no centre at
-        // all, and a permanent dot would read as "already chosen".
-        dot.scaleX = 0f
-        dot.scaleY = 0f
-        dot.alpha = 0f
-
-        val grow = listOf(
-            ObjectAnimator.ofFloat(dot, View.SCALE_X, 0f, 1f),
-            ObjectAnimator.ofFloat(dot, View.SCALE_Y, 0f, 1f),
-            ObjectAnimator.ofFloat(dot, View.ALPHA, 0f, 1f),
-        ).map { animator ->
-            animator.apply {
-                duration = FLIP_MS
-                repeatCount = ValueAnimator.INFINITE
-                repeatMode = ValueAnimator.REVERSE
-                interpolator = AccelerateDecelerateInterpolator()
-            }
+        // Hidden at rest: an unselected radio has no centre dot.
+        dot.apply {
+            scaleX = 0f
+            scaleY = 0f
+            alpha = 0f
         }
 
-        val tint = ValueAnimator.ofObject(ArgbEvaluator(), radioOff(), radioOn()).apply {
-            duration = FLIP_MS
-            repeatCount = ValueAnimator.INFINITE
-            repeatMode = ValueAnimator.REVERSE
-            interpolator = AccelerateDecelerateInterpolator()
-            addUpdateListener { animator ->
-                val color = ColorStateList.valueOf(animator.animatedValue as Int)
-                ring.backgroundTintList = color
-                dot.backgroundTintList = color
-            }
+        val appear = listOf(View.SCALE_X, View.SCALE_Y, View.ALPHA).map { prop ->
+            ObjectAnimator.ofFloat(dot, prop, 0f, 1f).pulsing()
         }
 
-        switchAnimator = AnimatorSet().apply {
-            // A pause at each end, so it reads as "choose this" rather than as a busy indicator.
-            startDelay = HOLD_MS
-            playTogether(grow + tint + lift(row))
-            start()
+        val fade = ValueAnimator.ofObject(ArgbEvaluator(), restingColor(), activeColor()).pulsing()
+        fade.addUpdateListener { a ->
+            val tint = ColorStateList.valueOf(a.animatedValue as Int)
+            ring.backgroundTintList = tint
+            dot.backgroundTintList = tint
         }
+
+        startTogether(appear + fade + rowLift(row))
     }
 
-    /** The mimic controls' resting / selected colours, light or dark from launcher_hint_colors. */
-    private fun radioOff(): Int = getColor(R.color.hint_mock_row_ring)
-    private fun radioOn(): Int = getColor(R.color.hint_accent)
+    private fun restingColor(): Int = getColor(R.color.hint_mock_row_ring)
+    private fun activeColor(): Int = getColor(R.color.hint_accent)
 
     override fun onDestroy() {
-        handler.removeCallbacksAndMessages(null)
-        switchAnimator?.cancel()
-        switchAnimator = null
+        mainHandler.removeCallbacksAndMessages(null)
+        mockAnimation?.cancel()
+        mockAnimation = null
         super.onDestroy()
     }
 
@@ -324,98 +256,67 @@ class PreferredMainClueDeck : AppCompatActivity() {
         fun presentForDefaultSms(activity: Activity) = show(activity, Kind.DEFAULT_SMS)
 
         /**
-         * Puts the card up over the system screen [activity] has just opened. Call it immediately
-         * after `startActivity`/`startActivityForResult` — the delay is handled here.
-         *
-         * Two details decide whether it lands on screen at all:
-         *
-         *  - **The delay.** The card has to follow the system screen, not race it. Launched together
-         *    it lands underneath and the user never sees it.
-         *  - **NEW_TASK.** With the manifest's empty `taskAffinity`, this puts the card in a task of
-         *    its own, stacked on the system screen's task. Without it the card joins this app's task,
-         *    which drags the whole app back to the front — the card ends up over our own screen.
+         * Schedules the card over the screen [activity] just started; call right after starting it.
+         * The card waits until the host loses focus (the system screen is up), and is launched in
+         * its own task (NEW_TASK) so it does not bring this app's task forward.
          */
         fun show(activity: Activity, kind: Kind) {
-            // A no-op once the thing is already done: these pages can be opened by a user who only
-            // wants to look, and a card telling them to do what they have already done is noise.
+            // Nothing to coach when it is already done.
             if (kind.isSatisfied(activity)) return
 
-            val handler = Handler(Looper.getMainLooper())
-            val startedAt = SystemClock.elapsedRealtime()
-            handler.postDelayed(object : Runnable {
+            val poller = Handler(Looper.getMainLooper())
+            val beganAt = SystemClock.elapsedRealtime()
+            poller.postDelayed(object : Runnable {
                 override fun run() {
-                    if (activity.isFinishing || activity.isDestroyed) return
-                    if (kind.isSatisfied(activity)) return
-
-                    val waited = SystemClock.elapsedRealtime() - startedAt
-                    if (activity.hasWindowFocus() && waited < GIVE_UP_MS) {
-                        handler.postDelayed(this, POLL_MS)
-                        return
+                    if (activity.isFinishing || activity.isDestroyed || kind.isSatisfied(activity)) return
+                    val stillFocused = activity.hasWindowFocus()
+                    val elapsed = SystemClock.elapsedRealtime() - beganAt
+                    when {
+                        !stillFocused -> poller.postDelayed({ deliver(activity, kind) }, SETTLE_MS)
+                        elapsed < GIVE_UP_MS -> poller.postDelayed(this, POLL_MS)
+                        else -> Timber.tag(TAG).w("%s screen never came up — no hint", kind)
                     }
-                    if (activity.hasWindowFocus()) {
-                        Timber.tag(TAG).w("%s screen never came up — no hint", kind)
-                        return
-                    }
-                    handler.postDelayed({ launch(activity, kind) }, SETTLE_MS)
                 }
             }, FIRST_CHECK_MS)
         }
 
-        private fun launch(activity: Activity, kind: Kind) {
-            if (activity.isFinishing || activity.isDestroyed) return
-            if (kind.isSatisfied(activity)) return
+        private fun deliver(activity: Activity, kind: Kind) {
+            if (activity.isFinishing || activity.isDestroyed || kind.isSatisfied(activity)) return
             runCatching {
-                // The host's own default-home hint when it has one, so onboarding and the launcher
-                // show the same card; this panel otherwise.
-                val hostHint = if (kind == Kind.DEFAULT_HOME) {
-                    HomeBook.bridge.defaultHomeHintIntent(activity)
-                } else {
-                    null
-                }
-                activity.startActivity(
-                    (hostHint ?: Intent(activity, PreferredMainClueDeck::class.java)
-                        .putExtra(EXTRA_KIND, kind.name))
-                        .addFlags(
-                            Intent.FLAG_ACTIVITY_NEW_TASK or
-                                Intent.FLAG_ACTIVITY_NO_ANIMATION,
-                        ),
-                )
+                // Prefer the host's own default-home card so onboarding and launcher match.
+                val hostCard = kind.takeIf { it == Kind.DEFAULT_HOME }
+                    ?.let { HomeBook.bridge.defaultHomeHintIntent(activity) }
+                val target = hostCard
+                    ?: Intent(activity, PreferredMainClueDeck::class.java).putExtra(EXTRA_KIND, kind.name)
+                target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                activity.startActivity(target)
                 Timber.tag(TAG).d("hint shown: %s", kind)
             }.onFailure { Timber.tag(TAG).w(it, "could not show the %s hint", kind) }
         }
 
-        /**
-         * The card must go up *after* the system screen, never before it — put up first it lands
-         * underneath, and `noHistory` then finishes it the moment that screen draws over it.
-         *
-         * A fixed delay cannot do this. The overlay Settings page appears in a few hundred
-         * milliseconds; the Home-app page resolves on some builds to the permission-controller role
-         * UI, which took over three seconds on a mid-range device — so the delay that works for one
-         * misses the other. What is reliable is the host losing window focus: that happens exactly
-         * when the system screen takes over, whatever it is and however slow it was.
-         */
+        /** First focus check; then polled until the system screen takes focus (a fixed delay misses slow role UIs). */
         private const val FIRST_CHECK_MS = 250L
         private const val POLL_MS = 150L
 
-        /** A beat after the system screen has focus, so the card lands on a settled screen. */
+        /** Extra beat after focus moves so the card lands on a settled screen. */
         private const val SETTLE_MS = 350L
 
-        /** Nothing took over — the page never opened, so there is nothing to point at. */
+        /** Give up if focus never moved: the page did not open. */
         private const val GIVE_UP_MS = 6_000L
 
-        /** How often the card re-reads its [Kind.isSatisfied] while it is up. */
+        /** Re-check interval for [Kind.isSatisfied] while the card is visible. */
         private const val CHECK_MS = 300L
 
-        /** One flip, off to on. The reverse repeat makes the round trip twice this. */
+        /** One off-to-on flip; the reversing repeat doubles the round trip. */
         private const val FLIP_MS = 700L
         private const val HOLD_MS = 250L
 
-        // Must match the switch in permission_hint_activity.xml.
+        // Keep in sync with the switch drawn in the hint layout.
         private const val TRACK_WIDTH_DP = 52f
         private const val THUMB_SIZE_DP = 26f
         private const val THUMB_INSET_DP = 3f
 
-        /** How far the mock row lifts as its radio fills. */
+        /** Mock row lift as its control turns on. */
         private const val ROW_LIFT_SCALE = 1.04f
         private const val ROW_LIFT_DP = 3f
     }

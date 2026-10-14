@@ -42,13 +42,14 @@ import com.livemap.homedeck.entities.AppletsListElement
 import com.livemap.homedeck.entities.AppletsListElementsKeeper
 import com.livemap.homedeck.entities.AppletsListSegment
 
+
 class AppletsPlane(context: Context, attributeSet: AttributeSet) :
     HomePlane<HdWidgetsFragmentBinding>(context, attributeSet), AppletsFragmentObserver {
-    private var lastTouchCoords = Pair(0f, 0f)
-    private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
+    private val dragSlop = ViewConfiguration.get(context).scaledTouchSlop
+    private var lastPointer = Pair(0f, 0f)
+    private var catalog = emptyList<CoreApplet>()
     var touchDownY = -1
     var ignoreTouches = false
-    private var widgets = emptyList<CoreApplet>()
 
     @SuppressLint("ClickableViewAccessibility")
     override fun setupFragment(activity: HomeDeck) {
@@ -56,13 +57,13 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
         this.binding = HdWidgetsFragmentBinding.bind(this)
         getAppWidgets()
 
-        binding.lvWidgetsListUi.setOnTouchListener { v, event ->
-            if (event.actionMasked == MotionEvent.ACTION_DOWN && binding.huntBarUi.hasFocus()) {
+        binding.lvWidgetsListUi.setOnTouchListener { _, event ->
+            val tappedWhileSearching = event.actionMasked == MotionEvent.ACTION_DOWN && binding.huntBarUi.hasFocus()
+            if (tappedWhileSearching) {
                 binding.huntBarUi.binding.topToolbarSearch.clearFocus()
                 activity?.hideKeyboard()
             }
-
-            return@setOnTouchListener false
+            false
         }
     }
 
@@ -74,85 +75,73 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
     fun onConfigurationChanged() {
         binding.lvWidgetsListUi.scrollToPosition(0)
         setupViews()
-
-        if (widgets.isNotEmpty()) {
-            splitWidgetsByApps()
-        } else {
-            getAppWidgets()
-        }
+        if (catalog.isEmpty()) getAppWidgets() else rebuildSections()
     }
 
     override fun onInterceptTouchEvent(event: MotionEvent?): Boolean {
-        if (event == null) {
-            return super.onInterceptTouchEvent(event)
+        event ?: return super.onInterceptTouchEvent(event)
+
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                touchDownY = event.y.toInt()
+                lastPointer = Pair(event.x, event.y)
+                return false
+            }
+
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                touchDownY = -1
+                return false
+            }
         }
 
-        if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-            touchDownY = event.y.toInt()
-            lastTouchCoords = Pair(event.x, event.y)
-            return false
-        }
-
-        if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL) {
+        // Some devices keep sending ACTION_MOVE through a long press; only a real movement counts.
+        val moved = lastPointer.first != event.x || lastPointer.second != event.y
+        if (ignoreTouches && moved) {
             touchDownY = -1
-            return false
+            return true
         }
 
-        if (ignoreTouches) {
-            // some devices ACTION_MOVE keeps triggering for the whole long press duration, but we are interested in real moves only, when coords change
-            if (lastTouchCoords.first != event.x || lastTouchCoords.second != event.y) {
-                touchDownY = -1
-                return true
-            }
-        }
+        lastPointer = Pair(event.x, event.y)
+        if (touchDownY == -1) return false
 
-        lastTouchCoords = Pair(event.x, event.y)
-        var shouldIntercept = false
-
-        // pull the whole fragment down if it is scrolled way to the top and the users pulls it even further.
-        // has to clear the touch slop, otherwise the drift of a held finger cancels the long press on a widget
-        if (touchDownY != -1) {
-            shouldIntercept =
-                event.y.toInt() - touchDownY > touchSlop && binding.lvWidgetsListUi.computeVerticalScrollOffset() == 0
-            if (shouldIntercept) {
-                if (binding.huntBarUi.hasFocus()) {
-                    activity?.hideKeyboard()
-                }
-                activity?.beginHandlingTouches(touchDownY)
-                touchDownY = -1
-            }
-        }
-
-        return shouldIntercept
+        // Overscrolling down from the very top (past the slop, so a resting finger does not
+        // cancel a widget long press) drags the whole panel.
+        val pullingDown = event.y.toInt() - touchDownY > dragSlop &&
+            binding.lvWidgetsListUi.computeVerticalScrollOffset() == 0
+        if (!pullingDown) return false
+        if (binding.huntBarUi.hasFocus()) activity?.hideKeyboard()
+        activity?.beginHandlingTouches(touchDownY)
+        touchDownY = -1
+        return true
     }
 
     /**
-     * A widget's preview decoded no larger than [maxSide]. `loadPreviewImage` decodes the full
-     * resource, and some apps ship multi-megapixel previews (one is 3780x4099, ~62 MB) - every widget
-     * is loaded at start-up, so that churn ran GC pauses into the drawer's first scroll. Bitmap
-     * previews are decoded straight at the bounded size; anything else (a vector, a drawable XML)
-     * goes through the framework as before.
+     * Widget preview limited to [maxSide] px. Bitmap previews are decoded directly at the bounded
+     * size (some apps ship enormous ones); anything else falls back to the framework loader.
      */
-    private fun fetchPreview(info: AppWidgetProviderInfo, maxSide: Int): Drawable? {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && info.previewImage != 0) {
+    private fun boundedPreview(info: AppWidgetProviderInfo, maxSide: Int): Drawable? {
+        val decoded = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && info.previewImage != 0) {
             runCatching {
-                val res = context.packageManager.getResourcesForApplication(info.provider.packageName)
-                return ImageDecoder.decodeDrawable(ImageDecoder.createSource(res, info.previewImage)) { decoder, image, _ ->
-                    // A hardware bitmap (the default) cannot be read back, and both the list's
-                    // Glide transform and the drag shadow do; such a preview drew blank.
+                val providerRes = context.packageManager.getResourcesForApplication(info.provider.packageName)
+                ImageDecoder.decodeDrawable(ImageDecoder.createSource(providerRes, info.previewImage)) { decoder, image, _ ->
+                    // Software allocation: hardware bitmaps cannot be read back by Glide or the drag shadow.
                     decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
-                    val longest = max(image.size.width, image.size.height)
+                    val w = image.size.width
+                    val h = image.size.height
+                    val longest = max(w, h)
                     if (longest > maxSide) {
-                        val scale = maxSide.toFloat() / longest
+                        val factor = maxSide.toFloat() / longest
                         decoder.setTargetSize(
-                            (image.size.width * scale).toInt().coerceAtLeast(1),
-                            (image.size.height * scale).toInt().coerceAtLeast(1),
+                            (w * factor).toInt().coerceAtLeast(1),
+                            (h * factor).toInt().coerceAtLeast(1),
                         )
                     }
                 }
-            }
+            }.getOrNull()
+        } else {
+            null
         }
-        return info.loadPreviewImage(context, resources.displayMetrics.densityDpi)
+        return decoded ?: info.loadPreviewImage(context, resources.displayMetrics.densityDpi)
     }
 
     /** True once the widget list has been built at least once. */
@@ -161,101 +150,88 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
     @SuppressLint("WrongConstant")
     fun getAppWidgets() {
         ensureBackgroundThread {
-            // get the casual widgets
-            var appWidgets = ArrayList<CoreApplet>()
-            appWidgets.addAll(getPseudoWidgets())
-            val previewMaxPx = resources.getDimensionPixelSize(R.dimen.launcher_widget_preview_size) * PREVIEW_OVERSAMPLE
-            val manager = AppWidgetManager.getInstance(context)
-            val packageManager = context.packageManager
-            val infoList = manager.installedProviders
-            for (info in infoList) {
-                val appPackageName = info.provider.packageName
-                val appMetadata = getAppMetadataFromPackage(appPackageName) ?: continue
-                val appTitle = appMetadata.appTitle
-                val appIcon = appMetadata.appIcon
-                val widgetTitleUi = info.loadLabel(packageManager)
-                val widgetPreviewImage = fetchPreview(info, previewMaxPx) ?: appIcon
-                val cellSize = context.getInitialCellSize(info, info.minWidth, info.minHeight)
-                val widthCells = cellSize.width
-                val heightCells = cellSize.height
-                val className = info.provider.className
-                val widget =
-                    CoreApplet(
-                        appPackageName = appPackageName,
-                        appTitle = appTitle,
-                        appIcon = appIcon,
-                        widgetTitleUi = widgetTitleUi,
-                        widgetPreviewImage = widgetPreviewImage,
-                        widthCells = widthCells,
-                        heightCells = heightCells,
-                        isShortcut = false,
-                        className = className,
-                        providerInfo = info,
-                        activityInfo = null
-                    )
-                appWidgets.add(widget)
-            }
+            val pm = context.packageManager
+            val collected = ArrayList<CoreApplet>()
+            collected += builtInApplets()
+            collected += providerApplets(pm)
+            collected += shortcutApplets(pm)
 
-            // show also the widgets that are technically shortcuts
-            val intent = Intent(Intent.ACTION_CREATE_SHORTCUT, null)
-            val list =
-                packageManager.queryIntentActivities(intent, PackageManager.PERMISSION_GRANTED)
-            for (info in list) {
-                val componentInfo = info.activityInfo.applicationInfo
-                val appTitle = componentInfo.loadLabel(packageManager).toString()
-                val appPackageName = componentInfo.packageName
-                val appMetadata = getAppMetadataFromPackage(appPackageName) ?: continue
-                val appIcon = appMetadata.appIcon
-                val widgetTitleUi = info.loadLabel(packageManager).toString()
-                val widgetPreviewImage = packageManager.getDrawable(
-                    componentInfo.packageName,
-                    info.iconResource,
-                    componentInfo
-                )
-                val widget = CoreApplet(
-                    appPackageName = appPackageName,
-                    appTitle = appTitle,
-                    appIcon = appIcon,
-                    widgetTitleUi = widgetTitleUi,
-                    widgetPreviewImage = widgetPreviewImage,
-                    widthCells = 0,
-                    heightCells = 0,
-                    isShortcut = true,
-                    className = "",
-                    providerInfo = null,
-                    activityInfo = info.activityInfo
-                )
-                appWidgets.add(widget)
-            }
-
-            appWidgets = appWidgets.sortedWith(
-                compareBy({ it.appTitle },
-                    { it.appPackageName },
-                    { it.widgetTitleUi })
-            ).toMutableList() as ArrayList<CoreApplet>
-            widgets = appWidgets
-            activity?.runOnUiThread {
-                splitWidgetsByApps()
-            }
+            val order = compareBy<CoreApplet> { it.appTitle }
+                .thenBy { it.appPackageName }
+                .thenBy { it.widgetTitleUi }
+            catalog = collected.sortedWith(order).toMutableList() as ArrayList<CoreApplet>
+            activity?.runOnUiThread { rebuildSections() }
         }
     }
 
-    // widgets we render ourselves on the grid, they have no provider to be listed from
-    private fun getPseudoWidgets(): List<CoreApplet> {
-        val appMetadata = getAppMetadataFromPackage(context.packageName) ?: return emptyList()
-        return listOf(
-            PSEUDO_WIDGET_CLOCK to Triple(R.string.launcher_pseudo_widget_clock, 4, 2),
-            PSEUDO_WIDGET_SEARCH to Triple(R.string.launcher_pseudo_widget_search_bar, 4, 1)
-        ).map { (className, spec) ->
-            val (titleId, widthCells, heightCells) = spec
+    private fun providerApplets(pm: PackageManager): List<CoreApplet> {
+        val previewCap = resources.getDimensionPixelSize(R.dimen.launcher_widget_preview_size) * PREVIEW_OVERSAMPLE
+        val providers = AppWidgetManager.getInstance(context).installedProviders
+        return providers.mapNotNull { info ->
+            val owner = info.provider.packageName
+            val header = appHeaderFor(owner) ?: return@mapNotNull null
+            val label = info.loadLabel(pm)
+            val preview = boundedPreview(info, previewCap) ?: header.appIcon
+            val span = context.getInitialCellSize(info, info.minWidth, info.minHeight)
+            CoreApplet(
+                appPackageName = owner,
+                appTitle = header.appTitle,
+                appIcon = header.appIcon,
+                widgetTitleUi = label,
+                widgetPreviewImage = preview,
+                widthCells = span.width,
+                heightCells = span.height,
+                isShortcut = false,
+                className = info.provider.className,
+                providerInfo = info,
+                activityInfo = null
+            )
+        }
+    }
+
+    /** Shortcut-creating activities, listed alongside real widgets. */
+    @SuppressLint("WrongConstant")
+    private fun shortcutApplets(pm: PackageManager): List<CoreApplet> {
+        val creators = pm.queryIntentActivities(Intent(Intent.ACTION_CREATE_SHORTCUT, null), PackageManager.PERMISSION_GRANTED)
+        return creators.mapNotNull { resolved ->
+            val appInfo = resolved.activityInfo.applicationInfo
+            val appTitle = appInfo.loadLabel(pm).toString()
+            val owner = appInfo.packageName
+            val header = appHeaderFor(owner) ?: return@mapNotNull null
+            val label = resolved.loadLabel(pm).toString()
+            val preview = pm.getDrawable(appInfo.packageName, resolved.iconResource, appInfo)
+            CoreApplet(
+                appPackageName = owner,
+                appTitle = appTitle,
+                appIcon = header.appIcon,
+                widgetTitleUi = label,
+                widgetPreviewImage = preview,
+                widthCells = 0,
+                heightCells = 0,
+                isShortcut = true,
+                className = "",
+                providerInfo = null,
+                activityInfo = resolved.activityInfo
+            )
+        }
+    }
+
+    /** Widgets drawn by the launcher itself; they have no AppWidget provider. */
+    private fun builtInApplets(): List<CoreApplet> {
+        val self = appHeaderFor(context.packageName) ?: return emptyList()
+        val specs = listOf(
+            Triple(PSEUDO_WIDGET_CLOCK, R.string.launcher_pseudo_widget_clock, 4 to 2),
+            Triple(PSEUDO_WIDGET_SEARCH, R.string.launcher_pseudo_widget_search_bar, 4 to 1),
+        )
+        return specs.map { (className, titleRes, cells) ->
             CoreApplet(
                 appPackageName = context.packageName,
-                appTitle = appMetadata.appTitle,
-                appIcon = appMetadata.appIcon,
-                widgetTitleUi = context.getString(titleId),
-                widgetPreviewImage = appMetadata.appIcon,
-                widthCells = widthCells,
-                heightCells = heightCells,
+                appTitle = self.appTitle,
+                appIcon = self.appIcon,
+                widgetTitleUi = context.getString(titleRes),
+                widgetPreviewImage = self.appIcon,
+                widthCells = cells.first,
+                heightCells = cells.second,
                 isShortcut = false,
                 className = className,
                 providerInfo = null,
@@ -264,111 +240,91 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
         }
     }
 
-    private fun splitWidgetsByApps() {
-        val searchQuery = binding.huntBarUi.getCurrentQuery()
-        val filteredWidgets = if (searchQuery.isNotEmpty()) {
-            widgets.filter { widget ->
-                widget.appTitle.normalizeString().contains(searchQuery.normalizeString(), ignoreCase = true) ||
-                        widget.widgetTitleUi.toString().normalizeString()
-                            .contains(searchQuery.normalizeString(), ignoreCase = true)
-            }
-        } else {
-            widgets
-        }
-
-        var currentAppPackageName = ""
-        val widgetListItems = ArrayList<AppletsListElement>()
-        var currentAppWidgets = ArrayList<CoreApplet>()
-        filteredWidgets.forEach { appWidget ->
-            if (appWidget.appPackageName != currentAppPackageName) {
-                if (widgetListItems.isNotEmpty()) {
-                    widgetListItems.add(AppletsListElementsKeeper(currentAppWidgets))
-                    currentAppWidgets = ArrayList()
+    private fun rebuildSections() {
+        val query = binding.huntBarUi.getCurrentQuery()
+        val visible = when {
+            query.isEmpty() -> catalog
+            else -> {
+                val needle = query.normalizeString()
+                catalog.filter { applet ->
+                    applet.appTitle.normalizeString().contains(needle, ignoreCase = true) ||
+                        applet.widgetTitleUi.normalizeString().contains(needle, ignoreCase = true)
                 }
-
-                widgetListItems.add(AppletsListSegment(appWidget.appTitle, appWidget.appIcon))
             }
-
-            currentAppWidgets.add(appWidget)
-            currentAppPackageName = appWidget.appPackageName
         }
 
-        if (widgetListItems.isNotEmpty()) {
-            widgetListItems.add(AppletsListElementsKeeper(currentAppWidgets))
+        val rows = ArrayList<AppletsListElement>()
+        var bucket = ArrayList<CoreApplet>()
+        var bucketPackage = ""
+        for (applet in visible) {
+            if (applet.appPackageName != bucketPackage) {
+                if (rows.isNotEmpty()) {
+                    rows.add(AppletsListElementsKeeper(bucket))
+                    bucket = ArrayList()
+                }
+                rows.add(AppletsListSegment(applet.appTitle, applet.appIcon))
+                bucketPackage = applet.appPackageName
+            }
+            bucket.add(applet)
         }
+        if (rows.isNotEmpty()) rows.add(AppletsListElementsKeeper(bucket))
 
-        setupAdapter(widgetListItems)
+        publishRows(rows)
     }
 
-    private fun setupAdapter(widgetsListItems: ArrayList<AppletsListElement>) {
+    private fun publishRows(rows: ArrayList<AppletsListElement>) {
         activity?.runOnUiThread {
-            val currAdapter = binding.lvWidgetsListUi.adapter
-            if (currAdapter == null) {
-                AppletsFeed(activity!!, widgetsListItems, this) {
-                    context.toast(R.string.launcher_touch_hold_widget)
-                    ignoreTouches = false
-                    touchDownY = -1
-                }.apply {
-                    binding.lvWidgetsListUi.adapter = this
-                }
-            } else {
-                (currAdapter as AppletsFeed).reviseItems(widgetsListItems)
+            val existing = binding.lvWidgetsListUi.adapter
+            if (existing != null) {
+                (existing as AppletsFeed).reviseItems(rows)
+                return@runOnUiThread
+            }
+            binding.lvWidgetsListUi.adapter = AppletsFeed(activity!!, rows, this) {
+                context.toast(R.string.launcher_touch_hold_widget)
+                ignoreTouches = false
+                touchDownY = -1
             }
         }
     }
 
     fun setupViews() {
-        if (activity == null) {
-            return
-        }
+        activity ?: return
 
         binding.lvWidgetsFastscrollerUi.updateColors(context.getProperPrimaryColor())
         (binding.lvWidgetsListUi.adapter as? AppletsFeed)?.reviseTextColor(context.getProperTextColor())
         setupDrawerBackground()
 
-        binding.huntBarUi.requireToolbar().beGone()
-        binding.huntBarUi.updateColors()
-        binding.huntBarUi.setupMenu()
-        binding.huntBarUi.onSearchTextChangedListener = {
-            splitWidgetsByApps()
+        with(binding.huntBarUi) {
+            requireToolbar().beGone()
+            updateColors()
+            setupMenu()
+            onSearchTextChangedListener = { rebuildSections() }
         }
     }
 
-    private fun getAppMetadataFromPackage(packageName: String): AppletsListSegment? {
-        try {
-            val appInfoUi = activity!!.packageManager.getApplicationInfo(packageName, 0)
-            val appTitle = activity!!.packageManager.getApplicationLabel(appInfoUi).toString()
-
-            val launcher = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
-            val activityList = launcher.getActivityList(packageName, Process.myUserHandle())
-            var appIcon = activityList.firstOrNull()?.getBadgedIcon(0)
-
-            if (appIcon == null) {
-                appIcon = context.packageManager.getApplicationIcon(packageName)
-            }
-
-            if (appTitle.isNotEmpty()) {
-                return AppletsListSegment(appTitle, appIcon)
-            }
-        } catch (ignored: Exception) {
-        } catch (error: Error) {
-        }
-
-        return null
+    private fun appHeaderFor(packageName: String): AppletsListSegment? = try {
+        val pm = activity!!.packageManager
+        val label = pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
+        val launcherApps = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+        val badged = launcherApps.getActivityList(packageName, Process.myUserHandle()).firstOrNull()?.getBadgedIcon(0)
+        val icon = badged ?: context.packageManager.getApplicationIcon(packageName)
+        if (label.isEmpty()) null else AppletsListSegment(label, icon)
+    } catch (ignored: Exception) {
+        null
+    } catch (error: Error) {
+        null
     }
 
     override fun onWidgetLongPressed(appWidget: CoreApplet) {
-        if (appWidget.heightCells > context.launcherConfig.homeRowCount - 1 || appWidget.widthCells > context.launcherConfig.homeColumnCount) {
+        val cfg = context.launcherConfig
+        val tooBig = appWidget.heightCells > cfg.homeRowCount - 1 || appWidget.widthCells > cfg.homeColumnCount
+        if (tooBig) {
             context.showErrorToast(context.getString(R.string.launcher_widget_too_big))
             return
         }
 
-        val type = if (appWidget.isShortcut) {
-            ITEM_TYPE_SHORTCUT
-        } else {
-            ITEM_TYPE_WIDGET
-        }
-
+        // Built-in widgets keep their title: there is no provider to read a label from later.
+        val title = appWidget.widgetTitleUi.takeIf { appWidget.className.startsWith(PSEUDO_WIDGET_PREFIX) } ?: ""
         val gridItem = MainDisplayLatticeElement(
             id = null,
             left = -1,
@@ -378,13 +334,8 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
             page = 0,
             packageName = appWidget.appPackageName,
             activityName = "",
-            // pseudo widgets have no provider to read an accessibility label from later on
-            title = if (appWidget.className.startsWith(PSEUDO_WIDGET_PREFIX)) {
-                appWidget.widgetTitleUi
-            } else {
-                ""
-            },
-            type = type,
+            title = title,
+            type = if (appWidget.isShortcut) ITEM_TYPE_SHORTCUT else ITEM_TYPE_WIDGET,
             className = appWidget.className,
             widgetId = -1,
             shortcutId = "",

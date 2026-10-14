@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.view.View
 import android.view.animation.LinearInterpolator
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
@@ -48,434 +49,447 @@ import org.osmdroid.util.GeoPoint
 import kotlin.math.roundToInt
 
 /**
- * Locating a searched number, full page (design 13a / 13b, Search Result).
+ * Full-page locating flow for a searched number.
  *
- * Searching (13a): the lookup runs while the map flies from the country to the state to the
- * approximate area under the scan, with the stage line, a progress bar and the three step
- * chips (country · state · area) under it, for at least [MIN_SEARCH_MS] (Premium:
- * [MIN_SEARCH_PREMIUM_MS]); the mid2 native is docked at the bottom of the page meanwhile (not
- * for Premium). The map ends on the report's own area (city or pincode when known), the same
- * point Number Details shows.
+ * While searching, the lookup runs and the map zooms country → state → area with a stage line,
+ * a progress bar and three phase chips, for a guaranteed minimum time (shorter for Premium); a
+ * native ad sits at the bottom for free users. When the answer is in, the map collapses into a
+ * small area card above a locked result card: a rewarded ad unlocks Number Details, or the user
+ * can go Premium. Premium users and numbers unlocked earlier skip straight to the details.
  *
- * Found (13b): "Location found · Search complete", the map shrinks to the approximate-area
- * card and the locked result card comes in under it. "Watch Ad · View full details" plays the
- * rewarded ad directly, which unlocks Number Details; "Skip with PRO" goes to the paywall;
- * Premium users, and numbers unlocked before, go straight to Number Details.
- *
- * With [EXTRA_REPORT] set (a locked recent search reopened) it opens at the result, no lookup.
- * The result intent carries [EXTRA_FOUND] once the lookup has answered, so Home can clear the box.
+ * A locked recent search passed via [EXTRA_REPORT] opens directly at its result. The returned
+ * intent contains [EXTRA_FOUND] once the lookup has finished.
  */
 class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
 
     override val layoutId: Int = R.layout.screen_locating
 
-    private lateinit var search: FreshHunt
-    private var saved: NumDigest? = null
-    private var alreadyUnlocked = false
-    private var report: NumDigest? = null
-    private var overlay: SectorThrobVeil? = null
-    private val animators = mutableListOf<Animator>()
-    private var progressAnim: ObjectAnimator? = null
-    private var watching = false
+    /** Search phases, in display order (ordinal drives chip styling). */
+    private enum class Phase { NATION, REGION, SPOT }
 
-    private val premiumPage = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        val result = report ?: return@registerForActivityResult
-        if (PlusCheckout.isPremium(this)) unlock(result)
+    private lateinit var hunt: FreshHunt
+    private var reopened: NumDigest? = null
+    private var priorUnlock = false
+    private var outcomeDigest: NumDigest? = null
+    private var pulseVeil: SectorThrobVeil? = null
+    private var barAnim: ObjectAnimator? = null
+    private var adShowing = false
+    private val runningAnims = mutableListOf<Animator>()
+
+    private val paywallLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        outcomeDigest?.takeIf { PlusCheckout.isPremium(this) }?.let { openDetails(it) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // osmdroid must be configured before the MapView is inflated (in super.onCreate).
+        // osmdroid needs its configuration before super.onCreate inflates the MapView.
         StreetCharts.init(this)
         super.onCreate(savedInstanceState)
     }
 
     override fun initView() {
-        val digits = intent.getStringExtra(EXTRA_DIGITS)
-        val iso = intent.getStringExtra(EXTRA_ISO)
-        val dial = intent.getStringExtra(EXTRA_DIAL)
-        if (digits.isNullOrEmpty() || iso.isNullOrEmpty() || dial.isNullOrEmpty()) {
+        val digits = intent.getStringExtra(KEY_DIGITS)
+        val iso = intent.getStringExtra(KEY_ISO)
+        val dial = intent.getStringExtra(KEY_DIAL)
+        if (listOf(digits, iso, dial).any { it.isNullOrEmpty() }) {
             finish()
             return
         }
-        search = FreshHunt(digits, iso, dial, System.currentTimeMillis())
-        saved = IntentCompat.getSerializableExtra(intent, EXTRA_REPORT, NumDigest::class.java)
-        alreadyUnlocked = intent.getBooleanExtra(EXTRA_UNLOCKED, false)
+        hunt = FreshHunt(digits!!, iso!!, dial!!, System.currentTimeMillis())
+        reopened = IntentCompat.getSerializableExtra(intent, EXTRA_REPORT, NumDigest::class.java)
+        priorUnlock = intent.getBooleanExtra(KEY_UNLOCKED, false)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.lvLocRoot) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.updatePadding(left = bars.left, top = bars.top, right = bars.right, bottom = bars.bottom)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.lvLocRoot) { root, insets ->
+            insets.getInsets(WindowInsetsCompat.Type.systemBars()).also { sb ->
+                root.updatePadding(left = sb.left, top = sb.top, right = sb.right, bottom = sb.bottom)
+            }
             insets
         }
 
-        binding.txtSearchNumber.text = search.display
-        binding.actBack.setOnClickListener { goBack() }
-        binding.actNotNow.setOnClickListener { finish() }
-        CraftMovement.pressScale(binding.actWatchAd)
-        binding.actWatchAd.setOnClickListener { reveal() }
-        binding.actSkipPro.setOnClickListener {
-            if (report == null) return@setOnClickListener
-            recordKeyEvent("result_skip_pro")
-            premiumPage.launch(PlusActivity.intent(this))
-        }
+        bindButtons()
         binding.chartCard.clipToOutline = true
         StreetCharts.style(binding.lvBigMap, interactive = false)
 
-        val premium = PlusCheckout.isPremium(this)
-        if (!premium) {
+        val isPro = PlusCheckout.isPremium(this)
+        if (!isPro) {
             BonusTeaser.preload(this)
-            presentNative()
+            mountNative()
         }
 
-        val given = saved
-        if (given != null) {
-            binding.chartCard.updateLayoutParams { height = dp(MAP_RESULT_DP) }
-            lifecycleScope.launch { siteArea(given, animate = false) }
-            presentResult(given)
-        } else {
-            binding.pillCountry.text = Realms.byIso(search.iso2)?.name ?: search.iso2
-            binding.pillState.setText(R.string.ds_step_state)
-            locate(if (premium) MIN_SEARCH_PREMIUM_MS else MIN_SEARCH_MS)
+        when (val known = reopened) {
+            null -> {
+                binding.pillCountry.text = countryLabel()
+                binding.pillState.setText(R.string.ds_step_state)
+                runLookup(if (isPro) PRO_HOLD_MS else FREE_HOLD_MS)
+            }
+            else -> {
+                binding.chartCard.updateLayoutParams { height = dpi(CARD_MAP_DP) }
+                lifecycleScope.launch { pinArea(known, animate = false) }
+                showVerdict(known)
+            }
         }
     }
 
-    /** The three search stages of design 13a, in order. */
-    private enum class Step { COUNTRY, STATE, AREA }
+    private fun bindButtons() {
+        binding.txtSearchNumber.text = hunt.display
+        binding.actBack.setOnClickListener { goBack() }
+        binding.actNotNow.setOnClickListener { finish() }
+        CraftMovement.pressScale(binding.actWatchAd)
+        binding.actWatchAd.setOnClickListener { playRewarded() }
+        binding.actSkipPro.setOnClickListener {
+            outcomeDigest ?: return@setOnClickListener
+            recordKeyEvent("result_skip_pro")
+            paywallLauncher.launch(PlusActivity.intent(this))
+        }
+    }
 
-    /**
-     * The step chips under the progress bar and the chips over the map for [current]: the
-     * stages before it are done (✓, green / filled primary), it is active (●, tint / white),
-     * the rest wait (gray / white 70).
-     */
-    private fun wireSteps(current: Step) {
-        val steps = listOf(
+    private fun countryLabel(): String = Realms.byIso(hunt.iso2)?.name ?: hunt.iso2
+
+    private fun color(res: Int) = ContextCompat.getColor(this, res)
+
+    private fun styleChipPair(
+        stepView: TextView, chipView: TextView, caption: String,
+        stepBg: Int, stepInk: Int, chipBg: Int, chipInk: Int,
+    ) {
+        stepView.text = caption
+        stepView.setBackgroundResource(stepBg)
+        stepView.setTextColor(color(stepInk))
+        chipView.setBackgroundResource(chipBg)
+        chipView.setTextColor(color(chipInk))
+    }
+
+    /** Phases before [now] are done, [now] is active, later ones are waiting. */
+    private fun paintPhases(now: Phase) {
+        val rows = arrayOf(
             Triple(binding.lvStepCountry, binding.pillCountry, R.string.ds_step_country),
             Triple(binding.lvStepState, binding.pillState, R.string.ds_step_state),
             Triple(binding.lvStepArea, binding.pillArea, R.string.ds_step_area),
         )
-        steps.forEachIndexed { index, (step, chip, label) ->
-            val name = getString(label)
-            when {
-                index < current.ordinal -> {
-                    step.text = getString(R.string.ds_step_done, name)
-                    step.setBackgroundResource(R.drawable.lv_tile_success12_r10)
-                    step.setTextColor(ContextCompat.getColor(this, R.color.ds_success))
-                    chip.setBackgroundResource(R.drawable.lv_tile_primary_r10)
-                    chip.setTextColor(ContextCompat.getColor(this, R.color.white))
-                }
-                index == current.ordinal -> {
-                    step.text = getString(R.string.ds_step_active, name)
-                    step.setBackgroundResource(R.drawable.lv_tile_tint_r10)
-                    step.setTextColor(ContextCompat.getColor(this, R.color.ds_primary))
-                    chip.setBackgroundResource(R.drawable.lv_tile_white_r10)
-                    chip.setTextColor(ContextCompat.getColor(this, R.color.ds_primary))
-                }
-                else -> {
-                    step.text = name
-                    step.setBackgroundResource(R.drawable.lv_tile_gray_r10)
-                    step.setTextColor(ContextCompat.getColor(this, R.color.ds_placeholder))
-                    chip.setBackgroundResource(R.drawable.lv_tile_white70_r10)
-                    chip.setTextColor(ContextCompat.getColor(this, R.color.ds_placeholder))
-                }
+        for (pos in rows.indices) {
+            val (stepView, chipView, labelRes) = rows[pos]
+            val label = getString(labelRes)
+            if (pos < now.ordinal) {
+                styleChipPair(
+                    stepView, chipView, getString(R.string.ds_step_done, label),
+                    R.drawable.lv_tile_success12_r10, R.color.ds_success, R.drawable.lv_tile_primary_r10, R.color.white,
+                )
+            } else if (pos == now.ordinal) {
+                styleChipPair(
+                    stepView, chipView, getString(R.string.ds_step_active, label),
+                    R.drawable.lv_tile_tint_r10, R.color.ds_primary, R.drawable.lv_tile_white_r10, R.color.ds_primary,
+                )
+            } else {
+                styleChipPair(
+                    stepView, chipView, label,
+                    R.drawable.lv_tile_gray_r10, R.color.ds_placeholder, R.drawable.lv_tile_white70_r10, R.color.ds_placeholder,
+                )
             }
         }
     }
 
     // ── Bottom native ─────────────────────────────────────────────────────
 
-    /**
-     * The template of the bottom native, from `ScreenAds.PinpointingActivity.nativeType`: `small`
-     * (or `native_banner`) is the one-line native banner of design 13b, which keeps Not now and
-     * Skip with PRO above the fold; `big` / `mid` / `mid2` are the body natives.
-     */
-    private val nativeType: String by lazy {
-        DisplayTeaserProfile.resolve(this, SCREEN_KEY).nativeType.trim().lowercase()
+    /** `ScreenAds.PinpointingActivity.nativeType`: small/native_banner = one-line banner; big/mid/mid2 = body natives. */
+    private val nativeTemplate: String by lazy {
+        DisplayTeaserProfile.resolve(this, ADS_SCREEN).nativeType.trim().lowercase()
     }
 
-    private val compactNative: Boolean
-        get() = nativeType == "small" || nativeType == "native_banner" || nativeType == "nativebanner"
+    private val bannerStyleNative: Boolean
+        get() = nativeTemplate in COMPACT_TEMPLATES
 
     /**
-     * The native at the bottom. The shared native pools are filled by the splash chain and
-     * emptied by every screen that shows one, so when the pool is empty here the page loads
-     * its own and shows it once it lands — otherwise the slot would sit blank for the whole search.
+     * Shows the bottom native. If the shared pool is empty this page starts its own load and
+     * fills the slot once it arrives, so the slot is not blank for the whole search.
      */
-    private fun presentNative() {
+    private fun mountNative() {
         binding.spotFrame.isVisible = true
-        if (nativeReady()) return paintNative()
-        if (compactNative) {
-            EmbeddedTeaserRibbon().fetchNativeBannerAds(this)
-        } else {
-            EmbeddedTeaser().fetchNativeADs(this, object : EmbeddedTeaser.NativeAdObserver {
-                override fun onNativeAdLoaded() = runOnUiThread { stuffNativeIfEmpty() }
+        if (hasCachedNative()) {
+            drawNative()
+            return
+        }
+        when {
+            bannerStyleNative -> EmbeddedTeaserRibbon().fetchNativeBannerAds(this)
+            else -> EmbeddedTeaser().fetchNativeADs(this, object : EmbeddedTeaser.NativeAdObserver {
+                override fun onNativeAdLoaded() = runOnUiThread { fillNativeIfBlank() }
                 override fun onNativeAdFailed() = Unit
             })
         }
-        // A load already in flight elsewhere doesn't call back here: look again once it may have landed.
-        NATIVE_RECHECK_MS.forEach { binding.spotFrame.postDelayed({ stuffNativeIfEmpty() }, it) }
+        // Another screen's in-flight load won't call back here, so check again a few times.
+        for (wait in NATIVE_POLL_MS) binding.spotFrame.postDelayed({ fillNativeIfBlank() }, wait)
     }
 
-    private fun nativeReady(): Boolean =
-        if (compactNative) EmbeddedTeaserRibbon.hasPreloadedNativeBanner() else EmbeddedTeaser.hasPreloadedNative()
-
-    private fun stuffNativeIfEmpty() {
-        if (isFinishing || isDestroyed || binding.spotFrame.childCount > 0) return
-        if (nativeReady()) paintNative()
+    private fun hasCachedNative(): Boolean = when {
+        bannerStyleNative -> EmbeddedTeaserRibbon.hasPreloadedNativeBanner()
+        else -> EmbeddedTeaser.hasPreloadedNative()
     }
 
-    private fun paintNative() {
-        when {
-            compactNative -> EmbeddedTeaserRibbon().presentNativeBannerNative(this, binding.spotFrame)
-            nativeType == "big" -> EmbeddedTeaser().presentBigNative(this, binding.spotFrame)
-            nativeType == "mid" -> EmbeddedTeaser().presentMidNative(this, binding.spotFrame)
-            else -> EmbeddedTeaser().presentMidNative2(this, binding.spotFrame)
+    private fun fillNativeIfBlank() {
+        val gone = isFinishing || isDestroyed
+        if (gone || binding.spotFrame.childCount > 0) return
+        if (!hasCachedNative()) return
+        drawNative()
+    }
+
+    private fun drawNative() {
+        val slot = binding.spotFrame
+        if (bannerStyleNative) {
+            EmbeddedTeaserRibbon().presentNativeBannerNative(this, slot)
+            return
+        }
+        val teaser = EmbeddedTeaser()
+        when (nativeTemplate) {
+            "big" -> teaser.presentBigNative(this, slot)
+            "mid" -> teaser.presentMidNative(this, slot)
+            else -> teaser.presentMidNative2(this, slot)
         }
     }
 
     // ── Searching ─────────────────────────────────────────────────────────
 
     /**
-     * Country → state → approximate area, over at least [minMs]. The lookup starts at once; the
-     * country stage covers it, and the state stage only starts once the answer names a state.
+     * Country, then state, then the approximate area, spread over at least [holdMs]. The lookup
+     * starts immediately; the state phase waits until the answer actually names a state.
      */
-    private fun locate(minMs: Long) = lifecycleScope.launch {
-        val started = SystemClock.elapsedRealtime()
-        fun at(ms: Long) = (started + ms - SystemClock.elapsedRealtime()).coerceAtLeast(0L)
+    private fun runLookup(holdMs: Long) = lifecycleScope.launch {
+        val t0 = SystemClock.elapsedRealtime()
+        fun leftUntil(mark: Long) = maxOf(0L, t0 + mark - SystemClock.elapsedRealtime())
 
-        val countryName = Realms.byIso(search.iso2)?.name ?: search.iso2
-        val lookup = async { NumInquiry.run(this@PinpointingActivity, search.digits, search.iso2, search.dial) }
+        val nation = countryLabel()
+        val pending = async { NumInquiry.run(this@PinpointingActivity, hunt.digits, hunt.iso2, hunt.dial) }
 
-        // Stage 1 — the country, zooming in from further out.
-        stage(getString(R.string.ds_locating_country, countryName), toPercent = 30, overMs = minMs * 3 / 10, step = Step.COUNTRY)
-        SectorPlaceCoder.locate(this@PinpointingActivity, null, null, null, countryName)?.let { pin ->
-            val point = GeoPoint(pin.lat, pin.lng)
+        // Phase 1: country, flying in from a wider zoom.
+        enterPhase(getString(R.string.ds_locating_country, nation), toPercent = 30, overMs = holdMs * 3 / 10, phase = Phase.NATION)
+        val nationPin = SectorPlaceCoder.locate(this@PinpointingActivity, null, null, null, nation)
+        if (nationPin != null) {
+            val point = GeoPoint(nationPin.lat, nationPin.lng)
             binding.lvBigMap.controller.setZoom(SectorExactness.COUNTRY.zoom - 2)
             binding.lvBigMap.controller.setCenter(point)
-            binding.lvBigMap.controller.animateTo(point, SectorExactness.COUNTRY.zoom, FLY_MS)
+            binding.lvBigMap.controller.animateTo(point, SectorExactness.COUNTRY.zoom, FLIGHT_MS)
         }
-        delay(at(minMs * 3 / 10))
+        delay(leftUntil(holdMs * 3 / 10))
 
-        val result = lookup.await()
-        report = result
-        onFound(result)
+        val answer = pending.await()
+        outcomeDigest = answer
+        persistFound(answer)
 
-        // Stage 2 — the state, when the answer has one the map can find.
-        val state = result.state?.takeIf { it.isNotBlank() }
-        val statePin = state?.let { SectorPlaceCoder.locate(this@PinpointingActivity, null, null, it, result.countryName) }
-        if (state != null && statePin != null) {
-            binding.pillState.text = state
-            stage(getString(R.string.ds_locating_state, state), toPercent = 70, overMs = minMs * 4 / 10, step = Step.STATE)
-            binding.lvBigMap.controller.animateTo(GeoPoint(statePin.lat, statePin.lng), SectorExactness.STATE.zoom - 1, FLY_MS)
-            delay(at(minMs * 7 / 10))
+        // Phase 2: the state, if the answer has one the geocoder can place.
+        val region = answer.state?.takeIf { it.isNotBlank() }
+        val regionPin = region?.let { SectorPlaceCoder.locate(this@PinpointingActivity, null, null, it, answer.countryName) }
+        if (region != null && regionPin != null) {
+            binding.pillState.text = region
+            enterPhase(getString(R.string.ds_locating_state, region), toPercent = 70, overMs = holdMs * 4 / 10, phase = Phase.REGION)
+            binding.lvBigMap.controller.animateTo(GeoPoint(regionPin.lat, regionPin.lng), SectorExactness.STATE.zoom - 1, FLIGHT_MS)
+            delay(leftUntil(holdMs * 7 / 10))
         }
 
-        // Stage 3 — the approximate area, pulsing, until the minimum time is up.
-        stage(getString(R.string.ds_locating_found, state ?: result.countryName), toPercent = 100, overMs = at(minMs), step = Step.AREA)
-        siteArea(result, animate = true, knownState = statePin)
-        delay(at(minMs))
+        // Phase 3: pulsing area until the hold time ends.
+        enterPhase(getString(R.string.ds_locating_found, region ?: answer.countryName), toPercent = 100, overMs = leftUntil(holdMs), phase = Phase.SPOT)
+        pinArea(answer, animate = true, knownState = regionPin)
+        delay(leftUntil(holdMs))
 
-        presentResult(result)
+        showVerdict(answer)
     }
 
-    /** The stage line, the step chips at [step], and the progress bar running on to [toPercent] over [overMs]. */
-    private fun stage(text: String, toPercent: Int, overMs: Long, step: Step) {
+    private fun enterPhase(text: String, toPercent: Int, overMs: Long, phase: Phase) {
         binding.txtStage.text = text
-        wireSteps(step)
-        progressAnim?.cancel()
-        progressAnim = ObjectAnimator.ofInt(binding.prog, "progress", binding.prog.progress, toPercent * 10).apply {
-            duration = overMs.coerceAtLeast(300L)
-            interpolator = LinearInterpolator()
-            addUpdateListener { binding.txtPercent.text = getString(R.string.ds_locating_percent, binding.prog.progress / 10) }
-            start()
-        }
-        animators += progressAnim!!
+        paintPhases(phase)
+        barAnim?.cancel()
+        val bar = binding.prog
+        val anim = ObjectAnimator.ofInt(bar, "progress", bar.progress, toPercent * 10)
+        anim.duration = maxOf(300L, overMs)
+        anim.interpolator = LinearInterpolator()
+        anim.addUpdateListener { binding.txtPercent.text = getString(R.string.ds_locating_percent, bar.progress / 10) }
+        anim.start()
+        barAnim = anim
+        runningAnims += anim
     }
 
     /**
-     * The approximate area with its pulse, on the report's own point: the most precise place the
-     * lookup knows (pincode, city, then state), the same point Number Details shows. Centring on
-     * the state's middle instead put a Surat number near Surendranagar, 250 km away. Falls back to
-     * the state's (or country's) centre only when the report has no point of its own.
+     * Pulses the area at the report's own most precise point (pincode, city, then state) — the
+     * same spot Number Details uses — falling back to the state's or country's centre only when
+     * the report has no point.
      */
-    private suspend fun siteArea(result: NumDigest, animate: Boolean, knownState: TerraTack? = null) {
-        val state = result.state?.takeIf { it.isNotBlank() }
-        val own = result.pin
-        val pin = own ?: knownState ?: SectorPlaceCoder.locate(this, null, null, state, result.countryName) ?: return
+    private suspend fun pinArea(result: NumDigest, animate: Boolean, knownState: TerraTack? = null) {
+        val region = result.state?.takeIf { it.isNotBlank() }
+        val ownPin = result.pin
+        val target = ownPin ?: knownState
+            ?: SectorPlaceCoder.locate(this, null, null, region, result.countryName)
+            ?: return
         if (isFinishing || isDestroyed) return
-        val precision = when {
-            own != null -> result.precision
-            state != null -> SectorExactness.STATE
-            else -> SectorExactness.COUNTRY
-        }
-        // This map ends as the small result card, where a city's circle at its own zoom would
-        // cover the whole card; the card zoom keeps it a ring around the place.
-        val zoom = StreetCharts.cardZoom(precision)
+        val accuracy = if (ownPin != null) result.precision
+        else if (region != null) SectorExactness.STATE
+        else SectorExactness.COUNTRY
+        // The map ends up as the small card; card zoom keeps a city's ring inside it.
+        val zoom = StreetCharts.cardZoom(accuracy)
         if (animate) {
-            binding.lvBigMap.controller.animateTo(GeoPoint(pin.lat, pin.lng), zoom, FLY_MS)
-            delay(FLY_MS)
+            binding.lvBigMap.controller.animateTo(GeoPoint(target.lat, target.lng), zoom, FLIGHT_MS)
+            delay(FLIGHT_MS)
             if (isFinishing || isDestroyed) return
         }
-        overlay?.let { it.stop(); binding.lvBigMap.overlays.remove(it) }
-        overlay = StreetCharts.siteAt(binding.lvBigMap, pin, precision, zoom)
+        pulseVeil?.let { old ->
+            old.stop()
+            binding.lvBigMap.overlays.remove(old)
+        }
+        pulseVeil = StreetCharts.siteAt(binding.lvBigMap, target, accuracy, zoom)
     }
 
-    /** The lookup answered: saved to Recents (locked, unless it was unlocked before). */
-    private fun onFound(result: NumDigest) {
-        FreshHuntShelf(this).add(search.copy(searchedAt = System.currentTimeMillis(), report = result, unlocked = alreadyUnlocked))
+    private fun recordRecent(result: NumDigest, unlocked: Boolean) {
+        val entry = hunt.copy(searchedAt = System.currentTimeMillis(), report = result, unlocked = unlocked)
+        FreshHuntShelf(this).add(entry)
         setResult(Activity.RESULT_OK, Intent().putExtra(EXTRA_FOUND, true))
     }
 
-    // ── Found ─────────────────────────────────────────────────────────────
+    /** Lookup finished: stored in Recents, locked unless it was unlocked earlier. */
+    private fun persistFound(result: NumDigest) = recordRecent(result, priorUnlock)
 
-    /** The result (design 13b); Premium users and numbers unlocked before go straight through. */
-    private fun presentResult(result: NumDigest) {
-        report = result
-        if (alreadyUnlocked || PlusCheckout.isPremium(this)) return unlock(result)
+    // ── Result ────────────────────────────────────────────────────────────
 
-        // Top bar: "Location found · Search complete · 100%", the Live pill gone.
-        binding.txtTitle.setText(R.string.ds_location_found)
-        binding.txtSearchNumber.setText(R.string.ds_locating_complete)
-        binding.txtSearchNumber.setTextColor(ContextCompat.getColor(this, R.color.ds_success))
-        binding.lvLivePill.isVisible = false
-        // The map keeps only the area pin and its pill: the scan and the stage chips go.
-        binding.lvScanGroup.isVisible = false
-        binding.chartChips.isVisible = false
-        binding.lvSearchingGroup.isVisible = false
-        binding.txtAreaPill.isVisible = true
-        shrinkMap()
+    private fun showVerdict(result: NumDigest) {
+        outcomeDigest = result
+        if (priorUnlock || PlusCheckout.isPremium(this)) {
+            openDetails(result)
+            return
+        }
 
-        binding.txtCountryTile.text = search.iso2.uppercase()
+        // Header switches to "Location found · Search complete"; the Live pill goes.
+        with(binding) {
+            txtTitle.setText(R.string.ds_location_found)
+            txtSearchNumber.setText(R.string.ds_locating_complete)
+            txtSearchNumber.setTextColor(color(R.color.ds_success))
+            lvLivePill.isVisible = false
+            // Only the area pin and its pill stay on the map.
+            lvScanGroup.isVisible = false
+            chartChips.isVisible = false
+            lvSearchingGroup.isVisible = false
+            txtAreaPill.isVisible = true
+        }
+        collapseMap()
+
+        binding.txtCountryTile.text = hunt.iso2.uppercase()
         binding.lvNameRow.isVisible = !result.name.isNullOrBlank()
         binding.txtName.text = result.name
         binding.txtName.setBlurred(true)
         binding.txtNumber.text = result.international
         binding.txtRegion.text = listOfNotNull(result.state, result.countryName).distinct().joinToString(", ")
-        if (result.valid) {
-            binding.txtValidity.setText(R.string.ds_result_valid_short)
-            binding.txtValidity.setBackgroundResource(R.drawable.lv_pill_success_soft)
-            binding.txtValidity.setTextColor(ContextCompat.getColor(this, R.color.ds_success))
-        } else {
-            binding.txtValidity.setText(R.string.ds_verdict_unverified)
-            binding.txtValidity.setBackgroundResource(R.drawable.lv_pill_warn)
-            binding.txtValidity.setTextColor(ContextCompat.getColor(this, R.color.ds_warn))
+        paintValidity(result.valid)
+
+        paintFact(binding.boxCountry, R.string.ds_label_country, result.countryName, locked = false)
+        paintFact(binding.boxLine, R.string.ds_fact_line, result.lineType.label(this), locked = false)
+        paintFact(binding.boxCity, R.string.ds_label_city, result.city, locked = true)
+        paintFact(binding.boxCarrier, R.string.ds_fact_carrier, result.carrier, locked = true)
+
+        binding.verdictGroup.run {
+            alpha = 0f
+            translationY = dpi(40).toFloat()
+            isVisible = true
+            animate().alpha(1f).translationY(0f).setDuration(450)
+                .setInterpolator(CraftMovement.EASE_IN_OUT).start()
         }
-
-        cell(binding.boxCountry, R.string.ds_label_country, result.countryName, locked = false)
-        cell(binding.boxLine, R.string.ds_fact_line, result.lineType.label(this), locked = false)
-        cell(binding.boxCity, R.string.ds_label_city, result.city, locked = true)
-        cell(binding.boxCarrier, R.string.ds_fact_carrier, result.carrier, locked = true)
-
-        binding.verdictGroup.alpha = 0f
-        binding.verdictGroup.translationY = dp(40).toFloat()
-        binding.verdictGroup.isVisible = true
-        binding.verdictGroup.animate().alpha(1f).translationY(0f).setDuration(450)
-            .setInterpolator(CraftMovement.EASE_IN_OUT).start()
     }
 
-    /** The big search map settles into the result's area card; the area stays centred. */
-    private fun shrinkMap() {
-        val from = binding.chartCard.height.takeIf { it > 0 } ?: return
-        val to = dp(MAP_RESULT_DP)
-        if (from <= to) return
-        val center = binding.lvBigMap.mapCenter
-        ValueAnimator.ofInt(from, to).apply {
-            duration = 400L
-            interpolator = CraftMovement.EASE_IN_OUT
-            addUpdateListener {
-                binding.chartCard.updateLayoutParams { height = it.animatedValue as Int }
-                binding.lvBigMap.controller.setCenter(center)
-            }
-            start()
-        }.also { animators += it }
+    private fun paintValidity(valid: Boolean) = with(binding.txtValidity) {
+        setText(if (valid) R.string.ds_result_valid_short else R.string.ds_verdict_unverified)
+        setBackgroundResource(if (valid) R.drawable.lv_pill_success_soft else R.drawable.lv_pill_warn)
+        setTextColor(color(if (valid) R.color.ds_success else R.color.ds_warn))
     }
 
-    /** A fact cell; a locked one blurs its value, a missing value just says so (no lock). */
-    private fun cell(cell: CellResultCellBinding, @StringRes label: Int, value: String?, locked: Boolean) {
-        cell.txtLabel.setText(label)
-        val known = !value.isNullOrBlank()
-        cell.txtValue.text = if (known) value else getString(R.string.ds_not_available)
-        cell.txtValue.setTextColor(ContextCompat.getColor(this, if (known) R.color.ds_ink else R.color.ds_muted))
-        cell.txtValue.setBlurred(locked && known)
-        cell.imgLock.isVisible = locked && known
+    /** Animates the big map down to the result's area card, keeping the area centred. */
+    private fun collapseMap() {
+        val startH = binding.chartCard.height
+        if (startH <= 0) return
+        val endH = dpi(CARD_MAP_DP)
+        if (startH <= endH) return
+        val keepCenter = binding.lvBigMap.mapCenter
+        val anim = ValueAnimator.ofInt(startH, endH)
+        anim.duration = 400L
+        anim.interpolator = CraftMovement.EASE_IN_OUT
+        anim.addUpdateListener { va ->
+            binding.chartCard.updateLayoutParams { height = va.animatedValue as Int }
+            binding.lvBigMap.controller.setCenter(keepCenter)
+        }
+        anim.start()
+        runningAnims += anim
+    }
+
+    /** One fact; a locked value is blurred, a missing one just reads "not available". */
+    private fun paintFact(box: CellResultCellBinding, @StringRes caption: Int, value: String?, locked: Boolean) {
+        box.txtLabel.setText(caption)
+        val missing = value.isNullOrBlank()
+        val hide = locked && !missing
+        box.txtValue.text = if (missing) getString(R.string.ds_not_available) else value
+        box.txtValue.setTextColor(color(if (missing) R.color.ds_muted else R.color.ds_ink))
+        box.txtValue.setBlurred(hide)
+        box.imgLock.isVisible = hide
+    }
+
+    private fun setAdSpinner(busy: Boolean) {
+        adShowing = busy
+        binding.txtWatchAd.isInvisible = busy
+        binding.spinWatchAd.isVisible = busy
     }
 
     /**
-     * Watch Ad: the rewarded ad plays straight away (no reveal dialog in between); earned →
-     * Number Details. Closing it early, or cancelling the "try again" dialog, keeps it locked here.
+     * Plays the rewarded ad right away; a full watch opens Number Details, anything else keeps
+     * the result locked here.
      */
-    private fun reveal() {
-        val result = report ?: return
-        if (watching) return
-        watching = true
-        binding.txtWatchAd.isInvisible = true
-        binding.spinWatchAd.isVisible = true
+    private fun playRewarded() {
+        val result = outcomeDigest ?: return
+        if (adShowing) return
+        setAdSpinner(true)
         BonusTeaser().show(this) { outcome ->
-            watching = false
-            binding.txtWatchAd.isInvisible = false
-            binding.spinWatchAd.isVisible = false
-            when (outcome) {
-                BonusTeaser.Result.EARNED -> unlock(result)
-                BonusTeaser.Result.NOT_EARNED ->
-                    Toast.makeText(this, R.string.ds_reward_not_earned, Toast.LENGTH_SHORT).show()
-                BonusTeaser.Result.CANCELED -> Unit
+            setAdSpinner(false)
+            if (outcome == BonusTeaser.Result.EARNED) {
+                openDetails(result)
+            } else if (outcome == BonusTeaser.Result.NOT_EARNED) {
+                Toast.makeText(this, R.string.ds_reward_not_earned, Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    /** Saves the result as unlocked and opens Number Details in this page's place. */
-    private fun unlock(result: NumDigest) {
+    /** Stores the result as unlocked and replaces this page with Number Details. */
+    private fun openDetails(result: NumDigest) {
         if (isFinishing) return
-        FreshHuntShelf(this).add(search.copy(searchedAt = System.currentTimeMillis(), report = result, unlocked = true))
-        setResult(Activity.RESULT_OK, Intent().putExtra(EXTRA_FOUND, true))
+        recordRecent(result, unlocked = true)
         startActivity(NumProfile2Activity.intent(this, result))
         finish()
     }
 
-    private fun dp(value: Int) = (value * resources.displayMetrics.density).roundToInt()
+    private fun dpi(value: Int) = (value * resources.displayMetrics.density).roundToInt()
 
     // ── Lifecycle ─────────────────────────────────────────────────────────
 
     override fun onResume() {
         super.onResume()
-        if (::search.isInitialized) binding.lvBigMap.onResume()
+        if (::hunt.isInitialized) binding.lvBigMap.onResume()
     }
 
     override fun onPause() {
-        if (::search.isInitialized) binding.lvBigMap.onPause()
+        if (::hunt.isInitialized) binding.lvBigMap.onPause()
         super.onPause()
     }
 
     override fun onDestroy() {
-        CraftMovement.abortAll(animators)
-        overlay?.stop()
+        CraftMovement.abortAll(runningAnims)
+        pulseVeil?.stop()
         super.onDestroy()
     }
 
     companion object {
-        private const val EXTRA_DIGITS = "digits"
-        private const val EXTRA_ISO = "iso"
-        private const val EXTRA_DIAL = "dial"
+        private const val KEY_DIGITS = "digits"
+        private const val KEY_ISO = "iso"
+        private const val KEY_DIAL = "dial"
         private const val EXTRA_REPORT = "report"
-        private const val EXTRA_UNLOCKED = "unlocked"
+        private const val KEY_UNLOCKED = "unlocked"
 
         /** Result extra: the lookup answered (the search box can be cleared). */
         const val EXTRA_FOUND = "found"
 
-        /** The search animation's minimum length, so the native has its time on screen. */
-        private const val MIN_SEARCH_MS = 10_000L
-
-        /** Premium sees no ad, so there is nothing to hold the page for. */
-        private const val MIN_SEARCH_PREMIUM_MS = 4_000L
-
-        /** When to look for a native that another screen's load delivered to the shared slot. */
-        private val NATIVE_RECHECK_MS = longArrayOf(2_500L, 5_000L, 8_000L)
-
-        /** This page's `ScreenAds` entry (its `show` and `nativeType`). */
-        private const val SCREEN_KEY = "PinpointingActivity"
-
-        private const val FLY_MS = 1_800L
-
-        /** The approximate-area card of design 13b. */
-        private const val MAP_RESULT_DP = 150
+        private const val FREE_HOLD_MS = 10_000L
+        private const val PRO_HOLD_MS = 4_000L
+        private val NATIVE_POLL_MS = longArrayOf(2_500L, 5_000L, 8_000L)
+        private const val ADS_SCREEN = "PinpointingActivity"
+        private val COMPACT_TEMPLATES = setOf("small", "native_banner", "nativebanner")
+        private const val FLIGHT_MS = 1_800L
+        private const val CARD_MAP_DP = 150
 
         /**
          * A new search ([saved] null) or a locked recent one reopened at its result ([saved]).
@@ -483,10 +497,10 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
          */
         fun intent(context: Context, search: FreshHunt, saved: NumDigest?, unlocked: Boolean): Intent =
             Intent(context, PinpointingActivity::class.java)
-                .putExtra(EXTRA_DIGITS, search.digits)
-                .putExtra(EXTRA_ISO, search.iso2)
-                .putExtra(EXTRA_DIAL, search.dial)
-                .putExtra(EXTRA_UNLOCKED, unlocked)
+                .putExtra(KEY_DIGITS, search.digits)
+                .putExtra(KEY_ISO, search.iso2)
+                .putExtra(KEY_DIAL, search.dial)
+                .putExtra(KEY_UNLOCKED, unlocked)
                 .apply { if (saved != null) putExtra(EXTRA_REPORT, saved) }
     }
 }

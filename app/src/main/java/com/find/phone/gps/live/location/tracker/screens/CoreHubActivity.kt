@@ -67,6 +67,7 @@ class CoreHubActivity : StageActivity<ScreenMainBinding>(), MainCasingHolder, Ma
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        com.find.phone.gps.live.location.tracker.monetize.logic.EventSession.endFirstSession(this)
         homeShellController.onHostCreated()
     }
 

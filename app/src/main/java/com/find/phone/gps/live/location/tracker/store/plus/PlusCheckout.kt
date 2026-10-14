@@ -19,20 +19,18 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Premium through Google Play Billing: the entitlement (cached in prefs so it is known offline
- * and on cold start), product details for the paywall, the purchase flow and Restore.
- *
- * Premium is active while any configured product is PURCHASED: a live weekly/monthly
- * subscription or the lifetime purchase. [sync] re-checks with Play at app start, so an
- * expired or refunded subscription drops premium on the next launch.
+ * Google Play Billing facade for Premium: cached entitlement (offline / cold start), paywall
+ * product details, the purchase sheet and Restore. Premium holds while any configured product
+ * is PURCHASED; [sync] re-validates with Play on app start.
  */
 object PlusCheckout {
 
     private const val TAG = "PlusCheckout"
-    private const val PREFS = "premium"
-    private const val KEY_ACTIVE = "active"
+    private const val STORE = "premium"
+    private const val FLAG_ACTIVE = "active"
+    private const val PERIOD_UNITS = "YMWD"
+    private val PERIOD_UNIT_DAYS = intArrayOf(365, 30, 7, 1)
 
-    /** Listeners for purchase results on the paywall; cleared when it goes away. */
     var onPurchaseResult: ((PurchaseOutcome) -> Unit)? = null
 
     enum class PurchaseOutcome { PURCHASED, PENDING, CANCELED, FAILED }
@@ -40,238 +38,283 @@ object PlusCheckout {
     private var client: BillingClient? = null
     private val details = HashMap<String, ProductDetails>()
 
-    fun isPremium(context: Context): Boolean =
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_ACTIVE, false)
+    /** Pending callbacks for the single in-flight connection attempt; guarded by `this`. */
+    private val queued = ArrayList<(BillingClient?) -> Unit>()
+    private var inFlight = false
 
-    private fun setPremium(context: Context, active: Boolean) {
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_ACTIVE, active).apply()
+    private fun store(ctx: Context) = ctx.applicationContext.getSharedPreferences(STORE, Context.MODE_PRIVATE)
+
+    fun isPremium(context: Context): Boolean = store(context).getBoolean(FLAG_ACTIVE, false)
+
+    private fun writePremium(ctx: Context, active: Boolean) {
+        store(ctx).edit().putBoolean(FLAG_ACTIVE, active).apply()
         Log.i(TAG, "premium=$active")
     }
 
-    private fun client(context: Context): BillingClient {
-        client?.let { return it }
-        val app = context.applicationContext
-        return BillingClient.newBuilder(app)
-            .setListener { result, purchases -> onPurchasesUpdated(app, result, purchases) }
+    private fun billing(ctx: Context): BillingClient {
+        val existing = client
+        if (existing != null) return existing
+        val appCtx = ctx.applicationContext
+        val built = BillingClient.newBuilder(appCtx)
+            .setListener { result, purchases -> handlePurchaseUpdate(appCtx, result, purchases) }
             .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
             .enableAutoServiceReconnection()
             .build()
-            .also { client = it }
+        client = built
+        return built
     }
 
-    /** Callers waiting for the one connection attempt in flight; guarded by `this`. */
-    private val waiting = ArrayList<(BillingClient?) -> Unit>()
-    private var connecting = false
+    private fun isOk(r: BillingResult) = r.responseCode == BillingClient.BillingResponseCode.OK
 
     /**
-     * Runs [block] with the client once connected, or with null when Play Billing can't be reached.
-     *
-     * Only one connection attempt runs at a time: the app-start [sync] and the paywall opening
-     * right after the intro used to call startConnection over each other, Play rejected the second
-     * ("already in the process of connecting") and every query that followed failed. Callers that
-     * arrive while an attempt is in flight now wait for that attempt instead.
+     * Hands [block] a ready client, or null if Play Billing is unreachable. Concurrent callers
+     * share one startConnection attempt (Play rejects overlapping ones).
      */
-    private fun connected(context: Context, block: (BillingClient?) -> Unit) {
-        val c = client(context)
-        if (c.isReady) return block(c)
+    private fun withClient(ctx: Context, block: (BillingClient?) -> Unit) {
+        val bc = billing(ctx)
+        if (bc.isReady) return block(bc)
         synchronized(this) {
-            waiting += block
-            if (connecting) return
-            connecting = true
+            queued += block
+            if (inFlight) return
+            inFlight = true
         }
-        c.startConnection(object : BillingClientStateListener {
+        bc.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(result: BillingResult) {
-                val ok = result.responseCode == BillingClient.BillingResponseCode.OK
-                if (!ok) Log.w(TAG, "setup failed: ${result.responseCode} ${result.debugMessage}")
-                val ready = synchronized(this@PlusCheckout) {
-                    connecting = false
-                    ArrayList(waiting).also { waiting.clear() }
+                val success = isOk(result)
+                if (!success) Log.w(TAG, "setup failed: ${result.responseCode} ${result.debugMessage}")
+                val drained = synchronized(this@PlusCheckout) {
+                    inFlight = false
+                    val copy = ArrayList(queued)
+                    queued.clear()
+                    copy
                 }
-                ready.forEach { it(if (ok) c else null) }
+                val handed = if (success) bc else null
+                for (cb in drained) cb(handed)
             }
 
             override fun onBillingServiceDisconnected() {
-                // enableAutoServiceReconnection() reconnects on the next call; nothing to do here.
                 Log.w(TAG, "service disconnected")
             }
         })
     }
 
     /**
-     * Re-reads what the user owns from Play and updates the cached entitlement. [onDone] gets
-     * whether Premium is active, or null when Play couldn't be asked — in which case the cached
-     * entitlement is left as it was: a paying user who is offline, or whose query failed, keeps
-     * Premium until Play can actually say otherwise.
+     * Refreshes ownership from Play. [onDone] receives the new state, or null when Play could not
+     * be queried (the cached entitlement is then left untouched).
      */
     fun sync(context: Context, onDone: (Boolean?) -> Unit = {}) {
-        val app = context.applicationContext
-        val ids = PlusProfile.read(app).plans.map { it.productId }.toSet()
-        connected(app) { c ->
-            if (c == null) return@connected onDone(null)
-            val owned = ArrayList<Purchase>()
-            val pending = AtomicInteger(2)
-            val failed = AtomicBoolean(false)
-            val collect = { ok: Boolean, list: List<Purchase> ->
-                synchronized(owned) { owned += list }
-                if (!ok) failed.set(true)
-                if (pending.decrementAndGet() == 0) {
-                    if (failed.get()) {
-                        Log.w(TAG, "sync incomplete — keeping premium=${isPremium(app)}")
-                        onDone(null)
-                    } else {
-                        val active = owned.any { p ->
-                            p.purchaseState == Purchase.PurchaseState.PURCHASED && p.products.any { it in ids }
-                        }
-                        owned.filter { !it.isAcknowledged && it.purchaseState == Purchase.PurchaseState.PURCHASED }
-                            .forEach { acknowledge(c, it) }
-                        setPremium(app, active)
-                        onDone(active)
-                    }
-                }
+        val appCtx = context.applicationContext
+        val configured = HashSet<String>()
+        PlusProfile.read(appCtx).plans.forEach { configured.add(it.productId) }
+        withClient(appCtx) { bc ->
+            if (bc == null) return@withClient onDone(null)
+            val gathered = ArrayList<Purchase>()
+            val remaining = AtomicInteger(2)
+            val anyFailure = AtomicBoolean(false)
+            val onBatch = { success: Boolean, batch: List<Purchase> ->
+                synchronized(gathered) { gathered += batch }
+                if (!success) anyFailure.set(true)
+                if (remaining.decrementAndGet() == 0) finishSync(appCtx, bc, gathered, configured, anyFailure.get(), onDone)
             }
-            for (type in listOf(BillingClient.ProductType.SUBS, BillingClient.ProductType.INAPP)) {
-                c.queryPurchasesAsync(QueryPurchasesParams.newBuilder().setProductType(type).build()) { result, list ->
-                    val ok = result.responseCode == BillingClient.BillingResponseCode.OK
-                    if (!ok) Log.w(TAG, "queryPurchases($type): ${result.responseCode} ${result.debugMessage}")
-                    collect(ok, list)
-                }
+            arrayOf(BillingClient.ProductType.SUBS, BillingClient.ProductType.INAPP).forEach { type ->
+                queryOwned(bc, type, onBatch)
             }
         }
     }
 
+    private fun queryOwned(bc: BillingClient, type: String, onBatch: (Boolean, List<Purchase>) -> Unit) {
+        bc.queryPurchasesAsync(QueryPurchasesParams.newBuilder().setProductType(type).build()) { result, list ->
+            val success = isOk(result)
+            if (!success) Log.w(TAG, "queryPurchases($type): ${result.responseCode} ${result.debugMessage}")
+            onBatch(success, list)
+        }
+    }
+
+    private fun finishSync(
+        appCtx: Context,
+        bc: BillingClient,
+        gathered: List<Purchase>,
+        configured: Set<String>,
+        failed: Boolean,
+        onDone: (Boolean?) -> Unit,
+    ) {
+        if (failed) {
+            Log.w(TAG, "sync incomplete — keeping premium=${isPremium(appCtx)}")
+            onDone(null)
+            return
+        }
+        val bought = gathered.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+        val active = bought.any { p -> p.products.any { id -> id in configured } }
+        bought.filterNot { it.isAcknowledged }.forEach { ack(bc, it) }
+        writePremium(appCtx, active)
+        onDone(active)
+    }
+
     /**
-     * Product details for [plans], keyed by product id; missing ones are simply absent (and
-     * logged, so an id that doesn't match Play Console shows up in logcat). [onLoaded] runs
-     * either way, with whatever is known.
+     * Loads product details for [plans] keyed by id; unknown ids are logged and left out.
+     * [onLoaded] always fires with everything currently known.
      */
     fun fetchDetails(context: Context, plans: List<PlusOffer>, onLoaded: (Map<String, ProductDetails>) -> Unit) {
-        connected(context) { c ->
-            if (c == null) return@connected onLoaded(HashMap(details))
-            val groups = plans.groupBy { if (it.isSubscription) BillingClient.ProductType.SUBS else BillingClient.ProductType.INAPP }
-            val pending = AtomicInteger(groups.size)
-            for ((type, group) in groups) {
-                val products = group.map {
-                    QueryProductDetailsParams.Product.newBuilder().setProductId(it.productId).setProductType(type).build()
+        withClient(context) { bc ->
+            if (bc == null) return@withClient onLoaded(HashMap(details))
+            val byType = plans.groupBy { plan ->
+                when {
+                    plan.isSubscription -> BillingClient.ProductType.SUBS
+                    else -> BillingClient.ProductType.INAPP
                 }
-                c.queryProductDetailsAsync(QueryProductDetailsParams.newBuilder().setProductList(products).build()) { result, res ->
-                    if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                        synchronized(details) { res.productDetailsList.forEach { details[it.productId] = it } }
-                        val found = res.productDetailsList.map { it.productId }.toSet()
-                        val missing = group.map { it.productId }.filter { it !in found }
-                        if (missing.isNotEmpty()) Log.w(TAG, "productDetails($type): not found in Play: $missing")
-                        else Log.i(TAG, "productDetails($type): loaded ${found.sorted()}")
+            }
+            val remaining = AtomicInteger(byType.size)
+            byType.forEach { (type, group) ->
+                val query = QueryProductDetailsParams.newBuilder().setProductList(
+                    group.map { plan ->
+                        QueryProductDetailsParams.Product.newBuilder().setProductId(plan.productId).setProductType(type).build()
+                    }
+                ).build()
+                bc.queryProductDetailsAsync(query) { result, res ->
+                    if (isOk(result)) {
+                        val loaded = res.productDetailsList
+                        synchronized(details) { for (pd in loaded) details[pd.productId] = pd }
+                        val loadedIds = loaded.mapTo(HashSet()) { it.productId }
+                        val absent = group.map { it.productId }.filterNot { it in loadedIds }
+                        when {
+                            absent.isEmpty() -> Log.i(TAG, "productDetails($type): loaded ${loadedIds.sorted()}")
+                            else -> Log.w(TAG, "productDetails($type): not found in Play: $absent")
+                        }
                     } else {
                         Log.w(TAG, "productDetails($type): ${result.responseCode} ${result.debugMessage}")
                     }
-                    if (pending.decrementAndGet() == 0) onLoaded(synchronized(details) { HashMap(details) })
+                    if (remaining.decrementAndGet() == 0) onLoaded(synchronized(details) { HashMap(details) })
                 }
             }
         }
     }
 
-    /**
-     * Loads Play's prices for the configured plans ahead of time (app start), so the paywall —
-     * which shows no price until Play has one — usually opens with them already in memory.
-     */
     fun prefetchDetails(context: Context) {
-        val app = context.applicationContext
-        fetchDetails(app, PlusProfile.read(app).plans) {}
+        val appCtx = context.applicationContext
+        fetchDetails(appCtx, PlusProfile.read(appCtx).plans) {}
     }
 
-    private fun detailsOf(plan: PlusOffer): ProductDetails? = synchronized(details) { details[plan.productId] }
+    private fun cachedDetails(plan: PlusOffer): ProductDetails? = synchronized(details) { details[plan.productId] }
 
-    /** Localized price of [plan] ("₹799.00"), or null until Play has answered. */
+    private fun recurringPhase(pd: ProductDetails): ProductDetails.PricingPhase? =
+        defaultOffer(pd)?.pricingPhases?.pricingPhaseList?.lastOrNull()
+
     fun price(plan: PlusOffer): String? {
-        val d = detailsOf(plan) ?: return null
-        return if (plan.isSubscription) {
-            basePlan(d)?.pricingPhases?.pricingPhaseList?.lastOrNull()?.formattedPrice
-        } else {
-            d.oneTimePurchaseOfferDetails?.formattedPrice
+        val pd = cachedDetails(plan) ?: return null
+        return when (plan.isSubscription) {
+            true -> recurringPhase(pd)?.formattedPrice
+            false -> pd.oneTimePurchaseOfferDetails?.formattedPrice
         }
     }
 
-    /**
-     * A monthly [plan]'s Play price shown per week — the monthly amount / 4, in Play's currency
-     * ("₹399.00" → "₹99.75"). Null until Play has answered, or for a plan that is not monthly.
-     */
+    /** Monthly plan price divided by four, formatted in Play's currency; null otherwise. */
     fun weeklyPrice(plan: PlusOffer): String? {
         if (plan.kind != PlusOffer.Kind.MONTHLY) return null
-        val phase = detailsOf(plan)?.let { basePlan(it) }?.pricingPhases?.pricingPhaseList?.lastOrNull() ?: return null
-        return runCatching {
-            NumberFormat.getCurrencyInstance().apply { currency = Currency.getInstance(phase.priceCurrencyCode) }
-                .format(phase.priceAmountMicros / 4 / 1_000_000.0)
-        }.getOrNull()
+        val pd = cachedDetails(plan) ?: return null
+        val phase = recurringPhase(pd) ?: return null
+        return try {
+            val fmt = NumberFormat.getCurrencyInstance()
+            fmt.currency = Currency.getInstance(phase.priceCurrencyCode)
+            fmt.format(phase.priceAmountMicros / 4 / 1_000_000.0)
+        } catch (t: Throwable) {
+            null
+        }
     }
 
-    /**
-     * Free-trial length of [plan] in days as Play offers it to this user: null until Play has
-     * answered, 0 when there is no trial (not set up, or the user already used it).
-     */
+    /** Trial length in days for this user: null before Play answers, 0 without a trial. */
     fun trialDays(plan: PlusOffer): Int? {
         if (!plan.isSubscription) return 0
-        val d = detailsOf(plan) ?: return null
-        val phase = trialOffer(d)?.pricingPhases?.pricingPhaseList?.firstOrNull { it.priceAmountMicros == 0L } ?: return 0
-        return days(phase.billingPeriod) * phase.billingCycleCount.coerceAtLeast(1)
+        val pd = cachedDetails(plan) ?: return null
+        val free = freeTrialOffer(pd)?.pricingPhases?.pricingPhaseList?.firstOrNull { it.priceAmountMicros == 0L }
+            ?: return 0
+        return periodToDays(free.billingPeriod) * maxOf(free.billingCycleCount, 1)
     }
 
-    /** The offer that starts with a free phase — Play only lists offers this user can take. */
-    private fun trialOffer(d: ProductDetails): ProductDetails.SubscriptionOfferDetails? =
-        d.subscriptionOfferDetails?.firstOrNull { o -> o.pricingPhases.pricingPhaseList.any { it.priceAmountMicros == 0L } }
-
-    /** ISO-8601 period ("P3D", "P1W", "P1M") → days. */
-    private fun days(period: String): Int {
-        val m = Regex("""P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)W)?(?:(\d+)D)?""").matchEntire(period) ?: return 0
-        val (y, mo, w, d) = m.destructured
-        return (y.toIntOrNull() ?: 0) * 365 + (mo.toIntOrNull() ?: 0) * 30 + (w.toIntOrNull() ?: 0) * 7 + (d.toIntOrNull() ?: 0)
-    }
-
-    /** Opens Play's purchase sheet; false when the product isn't available (not loaded / not in Play). */
-    fun purchase(activity: Activity, plan: PlusOffer): Boolean {
-        val d = detailsOf(plan) ?: return false
-        val params = BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(d)
-        if (plan.isSubscription) {
-            // The free-trial offer when this user can have one, else the plain base plan.
-            val token = (trialOffer(d) ?: basePlan(d))?.offerToken ?: return false
-            params.setOfferToken(token)
+    private fun freeTrialOffer(pd: ProductDetails): ProductDetails.SubscriptionOfferDetails? {
+        val offers = pd.subscriptionOfferDetails ?: return null
+        for (offer in offers) {
+            if (offer.pricingPhases.pricingPhaseList.any { it.priceAmountMicros == 0L }) return offer
         }
-        val c = client?.takeIf { it.isReady } ?: return false
-        val result = c.launchBillingFlow(activity, BillingFlowParams.newBuilder().setProductDetailsParamsList(listOf(params.build())).build())
-        Log.i(TAG, "launchBillingFlow(${plan.productId}): ${result.responseCode} ${result.debugMessage}")
-        return result.responseCode == BillingClient.BillingResponseCode.OK
+        return null
     }
 
-    /** The plain base plan (no offer id, so no intro pricing), else whatever Play lists first. */
-    private fun basePlan(d: ProductDetails): ProductDetails.SubscriptionOfferDetails? =
-        d.subscriptionOfferDetails?.let { offers -> offers.firstOrNull { it.offerId == null } ?: offers.firstOrNull() }
+    /** ISO-8601 "PnYnMnWnD" (each part optional, in that order) to an approximate day count; 0 if malformed. */
+    private fun periodToDays(period: String): Int {
+        if (period.isEmpty() || period[0] != 'P') return 0
+        var total = 0
+        var lastRank = -1
+        var pos = 1
+        while (pos < period.length) {
+            val numStart = pos
+            while (pos < period.length && period[pos] in '0'..'9') pos++
+            if (pos == numStart || pos == period.length) return 0
+            val rank = PERIOD_UNITS.indexOf(period[pos])
+            if (rank <= lastRank) return 0
+            total += (period.substring(numStart, pos).toIntOrNull() ?: 0) * PERIOD_UNIT_DAYS[rank]
+            lastRank = rank
+            pos++
+        }
+        return total
+    }
 
-    private fun onPurchasesUpdated(context: Context, result: BillingResult, purchases: List<Purchase>?) {
-        val outcome = when (result.responseCode) {
-            BillingClient.BillingResponseCode.OK -> {
-                val list = purchases.orEmpty()
-                list.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED && !it.isAcknowledged }
-                    .forEach { p -> client?.let { acknowledge(it, p) } }
-                when {
-                    list.any { it.purchaseState == Purchase.PurchaseState.PURCHASED } -> {
-                        setPremium(context, true)
-                        PurchaseOutcome.PURCHASED
-                    }
-                    list.any { it.purchaseState == Purchase.PurchaseState.PENDING } -> PurchaseOutcome.PENDING
-                    else -> PurchaseOutcome.FAILED
-                }
-            }
-            BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
-                setPremium(context, true)
-                PurchaseOutcome.PURCHASED
-            }
-            BillingClient.BillingResponseCode.USER_CANCELED -> PurchaseOutcome.CANCELED
-            else -> PurchaseOutcome.FAILED
+    fun purchase(activity: Activity, plan: PlusOffer): Boolean {
+        val pd = cachedDetails(plan) ?: return false
+        val productParams = BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(pd)
+        if (plan.isSubscription) {
+            // Prefer the free-trial offer, else the base plan.
+            val offer = freeTrialOffer(pd) ?: defaultOffer(pd)
+            val token = offer?.offerToken ?: return false
+            productParams.setOfferToken(token)
+        }
+        val bc = client?.takeIf { it.isReady } ?: return false
+        val flow = BillingFlowParams.newBuilder().setProductDetailsParamsList(listOf(productParams.build())).build()
+        val result = bc.launchBillingFlow(activity, flow)
+        Log.i(TAG, "launchBillingFlow(${plan.productId}): ${result.responseCode} ${result.debugMessage}")
+        return isOk(result)
+    }
+
+    /** Base plan without an offer id, else the first listed offer. */
+    private fun defaultOffer(pd: ProductDetails): ProductDetails.SubscriptionOfferDetails? {
+        val offers = pd.subscriptionOfferDetails ?: return null
+        return offers.find { it.offerId == null } ?: offers.firstOrNull()
+    }
+
+    private fun handlePurchaseUpdate(ctx: Context, result: BillingResult, purchases: List<Purchase>?) {
+        val code = result.responseCode
+        val outcome = if (code == BillingClient.BillingResponseCode.OK) {
+            outcomeOf(ctx, purchases ?: emptyList())
+        } else if (code == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
+            writePremium(ctx, true)
+            PurchaseOutcome.PURCHASED
+        } else if (code == BillingClient.BillingResponseCode.USER_CANCELED) {
+            PurchaseOutcome.CANCELED
+        } else {
+            PurchaseOutcome.FAILED
         }
         Log.i(TAG, "purchase update: ${result.responseCode} → $outcome")
         onPurchaseResult?.invoke(outcome)
     }
 
-    private fun acknowledge(c: BillingClient, purchase: Purchase) {
-        c.acknowledgePurchase(AcknowledgePurchaseParams.newBuilder().setPurchaseToken(purchase.purchaseToken).build()) { r ->
+    private fun outcomeOf(ctx: Context, list: List<Purchase>): PurchaseOutcome {
+        for (p in list) {
+            if (p.purchaseState == Purchase.PurchaseState.PURCHASED && !p.isAcknowledged) {
+                client?.let { ack(it, p) }
+            }
+        }
+        val states = list.map { it.purchaseState }
+        return when {
+            Purchase.PurchaseState.PURCHASED in states -> {
+                writePremium(ctx, true)
+                PurchaseOutcome.PURCHASED
+            }
+            Purchase.PurchaseState.PENDING in states -> PurchaseOutcome.PENDING
+            else -> PurchaseOutcome.FAILED
+        }
+    }
+
+    private fun ack(bc: BillingClient, purchase: Purchase) {
+        val params = AcknowledgePurchaseParams.newBuilder().setPurchaseToken(purchase.purchaseToken).build()
+        bc.acknowledgePurchase(params) { r ->
             Log.i(TAG, "acknowledge ${purchase.products}: ${r.responseCode}")
         }
     }

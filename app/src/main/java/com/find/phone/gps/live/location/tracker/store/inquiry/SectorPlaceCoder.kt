@@ -12,84 +12,95 @@ import java.util.Locale
 import kotlin.coroutines.resume
 
 /**
- * Turns a registered area (pincode / city / state / country) into a map point with the
- * platform [Geocoder]: no API key, no location permission. Tries the most precise query first,
- * then looser ones; answers are cached per query.
+ * Platform [Geocoder] lookup of a registration area, from the most specific query down to the
+ * country alone. Hits are memoised in SharedPreferences keyed by the lowercased query.
  */
 object SectorPlaceCoder {
 
-    private const val PREFS = "area_geocode_cache"
-    private const val TIMEOUT_MS = 6_000L
+    private const val CACHE_FILE = "area_geocode_cache"
+    private const val LOOKUP_TIMEOUT_MS = 6_000L
 
     suspend fun locate(context: Context, pincode: String?, city: String?, state: String?, country: String?): TerraTack? {
-        val app = context.applicationContext
-        for (query in queries(pincode, city, state, country)) {
-            cached(app, query)?.let { return it }
-            val pin = geocode(app, query) ?: continue
-            save(app, query, pin)
-            return pin
+        val appCtx = context.applicationContext
+        val candidates = candidateQueries(pincode, city, state, country)
+        var idx = 0
+        while (idx < candidates.size) {
+            val q = candidates[idx++]
+            readCache(appCtx, q)?.let { return it }
+            val hit = lookup(appCtx, q)
+            if (hit != null) {
+                writeCache(appCtx, q, hit)
+                return hit
+            }
         }
         return null
     }
 
-    private fun queries(pincode: String?, city: String?, state: String?, country: String?): List<String> {
-        fun join(vararg parts: String?) = parts.mapNotNull { it?.trim()?.takeIf(String::isNotEmpty) }.joinToString(", ")
-        return listOf(
-            join(pincode, city, state, country),
-            join(city, state, country),
-            join(pincode, country),
-            join(state, country),
-            join(country),
-        ).filter { it.isNotEmpty() }.distinct()
+    private fun candidateQueries(pincode: String?, city: String?, state: String?, country: String?): List<String> {
+        val combos = arrayOf(
+            arrayOf(pincode, city, state, country),
+            arrayOf(city, state, country),
+            arrayOf(pincode, country),
+            arrayOf(state, country),
+            arrayOf(country),
+        )
+        val result = LinkedHashSet<String>()
+        combos.forEach { parts ->
+            val joined = parts.asSequence()
+                .mapNotNull { it?.trim() }
+                .filter { it.isNotEmpty() }
+                .joinToString(", ")
+            if (joined.isNotEmpty()) result += joined
+        }
+        return result.toList()
     }
 
     /**
-     * One geocoder query, never throwing. The platform call itself can fail synchronously — on
-     * some OnePlus / OPPO builds (ColorOS 15+, Android 16) the system geocoder service throws a
-     * NullPointerException over Binder from `forwardGeocode`, which surfaces here as a plain
-     * exception from [Geocoder.getFromLocationName] — so every path treats a throw as "no answer".
+     * Single geocoder round, never throws: some vendor builds (OnePlus / OPPO, ColorOS 15+,
+     * Android 16) blow up with an NPE across Binder from forwardGeocode, so any throw means no hit.
      */
-    private suspend fun geocode(context: Context, query: String): TerraTack? {
-        if (!runCatching { Geocoder.isPresent() }.getOrDefault(false)) return null
-        val geocoder = runCatching { Geocoder(context, Locale.ENGLISH) }.getOrNull() ?: return null
-        val address: Address? = withTimeoutOrNull(TIMEOUT_MS) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                suspendCancellableCoroutine { cont ->
+    private suspend fun lookup(context: Context, query: String): TerraTack? {
+        val present = runCatching { Geocoder.isPresent() }.getOrElse { false }
+        if (!present) return null
+        val coder = runCatching { Geocoder(context, Locale.ENGLISH) }.getOrNull() ?: return null
+        val found: Address? = withTimeoutOrNull(LOOKUP_TIMEOUT_MS) {
+            when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> asyncLookup(coder, query)
+                else -> withContext(Dispatchers.IO) {
                     runCatching {
-                        geocoder.getFromLocationName(query, 1, object : Geocoder.GeocodeListener {
-                            override fun onGeocode(addresses: MutableList<Address>) {
-                                if (cont.isActive) cont.resume(addresses.firstOrNull())
-                            }
-
-                            override fun onError(errorMessage: String?) {
-                                if (cont.isActive) cont.resume(null)
-                            }
-                        })
-                    }.onFailure {
-                        if (cont.isActive) cont.resume(null)
-                    }
-                }
-            } else {
-                withContext(Dispatchers.IO) {
-                    @Suppress("DEPRECATION")
-                    runCatching { geocoder.getFromLocationName(query, 1)?.firstOrNull() }.getOrNull()
+                        @Suppress("DEPRECATION")
+                        coder.getFromLocationName(query, 1)?.firstOrNull()
+                    }.getOrNull()
                 }
             }
         }
         return runCatching {
-            address?.takeIf { it.hasLatitude() && it.hasLongitude() }?.let { TerraTack(it.latitude, it.longitude) }
+            if (found != null && found.hasLatitude() && found.hasLongitude()) TerraTack(found.latitude, found.longitude) else null
         }.getOrNull()
     }
 
-    private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private suspend fun asyncLookup(coder: Geocoder, query: String): Address? =
+        suspendCancellableCoroutine { cont ->
+            val finish: (Address?) -> Unit = { a -> if (cont.isActive) cont.resume(a) }
+            runCatching {
+                coder.getFromLocationName(query, 1, object : Geocoder.GeocodeListener {
+                    override fun onGeocode(addresses: MutableList<Address>) = finish(addresses.firstOrNull())
 
-    private fun cached(context: Context, query: String): TerraTack? {
-        val raw = prefs(context).getString(query.lowercase(Locale.ROOT), null) ?: return null
-        val parts = raw.split(",").mapNotNull { it.toDoubleOrNull() }
-        return if (parts.size == 2) TerraTack(parts[0], parts[1]) else null
+                    override fun onError(errorMessage: String?) = finish(null)
+                })
+            }.onFailure { finish(null) }
+        }
+
+    private fun cacheOf(context: Context) = context.getSharedPreferences(CACHE_FILE, Context.MODE_PRIVATE)
+
+    private fun readCache(context: Context, query: String): TerraTack? {
+        val stored = cacheOf(context).getString(query.lowercase(Locale.ROOT), null) ?: return null
+        val nums = stored.split(",").mapNotNull(String::toDoubleOrNull)
+        return nums.takeIf { it.size == 2 }?.let { TerraTack(it[0], it[1]) }
     }
 
-    private fun save(context: Context, query: String, pin: TerraTack) {
-        prefs(context).edit().putString(query.lowercase(Locale.ROOT), "${pin.lat},${pin.lng}").apply()
+    private fun writeCache(context: Context, query: String, pin: TerraTack) {
+        cacheOf(context).edit().putString(query.lowercase(Locale.ROOT), "${pin.lat},${pin.lng}").apply()
     }
 }

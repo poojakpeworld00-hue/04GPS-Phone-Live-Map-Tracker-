@@ -75,10 +75,14 @@ object MainPresetLaws {
         val heightDpMax: Int? = null,
         val navMode: Int? = null,
     ) {
-        /** How many constraints the rule states; the tie-breaker between matching rules. */
-        val specificity: Int = listOf(
-            packages.isNotEmpty(), manufacturers.isNotEmpty(), modelPrefix != null,
-            models.isNotEmpty(), devices.isNotEmpty(), products.isNotEmpty(),
+        /** Count of stated constraints; decides between several matching rules. */
+        val specificity: Int = booleanArrayOf(
+            packages.isNotEmpty(),
+            manufacturers.isNotEmpty(),
+            modelPrefix != null,
+            models.isNotEmpty(),
+            devices.isNotEmpty(),
+            products.isNotEmpty(),
             versionCodeMin != null || versionCodeMax != null,
             osVersionMin != null || osVersionMax != null || osVersionPrefix != null,
             sdkMin != null || sdkMax != null,
@@ -90,35 +94,43 @@ object MainPresetLaws {
         ).count { it }
 
         fun matches(fp: HomeThumbprint): Boolean {
-            if (packages.isNotEmpty() && fp.homePackage !in packages) return false
-            if (manufacturers.isNotEmpty() && fp.manufacturer !in manufacturers && fp.brand !in manufacturers) return false
-            if (modelPrefix != null && !fp.model.startsWith(modelPrefix, ignoreCase = true)) return false
-            if (models.isNotEmpty() && models.none { it.equals(fp.model, ignoreCase = true) }) return false
-            if (devices.isNotEmpty() && devices.none { it.equals(fp.device, ignoreCase = true) }) return false
-            if (products.isNotEmpty() && products.none { it.equals(fp.product, ignoreCase = true) }) return false
-            if (versionCodeMin != null && fp.homeVersionCode < versionCodeMin) return false
-            if (versionCodeMax != null && fp.homeVersionCode > versionCodeMax) return false
-            if (osVersionMin != null && fp.osVersionNumber < osVersionMin) return false
-            if (osVersionMax != null && fp.osVersionNumber > osVersionMax) return false
-            if (osVersionPrefix != null && !fp.osVersion.startsWith(osVersionPrefix, ignoreCase = true)) return false
-            if (sdkMin != null && fp.sdk < sdkMin) return false
-            if (sdkMax != null && fp.sdk > sdkMax) return false
-            if (swDpMin != null && fp.swDp < swDpMin) return false
-            if (swDpMax != null && fp.swDp > swDpMax) return false
-            if (densityMin != null && fp.densityDpi < densityMin) return false
-            if (densityMax != null && fp.densityDpi > densityMax) return false
-            if (widthDpMin != null && fp.widthDp < widthDpMin) return false
-            if (widthDpMax != null && fp.widthDp > widthDpMax) return false
-            if (heightDpMin != null && fp.heightDp < heightDpMin) return false
-            if (heightDpMax != null && fp.heightDp > heightDpMax) return false
-            if (navMode != null && fp.navMode != navMode) return false
-            return true
+            fun <T : Comparable<T>> bounded(value: T, low: T?, high: T?): Boolean =
+                (low == null || value >= low) && (high == null || value <= high)
+
+            fun Set<String>.accepts(value: String): Boolean =
+                isEmpty() || any { it.equals(value, ignoreCase = true) }
+
+            return when {
+                packages.isNotEmpty() && fp.homePackage !in packages -> false
+                manufacturers.isNotEmpty() && fp.manufacturer !in manufacturers && fp.brand !in manufacturers -> false
+                modelPrefix != null && !fp.model.startsWith(modelPrefix, ignoreCase = true) -> false
+                !models.accepts(fp.model) -> false
+                !devices.accepts(fp.device) -> false
+                !products.accepts(fp.product) -> false
+                !bounded(fp.homeVersionCode, versionCodeMin, versionCodeMax) -> false
+                (osVersionMin != null || osVersionMax != null) &&
+                    !bounded(fp.osVersionNumber, osVersionMin, osVersionMax) -> false
+                osVersionPrefix != null && !fp.osVersion.startsWith(osVersionPrefix, ignoreCase = true) -> false
+                !bounded(fp.sdk, sdkMin, sdkMax) -> false
+                !bounded(fp.swDp, swDpMin, swDpMax) -> false
+                !bounded(fp.densityDpi, densityMin, densityMax) -> false
+                !bounded(fp.widthDp, widthDpMin, widthDpMax) -> false
+                !bounded(fp.heightDp, heightDpMin, heightDpMax) -> false
+                navMode != null && fp.navMode != navMode -> false
+                else -> true
+            }
         }
     }
 
     class Table(val disabled: Boolean, val rules: List<Rule>) {
-        fun select(fp: HomeThumbprint): MainPreset? =
-            rules.filter { it.match.matches(fp) }.maxByOrNull { it.match.specificity }?.profile
+        fun select(fp: HomeThumbprint): MainPreset? {
+            var winner: Rule? = null
+            for (candidate in rules) {
+                if (!candidate.match.matches(fp)) continue
+                if (winner == null || candidate.match.specificity > winner.match.specificity) winner = candidate
+            }
+            return winner?.profile
+        }
     }
 
     const val KEY_DISABLED = "disabled"
@@ -148,61 +160,62 @@ object MainPresetLaws {
     const val KEY_HEIGHT_DP_MAX = "height_dp_max"
     const val KEY_NAV_MODE = "nav_mode"
 
-    /** Null when [raw] is blank or not a rules blob; a table with zero rules is returned as such. */
+    /** Null when [raw] is blank or unparsable; an empty rule list is still a table. */
     fun parse(raw: String, source: PresetFeed): Table? {
-        val text = raw.trim()
-        if (text.isEmpty()) return null
+        val text = raw.trim().takeUnless { it.isEmpty() } ?: return null
         return runCatching {
-            val (disabled, array) = when {
-                text.startsWith("[") -> false to JSONArray(text)
-                else -> JSONObject(text).let { it.optBoolean(KEY_DISABLED, false) to (it.optJSONArray(KEY_RULES) ?: JSONArray()) }
+            val wrapper: JSONObject? = if (text.startsWith("[")) null else JSONObject(text)
+            val entries = if (wrapper == null) JSONArray(text) else wrapper.optJSONArray(KEY_RULES) ?: JSONArray()
+            val off = wrapper?.optBoolean(KEY_DISABLED, false) ?: false
+            val collected = buildList {
+                for (index in 0 until entries.length()) {
+                    val entry = entries.optJSONObject(index) ?: continue
+                    val preset = entry.optJSONObject(KEY_PROFILE)?.let { MainPreset.fromJson(it, source = source) } ?: continue
+                    add(Rule(readMatch(entry.optJSONObject(KEY_MATCH) ?: JSONObject()), preset))
+                }
             }
-            val rules = (0 until array.length()).mapNotNull { i ->
-                val o = array.optJSONObject(i) ?: return@mapNotNull null
-                val profile = o.optJSONObject(KEY_PROFILE)?.let { MainPreset.fromJson(it, source = source) }
-                    ?: return@mapNotNull null
-                Rule(match(o.optJSONObject(KEY_MATCH) ?: JSONObject()), profile)
-            }
-            Table(disabled, rules)
+            Table(off, collected)
         }.getOrNull()
     }
 
-    private fun match(o: JSONObject) = Match(
-        packages = strings(o, KEY_PACKAGE),
-        manufacturers = strings(o, KEY_MANUFACTURER).map { it.lowercase() }.toSet(),
-        modelPrefix = o.optString(KEY_MODEL_PREFIX).trim().takeIf { it.isNotEmpty() },
-        versionCodeMin = long(o, KEY_VERSION_CODE_MIN),
-        versionCodeMax = long(o, KEY_VERSION_CODE_MAX),
-        sdkMin = int(o, KEY_SDK_MIN),
-        sdkMax = int(o, KEY_SDK_MAX),
-        swDpMin = int(o, KEY_SW_DP_MIN),
-        swDpMax = int(o, KEY_SW_DP_MAX),
-        models = strings(o, KEY_MODEL),
-        devices = strings(o, KEY_DEVICE),
-        products = strings(o, KEY_PRODUCT),
-        osVersionMin = long(o, KEY_OS_VERSION_MIN),
-        osVersionMax = long(o, KEY_OS_VERSION_MAX),
-        osVersionPrefix = o.optString(KEY_OS_VERSION_PREFIX).trim().takeIf { it.isNotEmpty() },
-        densityMin = int(o, KEY_DENSITY_MIN),
-        densityMax = int(o, KEY_DENSITY_MAX),
-        widthDpMin = int(o, KEY_WIDTH_DP_MIN),
-        widthDpMax = int(o, KEY_WIDTH_DP_MAX),
-        heightDpMin = int(o, KEY_HEIGHT_DP_MIN),
-        heightDpMax = int(o, KEY_HEIGHT_DP_MAX),
-        navMode = int(o, KEY_NAV_MODE),
+    private fun readMatch(node: JSONObject) = Match(
+        packages = stringSet(node, KEY_PACKAGE),
+        manufacturers = stringSet(node, KEY_MANUFACTURER).mapTo(LinkedHashSet()) { it.lowercase() },
+        modelPrefix = trimmedOrNull(node, KEY_MODEL_PREFIX),
+        versionCodeMin = optionalLong(node, KEY_VERSION_CODE_MIN),
+        versionCodeMax = optionalLong(node, KEY_VERSION_CODE_MAX),
+        sdkMin = optionalInt(node, KEY_SDK_MIN),
+        sdkMax = optionalInt(node, KEY_SDK_MAX),
+        swDpMin = optionalInt(node, KEY_SW_DP_MIN),
+        swDpMax = optionalInt(node, KEY_SW_DP_MAX),
+        models = stringSet(node, KEY_MODEL),
+        devices = stringSet(node, KEY_DEVICE),
+        products = stringSet(node, KEY_PRODUCT),
+        osVersionMin = optionalLong(node, KEY_OS_VERSION_MIN),
+        osVersionMax = optionalLong(node, KEY_OS_VERSION_MAX),
+        osVersionPrefix = trimmedOrNull(node, KEY_OS_VERSION_PREFIX),
+        densityMin = optionalInt(node, KEY_DENSITY_MIN),
+        densityMax = optionalInt(node, KEY_DENSITY_MAX),
+        widthDpMin = optionalInt(node, KEY_WIDTH_DP_MIN),
+        widthDpMax = optionalInt(node, KEY_WIDTH_DP_MAX),
+        heightDpMin = optionalInt(node, KEY_HEIGHT_DP_MIN),
+        heightDpMax = optionalInt(node, KEY_HEIGHT_DP_MAX),
+        navMode = optionalInt(node, KEY_NAV_MODE),
     )
 
-    /** A string or an array of strings; anything else is "not stated". */
-    private fun strings(o: JSONObject, key: String): Set<String> {
-        val array = o.optJSONArray(key)
-        if (array != null) {
-            return (0 until array.length()).mapNotNull { array.optString(it).trim().takeIf { s -> s.isNotEmpty() } }.toSet()
-        }
-        return o.optString(key).trim().takeIf { it.isNotEmpty() }?.let { setOf(it) } ?: emptySet()
+    private fun trimmedOrNull(node: JSONObject, key: String): String? =
+        node.optString(key).trim().takeIf { it.isNotEmpty() }
+
+    /** Accepts a single string or an array of strings; blanks are dropped. */
+    private fun stringSet(node: JSONObject, key: String): Set<String> {
+        val raw = node.optJSONArray(key)?.let { arr -> List(arr.length()) { arr.optString(it) } }
+            ?: listOf(node.optString(key))
+        return raw.map { it.trim() }.filterTo(LinkedHashSet()) { it.isNotEmpty() }
     }
 
-    private fun long(o: JSONObject, key: String): Long? = if (o.has(key) && !o.isNull(key)) o.optLong(key) else null
-    private fun int(o: JSONObject, key: String): Int? = if (o.has(key) && !o.isNull(key)) o.optInt(key) else null
+    private fun stated(node: JSONObject, key: String) = node.has(key) && !node.isNull(key)
+    private fun optionalLong(node: JSONObject, key: String): Long? = node.optLong(key).takeIf { stated(node, key) }
+    private fun optionalInt(node: JSONObject, key: String): Int? = node.optInt(key).takeIf { stated(node, key) }
 
     /** Every launcher package the built-in table names — used to pick the OEM home among several installed. */
     val knownLaunchers: Set<String> by lazy {

@@ -12,223 +12,176 @@ import com.find.phone.gps.live.location.tracker.consent.ConsentDrawerModal
 import com.find.phone.gps.live.location.tracker.screens.policy.DriftToolbox
 
 /**
- * Everything in the home shell that needs an **Activity** rather than a View.
+ * Activity-scoped helpers for the home shell: result launchers (which must be registered before
+ * the host is STARTED), the Remote Config driven permission sheet and the Play in-app update.
+ * Created as a field of the host and reached through [MainCasingHolder].
  *
- * Result launchers must be registered before the Activity is STARTED, and a fragment hosted in
- * the launcher's side panel is committed long after that — so permission round-trips and the
- * Play update check live here, owned by the host Activity as a field initializer, reached
- * through [MainCasingHolder].
- *
- * Two-phase on purpose: [onHostCreated] registers (pre-STARTED, cheap, invisible) and
- * [beginFirstRunPriming] prompts (visible, deferred until the shell is actually on screen —
- * in the launcher that is when the panel opens, not when it is committed off-screen).
- *
- * Trimmed from the reference: the caller-ID specific pieces (full-screen-intent priming, the
- * one-time contact upload) are gone; the RC-driven permission sheet and in-app update stay.
+ * Registration happens in [onHostCreated]; visible prompting waits for [beginFirstRunPriming].
  */
 class MainCasingDirector(private val host: MainCasingHolder) {
 
     private val activity get() = host.hostActivity
 
-    /** The sheet came due while the shell was off screen; flushed when it is back. */
-    private var permissionSheetPending = false
+    private var registered = false
+    private var primed = false
+    private var shellHidden = false
+    private var sheetDeferred = false
+    private var selfRetired = false
+    private var userDismissedSheet = false
+    private var polling = false
 
-    /** The shell is on its way off screen (the launcher's panel is closing). */
-    private var shellOffScreen = false
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val pollHandler = Handler(Looper.getMainLooper())
 
-    /** We took the sheet down ourselves, so its completion is not the user dismissing it. */
-    private var sheetTakenDownByUs = false
-
-    /** True once the first-run permission sheet has been dismissed by the user. */
-    private var permissionSheetDismissed = false
-
-    /** Guards [beginFirstRunPriming] so a re-opened panel doesn't prime twice per session. */
-    private var primingStarted = false
-
-    /** Whether [onHostCreated] ran (the launcher skips it while its first run is unfinished). */
-    private var hostCreated = false
-
-    private val handler = Handler(Looper.getMainLooper())
-
-    // ─────────────────────────── Result launchers ───────────────────────────
-
-    /** Returns from the overlay Settings page. */
-    private val overlayLauncher = activity.registerForActivityResult(
+    private val overlaySettingsResult = activity.registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
-        haltOverlayGrantPoll()
+        stopGrantPolling()
     }
 
-    // ─────────────────────────── Host lifecycle ───────────────────────────
-
-    /** Registration only — must run pre-STARTED, and must *not* show anything. */
-    fun onHostCreated() {
-        hostCreated = true
-        InCoreRefreshBook.enlistLauncher(activity)
-        perhapsCheckForUpdate()
-    }
-
-    /**
-     * The visible first-run prompts (the RC-gated permission sheet). Call this when the shell is
-     * actually on screen: CoreHubActivity from `initView`, the launcher once the panel slid in.
-     */
-    fun beginFirstRunPriming() {
-        shellOffScreen = false
-        if (primingStarted) {
-            if (permissionSheetPending) perhapsAutoShowPermissionSheet()
-            return
+    private val grantTick: Runnable = object : Runnable {
+        override fun run() {
+            when {
+                activity.isDestroyed -> polling = false
+                DriftToolbox.isGranted(activity) -> {
+                    polling = false
+                    host.bringHostToFront()
+                }
+                else -> pollHandler.postDelayed(this, POLL_INTERVAL_MS)
+            }
         }
-        primingStarted = true
-        perhapsAutoShowPermissionSheet()
     }
 
-    /** Re-evaluate after returning from a permission/Settings round trip. */
+    // ── host lifecycle ──
+
+    fun onHostCreated() {
+        registered = true
+        InCoreRefreshBook.enlistLauncher(activity)
+        maybeOfferUpdate()
+    }
+
+    fun beginFirstRunPriming() {
+        shellHidden = false
+        when {
+            !primed -> {
+                primed = true
+                tryAutoSheet()
+            }
+            sheetDeferred -> tryAutoSheet()
+        }
+    }
+
     fun onHostResume() {
-        // Resume an interrupted update (IMMEDIATE re-prompts; FLEXIBLE completes a download).
         InCoreRefreshBook.resumeUpdate()
-        // The launcher home may not be re-created for days; re-check on resume (throttled).
-        perhapsCheckForUpdate()
+        maybeOfferUpdate()
     }
 
     fun onHostDestroy() {
-        hostCreated = false
-        haltOverlayGrantPoll()
-        handler.removeCallbacksAndMessages(null)
-        // Owner-scoped: a late teardown here must not wipe the other host's registration.
+        registered = false
+        stopGrantPolling()
+        mainHandler.removeCallbacksAndMessages(null)
         InCoreRefreshBook.destroy(activity)
     }
 
-    // ─────────────────────────── In-app update ───────────────────────────
+    // ── in-app update ──
 
-    /**
-     * Triggers the Play in-app update flow when Remote Config enables it.
-     *  - `In_App_Update_Show`       → master switch for offering an update.
-     *  - `In_App_Update_Force_Show` → true = IMMEDIATE (mandatory), false = FLEXIBLE (optional).
-     */
-    private fun perhapsCheckForUpdate() {
-        if (!hostCreated) return
-        val pref = SpotsLocker.getInstance(activity)
-        if (!pref.getBoolean("In_App_Update_Show")) return
+    /** `In_App_Update_Show` gates the offer; `In_App_Update_Force_Show` picks IMMEDIATE over FLEXIBLE. */
+    private fun maybeOfferUpdate() {
+        if (!registered) return
+        val store = SpotsLocker.getInstance(activity)
+        if (!store.getBoolean("In_App_Update_Show")) return
 
-        val isForceUpdate = pref.getBoolean("In_App_Update_Force_Show")
-
-        // Throttled because this also runs on resume and the launcher home resumes on every
-        // HOME press. A FORCE update is exempt — being unskippable is the whole point.
-        if (!isForceUpdate) {
-            val age = System.currentTimeMillis() - pref.getLong(LAST_UPDATE_CHECK_KEY, 0L)
-            if (age in 0 until UPDATE_CHECK_WINDOW_MS) return
-            pref.putLong(LAST_UPDATE_CHECK_KEY, System.currentTimeMillis())
-        }
+        val mandatory = store.getBoolean("In_App_Update_Force_Show")
+        if (!mandatory && recentlyChecked(store)) return
 
         InCoreRefreshBook.init(
             activity = activity,
-            isForceUpdate = isForceUpdate,
-            callback = object : InCoreRefreshObserver {
-                override fun onUpdateSuccess() {}
-                override fun onUpdateCanceled() {}
-                override fun onUpdateFailed() {}
-                override fun onUpdateDownloaded() {
-                    host.showUpdateReadyPrompt()
-                }
-            }
+            isForceUpdate = mandatory,
+            callback = updateCallback(),
         )
     }
 
-    // ─────────────────────────── Permission sheet ───────────────────────────
+    /** Throttle for optional updates; stamps the time when a new check is allowed. */
+    private fun recentlyChecked(store: SpotsLocker): Boolean {
+        val elapsed = System.currentTimeMillis() - store.getLong(UPDATE_STAMP_KEY, 0L)
+        if (elapsed in 0 until UPDATE_FRESH_MS) return true
+        store.putLong(UPDATE_STAMP_KEY, System.currentTimeMillis())
+        return false
+    }
 
-    /** Shows the permission priming bottom sheet ([ConsentDrawerModal]). */
+    private fun updateCallback() = object : InCoreRefreshObserver {
+        override fun onUpdateSuccess() {}
+        override fun onUpdateCanceled() {}
+        override fun onUpdateFailed() {}
+        override fun onUpdateDownloaded() {
+            host.showUpdateReadyPrompt()
+        }
+    }
+
+    // ── permission sheet ──
+
     fun presentPermissionSheet() {
         ConsentDrawerModal.show(activity) {
-            // Only a dismissal the USER performed counts; when we closed the sheet because the
-            // shell went away, the ask is deferred, not answered.
-            if (sheetTakenDownByUs) sheetTakenDownByUs = false else permissionSheetDismissed = true
-        }
-    }
-
-    /**
-     * The shell is going off screen — on the launcher, the panel is closing. Anything anchored
-     * to the Activity would otherwise be left over the launcher's home grid.
-     */
-    fun onShellHidden() {
-        shellOffScreen = true
-        if (!ConsentDrawerModal.isShowing(activity)) return
-        sheetTakenDownByUs = true
-        ConsentDrawerModal.retireIfShowing(activity)
-        permissionSheetPending = true
-    }
-
-    /** Auto-shows the permission sheet when pending perms + the RC frequency gate allow. */
-    private fun perhapsAutoShowPermissionSheet() {
-        if (shellOffScreen || !host.isShellOnScreen) {
-            permissionSheetPending = true
-            return
-        }
-        permissionSheetPending = false
-        if (ConsentDrawerModal.mustAutoShow(activity)) presentPermissionSheet()
-    }
-
-    /** True when the sheet was dismissed at least once and something is still missing. */
-    fun mustShowPermissionHint(): Boolean =
-        permissionSheetDismissed && ConsentDrawerModal.hasPending(activity)
-
-    // ─────────────────────────── Overlay permission ───────────────────────────
-
-    /**
-     * Opens the system "display over other apps" page IN-TASK (for-result) and starts the
-     * in-activity grant poll to catch the toggle and auto-return. Only reachable when Remote
-     * Config lists the overlay row in the permission sheet.
-     */
-    fun beginOverlayPermissionFlow() {
-        if (!DriftToolbox.isOfferable(activity) || DriftToolbox.isGranted(activity)) return
-
-        // We open system Settings ourselves — the programmatic return must NOT trigger an
-        // App Open ad. One-shot skip, consumed on next foreground.
-        CoreOpenSpotBook.skipNextAppOpenAd = true
-
-        val launched = runCatching {
-            overlayLauncher.launch(DriftToolbox.composeOverlayIntent(activity.packageName))
-        }.isSuccess
-        if (!launched) return
-
-        DriftToolbox.presentGuide(activity)
-        beginOverlayGrantPoll()
-    }
-
-    private val overlayGrantPollHandler = Handler(Looper.getMainLooper())
-    private var overlayGrantPolling = false
-    private val overlayGrantPoll = object : Runnable {
-        override fun run() {
-            if (activity.isDestroyed) { overlayGrantPolling = false; return }
-            if (DriftToolbox.isGranted(activity)) {
-                overlayGrantPolling = false
-                host.bringHostToFront()
-            } else {
-                overlayGrantPollHandler.postDelayed(this, GRANT_POLL_MS)
+            // A close we caused ourselves defers the ask instead of counting as an answer.
+            when {
+                selfRetired -> selfRetired = false
+                else -> userDismissedSheet = true
             }
         }
     }
 
-    private fun beginOverlayGrantPoll() {
-        if (overlayGrantPolling) return
-        overlayGrantPolling = true
-        overlayGrantPollHandler.removeCallbacks(overlayGrantPoll)
-        overlayGrantPollHandler.postDelayed(overlayGrantPoll, GRANT_POLL_MS)
+    fun onShellHidden() {
+        shellHidden = true
+        if (ConsentDrawerModal.isShowing(activity)) {
+            selfRetired = true
+            ConsentDrawerModal.retireIfShowing(activity)
+            sheetDeferred = true
+        }
     }
 
-    private fun haltOverlayGrantPoll() {
-        overlayGrantPolling = false
-        overlayGrantPollHandler.removeCallbacks(overlayGrantPoll)
+    private fun tryAutoSheet() {
+        val visible = !shellHidden && host.isShellOnScreen
+        sheetDeferred = !visible
+        if (!visible) return
+        if (ConsentDrawerModal.mustAutoShow(activity)) presentPermissionSheet()
+    }
+
+    fun mustShowPermissionHint(): Boolean =
+        userDismissedSheet && ConsentDrawerModal.hasPending(activity)
+
+    // ── overlay permission ──
+
+    fun beginOverlayPermissionFlow() {
+        val canAsk = DriftToolbox.isOfferable(activity) && !DriftToolbox.isGranted(activity)
+        if (!canAsk) return
+
+        // We open Settings ourselves: skip the App Open ad once on the way back.
+        CoreOpenSpotBook.skipNextAppOpenAd = true
+
+        runCatching {
+            overlaySettingsResult.launch(DriftToolbox.composeOverlayIntent(activity.packageName))
+        }.onSuccess {
+            DriftToolbox.presentGuide(activity)
+            startGrantPolling()
+        }
+    }
+
+    private fun startGrantPolling() {
+        if (polling) return
+        polling = true
+        pollHandler.removeCallbacks(grantTick)
+        pollHandler.postDelayed(grantTick, POLL_INTERVAL_MS)
+    }
+
+    private fun stopGrantPolling() {
+        polling = false
+        pollHandler.removeCallbacks(grantTick)
     }
 
     companion object {
-        /** Grant-poll cadence while the user is on a system Settings page. */
-        private const val GRANT_POLL_MS = 350L
-
-        /** Pref holding when the Play update check last ran. */
-        private const val LAST_UPDATE_CHECK_KEY = "last_inapp_update_check_at"
-
-        /** How long a Play update check stays fresh before a resume may run another. */
-        private const val UPDATE_CHECK_WINDOW_MS = 6 * 60 * 60 * 1000L
+        private const val POLL_INTERVAL_MS = 350L
+        private const val UPDATE_STAMP_KEY = "last_inapp_update_check_at"
+        private const val UPDATE_FRESH_MS = 6 * 60 * 60 * 1000L
 
         /** Flags for the in-task reorder every [MainCasingHolder.bringHostToFront] uses. */
         const val REORDER_FLAGS =

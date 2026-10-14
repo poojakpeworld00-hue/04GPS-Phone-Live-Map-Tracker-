@@ -1,73 +1,94 @@
 package com.find.phone.gps.live.location.tracker.memo
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.find.phone.gps.live.location.tracker.memo.grant.MemoConsent
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.util.Calendar
 
-/** The reminders list, kept on the device only (SharedPreferences, JSON). */
+/** Device-local reminder storage: one JSON array in SharedPreferences. */
 object MemoShelf {
 
-    private const val PREFS = "reminder_prefs"
-    private const val KEY = "reminders"
-    private const val KEY_SEEDED = "reminder_defaults_seeded"
+    private const val FILE = "reminder_prefs"
+    private const val LIST_KEY = "reminders"
+    private const val SEEDED_KEY = "reminder_defaults_seeded"
+    private const val SAMPLE_HOUR = 9
 
-    fun load(context: Context): MutableList<MemoElement> {
-        val json = prefs(context).getString(KEY, null)
-        if (json.isNullOrEmpty()) return mutableListOf()
-        val type = object : TypeToken<MutableList<MemoElement>>() {}.type
-        return runCatching { Gson().fromJson<MutableList<MemoElement>>(json, type) }.getOrNull()
-            ?.filter { it.title != null }?.toMutableList() ?: mutableListOf()
+    private fun store(context: Context): SharedPreferences =
+        context.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+
+    private fun persist(context: Context, items: List<MemoElement>) {
+        val encoded = Gson().toJson(items)
+        store(context).edit().putString(LIST_KEY, encoded).apply()
     }
 
-    fun get(context: Context, id: Long): MemoElement? = load(context).firstOrNull { it.id == id }
+    fun load(context: Context): MutableList<MemoElement> {
+        val raw = store(context).getString(LIST_KEY, null)
+        if (raw == null || raw.isEmpty()) return ArrayList()
+        val listType = object : TypeToken<MutableList<MemoElement>>() {}.type
+        val decoded: List<MemoElement>? = runCatching { Gson().fromJson<MutableList<MemoElement>>(raw, listType) }.getOrNull()
+        val result = ArrayList<MemoElement>()
+        decoded?.forEach { if (it.title != null) result.add(it) }
+        return result
+    }
 
-    /** Inserts or replaces by id. */
+    fun get(context: Context, id: Long): MemoElement? = load(context).find { it.id == id }
+
     fun upsert(context: Context, item: MemoElement) {
-        val list = load(context)
-        val i = list.indexOfFirst { it.id == item.id }
-        if (i >= 0) list[i] = item else list.add(item)
-        save(context, list)
+        val items = load(context)
+        val pos = items.indexOfFirst { it.id == item.id }
+        when {
+            pos < 0 -> items.add(item)
+            else -> items[pos] = item
+        }
+        persist(context, items)
     }
 
     fun remove(context: Context, id: Long) {
-        val list = load(context)
-        if (list.removeAll { it.id == id }) save(context, list)
+        val items = load(context)
+        val changed = items.removeAll { it.id == id }
+        if (changed) persist(context, items)
     }
 
-    /** Reminders still waiting to fire: the drawer badge. */
-    fun activeCount(context: Context): Int = load(context).count { it.isActive }
+    fun activeCount(context: Context): Int = load(context).count(MemoElement::isActive)
 
-    private fun save(context: Context, list: List<MemoElement>) {
-        prefs(context).edit().putString(KEY, Gson().toJson(list)).apply()
+    private fun sampleTime(daysAhead: Int): Long {
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.DAY_OF_MONTH, maxOf(daysAhead, 0))
+        cal.set(Calendar.HOUR_OF_DAY, SAMPLE_HOUR)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return cal.timeInMillis
     }
-
-    private fun prefs(context: Context) =
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     /**
-     * Seeds `default_config_list` once, the first time reminders are usable, when
-     * `is_default_config` is on and the list is empty. Samples are switched off, so nothing
-     * fires until the user opens one and saves it.
+     * One-time seeding of `default_config_list` (when `is_default_config` is on and storage is
+     * empty). Seeds are disabled so nothing fires until the user saves one.
      */
     fun plantDefaultsIfNeeded(context: Context) {
-        val prefs = prefs(context)
-        if (prefs.getBoolean(KEY_SEEDED, false)) return
-        val cfg = MemoProfile.get(context)
-        if (!cfg.isDefaultConfig || !MemoConsent.isAllowed(context)) return
+        val sp = store(context)
+        if (sp.getBoolean(SEEDED_KEY, false)) return
+        val options = MemoProfile.get(context)
+        if (!options.isDefaultConfig) return
+        if (!MemoConsent.isAllowed(context)) return
         if (load(context).isEmpty()) {
-            val now = System.currentTimeMillis()
-            val seeded = cfg.defaultConfigList.filter { it.title.isNotBlank() }.mapIndexed { i, spec ->
-                val at = Calendar.getInstance().apply {
-                    add(Calendar.DAY_OF_MONTH, spec.daysAhead.coerceAtLeast(0))
-                    set(Calendar.HOUR_OF_DAY, 9); set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-                }.timeInMillis
-                MemoElement(id = now + i, title = spec.title.trim(), note = spec.note.trim(), dateTime = at, enabled = false)
-            }
-            if (seeded.isNotEmpty()) save(context, seeded)
+            val base = System.currentTimeMillis()
+            val samples = ArrayList<MemoElement>()
+            options.defaultConfigList.asSequence()
+                .filter { it.title.isNotBlank() }
+                .forEachIndexed { idx, spec ->
+                    samples += MemoElement(
+                        id = base + idx,
+                        title = spec.title.trim(),
+                        note = spec.note.trim(),
+                        dateTime = sampleTime(spec.daysAhead),
+                        enabled = false,
+                    )
+                }
+            if (samples.isNotEmpty()) persist(context, samples)
         }
-        prefs.edit().putBoolean(KEY_SEEDED, true).apply()
+        sp.edit().putBoolean(SEEDED_KEY, true).apply()
     }
 }

@@ -31,24 +31,32 @@ object Repeat {
     const val DAILY = "daily"
     const val WEEKDAYS = "weekdays"
 
+    private const val LOOKAHEAD_DAYS = 8
+
+    private fun isWorkday(cal: Calendar): Boolean = when (cal.get(Calendar.DAY_OF_WEEK)) {
+        Calendar.SATURDAY, Calendar.SUNDAY -> false
+        else -> true
+    }
+
     /**
-     * The first time after [after] that a [repeat] reminder picked for [base] falls on: the same
-     * hour and minute, on the next day (daily) or next Monday–Friday (weekdays). Null for once.
+     * Next fire moment strictly after [after] at the hour/minute chosen in [base]: any day for
+     * daily, Monday to Friday for weekdays. One-off reminders yield null.
      */
     fun nextAfter(repeat: String, base: Long, after: Long): Long? {
-        if (repeat != DAILY && repeat != WEEKDAYS) return null
-        val pick = Calendar.getInstance().apply { timeInMillis = base }
-        val c = Calendar.getInstance().apply {
-            timeInMillis = after
-            set(Calendar.HOUR_OF_DAY, pick.get(Calendar.HOUR_OF_DAY))
-            set(Calendar.MINUTE, pick.get(Calendar.MINUTE))
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        repeat(8) {
-            val weekday = c.get(Calendar.DAY_OF_WEEK) !in setOf(Calendar.SATURDAY, Calendar.SUNDAY)
-            if (c.timeInMillis > after && (repeat == DAILY || weekday)) return c.timeInMillis
-            c.add(Calendar.DAY_OF_MONTH, 1)
+        val everyDay = repeat == DAILY
+        if (!everyDay && repeat != WEEKDAYS) return null
+        val chosen = Calendar.getInstance()
+        chosen.timeInMillis = base
+        val probe = Calendar.getInstance()
+        probe.timeInMillis = after
+        probe.set(Calendar.HOUR_OF_DAY, chosen.get(Calendar.HOUR_OF_DAY))
+        probe.set(Calendar.MINUTE, chosen.get(Calendar.MINUTE))
+        probe.set(Calendar.SECOND, 0)
+        probe.set(Calendar.MILLISECOND, 0)
+        for (step in 0 until LOOKAHEAD_DAYS) {
+            val t = probe.timeInMillis
+            if (t > after && (everyDay || isWorkday(probe))) return t
+            probe.add(Calendar.DAY_OF_MONTH, 1)
         }
         return null
     }

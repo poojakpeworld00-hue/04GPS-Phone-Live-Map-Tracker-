@@ -26,6 +26,9 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.BonusProfile
 import com.find.phone.gps.live.location.tracker.monetize.logic.BonusPause
 import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordAdEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordAdLoadError
+import com.find.phone.gps.live.location.tracker.foundation.NavPressTracker
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverStandard
 import com.find.phone.gps.live.location.tracker.databinding.DlgRewardRetryBinding
 import com.find.phone.gps.live.location.tracker.databinding.DlgRewardWaitBinding
@@ -88,6 +91,7 @@ class BonusTeaser {
             val app = context.applicationContext
             isLoading = true
             Log.d(TAG, "Preloading…")
+            app.recordAdEvent("rewarded", "req")
 
             RewardedAd.load(
                 app,
@@ -99,6 +103,7 @@ class BonusTeaser {
                         isLoading = false
                         BonusPause.reset(app)
                         Log.d(TAG, "Preloaded OK")
+                        app.recordAdEvent("rewarded", "loaded")
                         flushWaiting()
                     }
 
@@ -106,6 +111,7 @@ class BonusTeaser {
                         loadedAd = null
                         isLoading = false
                         Log.e(TAG, "Preload failed (${error.code}): ${error.message}")
+                        app.recordAdLoadError("rewarded", error.code)
                         if (error.code in NO_FILL_CODES) {
                             app.recordKeyEvent("reward_nofill")
                             BonusPause.start(app)
@@ -212,13 +218,21 @@ class BonusTeaser {
         var earned = false
 
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+            override fun onAdShowedFullScreenContent() {
+                NavPressTracker.fullScreenAdShowing = true
+                runCatching { activity.recordAdEvent("rewarded", "show") }
+            }
+
             override fun onAdDismissedFullScreenContent() {
+                NavPressTracker.fullScreenAdShowing = false
+                runCatching { activity.recordAdEvent("rewarded", "close") }
                 Log.d(TAG, "Dismissed, earned=$earned")
                 preload(activity)
                 onDone(if (earned) Result.EARNED else Result.NOT_EARNED)
             }
 
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                NavPressTracker.fullScreenAdShowing = false
                 Log.e(TAG, "Show failed: ${error.message} — showing DirectLink fallback")
                 preload(activity)
                 presentDirectLinkFallback(activity) { onDone(Result.EARNED) }

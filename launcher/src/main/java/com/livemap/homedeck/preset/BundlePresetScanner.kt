@@ -118,44 +118,58 @@ object BundlePresetScanner {
     class ApkFacts(val numbers: MainPreset.Numbers?, val sources: List<String>)
 
     /**
-     * Grid numbers from, in order: the Launcher3 `device_profiles.xml`, the generic name-based
-     * reader over the APK's resource index, and the console probes as an override. Each fills
-     * only what the previous left null.
+     * Reads the grid from the APK: Launcher3 `device_profiles.xml` first, then the generic
+     * resource-name reader, then the console probes as an override; each only fills gaps.
      */
     fun read(context: Context, fp: HomeThumbprint, probesJson: String): ApkFacts? {
-        if (fp.homePackage.isEmpty() || fp.homePackage == context.packageName) return null
-        val pm = context.packageManager
-        val resources = runCatching { pm.getResourcesForApplication(fp.homePackage) }.getOrElse { return null }
-        val apkPath = runCatching { pm.getApplicationInfo(fp.homePackage, 0).publicSourceDir }.getOrNull()
-        val index = apkPath?.let { runCatching { BundleResLedger.read(it) }.getOrNull() }
-        val sources = ArrayList<String>()
+        val target = fp.homePackage
+        if (target.isEmpty() || target == context.packageName) return null
+        val packages = context.packageManager
+        val apkRes = runCatching { packages.getResourcesForApplication(target) }.getOrElse { return null }
+        val ledger = runCatching { packages.getApplicationInfo(target, 0).publicSourceDir }.getOrNull()
+            ?.let { path -> runCatching { BundleResLedger.read(path) }.getOrNull() }
+        val contributors = ArrayList<String>()
+        var merged = MainPreset.Numbers()
 
-        var numbers = MainPreset.Numbers()
-        runCatching { pullLauncher3(context, resources, fp.homePackage) }
+        val fromProfiles = runCatching { readDeviceProfiles(context, apkRes, target) }
             .onFailure { Timber.d(it, "BundlePresetScanner: device_profiles unreadable for ${fp.homePackage}") }
-            .getOrNull()?.let { n -> numbers = n; sources.add("device_profiles") }
-        if (index != null) {
-            runCatching { CommonLatticeScanner.read(resources, fp.homePackage, index) }
-                .onFailure { Timber.d(it, "BundlePresetScanner: generic read failed for ${fp.homePackage}") }
-                .getOrNull()?.let { g -> if (!g.isEmpty) { numbers = numbers.fill(g); sources.add("generic") } }
+            .getOrNull()
+        if (fromProfiles != null) {
+            merged = fromProfiles
+            contributors.add("device_profiles")
         }
-        runCatching { pullProbes(context, resources, fp.homePackage, probesJson) }
-            .onFailure { Timber.d(it, "BundlePresetScanner: probes failed for ${fp.homePackage}") }
-            .getOrNull()?.let { p -> if (!p.isEmpty) { numbers = p.fill(numbers); sources.add("probes") } }
 
-        return ApkFacts(numbers.takeIf { !it.isEmpty }, sources)
+        if (ledger != null) {
+            val generic = runCatching { CommonLatticeScanner.read(apkRes, target, ledger) }
+                .onFailure { Timber.d(it, "BundlePresetScanner: generic read failed for ${fp.homePackage}") }
+                .getOrNull()
+            if (generic != null && !generic.isEmpty) {
+                merged = merged.fill(generic)
+                contributors.add("generic")
+            }
+        }
+
+        val probed = runCatching { readProbes(context, apkRes, target, probesJson) }
+            .onFailure { Timber.d(it, "BundlePresetScanner: probes failed for ${fp.homePackage}") }
+            .getOrNull()
+        if (probed != null && !probed.isEmpty) {
+            merged = probed.fill(merged)
+            contributors.add("probes")
+        }
+
+        return ApkFacts(if (merged.isEmpty) null else merged, contributors)
+    }
+
+    /**
+     * The mode [value] stands for, per the probe entry's own table; null when the entry does not
+     * name that number. Pure, so an OEM's numbering is unit-testable without its device.
+     */
+    fun drawerModeOf(value: Int, values: JSONObject?): SliderWay? {
+        val label = values?.optString(value.toString())?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        return SliderWay.entries.firstOrNull { it.name.equals(label, ignoreCase = true) }
     }
 
     // ---- Launcher3 ---------------------------------------------------------------------------
-
-    private class GridOption(
-        val cols: Int,
-        val rows: Int,
-        val hotseat: Int?,
-        val allAppsCols: Int?,
-        val deviceCategory: String?,
-        val displays: MutableList<DisplayOption> = mutableListOf(),
-    )
 
     private class DisplayOption(
         val minWidthDps: Float,
@@ -167,167 +181,181 @@ object BundlePresetScanner {
         val hotseatIconSize: Float?,
     )
 
-    private fun pullLauncher3(context: Context, resources: Resources, packageName: String): MainPreset.Numbers? {
-        val id = resources.getIdentifier(DEVICE_PROFILES, "xml", packageName)
-        if (id == 0) return null
-        val parser = resources.getXml(id)
-        val options = try {
-            decodeGridOptions(parser)
-        } finally {
-            parser.close()
+    private class GridOption(
+        val cols: Int,
+        val rows: Int,
+        val hotseat: Int?,
+        val allAppsCols: Int?,
+        val deviceCategory: String?,
+        val displays: MutableList<DisplayOption> = mutableListOf(),
+    )
+
+    private fun iconDpOrNull(raw: Float?): Int? = raw?.toInt()?.takeIf { it in 24..120 }
+
+    private fun readDeviceProfiles(context: Context, apkRes: Resources, packageName: String): MainPreset.Numbers? {
+        val xmlId = apkRes.getIdentifier(DEVICE_PROFILES, "xml", packageName)
+        if (xmlId == 0) return null
+        val grids = apkRes.getXml(xmlId).let { xml ->
+            try {
+                parseGridOptions(xml)
+            } finally {
+                xml.close()
+            }
         }
-        if (options.isEmpty()) return null
+        if (grids.isEmpty()) return null
 
-        val metrics = context.resources.displayMetrics
-        val widthDp = minOf(metrics.widthPixels, metrics.heightPixels) / metrics.density
-        val heightDp = maxOf(metrics.widthPixels, metrics.heightPixels) / metrics.density
-        val wantedCategory = if (context.resources.configuration.smallestScreenWidthDp >= 600) "tablet" else "phone"
+        val dm = context.resources.displayMetrics
+        val shortSide = minOf(dm.widthPixels, dm.heightPixels) / dm.density
+        val longSide = maxOf(dm.widthPixels, dm.heightPixels) / dm.density
+        val category = when {
+            context.resources.configuration.smallestScreenWidthDp >= 600 -> "tablet"
+            else -> "phone"
+        }
 
-        // Launcher3 keeps the options tagged for this device category that may be a default, and
-        // takes the one whose display size is nearest; an untagged file is treated as all-phone.
-        val eligible = options.filter { it.deviceCategory == null || it.deviceCategory.contains(wantedCategory) }
-            .ifEmpty { options }
-        val (best, display) = eligible.flatMap { option ->
-            option.displays.filter { it.canBeDefault }.map { display -> option to display }
-        }.minByOrNull { (_, display) ->
-            hypot((display.minWidthDps - widthDp).toDouble(), (display.minHeightDps - heightDp).toDouble())
-        } ?: return null
+        // Same choice Launcher3 makes: options for this device class that may be default, nearest
+        // display size wins. Untagged options count for every class.
+        val pool = grids.filter { it.deviceCategory == null || it.deviceCategory.contains(category) }
+            .ifEmpty { grids }
+        var chosenGrid: GridOption? = null
+        var chosenDisplay: DisplayOption? = null
+        var nearest = 0.0
+        for (grid in pool) {
+            for (option in grid.displays) {
+                if (!option.canBeDefault) continue
+                val distance = hypot((option.minWidthDps - shortSide).toDouble(), (option.minHeightDps - longSide).toDouble())
+                if (chosenGrid == null || distance.compareTo(nearest) < 0) {
+                    chosenGrid = grid
+                    chosenDisplay = option
+                    nearest = distance
+                }
+            }
+        }
+        val grid = chosenGrid ?: return null
+        val display = chosenDisplay ?: return null
 
         return MainPreset.Numbers(
-            homeCols = best.cols,
-            homeRows = best.rows,
-            dockSize = best.hotseat,
-            drawerCols = best.allAppsCols ?: best.cols,
-            iconSizeDp = display.iconImageSize?.toInt()?.takeIf { it in 24..120 },
-            // Launcher3 draws its labels at `iconTextSize` sp (DeviceProfile.iconTextSizePx = sp * scaledDensity).
+            homeCols = grid.cols,
+            homeRows = grid.rows,
+            dockSize = grid.hotseat,
+            drawerCols = grid.allAppsCols ?: grid.cols,
+            iconSizeDp = iconDpOrNull(display.iconImageSize),
             labelSp = display.iconTextSize?.takeIf { it in MainPreset.MIN_LABEL_SP..MainPreset.MAX_LABEL_SP },
-            // Launcher3 states the all-apps icon apart (`allAppsIconSize`); a hotseat size only where a fork adds it.
-            drawerIconDp = display.allAppsIconSize?.toInt()?.takeIf { it in 24..120 },
-            dockIconDp = display.hotseatIconSize?.toInt()?.takeIf { it in 24..120 },
+            drawerIconDp = iconDpOrNull(display.allAppsIconSize),
+            dockIconDp = iconDpOrNull(display.hotseatIconSize),
         )
     }
 
-    private fun decodeGridOptions(parser: XmlResourceParser): List<GridOption> {
-        val options = mutableListOf<GridOption>()
-        var current: GridOption? = null
-        var event = parser.eventType
-        while (event != XmlPullParser.END_DOCUMENT) {
-            if (event == XmlPullParser.START_TAG) {
-                when (parser.name) {
-                    TAG_GRID_OPTION -> {
-                        val cols = parser.int("numColumns")
-                        val rows = parser.int("numRows")
-                        current = if (cols != null && rows != null) {
-                            GridOption(
-                                cols = cols,
-                                rows = rows,
-                                hotseat = parser.int("numHotseatIcons"),
-                                allAppsCols = parser.int("numAllAppsColumns"),
-                                deviceCategory = parser.str("deviceCategory"),
-                            ).also(options::add)
-                        } else {
-                            null
-                        }
-                    }
-
-                    TAG_DISPLAY_OPTION -> {
-                        val w = parser.float("minWidthDps")
-                        val h = parser.float("minHeightDps")
-                        if (current != null && w != null && h != null) {
-                            // Older files predate canBeDefault; there every option was a candidate.
-                            current.displays.add(
-                                DisplayOption(
-                                    w, h, parser.bool("canBeDefault") ?: true, parser.float("iconImageSize"), parser.float("iconTextSize"),
-                                    parser.float("allAppsIconSize"), parser.float("hotseatIconSize"),
-                                )
-                            )
-                        }
+    private fun parseGridOptions(xml: XmlResourceParser): List<GridOption> {
+        val found = mutableListOf<GridOption>()
+        var open: GridOption? = null
+        var token = xml.eventType
+        while (token != XmlPullParser.END_DOCUMENT) {
+            when {
+                token == XmlPullParser.START_TAG && xml.name == TAG_GRID_OPTION -> {
+                    val c = xml.attrInt("numColumns")
+                    val r = xml.attrInt("numRows")
+                    open = null
+                    if (c != null && r != null) {
+                        open = GridOption(
+                            cols = c,
+                            rows = r,
+                            hotseat = xml.attrInt("numHotseatIcons"),
+                            allAppsCols = xml.attrInt("numAllAppsColumns"),
+                            deviceCategory = xml.attr("deviceCategory"),
+                        )
+                        found.add(open)
                     }
                 }
-            } else if (event == XmlPullParser.END_TAG && parser.name == TAG_GRID_OPTION) {
-                current = null
+
+                token == XmlPullParser.START_TAG && xml.name == TAG_DISPLAY_OPTION -> {
+                    val owner = open
+                    val minW = xml.attrFloat("minWidthDps")
+                    val minH = xml.attrFloat("minHeightDps")
+                    if (owner != null && minW != null && minH != null) {
+                        // A file older than canBeDefault treats every option as a candidate.
+                        owner.displays += DisplayOption(
+                            minWidthDps = minW,
+                            minHeightDps = minH,
+                            canBeDefault = xml.attrBool("canBeDefault") ?: true,
+                            iconImageSize = xml.attrFloat("iconImageSize"),
+                            iconTextSize = xml.attrFloat("iconTextSize"),
+                            allAppsIconSize = xml.attrFloat("allAppsIconSize"),
+                            hotseatIconSize = xml.attrFloat("hotseatIconSize"),
+                        )
+                    }
+                }
+
+                token == XmlPullParser.END_TAG && xml.name == TAG_GRID_OPTION -> open = null
             }
-            event = parser.next()
+            token = xml.next()
         }
-        return options
+        return found
     }
 
-    // Attributes sit in the res-auto namespace; a build that flattened them is tried unqualified too.
-    private fun XmlResourceParser.str(name: String): String? =
+    // res-auto namespace first; some builds flatten attributes into the default namespace.
+    private fun XmlResourceParser.attr(name: String): String? =
         getAttributeValue(RES_AUTO_NS, name) ?: getAttributeValue(null, name)
 
-    private fun XmlResourceParser.int(name: String): Int? = str(name)?.trim()?.toIntOrNull()
-    private fun XmlResourceParser.float(name: String): Float? = str(name)?.trim()?.toFloatOrNull()
-    private fun XmlResourceParser.bool(name: String): Boolean? = str(name)?.trim()?.toBooleanStrictOrNull()
+    private fun XmlResourceParser.attrInt(name: String): Int? = attr(name)?.trim()?.toIntOrNull()
+    private fun XmlResourceParser.attrFloat(name: String): Float? = attr(name)?.trim()?.toFloatOrNull()
+    private fun XmlResourceParser.attrBool(name: String): Boolean? = attr(name)?.trim()?.toBooleanStrictOrNull()
 
     // ---- Named-integer probes ----------------------------------------------------------------
 
-    /** `integer/<name>` as is, else `dimen/<name>` converted to dp; null when neither exists. */
-    private fun pullInt(resources: Resources, packageName: String, name: String): Int? {
-        val intId = resources.getIdentifier(name, "integer", packageName)
-        if (intId != 0) return runCatching { resources.getInteger(intId) }.getOrNull()
-        val dimenId = resources.getIdentifier(name, "dimen", packageName)
-        if (dimenId != 0) {
-            return runCatching { (resources.getDimension(dimenId) / resources.displayMetrics.density).toInt() }.getOrNull()
+    /** Trimmed, non-blank entries of the string array under [key], or null when there is none. */
+    private fun JSONObject.nameList(key: String): Sequence<String>? =
+        optJSONArray(key)?.let { arr ->
+            (0 until arr.length()).asSequence().map { arr.optString(it).trim() }.filter { it.isNotEmpty() }
         }
-        return null
+
+    /** `integer/<name>` verbatim, otherwise `dimen/<name>` in dp; null if neither resolves. */
+    private fun readNumber(apkRes: Resources, packageName: String, name: String): Int? {
+        val integerId = apkRes.getIdentifier(name, "integer", packageName)
+        if (integerId != 0) return runCatching { apkRes.getInteger(integerId) }.getOrNull()
+        val dimenId = apkRes.getIdentifier(name, "dimen", packageName)
+        return when (dimenId) {
+            0 -> null
+            else -> runCatching { (apkRes.getDimension(dimenId) / apkRes.displayMetrics.density).toInt() }.getOrNull()
+        }
     }
 
-    /**
-     * The mode [value] stands for, per the probe entry's own table; null when the entry does not
-     * name that number. Pure, so an OEM's numbering is unit-testable without its device.
-     */
-    fun drawerModeOf(value: Int, values: JSONObject?): SliderWay? {
-        val name = values?.optString(value.toString())?.trim().orEmpty()
-        if (name.isEmpty()) return null
-        return SliderWay.entries.firstOrNull { it.name.equals(name, ignoreCase = true) }
-    }
+    private fun readProbes(context: Context, apkRes: Resources, packageName: String, probesJson: String): MainPreset.Numbers? {
+        val body = probesJson.trim().takeUnless { it.isEmpty() } ?: return null
+        val entry = JSONObject(body).optJSONObject(packageName) ?: return null
 
-    private fun pullProbes(context: Context, resources: Resources, packageName: String, probesJson: String): MainPreset.Numbers? {
-        val text = probesJson.trim()
-        if (text.isEmpty()) return null
-        val probes = JSONObject(text).optJSONObject(packageName) ?: return null
-        fun probe(key: String, range: IntRange = MainPreset.MIN_CELLS..MainPreset.MAX_CELLS): Int? {
-            val names = probes.optJSONArray(key) ?: return null
-            for (i in 0 until names.length()) {
-                val name = names.optString(i).trim()
-                if (name.isEmpty()) continue
-                val value = pullInt(resources, packageName, name) ?: continue
-                if (value in range) return value
+        fun firstInRange(key: String, range: IntRange = MainPreset.MIN_CELLS..MainPreset.MAX_CELLS): Int? =
+            entry.nameList(key)?.firstNotNullOfOrNull { name ->
+                readNumber(apkRes, packageName, name)?.takeIf { it in range }
             }
-            return null
-        }
-        // Only for a launcher whose entry says where its mode lives: what the user switched to
-        // (the Settings value, written on a switch) first, the launcher's own default after.
-        val drawerMode = probes.optJSONArray(KEY_DRAWER_MODE)?.let { names ->
-            val values = probes.optJSONObject(KEY_DRAWER_MODE_VALUES)
-            val live = probes.optString(KEY_DRAWER_MODE_SETTING).trim().takeIf { it.isNotEmpty() }?.let { key ->
+
+        // Only launchers whose entry names a mode resource: the user's switch (Settings) wins
+        // over the factory default resource.
+        val mode = entry.nameList(KEY_DRAWER_MODE)?.let { candidates ->
+            val table = entry.optJSONObject(KEY_DRAWER_MODE_VALUES)
+            val settingKey = entry.optString(KEY_DRAWER_MODE_SETTING).trim().takeIf { it.isNotEmpty() }
+            val switched = settingKey?.let { key ->
                 runCatching { Settings.Global.getInt(context.contentResolver, key) }.getOrNull()
             }
-            live?.let { drawerModeOf(it, values) } ?: (0 until names.length()).asSequence()
-                .map { names.optString(it).trim() }.filter { it.isNotEmpty() }
-                .firstNotNullOfOrNull { name ->
-                    pullInt(resources, packageName, name)?.let { drawerModeOf(it, values) }
+            switched?.let { drawerModeOf(it, table) }
+                ?: candidates.firstNotNullOfOrNull { name ->
+                    readNumber(apkRes, packageName, name)?.let { drawerModeOf(it, table) }
                 }
         }
 
-        val labelSp = probes.optJSONArray(KEY_LABEL_SP)?.let { names ->
-            (0 until names.length()).asSequence().map { names.optString(it).trim() }.filter { it.isNotEmpty() }
-                .firstNotNullOfOrNull { name ->
-                    val id = resources.getIdentifier(name, "dimen", packageName)
-                    if (id == 0) null
-                    else CommonLatticeScanner.pullTextSizeSp(resources, id)?.takeIf { it in MainPreset.MIN_LABEL_SP..MainPreset.MAX_LABEL_SP }
-                }
+        val textSp = entry.nameList(KEY_LABEL_SP)?.firstNotNullOfOrNull { name ->
+            apkRes.getIdentifier(name, "dimen", packageName).takeIf { it != 0 }?.let { dimenId ->
+                CommonLatticeScanner.pullTextSizeSp(apkRes, dimenId)
+                    ?.takeIf { it in MainPreset.MIN_LABEL_SP..MainPreset.MAX_LABEL_SP }
+            }
         }
         return MainPreset.Numbers(
-            homeCols = probe(KEY_HOME_COLS),
-            homeRows = probe(KEY_HOME_ROWS),
-            dockSize = probe(KEY_DOCK_SIZE),
-            drawerCols = probe(KEY_DRAWER_COLS),
-            // An icon size may be an integer (dp) or a dimen; both read as dp.
-            iconSizeDp = probe(KEY_ICON_SIZE_DP, 24..120),
-            labelSp = labelSp,
-            drawerMode = drawerMode,
+            homeCols = firstInRange(KEY_HOME_COLS),
+            homeRows = firstInRange(KEY_HOME_ROWS),
+            dockSize = firstInRange(KEY_DOCK_SIZE),
+            drawerCols = firstInRange(KEY_DRAWER_COLS),
+            iconSizeDp = firstInRange(KEY_ICON_SIZE_DP, 24..120),
+            labelSp = textSp,
+            drawerMode = mode,
         )
     }
 }

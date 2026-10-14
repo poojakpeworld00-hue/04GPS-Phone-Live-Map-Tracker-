@@ -63,13 +63,9 @@ private data class MemoProfileDocument(
 )
 
 /**
- * The reminders feature's only Remote Config surface: the top-level `feature_config` JSON
- * parameter, with a `marketing` and an `organic` branch. Read the way `permission_engine` is
- * (ConsentFeed): the activated Firebase value, else the compiled [DEFAULT_CONFIG]. The branch
- * follows the app's existing audience flag (`SpotsLocker` `OnMaketing`, set at splash), and the
- * country checks use the country the splash already resolved ([LockerBook]).
- *
- * Never throws: a missing parameter, bad JSON or a missing field all fall back to defaults.
+ * Reader for the `feature_config` Remote Config JSON (branches `marketing` / `organic`). Uses the
+ * activated Firebase value when present, otherwise [DEFAULT_CONFIG]. The branch is chosen by the
+ * `OnMaketing` flag in [SpotsLocker]; country checks rely on [LockerBook]. Never throws.
  */
 object MemoProfile {
 
@@ -77,63 +73,78 @@ object MemoProfile {
     const val MARKETING = "marketing"
     const val ORGANIC = "organic"
 
-    @Volatile private var cachedRaw: String? = null
-    @Volatile private var cachedAudience: String? = null
-    @Volatile private var cachedBranch: MemoOptions = MemoOptions()
+    @Volatile private var lastJson: String? = null
+    @Volatile private var lastAudience: String? = null
+    @Volatile private var lastOptions: MemoOptions = MemoOptions()
+
+    private fun remoteJson(): String {
+        val fetched = runCatching { FirebaseRemoteConfig.getInstance().getString(RC_KEY) }.getOrNull()
+        return if (fetched.isNullOrBlank()) DEFAULT_CONFIG else fetched
+    }
+
+    private fun decode(json: String): MemoProfileDocument? =
+        runCatching { Gson().fromJson(json, MemoProfileDocument::class.java) }.getOrNull()
 
     @Synchronized
     fun get(context: Context): MemoOptions {
-        val raw = runCatching { FirebaseRemoteConfig.getInstance().getString(RC_KEY) }
-            .getOrNull()?.takeIf { it.isNotBlank() } ?: DEFAULT_CONFIG
+        val json = remoteJson()
         val audience = currentAudience(context)
-        if (raw == cachedRaw && audience == cachedAudience) return cachedBranch
+        if (json == lastJson && audience == lastAudience) return lastOptions
 
-        val doc = runCatching { Gson().fromJson(raw, MemoProfileDocument::class.java) }.getOrNull()
-            ?: runCatching { Gson().fromJson(DEFAULT_CONFIG, MemoProfileDocument::class.java) }.getOrNull()
-        val branch = (if (audience == MARKETING) doc?.marketing else doc?.organic) ?: MemoOptions()
+        val document = decode(json) ?: decode(DEFAULT_CONFIG)
+        val picked = when (audience) {
+            MARKETING -> document?.marketing
+            else -> document?.organic
+        } ?: MemoOptions()
 
-        cachedRaw = raw
-        cachedAudience = audience
-        cachedBranch = branch
-        return branch
+        lastJson = json
+        lastAudience = audience
+        lastOptions = picked
+        return picked
     }
 
-    /** The app's own audience flag; an unresolved audience reads organic. */
-    fun currentAudience(context: Context): String =
-        if (runCatching { SpotsLocker.getInstance(context).getBoolean("OnMaketing") }.getOrDefault(false)) MARKETING else ORGANIC
+    fun currentAudience(context: Context): String {
+        val marketing = runCatching { SpotsLocker.getInstance(context).getBoolean("OnMaketing") }.getOrElse { false }
+        return if (marketing) MARKETING else ORGANIC
+    }
 
-    // ───────────────────────── country gates (block lists, fail-open) ─────────────────────────
-
-    /** False only when the country filter is on and this device's country is excluded. */
     fun isCountryAllowed(context: Context): Boolean {
-        val cfg = get(context)
-        if (!cfg.isCountryFilter) return true
-        return !isListed(country(context), cfg.excludedCountries)
+        val options = get(context)
+        return !options.isCountryFilter || !blocked(deviceCountry(context), options.excludedCountries)
     }
 
-    /** The drawer row: its own master, the feature's country filter, then the row's own list. */
     fun isSettingsRowAllowed(context: Context): Boolean {
-        val cfg = get(context)
-        if (!cfg.isSettingsRow) return false
-        if (!isCountryAllowed(context)) return false
-        return !isListed(country(context), cfg.settingsRowExcludedCountries)
+        val options = get(context)
+        return when {
+            !options.isSettingsRow -> false
+            !isCountryAllowed(context) -> false
+            else -> !blocked(deviceCountry(context), options.settingsRowExcludedCountries)
+        }
     }
 
-    private fun isListed(iso: String?, csv: String): Boolean {
-        if (iso.isNullOrBlank() || csv.isBlank()) return false   // unknown / empty list → shown
-        return csv.split(',').any { it.trim().equals(iso, ignoreCase = true) }
+    /** Fail-open: an unknown country or an empty list never blocks. */
+    private fun blocked(iso: String?, csv: String): Boolean {
+        if (iso.isNullOrBlank() || csv.isBlank()) return false
+        for (token in csv.split(',')) {
+            if (token.trim().equals(iso, ignoreCase = true)) return true
+        }
+        return false
     }
 
-    /** IP country from the splash lookup first (a user's Home pick is a preference, not where
-     *  they are), then that pick, then the SIM's network. Null when nothing is known. */
-    private fun country(context: Context): String? {
-        val vault = LockerBook(context)
-        return vault.geoCountryIso.ifBlank { vault.homeCountryIso }.ifBlank {
-            runCatching {
-                (context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager)
-                    ?.networkCountryIso.orEmpty()
-            }.getOrDefault("")
-        }.uppercase(Locale.ROOT).ifBlank { null }
+    /** Splash IP country, then the user's Home pick, then the SIM network; null if none known. */
+    private fun deviceCountry(context: Context): String? {
+        val book = LockerBook(context)
+        val candidates = sequenceOf(
+            { book.geoCountryIso },
+            { book.homeCountryIso },
+            {
+                runCatching {
+                    (context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager)?.networkCountryIso ?: ""
+                }.getOrElse { "" }
+            },
+        )
+        val first = candidates.map { it() }.firstOrNull { it.isNotBlank() } ?: ""
+        return first.uppercase(Locale.ROOT).takeIf { it.isNotBlank() }
     }
 
     /**

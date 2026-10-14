@@ -9,6 +9,7 @@ import android.net.Uri
 import android.provider.Settings
 import android.view.Gravity
 import android.view.MotionEvent
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,258 +37,288 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 
 /**
- * The contact list (design 8a / 8b): account filter with count, tools and add, search, a small
- * native ad, the Favorites row, A–Z cards with Locate and Call, and a letter rail. Every number
- * in the phone book, searchable by name or digits.
- *
- * Opened from Home as a picker: Locate hands the number back as [EXTRA_NUMBER]. Without the
- * Contacts permission the 8b state asks for it in place.
+ * Phone-book picker: account scope, search, a native card, starred people and an A–Z list
+ * with a side letter index. Locate returns the chosen number through [EXTRA_NUMBER].
  */
 class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
 
     override val layoutId: Int = R.layout.screen_contact_picker
 
-    private val adapter = BuddyAdapter(onLocate = { pick(it) }, onCall = { dial(it) })
-    private val favorites = PinnedAdapter { pick(it) }
-    private val prefs by lazy { LockerBook(this) }
+    private var everyone: List<BuddyNum> = emptyList()
+    private var activeAccount: String? = null
+    private var reverseOrder = false
 
-    private var all: List<BuddyNum> = emptyList()
-    private var account: String? = null // null = all accounts
-    private var descending = false
+    private val book by lazy { LockerBook(this) }
+    private val starAdapter = PinnedAdapter { returnNumber(it) }
+    private val contactsAdapter = BuddyAdapter(onLocate = { returnNumber(it) }, onCall = { callNumber(it) })
 
-    private val permission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) onGranted() else presentPermissionState()
+    private val contactsAsk = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        when (ok) {
+            true -> revealContacts()
+            false -> showGrantGate()
+        }
     }
 
     override fun initView() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.lvContactsRoot) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.updatePadding(left = bars.left, top = bars.top, right = bars.right, bottom = bars.bottom)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.lvContactsRoot) { root, insets ->
+            insets.getInsets(WindowInsetsCompat.Type.systemBars()).let { sb ->
+                root.updatePadding(left = sb.left, top = sb.top, right = sb.right, bottom = sb.bottom)
+            }
             insets
         }
 
-        binding.listContacts.layoutManager = LinearLayoutManager(this)
-        binding.listContacts.adapter = adapter
-        binding.listFavorites.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        binding.listFavorites.adapter = favorites
+        binding.listContacts.apply {
+            layoutManager = LinearLayoutManager(this@BuddyChooserActivity)
+            adapter = contactsAdapter
+        }
+        binding.listFavorites.apply {
+            layoutManager = LinearLayoutManager(this@BuddyChooserActivity, LinearLayoutManager.HORIZONTAL, false)
+            adapter = starAdapter
+        }
 
-        binding.huntInput.doAfterTextChanged {
-            binding.actClearSearch.isVisible = !it.isNullOrEmpty()
-            enactFilter()
+        binding.huntInput.doAfterTextChanged { typed ->
+            binding.actClearSearch.isVisible = !typed.isNullOrEmpty()
+            applyQuery()
         }
         binding.actClearSearch.setOnClickListener { binding.huntInput.setText("") }
-        binding.lvAccountChip.setOnClickListener { presentAccountMenu() }
-        binding.actTools.setOnClickListener { presentToolsMenu() }
-        binding.actAllow.setOnClickListener { queryPermission() }
-        listOf(binding.lvAccountChip, binding.actTools, binding.actAllow).forEach { CraftMovement.pressScale(it) }
-        setupRail()
+        binding.lvAccountChip.setOnClickListener { openAccountPopup() }
+        binding.actTools.setOnClickListener { openToolsPopup() }
+        binding.actAllow.setOnClickListener { askForContacts() }
+        arrayOf<View>(binding.lvAccountChip, binding.actTools, binding.actAllow).forEach(CraftMovement::pressScale)
+        attachRailTouch()
 
-        if (hasPermission()) onGranted() else presentPermissionState()
-    }
-
-    // ===== permission (8b) =====
-
-    private fun hasPermission(): Boolean =
-        ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
-
-    /** First ask through the system dialog; once it stops showing (denied twice), app settings. */
-    private fun queryPermission() {
-        val perm = Manifest.permission.READ_CONTACTS
-        when {
-            !prefs.hasRequestedPermission(perm) -> {
-                prefs.flagPermissionRequested(perm)
-                permission.launch(perm)
-            }
-            shouldShowRequestPermissionRationale(perm) -> permission.launch(perm)
-            else -> runCatching {
-                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
-            }
-        }
+        if (contactsGranted()) revealContacts() else showGrantGate()
     }
 
     override fun onResume() {
         super.onResume()
-        // Back from app settings with the grant in hand.
-        if (binding.grantState.isVisible && hasPermission()) onGranted()
+        // Returning from system settings after granting.
+        if (!binding.grantState.isVisible) return
+        if (contactsGranted()) revealContacts()
     }
 
-    private fun presentPermissionState() {
-        binding.grantState.isVisible = true
-        binding.lvListGroup.isVisible = false
-        binding.lvRailBox.isVisible = false
-    }
+    // ----- permission gate -----
 
-    private fun onGranted() {
-        binding.grantState.isVisible = false
-        binding.lvListGroup.isVisible = true
-        paintAd()
-        load()
-    }
+    private fun contactsGranted(): Boolean = PackageManager.PERMISSION_GRANTED ==
+        ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
 
-    // ===== data =====
-
-    private fun load() {
-        binding.spinLoading.isVisible = true
-        binding.txtAccountCount.isVisible = false // no count until the phone book is read
-        lifecycleScope.launch {
-            all = withContext(Dispatchers.IO) { runCatching { GadgetBuddies.load(this@BuddyChooserActivity) }.getOrDefault(emptyList()) }
-            binding.spinLoading.isVisible = false
-            if (account != null && all.none { it.account == account }) account = null
-            wireAccountChip()
-            enactFilter()
+    private fun askForContacts() {
+        val readContacts = Manifest.permission.READ_CONTACTS
+        if (!book.hasRequestedPermission(readContacts)) {
+            book.flagPermissionRequested(readContacts)
+            contactsAsk.launch(readContacts)
+            return
+        }
+        if (shouldShowRequestPermissionRationale(readContacts)) {
+            contactsAsk.launch(readContacts)
+            return
+        }
+        runCatching {
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
         }
     }
 
-    private fun wireAccountChip() {
-        val scope = all.filter { account == null || it.account == account }
-        binding.txtAccount.text = account ?: getString(R.string.ds_contacts_all_accounts)
-        binding.txtAccountCount.text = scope.distinctBy { it.contactId }.size.toString()
+    private fun showGrantGate() = with(binding) {
+        grantState.isVisible = true
+        lvListGroup.isVisible = false
+        lvRailBox.isVisible = false
+    }
+
+    private fun revealContacts() {
+        with(binding) {
+            grantState.isVisible = false
+            lvListGroup.isVisible = true
+        }
+        mountNativeAd()
+        readPhoneBook()
+    }
+
+    // ----- data -----
+
+    private fun inScope(): List<BuddyNum> = everyone.filter { activeAccount == null || it.account == activeAccount }
+
+    private fun readPhoneBook() {
+        binding.spinLoading.isVisible = true
+        binding.txtAccountCount.isVisible = false
+        lifecycleScope.launch {
+            everyone = withContext(Dispatchers.IO) {
+                runCatching { GadgetBuddies.load(this@BuddyChooserActivity) }.getOrDefault(emptyList())
+            }
+            binding.spinLoading.isVisible = false
+            val acc = activeAccount
+            if (acc != null && everyone.none { it.account == acc }) activeAccount = null
+            refreshAccountChip()
+            applyQuery()
+        }
+    }
+
+    private fun refreshAccountChip() {
+        val uniquePeople = inScope().distinctBy { it.contactId }.size
+        binding.txtAccount.text = activeAccount ?: getString(R.string.ds_contacts_all_accounts)
+        binding.txtAccountCount.text = uniquePeople.toString()
         binding.txtAccountCount.isVisible = true
     }
 
-    /** Account scope, then name contains the text or — when it has digits — the number does. */
-    private fun enactFilter() {
-        if (binding.spinLoading.isVisible) return
-        val query = binding.huntInput.text?.toString()?.trim().orEmpty()
-        val needle = query.lowercase(Locale.getDefault())
-        val digits = query.filter(Char::isDigit)
-        val scoped = all.filter { account == null || it.account == account }
-        var shown = if (query.isEmpty()) scoped else scoped.filter {
-            it.name.lowercase(Locale.getDefault()).contains(needle) ||
-                (digits.isNotEmpty() && it.number.filter(Char::isDigit).contains(digits))
-        }
-        if (descending) shown = shown.sortedWith(compareBy<BuddyNum> { it.letter == "#" }.thenByDescending { it.name.lowercase(Locale.getDefault()) })
-        adapter.lodgeContacts(shown) {
-            binding.listContacts.scrollToPosition(0)
-            composeRail()
-        }
-
-        // Favorites: the starred contacts of the scope, hidden while searching (design 8a).
-        val favs = scoped.filter { it.starred }.distinctBy { it.contactId }
-        favorites.submitList(favs)
-        binding.lvFavoritesGroup.isVisible = query.isEmpty() && favs.isNotEmpty()
-        binding.txtFavoritesCount.text = favs.size.toString()
-
-        when {
-            all.isEmpty() -> presentEmpty(R.string.ds_contacts_empty, R.string.ds_contacts_empty_body)
-            shown.isEmpty() -> presentEmpty(R.string.ds_contacts_no_match, R.string.ds_contacts_no_match_body)
-            else -> binding.blankState.isVisible = false
-        }
-        binding.lvRailBox.isVisible = shown.isNotEmpty()
+    private fun matches(entry: BuddyNum, lowered: String, numeric: String): Boolean {
+        if (entry.name.lowercase(Locale.getDefault()).contains(lowered)) return true
+        return numeric.isNotEmpty() && entry.number.filter(Char::isDigit).contains(numeric)
     }
 
-    private fun presentEmpty(title: Int, body: Int) {
-        binding.txtEmpty.setText(title)
-        binding.txtEmptyBody.setText(body)
+    private fun applyQuery() {
+        if (binding.spinLoading.isVisible) return
+        val term = binding.huntInput.text?.toString()?.trim().orEmpty()
+        val lowered = term.lowercase(Locale.getDefault())
+        val numeric = term.filter(Char::isDigit)
+        val pool = inScope()
+        val filtered = when {
+            term.isEmpty() -> pool
+            else -> pool.filter { matches(it, lowered, numeric) }
+        }
+        val visible = if (!reverseOrder) filtered else filtered.sortedWith(
+            compareBy<BuddyNum> { it.letter == "#" }.thenByDescending { it.name.lowercase(Locale.getDefault()) }
+        )
+        contactsAdapter.lodgeContacts(visible) {
+            binding.listContacts.scrollToPosition(0)
+            buildLetterRail()
+        }
+
+        // Starred people within the scope; hidden while a search is typed.
+        val starred = pool.filter { it.starred }.distinctBy { it.contactId }
+        starAdapter.submitList(starred)
+        binding.lvFavoritesGroup.isVisible = term.isEmpty() && starred.isNotEmpty()
+        binding.txtFavoritesCount.text = starred.size.toString()
+
+        if (everyone.isEmpty()) {
+            showBlank(R.string.ds_contacts_empty, R.string.ds_contacts_empty_body)
+        } else if (visible.isEmpty()) {
+            showBlank(R.string.ds_contacts_no_match, R.string.ds_contacts_no_match_body)
+        } else {
+            binding.blankState.isVisible = false
+        }
+        binding.lvRailBox.isVisible = visible.isNotEmpty()
+    }
+
+    private fun showBlank(headline: Int, detail: Int) {
+        binding.txtEmpty.setText(headline)
+        binding.txtEmptyBody.setText(detail)
         binding.blankState.isVisible = true
     }
 
-    // ===== menus =====
+    // ----- popups -----
 
-    /** "All accounts" plus every account the phone book has, each with its contact count. */
-    private fun presentAccountMenu() {
-        val people = all.distinctBy { it.contactId }
-        val counts = people.groupingBy { it.account }.eachCount()
-        val popup = KitFlyout(this)
-        popup.add(
+    private fun accountIcon(name: String): Int = when (name) {
+        BuddyNum.ACCOUNT_PHONE -> R.drawable.lv_ic_phone
+        BuddyNum.ACCOUNT_SIM -> R.drawable.lv_ic_contact_card
+        else -> R.drawable.lv_ic_globe
+    }
+
+    private fun openAccountPopup() {
+        val unique = everyone.distinctBy { it.contactId }
+        val perAccount = unique.groupingBy { it.account }.eachCount()
+        val menu = KitFlyout(this)
+        menu.add(
             label = getString(R.string.ds_contacts_all_accounts),
             icon = R.drawable.lv_ic_contact_card,
-            badge = people.size.toString(),
-            selected = account == null,
-        ) { highlightAccount(null) }
-        counts.keys.sorted().forEach { name ->
-            popup.add(
-                label = name,
-                icon = when (name) {
-                    BuddyNum.ACCOUNT_PHONE -> R.drawable.lv_ic_phone
-                    BuddyNum.ACCOUNT_SIM -> R.drawable.lv_ic_contact_card
-                    else -> R.drawable.lv_ic_globe
-                },
-                badge = counts.getValue(name).toString(),
-                selected = account == name,
-            ) { highlightAccount(name) }
+            badge = unique.size.toString(),
+            selected = activeAccount == null,
+        ) { chooseAccount(null) }
+        for (accName in perAccount.keys.sorted()) {
+            menu.add(
+                label = accName,
+                icon = accountIcon(accName),
+                badge = perAccount.getValue(accName).toString(),
+                selected = activeAccount == accName,
+            ) { chooseAccount(accName) }
         }
-        popup.show(binding.lvAccountChip, Gravity.START)
+        menu.show(binding.lvAccountChip, Gravity.START)
     }
 
-    private fun highlightAccount(name: String?) {
-        account = name
-        wireAccountChip()
-        enactFilter()
+    private fun chooseAccount(accName: String?) {
+        activeAccount = accName
+        refreshAccountChip()
+        applyQuery()
     }
 
-    /** The tools button: sort direction and a refresh. */
-    private fun presentToolsMenu() {
+    private fun openToolsPopup() {
+        val sortLabel = if (reverseOrder) R.string.ds_contacts_sort_az else R.string.ds_contacts_sort_za
         KitFlyout(this)
-            .add(
-                label = getString(if (descending) R.string.ds_contacts_sort_az else R.string.ds_contacts_sort_za),
-                icon = R.drawable.lv_ic_grid,
-            ) { descending = !descending; enactFilter() }
-            .add(label = getString(R.string.ds_contacts_refresh), icon = R.drawable.lv_ic_history) { load() }
+            .add(label = getString(sortLabel), icon = R.drawable.lv_ic_grid) {
+                reverseOrder = !reverseOrder
+                applyQuery()
+            }
+            .add(label = getString(R.string.ds_contacts_refresh), icon = R.drawable.lv_ic_history) { readPhoneBook() }
             .show(binding.actTools, Gravity.END)
     }
 
-    // ===== actions =====
+    // ----- row actions -----
 
-    /** Locate: the number goes back to Home, which fills the field. */
-    private fun pick(contact: BuddyNum) {
-        setResult(RESULT_OK, Intent().putExtra(EXTRA_NUMBER, contact.number))
+    private fun returnNumber(entry: BuddyNum) {
+        val data = Intent().putExtra(EXTRA_NUMBER, entry.number)
+        setResult(RESULT_OK, data)
         finish()
     }
 
-    private fun dial(contact: BuddyNum) {
-        runCatching { startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${contact.number}"))) }
+    private fun callNumber(entry: BuddyNum) {
+        val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${entry.number}"))
+        runCatching { startActivity(dialIntent) }
     }
 
-    // ===== small native ad =====
+    // ----- native card -----
 
-    /** The small native card under the search field (`ScreenAds.BuddyChooserActivity`). */
-    private fun paintAd() {
-        val show = SpotsLocker.getInstance(this).getBoolean("IsAdsON") && DisplayTeaserProfile.resolve(this, javaClass.simpleName).show
-        binding.spotCard.isVisible = show
-        if (show) EmbeddedTeaserRibbon().presentNativeBannerNative(this, binding.spotNativeFrame, binding.spotShimmer)
+    private fun mountNativeAd() {
+        val enabled = SpotsLocker.getInstance(this).getBoolean("IsAdsON") &&
+            DisplayTeaserProfile.resolve(this, javaClass.simpleName).show
+        binding.spotCard.isVisible = enabled
+        if (!enabled) return
+        EmbeddedTeaserRibbon().presentNativeBannerNative(this, binding.spotNativeFrame, binding.spotShimmer)
     }
 
-    // ===== letter rail =====
+    // ----- letter index -----
 
-    private fun composeRail() {
+    private fun railLabel(letter: String, face: android.graphics.Typeface?): TextView = TextView(this).apply {
+        text = letter
+        gravity = Gravity.CENTER
+        typeface = face
+        setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 10f)
+        setTextColor(ContextCompat.getColor(context, R.color.ds_primary))
+        setPadding(px(4), px(1), px(4), px(1))
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+    }
+
+    private fun buildLetterRail() {
         binding.lvRail.removeAllViews()
-        val font = ResourcesCompat.getFont(this, R.font.figtree_bold)
-        adapter.letterPositions.keys.forEach { letter ->
-            binding.lvRail.addView(TextView(this).apply {
-                text = letter
-                gravity = Gravity.CENTER
-                typeface = font
-                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 10f)
-                setTextColor(ContextCompat.getColor(context, R.color.ds_primary))
-                setPadding(dp(4), dp(1), dp(4), dp(1))
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            })
+        val face = ResourcesCompat.getFont(this, R.font.figtree_bold)
+        for (letter in contactsAdapter.letterPositions.keys) {
+            binding.lvRail.addView(railLabel(letter, face))
         }
     }
 
-    /** Touch or drag along the rail scrolls the list to that letter. */
+    private fun jumpToLetterAt(rail: View, y: Float) {
+        val keys = contactsAdapter.letterPositions.keys.toList()
+        if (keys.isEmpty() || rail.height <= 0) return
+        val slot = ((y / rail.height) * keys.size).toInt().coerceIn(0, keys.lastIndex)
+        val target = contactsAdapter.letterPositions[keys[slot]] ?: return
+        (binding.listContacts.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(target, 0)
+    }
+
     @SuppressLint("ClickableViewAccessibility")
-    private fun setupRail() {
-        binding.lvRail.setOnTouchListener { v, event ->
-            when (event.actionMasked) {
+    private fun attachRailTouch() {
+        binding.lvRail.setOnTouchListener { rail, ev ->
+            when (ev.actionMasked) {
                 MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                    val letters = adapter.letterPositions.keys.toList()
-                    if (letters.isNotEmpty() && v.height > 0) {
-                        val idx = ((event.y / v.height) * letters.size).toInt().coerceIn(0, letters.lastIndex)
-                        adapter.letterPositions[letters[idx]]?.let { pos ->
-                            (binding.listContacts.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(pos, 0)
-                        }
-                    }
+                    jumpToLetterAt(rail, ev.y)
                     true
                 }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> { v.performClick(); true }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    rail.performClick()
+                    true
+                }
                 else -> false
             }
         }
     }
 
-    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+    private fun px(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     companion object {
         const val EXTRA_NUMBER = "number"

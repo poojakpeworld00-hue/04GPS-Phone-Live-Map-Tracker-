@@ -10,8 +10,10 @@ import android.telephony.SignalStrength
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
+import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
@@ -27,182 +29,184 @@ import com.find.phone.gps.live.location.tracker.helpers.isNightMode
 import java.util.Locale
 
 /**
- * SIM Tools "Dual-SIM dashboard" (design 1b). Per-SIM: a live signal gauge (SignalStrength),
- * network type, roaming, country and SIM state; plus the default SIM for calls, data and SMS.
- * Read-only, READ_PHONE_STATE only. Signal updates while the screen is resumed.
+ * Read-only overview of every active SIM: live signal gauge, radio generation, roaming, country,
+ * SIM state, and which line is the default for calls, data and SMS.
  */
 class DoubleChipOverviewActivity : StageActivity<ScreenDualSimDashboardBinding>() {
 
     override val layoutId: Int = R.layout.screen_dual_sim_dashboard
 
-    private var subs: List<SubscriptionInfo> = emptyList()
-    private var selectedIndex = 0
-    private var listening: TelephonyManager? = null
+    private var activeTab = 0
+    private var lines: List<SubscriptionInfo> = emptyList()
     @Suppress("DEPRECATION")
-    private var listener: PhoneStateListener? = null
+    private var strengthWatcher: PhoneStateListener? = null
+    private var watchedTm: TelephonyManager? = null
 
     override fun initView() {
-        // Dark icons on the light canvas, light icons in dark mode.
         WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = !isNightMode(this)
-        ViewCompat.setOnApplyWindowInsetsListener(binding.lvDashRoot) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.updatePadding(top = bars.top, bottom = bars.bottom)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.lvDashRoot) { root, insets ->
+            val sys = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            root.updatePadding(top = sys.top, bottom = sys.bottom)
             insets
         }
         binding.actBack.setOnClickListener { goBack() }
-        subs = activeSubs()
-        composeSelector()
-        paintDefaults()
-        paintSelected()
+        lines = loadSubscriptions()
+        buildTabs()
+        fillDefaultRows()
+        fillActiveLine()
     }
 
     override fun onStart() {
         super.onStart()
-        if (subs.isNotEmpty()) enlistSignal(subs[selectedIndex])
+        lines.getOrNull(activeTab)?.let { startStrengthWatch(it) }
     }
 
     override fun onStop() {
-        haltSignal()
+        stopStrengthWatch()
         super.onStop()
     }
 
     @SuppressLint("MissingPermission")
-    private fun activeSubs(): List<SubscriptionInfo> {
+    private fun loadSubscriptions(): List<SubscriptionInfo> {
         if (!MineChipNums.isGranted(this)) return emptyList()
-        val sm = getSystemService(SubscriptionManager::class.java) ?: return emptyList()
-        return runCatching { sm.activeSubscriptionInfoList }.getOrNull().orEmpty()
-            .sortedBy { it.simSlotIndex }
+        val subMgr = getSystemService(SubscriptionManager::class.java) ?: return emptyList()
+        val raw = runCatching { subMgr.activeSubscriptionInfoList }.getOrNull()
+        return raw.orEmpty().sortedBy { it.simSlotIndex }
     }
 
-    private fun composeSelector() {
-        binding.chipcardSelector.removeAllViews()
-        if (subs.size < 2) {
-            binding.chipcardSelector.visibility = View.GONE
+    private fun buildTabs() {
+        val strip = binding.chipcardSelector
+        strip.removeAllViews()
+        if (lines.size < 2) {
+            strip.visibility = View.GONE
             return
         }
-        subs.forEachIndexed { i, info ->
-            val tab = TextView(this).apply {
-                layoutParams = android.widget.LinearLayout.LayoutParams(0, dp(36), 1f).also { lp ->
-                    if (i > 0) lp.marginStart = dp(4)
-                }
-                gravity = Gravity.CENTER
-                maxLines = 1
-                ellipsize = android.text.TextUtils.TruncateAt.END
-                textSize = 13f
-                text = getString(R.string.dashboard_sim_fmt, info.simSlotIndex + 1, info.carrierName)
-                setOnClickListener { select(i) }
-            }
-            binding.chipcardSelector.addView(tab)
+        lines.forEachIndexed { idx, sub ->
+            strip.addView(makeTab(idx, sub))
         }
-        styleSelector()
+        restyleTabs()
     }
 
-    private fun styleSelector() {
-        for (i in 0 until binding.chipcardSelector.childCount) {
-            val tab = binding.chipcardSelector.getChildAt(i) as TextView
-            val on = i == selectedIndex
-            tab.setTextColor(ContextCompat.getColor(this, if (on) R.color.ds_primary else R.color.ds_muted))
-            tab.typeface = ResourcesCompat.getFont(this, if (on) R.font.figtree_bold else R.font.figtree_semibold)
-            tab.background = if (on) ContextCompat.getDrawable(this, R.drawable.lv_seg_thumb_r10) else null
-            tab.elevation = if (on) dp(2).toFloat() else 0f
+    private fun makeTab(idx: Int, sub: SubscriptionInfo): TextView = TextView(this).apply {
+        layoutParams = LinearLayout.LayoutParams(0, px(36), 1f).also { lp ->
+            if (idx > 0) lp.marginStart = px(4)
+        }
+        gravity = Gravity.CENTER
+        maxLines = 1
+        ellipsize = TextUtils.TruncateAt.END
+        textSize = 13f
+        text = getString(R.string.dashboard_sim_fmt, sub.simSlotIndex + 1, sub.carrierName)
+        setOnClickListener { switchTab(idx) }
+    }
+
+    private fun restyleTabs() {
+        val strip = binding.chipcardSelector
+        repeat(strip.childCount) { idx ->
+            val tab = strip.getChildAt(idx) as TextView
+            val active = idx == activeTab
+            tab.setTextColor(ContextCompat.getColor(this, if (active) R.color.ds_primary else R.color.ds_muted))
+            tab.typeface = ResourcesCompat.getFont(this, if (active) R.font.figtree_bold else R.font.figtree_semibold)
+            tab.background = if (active) ContextCompat.getDrawable(this, R.drawable.lv_seg_thumb_r10) else null
+            tab.elevation = if (active) px(2).toFloat() else 0f
         }
     }
 
-    private fun select(i: Int) {
-        if (i == selectedIndex) return
-        selectedIndex = i
-        styleSelector()
-        haltSignal()
-        paintSelected()
-        enlistSignal(subs[i])
+    private fun switchTab(idx: Int) {
+        if (idx == activeTab) return
+        activeTab = idx
+        restyleTabs()
+        stopStrengthWatch()
+        fillActiveLine()
+        startStrengthWatch(lines[idx])
     }
 
     @SuppressLint("MissingPermission")
-    private fun paintSelected() {
-        val info = subs.getOrNull(selectedIndex)
-        if (info == null) {
-            binding.txtLevel.setText(R.string.dashboard_na)
-            binding.txtDbm.text = ""
-            setMeter(0)
-            listOf(binding.txtNetwork, binding.txtRoaming, binding.txtCountry, binding.txtSimState)
-                .forEach { it.setText(R.string.dashboard_na) }
+    private fun fillActiveLine() {
+        val sub = lines.getOrNull(activeTab) ?: run {
+            showEmptyLine()
             return
         }
-        val tm = telephonyFor(info)
-        binding.txtNetwork.text = networkLabel(runCatching { tm.dataNetworkType }.getOrDefault(TelephonyManager.NETWORK_TYPE_UNKNOWN))
-        binding.txtRoaming.setText(if (runCatching { tm.isNetworkRoaming }.getOrDefault(false)) R.string.dashboard_on else R.string.dashboard_off)
-        binding.txtCountry.text = countryName(runCatching { tm.networkCountryIso }.getOrNull()
-            ?: runCatching { tm.simCountryIso }.getOrNull())
-        binding.txtSimState.text = simStateLabel(info.simSlotIndex)
+        val tm = managerFor(sub)
+        val netType = runCatching { tm.dataNetworkType }.getOrDefault(TelephonyManager.NETWORK_TYPE_UNKNOWN)
+        binding.txtNetwork.text = generationOf(netType)
+        val roaming = runCatching { tm.isNetworkRoaming }.getOrDefault(false)
+        binding.txtRoaming.setText(if (roaming) R.string.dashboard_on else R.string.dashboard_off)
+        val iso = runCatching { tm.networkCountryIso }.getOrNull()
+            ?: runCatching { tm.simCountryIso }.getOrNull()
+        binding.txtCountry.text = countryFromIso(iso)
+        binding.txtSimState.text = describeSimState(sub.simSlotIndex)
+    }
+
+    private fun showEmptyLine() {
+        binding.txtLevel.setText(R.string.dashboard_na)
+        binding.txtDbm.text = ""
+        paintGauge(0)
+        arrayOf(binding.txtNetwork, binding.txtRoaming, binding.txtCountry, binding.txtSimState)
+            .forEach { it.setText(R.string.dashboard_na) }
     }
 
     @SuppressLint("MissingPermission")
-    private fun paintDefaults() {
-        binding.txtDefCalls.text = subLabel(SubscriptionManager.getDefaultVoiceSubscriptionId())
-        binding.txtDefData.text = subLabel(SubscriptionManager.getDefaultDataSubscriptionId())
-        binding.txtDefSms.text = subLabel(SubscriptionManager.getDefaultSmsSubscriptionId())
+    private fun fillDefaultRows() {
+        binding.txtDefCalls.text = labelForSubId(SubscriptionManager.getDefaultVoiceSubscriptionId())
+        binding.txtDefData.text = labelForSubId(SubscriptionManager.getDefaultDataSubscriptionId())
+        binding.txtDefSms.text = labelForSubId(SubscriptionManager.getDefaultSmsSubscriptionId())
     }
 
-    private fun subLabel(subId: Int): String {
-        val info = subs.firstOrNull { it.subscriptionId == subId } ?: return getString(R.string.dashboard_na)
-        return getString(R.string.dashboard_sim_fmt, info.simSlotIndex + 1, info.carrierName)
-    }
-
-    // ── live signal ──────────────────────────────────────────────────────────
+    private fun labelForSubId(subId: Int): String =
+        lines.firstOrNull { it.subscriptionId == subId }
+            ?.let { getString(R.string.dashboard_sim_fmt, it.simSlotIndex + 1, it.carrierName) }
+            ?: getString(R.string.dashboard_na)
 
     @SuppressLint("MissingPermission")
     @Suppress("DEPRECATION")
-    private fun enlistSignal(info: SubscriptionInfo) {
+    private fun startStrengthWatch(sub: SubscriptionInfo) {
         if (!MineChipNums.isGranted(this)) return
-        val tm = telephonyFor(info)
-        val l = object : PhoneStateListener() {
+        val tm = managerFor(sub)
+        val watcher = object : PhoneStateListener() {
             override fun onSignalStrengthsChanged(signalStrength: SignalStrength) {
-                onSignal(signalStrength)
+                showStrength(signalStrength)
             }
         }
-        listener = l
-        listening = tm
-        runCatching { tm.listen(l, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS) }
+        strengthWatcher = watcher
+        watchedTm = tm
+        runCatching { tm.listen(watcher, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS) }
     }
 
     @Suppress("DEPRECATION")
-    private fun haltSignal() {
-        val l = listener ?: return
-        runCatching { listening?.listen(l, PhoneStateListener.LISTEN_NONE) }
-        listener = null
-        listening = null
-    }
-
-    private fun onSignal(ss: SignalStrength) {
-        val level = ss.level.coerceIn(0, 4)
-        setMeter(level)
-        binding.txtLevel.setText(levelLabel(level))
-        val dbm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ss.cellSignalStrengths.firstOrNull { it.dbm != Int.MAX_VALUE && it.dbm != 0 }?.dbm
-        } else null
-        binding.txtDbm.text = if (dbm != null) getString(R.string.dashboard_live_fmt, dbm) else ""
-    }
-
-    private fun setMeter(level: Int) {
-        val segs = listOf(binding.part1, binding.part2, binding.part3, binding.part4)
-        val onColor = ContextCompat.getColor(this, when {
-            level <= 1 -> R.color.ds_danger
-            level == 2 -> R.color.ds_warn
-            else -> R.color.ds_success
-        })
-        val off = ContextCompat.getColor(this, R.color.ds_border)
-        segs.forEachIndexed { i, v ->
-            ViewCompat.setBackgroundTintList(v, ColorStateList.valueOf(if (i < level) onColor else off))
+    private fun stopStrengthWatch() {
+        strengthWatcher?.let { watcher ->
+            runCatching { watchedTm?.listen(watcher, PhoneStateListener.LISTEN_NONE) }
+            strengthWatcher = null
+            watchedTm = null
         }
     }
 
-    // ── labels ───────────────────────────────────────────────────────────────
+    private fun showStrength(strength: SignalStrength) {
+        val bars = strength.level.coerceIn(0, 4)
+        paintGauge(bars)
+        binding.txtLevel.setText(strengthWord(bars))
+        val dbm: Int? = when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ->
+                strength.cellSignalStrengths.firstOrNull { it.dbm != Int.MAX_VALUE && it.dbm != 0 }?.dbm
+            else -> null
+        }
+        binding.txtDbm.text = dbm?.let { getString(R.string.dashboard_live_fmt, it) } ?: ""
+    }
 
-    private fun telephonyFor(info: SubscriptionInfo): TelephonyManager =
+    private fun paintGauge(bars: Int) {
+        val litRes = if (bars <= 1) R.color.ds_danger else if (bars == 2) R.color.ds_warn else R.color.ds_success
+        val lit = ContextCompat.getColor(this, litRes)
+        val unlit = ContextCompat.getColor(this, R.color.ds_border)
+        arrayOf(binding.part1, binding.part2, binding.part3, binding.part4).forEachIndexed { idx, seg ->
+            ViewCompat.setBackgroundTintList(seg, ColorStateList.valueOf(if (idx < bars) lit else unlit))
+        }
+    }
+
+    private fun managerFor(sub: SubscriptionInfo): TelephonyManager =
         (getSystemService(TelephonyManager::class.java) as TelephonyManager)
-            .createForSubscriptionId(info.subscriptionId)
+            .createForSubscriptionId(sub.subscriptionId)
 
-    private fun levelLabel(level: Int): Int = when (level) {
+    private fun strengthWord(bars: Int): Int = when (bars) {
         0 -> R.string.dashboard_no_signal
         1 -> R.string.dashboard_weak
         2 -> R.string.dashboard_fair
@@ -210,43 +214,48 @@ class DoubleChipOverviewActivity : StageActivity<ScreenDualSimDashboardBinding>(
         else -> R.string.dashboard_excellent
     }
 
-    private fun networkLabel(type: Int): String = when (type) {
+    private fun generationOf(type: Int): String = when (type) {
         TelephonyManager.NETWORK_TYPE_NR -> "5G"
         TelephonyManager.NETWORK_TYPE_LTE -> "4G"
-        TelephonyManager.NETWORK_TYPE_HSPAP, TelephonyManager.NETWORK_TYPE_HSPA,
-        TelephonyManager.NETWORK_TYPE_HSDPA, TelephonyManager.NETWORK_TYPE_HSUPA,
-        TelephonyManager.NETWORK_TYPE_UMTS, TelephonyManager.NETWORK_TYPE_EVDO_0,
-        TelephonyManager.NETWORK_TYPE_EVDO_A, TelephonyManager.NETWORK_TYPE_EVDO_B -> "3G"
-        TelephonyManager.NETWORK_TYPE_EDGE, TelephonyManager.NETWORK_TYPE_GPRS,
-        TelephonyManager.NETWORK_TYPE_CDMA, TelephonyManager.NETWORK_TYPE_1xRTT -> "2G"
+        in THREE_G_TYPES -> "3G"
+        in TWO_G_TYPES -> "2G"
         else -> getString(R.string.dashboard_na)
     }
 
-    private fun countryName(iso: String?): String {
+    private fun countryFromIso(iso: String?): String {
         if (iso.isNullOrBlank()) return getString(R.string.dashboard_na)
-        val name = Locale("", iso.uppercase(Locale.US)).getDisplayCountry(Locale.ENGLISH)
-        return name.ifBlank { iso.uppercase(Locale.US) }
+        val code = iso.uppercase(Locale.US)
+        return Locale("", code).getDisplayCountry(Locale.ENGLISH).ifBlank { code }
     }
 
     @SuppressLint("MissingPermission")
-    private fun simStateLabel(slot: Int): String {
-        val tm = getSystemService(TelephonyManager::class.java) as? TelephonyManager
-            ?: return getString(R.string.dashboard_na)
-        val state = runCatching { tm.getSimState(slot) }.getOrDefault(TelephonyManager.SIM_STATE_UNKNOWN)
-        return when (state) {
+    private fun describeSimState(slot: Int): String {
+        val na = getString(R.string.dashboard_na)
+        val tm = getSystemService(TelephonyManager::class.java) as? TelephonyManager ?: return na
+        return when (runCatching { tm.getSimState(slot) }.getOrDefault(TelephonyManager.SIM_STATE_UNKNOWN)) {
             TelephonyManager.SIM_STATE_READY -> getString(R.string.dashboard_ready)
             TelephonyManager.SIM_STATE_ABSENT -> "Absent"
-            TelephonyManager.SIM_STATE_PIN_REQUIRED,
-            TelephonyManager.SIM_STATE_PUK_REQUIRED -> "Locked"
+            TelephonyManager.SIM_STATE_PIN_REQUIRED, TelephonyManager.SIM_STATE_PUK_REQUIRED -> "Locked"
             TelephonyManager.SIM_STATE_NETWORK_LOCKED -> "Network locked"
             TelephonyManager.SIM_STATE_NOT_READY -> "Not ready"
-            else -> getString(R.string.dashboard_na)
+            else -> na
         }
     }
 
-    private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
+    private fun px(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     companion object {
+        private val THREE_G_TYPES = intArrayOf(
+            TelephonyManager.NETWORK_TYPE_HSPAP, TelephonyManager.NETWORK_TYPE_HSPA,
+            TelephonyManager.NETWORK_TYPE_HSDPA, TelephonyManager.NETWORK_TYPE_HSUPA,
+            TelephonyManager.NETWORK_TYPE_UMTS, TelephonyManager.NETWORK_TYPE_EVDO_0,
+            TelephonyManager.NETWORK_TYPE_EVDO_A, TelephonyManager.NETWORK_TYPE_EVDO_B,
+        )
+        private val TWO_G_TYPES = intArrayOf(
+            TelephonyManager.NETWORK_TYPE_EDGE, TelephonyManager.NETWORK_TYPE_GPRS,
+            TelephonyManager.NETWORK_TYPE_CDMA, TelephonyManager.NETWORK_TYPE_1xRTT,
+        )
+
         fun intent(context: Context): Intent = Intent(context, DoubleChipOverviewActivity::class.java)
     }
 }

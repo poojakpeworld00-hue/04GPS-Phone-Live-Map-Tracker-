@@ -20,88 +20,99 @@ import com.find.phone.gps.live.location.tracker.screens.memo.MemoListActivity
 import com.find.phone.gps.live.location.tracker.helpers.WardenRail
 
 /**
- * Fires one reminder. Posts a high-importance notification whose full-screen target is
- * [MemoSirenActivity]; that screen cancels the notification once it is up.
- *
- * Product decision: reminders only show while the phone is locked. In use, the full-screen
- * target would only surface as a heads-up banner, so the reminder is not shown at all. Either way
- * the reminder moves on: a one-off is marked done, a repeating one is scheduled for its next time.
+ * Worker behind a single due reminder. It first rolls the reminder forward (done, or next
+ * occurrence) and then, only when the screen is locked, posts a high-priority notification
+ * whose full-screen target is [MemoSirenActivity]. While the device is in use nothing is shown.
  */
 class MemoLaborer(context: Context, params: WorkerParameters) : Worker(context, params) {
 
     override fun doWork(): Result {
-        val ctx = applicationContext
-        val id = inputData.getLong(KEY_ID, -1L)
-        val item = MemoShelf.get(ctx, id)?.takeIf { it.isActive } ?: return Result.success()
+        val appCtx = applicationContext
+        val reminderId = inputData.getLong(KEY_ID, -1L)
+        val reminder = MemoShelf.get(appCtx, reminderId)
+        if (reminder == null || !reminder.isActive) return Result.success()
 
-        advance(ctx, item)
+        rollForward(appCtx, reminder)
 
-        if (isDeviceInUse(ctx)) {
-            WardenRail.log(TAG, "reminder $id due while the phone is in use → not shown")
-            return Result.success()
+        when {
+            phoneUnlockedAndAwake(appCtx) ->
+                WardenRail.log(TAG, "reminder $reminderId due while the phone is in use → not shown")
+            else -> post(appCtx, reminder)
         }
-        notify(ctx, item)
         return Result.success()
     }
 
-    /** One-off → done; repeating → its next time. */
-    private fun advance(ctx: Context, item: MemoElement) {
-        val next = Repeat.nextAfter(item.repeatOrOnce, item.baseTime, System.currentTimeMillis())
-        if (next == null) MemoShelf.upsert(ctx, item.copy(done = true))
-        else MemoTimer.save(ctx, item.copy(dateTime = next))
+    private fun rollForward(appCtx: Context, reminder: MemoElement) {
+        Repeat.nextAfter(reminder.repeatOrOnce, reminder.baseTime, System.currentTimeMillis())
+            ?.let { MemoTimer.save(appCtx, reminder.copy(dateTime = it)) }
+            ?: MemoShelf.upsert(appCtx, reminder.copy(done = true))
     }
 
-    private fun isDeviceInUse(ctx: Context): Boolean {
-        val km = ctx.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-        val pm = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
-        return pm.isInteractive && !km.isKeyguardLocked
+    private fun phoneUnlockedAndAwake(appCtx: Context): Boolean {
+        val keyguard = appCtx.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        val power = appCtx.getSystemService(Context.POWER_SERVICE) as PowerManager
+        return power.isInteractive && !keyguard.isKeyguardLocked
     }
 
-    private fun notify(ctx: Context, item: MemoElement) {
-        val nmc = NotificationManagerCompat.from(ctx)
-        if (!nmc.areNotificationsEnabled()) {
-            WardenRail.log(TAG, "notifications are off → reminder ${item.id} cannot be shown")
+    private fun bodyText(appCtx: Context, reminder: MemoElement): String = when {
+        reminder.note.isNotBlank() -> reminder.note
+        reminder.number.isNotBlank() -> reminder.number
+        else -> appCtx.getString(R.string.rem_notification_text)
+    }
+
+    private fun post(appCtx: Context, reminder: MemoElement) {
+        val manager = NotificationManagerCompat.from(appCtx)
+        if (!manager.areNotificationsEnabled()) {
+            WardenRail.log(TAG, "notifications are off → reminder ${reminder.id} cannot be shown")
             return
         }
-        guaranteeChannel(ctx)
+        createChannelIfNeeded(appCtx)
 
-        // `is_enhanced_mode` off (or the country is excluded): a plain notification into the list.
-        val fullScreen = MemoProfile.get(ctx).isEnhancedMode && MemoProfile.isCountryAllowed(ctx)
-        val notifId = item.id.hashCode()
-        val target = if (fullScreen) MemoSirenActivity.intent(ctx, item.id, notifId)
-        else Intent(ctx, MemoListActivity::class.java)
-        target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        val pending = PendingIntent.getActivity(
-            ctx, notifId, target, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        val takeover = MemoProfile.get(appCtx).isEnhancedMode && MemoProfile.isCountryAllowed(appCtx)
+        val slot = reminder.id.hashCode()
+        val launch = when (takeover) {
+            true -> MemoSirenActivity.intent(appCtx, reminder.id, slot)
+            false -> Intent(appCtx, MemoListActivity::class.java)
+        }.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP) }
+        val tapIntent = PendingIntent.getActivity(
+            appCtx, slot, launch, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        val text = item.note.ifBlank { item.number }.ifBlank { ctx.getString(R.string.rem_notification_text) }
-        val builder = NotificationCompat.Builder(ctx, CHANNEL_ID)
-            .setSmallIcon(R.drawable.icon_stat_reminder)
-            .setColor(ContextCompat.getColor(ctx, R.color.ds_primary))
-            .setContentTitle(item.title)
-            .setContentText(text)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_REMINDER)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setContentIntent(pending)
-            .setAutoCancel(true)
-        if (fullScreen) MemoConsent.linkAlertIntent(builder, pending)
+        val text = bodyText(appCtx, reminder)
+        val notification = NotificationCompat.Builder(appCtx, CHANNEL_ID).apply {
+            setSmallIcon(R.drawable.icon_stat_reminder)
+            setColor(ContextCompat.getColor(appCtx, R.color.ds_primary))
+            setContentTitle(reminder.title)
+            setContentText(text)
+            setPriority(NotificationCompat.PRIORITY_HIGH)
+            setCategory(NotificationCompat.CATEGORY_REMINDER)
+            setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            setContentIntent(tapIntent)
+            setAutoCancel(true)
+            if (takeover) MemoConsent.linkAlertIntent(this, tapIntent)
+        }
 
-        runCatching { nmc.notify(notifId, builder.build()) }
-            .onSuccess {
-                WardenRail.log(TAG, "reminder ${item.id} \"${item.title}\" notified (full screen=$fullScreen, notif=$notifId)")
-            }
-            .onFailure { WardenRail.error(TAG, "notify failed", it) }
+        val failure: Throwable? = try {
+            manager.notify(slot, notification.build())
+            null
+        } catch (t: Throwable) {
+            t
+        }
+        if (failure != null) {
+            WardenRail.error(TAG, "notify failed", failure)
+        } else {
+            WardenRail.log(TAG, "reminder ${reminder.id} \"${reminder.title}\" notified (full screen=$takeover, notif=$slot)")
+        }
     }
 
-    private fun guaranteeChannel(ctx: Context) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        val manager = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, ctx.getString(R.string.rem_channel_name), NotificationManager.IMPORTANCE_HIGH)
-                .apply { description = ctx.getString(R.string.rem_channel_desc) }
-        )
+    private fun createChannelIfNeeded(appCtx: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID, appCtx.getString(R.string.rem_channel_name), NotificationManager.IMPORTANCE_HIGH,
+            )
+            channel.description = appCtx.getString(R.string.rem_channel_desc)
+            (appCtx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(channel)
+        }
     }
 
     companion object {

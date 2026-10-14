@@ -1,5 +1,7 @@
 package com.find.phone.gps.live.location.tracker.screens.policy
 
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordPermissionResult
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -43,6 +45,7 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
     private var settingsShown = false
     private var proceeded = false
     private var watchRegistered = false
+    private var overlayAsked = false
 
     /** Fired by [DriftWatchService] once the overlay permission flips ON. */
     private val overlayGrantedReceiver = object : BroadcastReceiver() {
@@ -133,6 +136,7 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
         // Already granted, or a region where the permission is not offered at all
         // (CountryList_Counter_NShow / `all`) → straight on to the next screen.
         if (DriftToolbox.isGranted(this) || !DriftToolbox.isOfferable(this)) {
+            if (DriftToolbox.isGranted(this)) recordKeyEvent("Permission_SYSTEM_ALERT_WINDOW_Bypass")
             proceedToNextScreen()
             return
         }
@@ -150,12 +154,15 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
 
         if (!launched) {
             // No overlay-settings screen on this device; don't block the flow.
+            recordKeyEvent("Permission_SYSTEM_ALERT_WINDOW_Bypass")
             proceedToNextScreen()
             return
         }
 
         awaitingOverlay = true
         settingsShown = false
+        overlayAsked = true
+        recordKeyEvent("Permission_SYSTEM_ALERT_WINDOW_Show")
 
         // Watch for the grant from a service so it keeps polling while we sit
         // behind the system Settings screen.
@@ -178,6 +185,9 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
         if (proceeded) return
         proceeded = true
         haltWatch()
+        if (overlayAsked) {
+            recordPermissionResult(android.Manifest.permission.SYSTEM_ALERT_WINDOW, DriftToolbox.isGranted(this))
+        }
 
         // Onboarding follows the same OpeningUnveilCharter frequency gate as Splash.
         val next = if (OpeningUnveilCharter.mustShowOnboarding(this)) BriefingActivity::class.java

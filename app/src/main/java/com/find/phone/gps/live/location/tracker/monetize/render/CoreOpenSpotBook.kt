@@ -14,6 +14,8 @@ import com.find.phone.gps.live.location.tracker.monetize.model.SpotSort
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotIncomeGauge
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordAdEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordAdLoadError
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverRear
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverStandard
 import com.find.phone.gps.live.location.tracker.BuildConfig
@@ -76,12 +78,14 @@ object CoreOpenSpotBook {
 
             if (adsPreference.getString("IsAdType").equals("Google", true)) {
                 SpotsLocker.getInstance(context).getString("googleAppopen")?.let { adUnitId ->
+                    context.recordAdEvent("app_open", "req")
                     AppOpenAd.load(
                         context, adUnitId, request, object : AppOpenAdLoadCallback() {
                             override fun onAdLoaded(ad: AppOpenAd) {
 
                                 try {
                                     context.recordKeyEvent("appopen_ad_loaded")
+                                    context.recordAdEvent("app_open", "loaded")
                                 } catch (e: Exception) {
                                 }
 
@@ -97,6 +101,7 @@ object CoreOpenSpotBook {
 
                                 try {
                                     context.recordKeyEvent("appopen_ad_fail")
+                                    context.recordAdLoadError("app_open", loadAdError.code)
                                 } catch (e: Exception) {
                                 }
                                 isLoadingAd = false
@@ -168,6 +173,7 @@ object CoreOpenSpotBook {
 
                 try {
                     activity.recordKeyEvent("appopen_ad_dismissed")
+                    activity.recordAdEvent("app_open", "close")
                 } catch (_: Exception) {
                 }
 
@@ -200,6 +206,7 @@ object CoreOpenSpotBook {
                 Log.e(
                     LOG_TAG, "Ad showed fullscreen content."
                 )
+                runCatching { activity.recordAdEvent("app_open", "show") }
             }
         }
 

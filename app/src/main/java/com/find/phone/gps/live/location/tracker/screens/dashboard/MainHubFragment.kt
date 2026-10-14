@@ -5,6 +5,7 @@ import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.app.Activity
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -55,15 +56,12 @@ import com.find.phone.gps.live.location.tracker.screens.finder.Realms
 import com.find.phone.gps.live.location.tracker.helpers.followAdContainer
 
 /**
- * The app's home content (design 3a–3e): "one task up front — number in, search out". The live
- * radar hero, the raised search card, the native mid slot under the fold, then recent searches;
- * the adaptive banner docks at the bottom once recents exist.
+ * Home content: a radar hero, the number search card, a native slot below it and the list of
+ * recent searches, with a bottom banner once there are recents.
  *
- * One fragment, two hosts: the standalone home ([com.find.phone.gps.live.location.tracker.screens.CoreHubActivity])
- * and the launcher's swipe-in panel ([com.find.phone.gps.live.location.tracker.homeshell.HomeCasingFragment]).
- * Ads and anything else that must not run unseen wait for [setOnScreen]: the launcher commits its
- * panel at `onCreate` and parks it off screen. The Activity-bound flows (RC permission sheet,
- * in-app update) stay with the hosts through [MainCasingDirector].
+ * Hosted both by the standalone home and by the launcher's swipe-in panel. Anything that must
+ * not run while unseen (ads) waits for [setOnScreen], because the launcher attaches this panel
+ * early and keeps it off screen. Activity-level flows stay with the hosts.
  */
 class MainHubFragment : Fragment() {
 
@@ -75,579 +73,607 @@ class MainHubFragment : Fragment() {
     private var _binding: PaneHomeCoreBinding? = null
     private val binding get() = _binding!!
 
-    private val store by lazy { FreshHuntShelf(requireContext()) }
-    private val prefs by lazy { LockerBook(requireContext()) }
+    private val book by lazy { LockerBook(requireContext()) }
+    private val recentShelf by lazy { FreshHuntShelf(requireContext()) }
 
-    private lateinit var recentsAdapter: FreshHuntAdapter
-    private val animators = mutableListOf<Animator>()
-    private var glowAnimator: Animator? = null
-    private var proShine: Animator? = null
-    private var heroAnimator: ValueAnimator? = null
+    private lateinit var recentsListAdapter: FreshHuntAdapter
+    private val liveAnims = mutableListOf<Animator>()
+    private var heroResize: ValueAnimator? = null
+    private var searchGlow: Animator? = null
+    private var chipShine: Animator? = null
 
-    /** The country the dial code belongs to; the user's home country, else the US. */
-    private var countryIso: String = "US"
+    /** ISO code of the selected dialing country (home country, else US). */
+    private var pickedIso: String = "US"
 
-    /** Groups the digits as the user types ("415 555 0134"), following the chosen country. */
-    private var formatter: PhoneNumberFormattingTextWatcher? = null
+    /** Formats the digits while typing according to [pickedIso]. */
+    private var digitGrouper: PhoneNumberFormattingTextWatcher? = null
 
-    /** Whether the user can see this content right now (always in the standalone home). */
-    private var onScreen = false
+    /** True while this content is actually visible (always true in the standalone home). */
+    private var visibleToUser = false
 
-    /** The native slot has been requested once; later opens refresh instead. */
-    private var nativeRequested = false
+    /** First native request done; afterwards only refreshes happen. */
+    private var nativeLoadedOnce = false
 
-    /** A banner load is in flight or on screen; cleared when recents empty and the frame hides. */
-    private var bannerRequested = false
+    /** A banner is loading or shown; reset when the recents list empties. */
+    private var bannerInFlight = false
 
-    /** The contact button asks for Contacts first; once granted it opens the system picker. */
-    private val contactPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) enterContactPicker()
-        else Toast.makeText(requireContext(), R.string.ds_contacts_denied, Toast.LENGTH_SHORT).show()
-    }
+    /** Navigation bar height from the latest insets dispatch. */
+    private var navInset = 0
 
-    /** The history page hands a row back; it reopens exactly as a tap on the Home list would. */
-    private val historyPage = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode != Activity.RESULT_OK) { renewRecents(); return@registerForActivityResult }
-        val digits = result.data?.getStringExtra(LiveHistoryActivity.EXTRA_DIGITS).orEmpty()
-        val dial = result.data?.getStringExtra(LiveHistoryActivity.EXTRA_DIAL).orEmpty()
-        renewRecents()
-        store.find(digits, dial)?.let { enterRecent(it) }
-    }
+    /** Search waiting for the permission answers. */
+    private var heldSearch: FreshHunt? = null
 
-    /**
-     * A recent search tapped (on Home or on the history page): an unlocked result reopens as it
-     * was; a locked one goes back to its blurred preview (no new lookup); rows saved before
-     * results were kept just refill the search box.
-     */
-    private fun enterRecent(recent: FreshHunt) {
-        val report = recent.report
-        if (report != null) {
-            if (recent.unlocked) requireContext().enterActivity(NumProfile2Activity.intent(requireContext(), report))
-            else enterLocating(recent, saved = report)
-            return
-        }
-        countryIso = recent.iso2
-        wireCountry()
-        binding.lvPhoneInput.setText(recent.digits)
-        binding.lvPhoneInput.setSelection(recent.digits.length)
-    }
+    /** The upcoming search was paid for with the limit sheet's rewarded ad. */
+    private var prepaidByAd = false
 
-    private val contactPicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val number = result.data?.getStringExtra(BuddyChooserActivity.EXTRA_NUMBER)
-        if (result.resultCode == Activity.RESULT_OK && !number.isNullOrBlank()) stuffFromContact(number)
-    }
+    // Result registrations (kept in a fixed order).
 
-    /**
-     * Search Location: location permission first, then contacts permission, then the result —
-     * the search runs whatever either answer is. The data use is disclosed on the LightHouse
-     * disclosure screen after the splash, so neither step has an in-app dialog of its own; the
-     * one-time phonebook upload runs silently once contacts is granted (gated inside
-     * [BuddyRelay.pushOnceIfDue]: release only, Remote Config switch, once per install).
-     *
-     * Everything after a permission result is null-safe on purpose: the result can land while
-     * the fragment's view is gone (the launcher panel closes and reopens under the system
-     * dialog), and a throw here takes the whole app down.
-     */
-    private val locationPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
-        if (result.values.any { it }) context?.let(PlaceDiary::log)
-        queryContactsThenSearch()
-    }
-
-    /** Result of the contacts permission asked in the search chain (not the picker button). */
-    private val uploadContactsPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        beginUploadIfDue()
-        enterPendingSearch()
-    }
-
-    /**
-     * After location settles: ask for contacts once (the system shows its dialog at most twice;
-     * after that the search just goes ahead), then open the search. Already granted → straight to
-     * the search, with the upload kicked off in the background.
-     */
-    private fun queryContactsThenSearch() {
-        val context = context ?: return
-        val permission = Manifest.permission.READ_CONTACTS
-        val granted = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
-        when {
-            granted -> {
-                beginUploadIfDue()
-                enterPendingSearch()
-            }
-            !prefs.hasRequestedPermission(permission) -> {
-                prefs.flagPermissionRequested(permission)
-                uploadContactsPermission.launch(permission)
-            }
-            shouldShowRequestPermissionRationale(permission) -> uploadContactsPermission.launch(permission)
-            // Denied for good: the system would not show a dialog, so don't hold the search.
-            else -> enterPendingSearch()
+    private val pickerContactsAsk = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        when (ok) {
+            true -> launchBuddyPicker()
+            false -> Toast.makeText(requireContext(), R.string.ds_contacts_denied, Toast.LENGTH_SHORT).show()
         }
     }
 
-    /**
-     * The one-time upload, off the main thread and never fatal. Uses the application context and
-     * the view's scope only if the view is still there, so a late permission result cannot throw.
-     */
-    private fun beginUploadIfDue() {
-        val app = context?.applicationContext ?: return
-        val owner = viewLifecycleOwnerLiveData.value ?: return
-        owner.lifecycleScope.launch {
-            runCatching { BuddyRelay.pushOnceIfDue(app) }
-                .onFailure { android.util.Log.w("BuddyRelay", "upload chain failed", it) }
+    private val historyLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        if (res.resultCode == Activity.RESULT_OK) {
+            val data = res.data
+            val digits = data?.getStringExtra(LiveHistoryActivity.EXTRA_DIGITS).orEmpty()
+            val dial = data?.getStringExtra(LiveHistoryActivity.EXTRA_DIAL).orEmpty()
+            reloadRecents()
+            recentShelf.find(digits, dial)?.let { reopenRecent(it) }
+        } else {
+            reloadRecents()
         }
     }
 
-    /** Opens the search that was waiting on the permission answers, if one is still pending. */
-    private fun enterPendingSearch() {
-        val search = pendingSearch ?: return
-        pendingSearch = null
-        enterLocating(search, saved = null)
-    }
-
-    /** The search waiting on the location answer. */
-    private var pendingSearch: FreshHunt? = null
-
-    /** The next search was bought with a 9b rewarded ad: its result opens without another ad. */
-    private var nextSearchPrepaid = false
-
-    /** Back from the paywall opened by the limit sheet: bought Premium → the search goes ahead. */
-    private val limitPremiumLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        wireQuota()
-        if (PlusCheckout.isPremium(requireContext())) beginSearch()
+    private val buddyPickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        val picked = res.data?.getStringExtra(BuddyChooserActivity.EXTRA_NUMBER)
+        picked?.takeIf { res.resultCode == Activity.RESULT_OK && it.isNotBlank() }?.let { fillFromContact(it) }
     }
 
     /**
-     * Back from the Locating page: it saved the search to Recents itself; once its lookup has
-     * answered the search box is cleared. Premium bought from it shows here too.
+     * Location first, then contacts, then the search goes ahead regardless of the answers. Both
+     * steps are disclosed earlier in the app, so there is no extra dialog here. All follow-up is
+     * null-safe: the answer can arrive after the view is gone.
      */
-    private val locatingPage = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.data?.getBooleanExtra(PinpointingActivity.EXTRA_FOUND, false) == true) _binding?.lvPhoneInput?.setText("")
-        renewRecents()
-        wireQuota()
-        wireProChip()
+    private val locationAsk = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { answers ->
+        if (true in answers.values) context?.let(PlaceDiary::log)
+        askContactsThenProceed()
     }
+
+    /** Contacts asked as part of the search chain (not the picker button). */
+    private val searchContactsAsk = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        kickPhonebookUpload()
+        releaseHeldSearch()
+    }
+
+    /** Paywall opened from the limit sheet: a purchase lets the search continue. */
+    private val ceilingPaywall = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        refreshQuota()
+        if (PlusCheckout.isPremium(requireContext())) submitSearch()
+    }
+
+    /** Back from Locating: it saved the recent itself; clear the box once the lookup answered. */
+    private val locatingLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        val answered = res.data?.getBooleanExtra(PinpointingActivity.EXTRA_FOUND, false) == true
+        if (answered) _binding?.lvPhoneInput?.setText("")
+        reloadRecents()
+        refreshQuota()
+        refreshProChip()
+    }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        // Inflated under the app theme in both hosts: the launcher Activity carries the module's
-        // own theme, whose default font and text style would otherwise restyle this content.
-        val themed = inflater.cloneInContext(ContextThemeWrapper(inflater.context, R.style.Theme_GpsTracker))
-        return PaneHomeCoreBinding.inflate(themed, container, false).also { _binding = it }.root
+        // Always inflate with the app theme: the launcher host uses its own module theme.
+        val appThemed = ContextThemeWrapper(inflater.context, R.style.Theme_GpsTracker)
+        val fresh = PaneHomeCoreBinding.inflate(inflater.cloneInContext(appThemed), container, false)
+        _binding = fresh
+        return fresh.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        // The hero gradient runs under the status bar; the header takes the top inset as
-        // padding, the root the sides and the bottom (the banner slot sits above the nav bar).
-        ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            binding.crest.updatePadding(top = bars.top)
-            binding.crest.layoutParams.height = dp(56) + bars.top
-            navBarBottom = bars.bottom
-            v.updatePadding(left = bars.left, right = bars.right)
-            enactBottomInset(v)
-            insets
-        }
-        // The bottom inset is only padded where the navigation bar really covers this view. In the
-        // standalone (edge-to-edge) home that is the whole bar; in the launcher panel with 3-button
-        // navigation the host already lays out above the bar, and padding again left a bar-high
-        // empty strip under the banner.
-        view.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ -> enactBottomInset(v) }
+        installInsets(view)
 
-        countryIso = prefs.homeCountryIso.takeIf { it.length == 2 && Realms.byIso(it) != null } ?: "US"
-        wireCountry()
+        pickedIso = book.homeCountryIso.takeIf { it.length == 2 && Realms.byIso(it) != null } ?: "US"
+        applyCountry()
 
-        // The menu only exists where there is a drawer to open (the standalone home).
-        val menuHost = (parentFragment as? MenuHost) ?: (activity as? MenuHost)
-        binding.actMenu.isVisible = menuHost != null
-        binding.actMenu.setOnClickListener { menuHost?.openHomeMenu() }
-        binding.actHistory.setOnClickListener { historyPage.launch(LiveHistoryActivity.intent(requireContext())) }
+        bindHeader()
+        bindSearchCard()
+        bindRecents()
 
-        // Free searches today (design 9a); "Unlimited" → the Premium paywall.
-        binding.actUnlimited.setOnClickListener {
-            requireContext().recordKeyEvent("home_quota_unlimited")
-            startActivity(PlusActivity.intent(requireContext()))
-        }
-        wireQuota()
-
-        // PRO chip (design 9a) → the Premium paywall.
-        CraftMovement.pressScale(binding.actPro)
-        binding.actPro.clipToOutline = true
-        binding.actPro.setOnClickListener {
-            requireContext().recordKeyEvent("home_pro_chip")
-            startActivity(PlusActivity.intent(requireContext()))
-        }
-        wireProChip()
-        binding.landChip.setOnClickListener {
-            LandChooserDrawer.newInstance(countryIso).show(childFragmentManager, "country")
-        }
-        childFragmentManager.setFragmentResultListener(LandChooserDrawer.RESULT_KEY, viewLifecycleOwner) { _, bundle ->
-            bundle.getString(LandChooserDrawer.ARG_ISO)?.let { iso ->
-                countryIso = iso
-                wireCountry()
-            }
-        }
-
-        // Field: rest → focus (white, 2dp primary, 4dp halo) and the hero shrinks (3b).
-        binding.lvPhoneInput.setOnFocusChangeListener { _, focused -> setTypingState(focused) }
-        binding.lvPhoneInput.doAfterTextChanged { reviseInputState() }
-        binding.lvPhoneInput.setOnEditorActionListener { _, action, _ ->
-            if (action == EditorInfo.IME_ACTION_SEARCH) { beginSearch(); true } else false
-        }
-        binding.actContact.setOnClickListener { chooseContact() }
-        binding.actClear.setOnClickListener { binding.lvPhoneInput.setText("") }
-        CraftMovement.pressScale(binding.actSearch)
-        binding.actSearch.setOnClickListener { beginSearch() }
-        reviseInputState()
-
-        recentsAdapter = FreshHuntAdapter { enterRecent(it) }
-        binding.listRecents.layoutManager = LinearLayoutManager(requireContext())
-        binding.listRecents.adapter = recentsAdapter
-        binding.actClearAll.setOnClickListener {
-            store.clear()
-            renewRecents()
-        }
-        renewRecents()
-
-        // The slot frame and the bottom banner are hidden until the content is on screen, so an
-        // off-screen panel never requests an ad; the standalone home calls setOnScreen(true)
-        // straight away. The ad layer shows the banner frame itself once a load starts.
+        // Ad frames stay hidden until the content is on screen, so a parked panel never loads one.
         binding.spotNativeCard.isVisible = false
         binding.root.findViewById<View>(R.id.ribbonAdFrame)?.isVisible = false
-        if (onScreen) paintAds()
+        if (visibleToUser) loadAdSlots()
     }
 
     override fun onResume() {
         super.onResume()
-        // Coming back from the paywall with a purchase hides the chip and the counter; a new day
-        // refills the counter.
-        wireProChip()
-        wireQuota()
-    }
-
-    /** The chip shows while Premium is on offer and the user doesn't have it; its shine runs meanwhile. */
-    private fun wireProChip() {
-        val b = _binding ?: return
-        val context = requireContext()
-        val show = PlusProfile.read(context).enabled && !PlusCheckout.isPremium(context)
-        b.actPro.isVisible = show
-        if (!show) {
-            proShine?.cancel()
-            proShine = null
-            return
-        }
-        if (proShine != null || CraftMovement.animationsDisabled(context)) {
-            b.lvProShine.isVisible = proShine != null
-            return
-        }
-        b.actPro.post {
-            val chip = _binding?.actPro ?: return@post
-            val w = chip.width.toFloat()
-            proShine = ObjectAnimator.ofFloat(_binding?.lvProShine, View.TRANSLATION_X, -0.4f * w, 1.2f * w).apply {
-                duration = 1_800L
-                startDelay = 1_200L
-                repeatCount = ValueAnimator.INFINITE
-                interpolator = CraftMovement.EASE_IN_OUT
-                start()
-            }.also { animators += it }
-        }
+        // A purchase or a new day may have changed the chip / counter.
+        refreshProChip()
+        refreshQuota()
     }
 
     override fun onDestroyView() {
-        proShine = null
-        heroAnimator?.cancel()
-        CraftMovement.abortAll(animators)
-        glowAnimator = null
+        chipShine = null
+        heroResize?.cancel()
+        CraftMovement.abortAll(liveAnims)
+        searchGlow = null
         _binding = null
         super.onDestroyView()
     }
 
     /**
-     * Whether the user can see this content. The launcher calls it as its panel slides in and
-     * out; the standalone home once, on create. Ad requests only ever happen while it is true.
+     * Called by the launcher as its panel enters/leaves, and once by the standalone home.
+     * Ads are only requested while this is true.
      */
     fun setOnScreen(visible: Boolean) {
-        onScreen = visible
-        if (visible && _binding != null) paintAds()
+        visibleToUser = visible
+        if (!visible || _binding == null) return
+        loadAdSlots()
     }
 
-    /** The native mid slot under the search card, and the bottom banner once recents exist. */
-    private fun paintAds() {
-        val activity = activity ?: return
-        val slot = HomeSpotsProfile.rightPanelNativeSlot(activity)
-        val adsOn = SpotsLocker.getInstance(activity).getBoolean("IsAdsON")
-        binding.spotNativeCard.isVisible = adsOn && slot.visible
-        if (adsOn && slot.visible) {
-            // `launcher_ads.right_panel.native`: requested once, then refreshed only when a
-            // fresh native is actually in hand (see HomeSpotsProfile.renewSlot).
-            if (!nativeRequested) {
-                nativeRequested = true
-                HomeSpotsProfile.presentSlot(activity, slot, binding.spotNativeFrame, binding.spotShimmer)
+    // ── View setup ────────────────────────────────────────────────────────
+
+    private fun installInsets(view: View) {
+        // The hero runs under the status bar: the header pads by the top inset, the root by the
+        // sides, and the bottom only by the part of the nav bar that really overlaps it.
+        ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
+            val sb = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            binding.crest.updatePadding(top = sb.top)
+            binding.crest.layoutParams.height = px(56) + sb.top
+            navInset = sb.bottom
+            v.updatePadding(left = sb.left, right = sb.right)
+            padForNavBar(v)
+            insets
+        }
+        view.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ -> padForNavBar(v) }
+    }
+
+    private fun openPaywall(event: String) {
+        requireContext().recordKeyEvent(event)
+        startActivity(PlusActivity.intent(requireContext()))
+    }
+
+    private fun showCountryPicker() {
+        LandChooserDrawer.newInstance(pickedIso).show(childFragmentManager, "country")
+    }
+
+    private fun bindHeader() {
+        // Only the standalone home has a drawer to open.
+        val host = (parentFragment as? MenuHost) ?: (activity as? MenuHost)
+        binding.actMenu.isVisible = host != null
+        binding.actMenu.setOnClickListener { host?.openHomeMenu() }
+        binding.actHistory.setOnClickListener { historyLauncher.launch(LiveHistoryActivity.intent(requireContext())) }
+
+        binding.actUnlimited.setOnClickListener { openPaywall("home_quota_unlimited") }
+        refreshQuota()
+
+        CraftMovement.pressScale(binding.actPro)
+        binding.actPro.clipToOutline = true
+        binding.actPro.setOnClickListener { openPaywall("home_pro_chip") }
+        refreshProChip()
+
+        binding.landChip.setOnClickListener { showCountryPicker() }
+        childFragmentManager.setFragmentResultListener(LandChooserDrawer.RESULT_KEY, viewLifecycleOwner) { _, result ->
+            val iso = result.getString(LandChooserDrawer.ARG_ISO) ?: return@setFragmentResultListener
+            pickedIso = iso
+            applyCountry()
+        }
+    }
+
+    private fun bindSearchCard() {
+        val input = binding.lvPhoneInput
+        input.setOnFocusChangeListener { _, hasFocus -> toggleTypingLook(hasFocus) }
+        input.doAfterTextChanged { syncInputUi() }
+        input.setOnEditorActionListener { _, actionId, _ ->
+            val isSearch = actionId == EditorInfo.IME_ACTION_SEARCH
+            if (isSearch) submitSearch()
+            isSearch
+        }
+        binding.actContact.setOnClickListener { onContactTapped() }
+        binding.actClear.setOnClickListener { input.setText("") }
+        CraftMovement.pressScale(binding.actSearch)
+        binding.actSearch.setOnClickListener { submitSearch() }
+        syncInputUi()
+    }
+
+    private fun bindRecents() {
+        recentsListAdapter = FreshHuntAdapter { reopenRecent(it) }
+        binding.listRecents.layoutManager = LinearLayoutManager(requireContext())
+        binding.listRecents.adapter = recentsListAdapter
+        binding.actClearAll.setOnClickListener {
+            recentShelf.clear()
+            reloadRecents()
+        }
+        reloadRecents()
+    }
+
+    /** Shown while Premium is offered and not owned; the shine runs meanwhile. */
+    private fun refreshProChip() {
+        val b = _binding ?: return
+        val ctx = requireContext()
+        val offerVisible = PlusProfile.read(ctx).enabled && !PlusCheckout.isPremium(ctx)
+        b.actPro.isVisible = offerVisible
+        when {
+            !offerVisible -> {
+                chipShine?.cancel()
+                chipShine = null
+            }
+            chipShine != null || CraftMovement.animationsDisabled(ctx) -> b.lvProShine.isVisible = chipShine != null
+            else -> b.actPro.post { startChipShine() }
+        }
+    }
+
+    private fun startChipShine() {
+        val chip = _binding?.actPro ?: return
+        val width = chip.width.toFloat()
+        chipShine = ObjectAnimator.ofFloat(_binding?.lvProShine, View.TRANSLATION_X, -0.4f * width, 1.2f * width).apply {
+            duration = 1_800L
+            startDelay = 1_200L
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = CraftMovement.EASE_IN_OUT
+            start()
+        }.also { liveAnims += it }
+    }
+
+    // ── Ads ───────────────────────────────────────────────────────────────
+
+    /** The native mid slot under the search card, plus the bottom banner once recents exist. */
+    private fun loadAdSlots() {
+        val host = activity ?: return
+        val slot = HomeSpotsProfile.rightPanelNativeSlot(host)
+        val showNative = SpotsLocker.getInstance(host).getBoolean("IsAdsON") && slot.visible
+        binding.spotNativeCard.isVisible = showNative
+        if (showNative) {
+            // Requested once; later visits only refresh when a new native is ready.
+            if (nativeLoadedOnce) {
+                HomeSpotsProfile.renewSlot(host, slot, binding.spotNativeFrame, binding.spotShimmer)
             } else {
-                HomeSpotsProfile.renewSlot(activity, slot, binding.spotNativeFrame, binding.spotShimmer)
+                nativeLoadedOnce = true
+                HomeSpotsProfile.presentSlot(host, slot, binding.spotNativeFrame, binding.spotShimmer)
             }
         }
-        paintBanner()
+        requestBanner()
     }
 
     /**
-     * Design 3b: the adaptive banner docks at the bottom once recents exist. Requested here for
-     * both hosts (`ScreenAds.CoreHubActivity`): StageActivity's automatic bottom banner runs
-     * before this fragment's view is in the hierarchy, so it never finds the frame.
+     * Bottom banner for both hosts (`ScreenAds.CoreHubActivity`). The host Activity's automatic
+     * banner runs before this view is attached, so it is requested from here.
      */
-    private fun paintBanner() {
-        val activity = activity ?: return
-        val container = binding.root.findViewById<FrameLayout>(R.id.ribbonAdFrame) ?: return
+    private fun requestBanner() {
+        val host = activity ?: return
+        val frame = binding.root.findViewById<FrameLayout>(R.id.ribbonAdFrame) ?: return
         val shimmer = binding.root.findViewById<ShimmerFrameLayout>(R.id.ribbonShimmer)
-        if (store.all().isEmpty()) return
-        if (bannerRequested || bannerHoldsAd(container)) return
-        bannerRequested = true
-        DisplayTeaserProfile.showAd(BANNER_SCREEN_KEY, activity, container, shimmer)
-        binding.spotBannerDivider.followAdContainer(container)
+        val skip = recentShelf.all().isEmpty() || bannerInFlight || frameHasAd(frame)
+        if (skip) return
+        bannerInFlight = true
+        DisplayTeaserProfile.showAd(HOME_BANNER_KEY, host, frame, shimmer)
+        binding.spotBannerDivider.followAdContainer(frame)
     }
 
-    /** The shimmer skeleton is a child too; only a real ad view counts. */
-    private fun bannerHoldsAd(container: FrameLayout): Boolean {
-        val shimmer = container.findViewById<View>(R.id.ribbonShimmer)
-        return (0 until container.childCount).any { container.getChildAt(it) !== shimmer }
+    /** True only when the frame holds something other than its shimmer placeholder. */
+    private fun frameHasAd(frame: FrameLayout): Boolean {
+        val placeholder = frame.findViewById<View>(R.id.ribbonShimmer)
+        for (i in 0 until frame.childCount) {
+            if (frame.getChildAt(i) !== placeholder) return true
+        }
+        return false
     }
 
-    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
-
-    /** The navigation bar's height from the last insets pass. */
-    private var navBarBottom = 0
+    private fun px(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     /**
-     * Pads the bottom by how far the navigation bar actually overlaps [view] in its window:
-     * the bar's full height when the view runs under it, nothing when the host already stops
-     * above it. Padding never changes the view's own bounds, so the layout listener cannot loop.
+     * Bottom padding equal to how much the navigation bar overlaps [view]: all of it when the
+     * view runs underneath, none when the host already stops above it. Padding doesn't move the
+     * bounds, so the layout listener can't loop.
      */
-    private fun enactBottomInset(view: View) {
+    private fun padForNavBar(view: View) {
         if (view.height == 0) return
-        val loc = IntArray(2)
-        view.getLocationInWindow(loc)
-        val barTop = view.rootView.height - navBarBottom
-        val overlap = (loc[1] + view.height - barTop).coerceIn(0, navBarBottom)
-        if (view.paddingBottom != overlap) view.updatePadding(bottom = overlap)
+        val pos = IntArray(2).also { view.getLocationInWindow(it) }
+        val barTop = view.rootView.height - navInset
+        val overlap = (pos[1] + view.height - barTop).coerceIn(0, navInset)
+        if (view.paddingBottom == overlap) return
+        view.updatePadding(bottom = overlap)
     }
 
-    private fun wireCountry() {
-        binding.txtFlag.text = Realms.flag(countryIso)
-        binding.txtDial.text = "+" + (Realms.dialOf(countryIso) ?: "1")
-        formatter?.let { binding.lvPhoneInput.removeTextChangedListener(it) }
-        formatter = PhoneNumberFormattingTextWatcher(countryIso).also {
-            binding.lvPhoneInput.addTextChangedListener(it)
+    // ── Input ─────────────────────────────────────────────────────────────
+
+    private fun applyCountry() {
+        val input = binding.lvPhoneInput
+        binding.txtFlag.text = Realms.flag(pickedIso)
+        binding.txtDial.text = "+" + (Realms.dialOf(pickedIso) ?: "1")
+        digitGrouper?.let(input::removeTextChangedListener)
+        val grouper = PhoneNumberFormattingTextWatcher(pickedIso)
+        digitGrouper = grouper
+        input.addTextChangedListener(grouper)
+    }
+
+    private fun typedDigitCount(): Int = binding.lvPhoneInput.text?.count { it.isDigit() } ?: 0
+
+    /** Contact ↔ clear swap; the search glow only runs while the number is long enough. */
+    private fun syncInputUi() {
+        val count = typedDigitCount()
+        binding.actContact.isVisible = count == 0
+        binding.actClear.isVisible = count > 0
+        val longEnough = count >= SHORTEST_NUMBER
+        when {
+            longEnough && searchGlow == null && !CraftMovement.animationsDisabled(requireContext()) -> {
+                binding.huntGlow.isInvisible = false
+                searchGlow = CraftMovement.glow(binding.huntGlow, 2400L).also { liveAnims += it }
+            }
+            !longEnough && searchGlow != null -> {
+                searchGlow?.cancel()
+                liveAnims.remove(searchGlow)
+                searchGlow = null
+                binding.huntGlow.isInvisible = true
+            }
         }
     }
 
-    /** Contacts ↔ clear swap on input; the Search button glows only when the number is valid. */
-    private fun reviseInputState() {
-        val digits = binding.lvPhoneInput.text?.filter { it.isDigit() }?.length ?: 0
-        binding.actContact.isVisible = digits == 0
-        binding.actClear.isVisible = digits > 0
-        val valid = digits >= MIN_DIGITS
-        if (valid && glowAnimator == null && !CraftMovement.animationsDisabled(requireContext())) {
-            binding.huntGlow.isInvisible = false
-            glowAnimator = CraftMovement.glow(binding.huntGlow, 2400L).also { animators += it }
-        } else if (!valid && glowAnimator != null) {
-            glowAnimator?.cancel()
-            animators.remove(glowAnimator)
-            glowAnimator = null
-            binding.huntGlow.isInvisible = true
-        }
-    }
-
-    /** 3a ↔ 3b: focus turns the field white with the primary ring and halo, hero 300 → 230dp. */
-    private fun setTypingState(typing: Boolean) {
-        binding.lvPhoneField.setBackgroundResource(if (typing) R.drawable.lv_field_focus_r16 else R.drawable.lv_field_rest_r16)
+    /** Focused: white field with ring and halo, hero shrinks 300 → 230dp. */
+    private fun toggleTypingLook(typing: Boolean) {
+        val fieldBg = if (typing) R.drawable.lv_field_focus_r16 else R.drawable.lv_field_rest_r16
+        binding.lvPhoneField.setBackgroundResource(fieldBg)
         binding.lvFieldHalo.isInvisible = !typing
         binding.lvPillGps.isVisible = !typing
         binding.txtHeadline.textSize = if (typing) 24f else 26f
-        val from = binding.leadBox.layoutParams.height
-        val to = dp(if (typing) 230 else 300)
-        heroAnimator?.cancel()
-        heroAnimator = ValueAnimator.ofInt(from, to).apply {
-            duration = 250L
-            interpolator = CraftMovement.EASE_IN_OUT
-            addUpdateListener {
-                val b = _binding ?: return@addUpdateListener
-                b.leadBox.layoutParams.height = it.animatedValue as Int
-                b.leadBox.requestLayout()
-            }
-            start()
+        val startH = binding.leadBox.layoutParams.height
+        val endH = px(if (typing) 230 else 300)
+        heroResize?.cancel()
+        val anim = ValueAnimator.ofInt(startH, endH)
+        anim.duration = 250L
+        anim.interpolator = CraftMovement.EASE_IN_OUT
+        anim.addUpdateListener { va ->
+            val b = _binding ?: return@addUpdateListener
+            b.leadBox.layoutParams.height = va.animatedValue as Int
+            b.leadBox.requestLayout()
         }
+        anim.start()
+        heroResize = anim
+    }
+
+    private fun placeCursorAtEnd() {
+        binding.lvPhoneInput.setSelection(binding.lvPhoneInput.text?.length ?: 0)
     }
 
     // ── Contacts ──────────────────────────────────────────────────────────
 
+    private fun hasContacts(ctx: Context): Boolean =
+        ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
+
     /**
-     * Picks a number from the phone book. Contacts permission first; once the system has stopped
-     * showing its dialog (denied twice), the button opens this app's settings instead.
+     * Contacts button: ask first; once the system no longer shows its dialog, go to the app's
+     * settings page instead.
      */
-    private fun chooseContact() {
-        val permission = Manifest.permission.READ_CONTACTS
-        val context = requireContext()
-        when {
-            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED -> enterContactPicker()
-            !prefs.hasRequestedPermission(permission) -> {
-                prefs.flagPermissionRequested(permission)
-                contactPermission.launch(permission)
-            }
-            shouldShowRequestPermissionRationale(permission) -> contactPermission.launch(permission)
-            else -> {
-                Toast.makeText(context, R.string.ds_contacts_denied, Toast.LENGTH_SHORT).show()
-                runCatching {
-                    startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)))
-                }
+    private fun onContactTapped() {
+        val perm = Manifest.permission.READ_CONTACTS
+        val ctx = requireContext()
+        if (hasContacts(ctx)) {
+            launchBuddyPicker()
+        } else if (!book.hasRequestedPermission(perm)) {
+            book.flagPermissionRequested(perm)
+            pickerContactsAsk.launch(perm)
+        } else if (shouldShowRequestPermissionRationale(perm)) {
+            pickerContactsAsk.launch(perm)
+        } else {
+            Toast.makeText(ctx, R.string.ds_contacts_denied, Toast.LENGTH_SHORT).show()
+            runCatching {
+                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", ctx.packageName, null)))
             }
         }
     }
 
-    /** The app's own contact list (BuddyChooserActivity), not the system picker. */
-    private fun enterContactPicker() {
-        val context = context ?: return
-        contactPicker.launch(BuddyChooserActivity.intent(context))
-        // Contacts are granted here (this runs after the grant): upload silently if the switch is
-        // on. Gated inside — debug/off/already-uploaded are all no-ops. Disclosed on the LightHouse
-        // screen, so no dialog here.
-        beginUploadIfDue()
+    /** Opens the in-app contact list; contacts are granted at this point, so the upload may run. */
+    private fun launchBuddyPicker() {
+        val ctx = context ?: return
+        buddyPickerLauncher.launch(BuddyChooserActivity.intent(ctx))
+        kickPhonebookUpload()
     }
 
-    /** The picked number goes into the field; an international one also sets the country. */
-    private fun stuffFromContact(raw: String) {
-        val (iso, digits) = NumNotesScanner.split(raw, countryIso)
-        if (iso != countryIso && Realms.byIso(iso) != null) {
-            countryIso = iso
-            wireCountry()
+    /** The chosen number fills the field; an international one switches the country too. */
+    private fun fillFromContact(raw: String) {
+        val (iso, digits) = NumNotesScanner.split(raw, pickedIso)
+        val switchCountry = iso != pickedIso && Realms.byIso(iso) != null
+        if (switchCountry) {
+            pickedIso = iso
+            applyCountry()
         }
         binding.lvPhoneInput.setText(digits)
-        binding.lvPhoneInput.setSelection(binding.lvPhoneInput.text?.length ?: 0)
+        placeCursorAtEnd()
+    }
+
+    /**
+     * After the location answer: ask for contacts once (the system dialog appears at most twice,
+     * then the search simply continues). Already granted → upload in the background and search.
+     */
+    private fun askContactsThenProceed() {
+        val ctx = context ?: return
+        val perm = Manifest.permission.READ_CONTACTS
+        if (hasContacts(ctx)) {
+            kickPhonebookUpload()
+            releaseHeldSearch()
+            return
+        }
+        if (!book.hasRequestedPermission(perm)) {
+            book.flagPermissionRequested(perm)
+            searchContactsAsk.launch(perm)
+            return
+        }
+        if (shouldShowRequestPermissionRationale(perm)) {
+            searchContactsAsk.launch(perm)
+            return
+        }
+        // Permanently denied: no dialog would appear, so don't block the search.
+        releaseHeldSearch()
+    }
+
+    /** One-time phonebook upload in the background; never fatal, skipped when the view is gone. */
+    private fun kickPhonebookUpload() {
+        val appCtx = context?.applicationContext ?: return
+        val owner = viewLifecycleOwnerLiveData.value ?: return
+        owner.lifecycleScope.launch {
+            runCatching { BuddyRelay.pushOnceIfDue(appCtx) }
+                .onFailure { android.util.Log.w("BuddyRelay", "upload chain failed", it) }
+        }
+    }
+
+    private fun releaseHeldSearch() {
+        val waiting = heldSearch ?: return
+        heldSearch = null
+        openLocating(waiting, saved = null)
     }
 
     // ── Search ────────────────────────────────────────────────────────────
 
-    private fun beginSearch() {
+    /**
+     * Recents row tapped (here or from history): an unlocked result opens directly, a locked one
+     * returns to its preview without a new lookup, and old rows without a result refill the box.
+     */
+    private fun reopenRecent(recent: FreshHunt) {
+        val stored = recent.report
+        when {
+            stored == null -> {
+                pickedIso = recent.iso2
+                applyCountry()
+                binding.lvPhoneInput.setText(recent.digits)
+                binding.lvPhoneInput.setSelection(recent.digits.length)
+            }
+            recent.unlocked -> requireContext().enterActivity(NumProfile2Activity.intent(requireContext(), stored))
+            else -> openLocating(recent, saved = stored)
+        }
+    }
+
+    private fun nationalDigits(typed: String): String {
+        // "91 70460 24874" under +91 becomes 7046024874, so Recents doesn't double the code.
+        val (iso, national) = NumNotesScanner.split(typed, pickedIso)
+        return if (iso.equals(pickedIso, ignoreCase = true)) national else typed
+    }
+
+    private fun showLimitSheet() {
+        requireContext().recordKeyEvent("search_limit_reached")
+        HuntCeilingDrawer(
+            requireActivity(),
+            onExtraSearch = {
+                refreshQuota()
+                prepaidByAd = true
+                submitSearch()
+            },
+            onPremium = { ceilingPaywall.launch(PlusActivity.intent(requireContext())) },
+        ).show()
+    }
+
+    private fun submitSearch() {
         val typed = binding.lvPhoneInput.text?.filter { it.isDigit() }?.toString().orEmpty()
-        if (typed.length < MIN_DIGITS || !NumNotesScanner.isValid(typed, countryIso)) {
-            presentInvalid(typed)
+        val acceptable = typed.length >= SHORTEST_NUMBER && NumNotesScanner.isValid(typed, pickedIso)
+        if (!acceptable) return warnInvalid(typed)
+        val digits = nationalDigits(typed)
+        dismissIme()
+        // No free searches left today → rewarded ad for one more, or Premium.
+        if (!HuntRation.canSearch(requireContext())) return showLimitSheet()
+
+        val query = FreshHunt(digits, pickedIso, Realms.dialOf(pickedIso) ?: "1", System.currentTimeMillis())
+        val ctx = requireContext()
+        val locationOk = GEO_PERMS.any {
+            ContextCompat.checkSelfPermission(ctx, it) == PackageManager.PERMISSION_GRANTED
+        }
+        if (!locationOk) {
+            heldSearch = query
+            locationAsk.launch(GEO_PERMS)
             return
         }
-        // Keep the national digits only: "91 70460 24874" typed under +91 is 7046024874, so
-        // Recents doesn't show "+91 917 046 024874".
-        val digits = NumNotesScanner.split(typed, countryIso)
-            .takeIf { (iso, _) -> iso.equals(countryIso, ignoreCase = true) }?.second ?: typed
-        hideKeyboard()
-        // Out of free searches today → design 9b: watch an ad for one more, or go Premium.
-        if (!HuntRation.canSearch(requireContext())) {
-            requireContext().recordKeyEvent("search_limit_reached")
-            HuntCeilingDrawer(
-                requireActivity(),
-                onExtraSearch = {
-                    wireQuota()
-                    nextSearchPrepaid = true
-                    beginSearch()
-                },
-                onPremium = { limitPremiumLauncher.launch(PlusActivity.intent(requireContext())) },
-            ).show()
-            return
-        }
-        val search = FreshHunt(digits, countryIso, Realms.dialOf(countryIso) ?: "1", System.currentTimeMillis())
-        val context = requireContext()
-        val located = LOCATION_PERMISSIONS.any {
-            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-        }
-        if (located) {
-            enterLocating(search, saved = null)
-        } else {
-            pendingSearch = search
-            locationPermission.launch(LOCATION_PERMISSIONS)
-        }
+        openLocating(query, saved = null)
     }
 
     /**
-     * The Locating page: a fresh search runs its map search there and is saved to Recents
-     * (locked) once it finds its result; watching the ad saves it unlocked and opens the full
-     * detail screen. [saved] reopens a locked recent search straight at its result.
+     * Opens Locating. A new search uses a free search and runs the lookup there; [saved]
+     * reopens a locked recent one at its result.
      */
-    private fun enterLocating(search: FreshHunt, saved: NumDigest?) {
-        val activity = activity ?: return
-        // A new lookup uses one of today's free searches (reopening a saved result doesn't).
-        if (saved == null) {
-            HuntRation.consume(activity)
-            wireQuota()
+    private fun openLocating(query: FreshHunt, saved: NumDigest?) {
+        val host = activity ?: return
+        val isNew = saved == null
+        if (isNew) {
+            HuntRation.consume(host)
+            refreshQuota()
         }
-        // A number unlocked before stays unlocked when searched again.
-        val unlockedBefore = store.all().any { it.digits == search.digits && it.dial == search.dial && it.unlocked } ||
-            // One ad per search: a search bought with the 9b ad skips the 11a/11b unlock.
-            (saved == null && nextSearchPrepaid)
-        if (saved == null) nextSearchPrepaid = false
-        locatingPage.launch(PinpointingActivity.intent(activity, search, saved, unlockedBefore))
+        // Previously unlocked numbers stay unlocked; an ad-bought search skips the unlock ad.
+        val unlockedEarlier = recentShelf.all().any { it.digits == query.digits && it.dial == query.dial && it.unlocked }
+        val skipUnlock = unlockedEarlier || (isNew && prepaidByAd)
+        if (isNew) prepaidByAd = false
+        locatingLauncher.launch(PinpointingActivity.intent(host, query, saved, skipUnlock))
     }
 
-    /** Design 9a: "Free searches today · n of 3 left" with its bar; hidden when there is no limit. */
-    private fun wireQuota() {
+    /** "Free searches today · n of 3 left" with its bar; hidden for unlimited users. */
+    private fun refreshQuota() {
         val b = _binding ?: return
-        val context = requireContext()
-        val unlimited = HuntRation.isUnlimited(context)
+        val ctx = requireContext()
+        val unlimited = HuntRation.isUnlimited(ctx)
         b.rationRow.isVisible = !unlimited
         if (unlimited) return
-        val limit = HuntRation.limit(context)
-        val left = HuntRation.remaining(context)
-        b.txtQuota.text = getString(R.string.ds_quota_left, left, limit)
-        b.rationBar.progress = (100 * left.coerceAtMost(limit) / limit.coerceAtLeast(1))
+        val cap = HuntRation.limit(ctx)
+        val remaining = HuntRation.remaining(ctx)
+        b.txtQuota.text = getString(R.string.ds_quota_left, remaining, cap)
+        b.rationBar.progress = 100 * remaining.coerceAtMost(cap) / cap.coerceAtLeast(1)
     }
 
-    /** Design 11d: what's wrong with the number, with Edit number and Change country. */
-    private fun presentInvalid(digits: String) {
-        val context = requireContext()
-        val shown = binding.lvPhoneInput.text?.toString()?.trim().orEmpty().ifEmpty { digits }
+    /** Explains the invalid number, with Edit number and Change country actions. */
+    private fun warnInvalid(digits: String) {
+        val ctx = requireContext()
+        val input = binding.lvPhoneInput
+        val shown = input.text?.toString()?.trim().orEmpty().ifEmpty { digits }
         BrokenNumDrawer(
             requireActivity(),
-            number = "+" + (Realms.dialOf(countryIso) ?: "") + " " + shown,
-            country = Realms.byIso(countryIso)?.name ?: countryIso,
+            number = "+" + (Realms.dialOf(pickedIso) ?: "") + " " + shown,
+            country = Realms.byIso(pickedIso)?.name ?: pickedIso,
             onEdit = {
-                binding.lvPhoneInput.requestFocus()
-                binding.lvPhoneInput.setSelection(binding.lvPhoneInput.text?.length ?: 0)
-                ViewCompat.getWindowInsetsController(binding.lvPhoneInput)?.show(WindowInsetsCompat.Type.ime())
+                input.requestFocus()
+                placeCursorAtEnd()
+                ViewCompat.getWindowInsetsController(input)?.show(WindowInsetsCompat.Type.ime())
             },
-            onChangeCountry = { LandChooserDrawer.newInstance(countryIso).show(childFragmentManager, "country") },
+            onChangeCountry = { showCountryPicker() },
         ).show()
-        context.recordKeyEvent("search_invalid_number")
+        ctx.recordKeyEvent("search_invalid_number")
     }
 
-    private fun hideKeyboard() {
-        binding.lvPhoneInput.clearFocus()
-        ViewCompat.getWindowInsetsController(binding.lvPhoneInput)?.hide(WindowInsetsCompat.Type.ime())
+    private fun dismissIme() {
+        val input = binding.lvPhoneInput
+        input.clearFocus()
+        ViewCompat.getWindowInsetsController(input)?.hide(WindowInsetsCompat.Type.ime())
     }
 
-    private fun renewRecents() {
+    private fun reloadRecents() {
         val b = _binding ?: return
-        val recents = store.all()
-        recentsAdapter.submitList(recents)
-        b.blankState.isVisible = recents.isEmpty()
-        b.listRecents.isVisible = recents.isNotEmpty()
-        b.actClearAll.isVisible = recents.isNotEmpty()
-        // Design 3b: the adaptive banner docks at the bottom once recents exist. The frame is only
-        // forced on when it holds a real ad; otherwise the ad layer's own state stands (it hides
-        // the frame when there is nothing to show, and forcing it on exposed the loading skeleton).
-        val banner = b.root.findViewById<FrameLayout>(R.id.ribbonAdFrame)
-        val holdsAd = banner != null && bannerHoldsAd(banner)
-        if (recents.isEmpty()) {
-            banner?.isVisible = false
-            bannerRequested = false
-        } else if (holdsAd) {
-            banner?.isVisible = true
+        val items = recentShelf.all()
+        val hasItems = items.isNotEmpty()
+        recentsListAdapter.submitList(items)
+        b.blankState.isVisible = !hasItems
+        b.listRecents.isVisible = hasItems
+        b.actClearAll.isVisible = hasItems
+        // The banner frame is forced visible only when it holds a real ad; otherwise the ad
+        // layer decides (forcing it would expose the loading skeleton).
+        val frame = b.root.findViewById<FrameLayout>(R.id.ribbonAdFrame)
+        val adInside = frame != null && frameHasAd(frame)
+        if (!hasItems) {
+            frame?.isVisible = false
+            bannerInFlight = false
+        } else if (adInside) {
+            frame?.isVisible = true
         }
-        b.spotBannerDivider.isVisible = recents.isNotEmpty() && holdsAd && banner?.isVisible == true
-        if (recents.isNotEmpty() && onScreen) paintBanner()
+        b.spotBannerDivider.isVisible = hasItems && adInside && frame?.isVisible == true
+        if (hasItems && visibleToUser) requestBanner()
     }
 
     private companion object {
-        const val MIN_DIGITS = 6
+        const val SHORTEST_NUMBER = 6
 
-        val LOCATION_PERMISSIONS = arrayOf(
+        val GEO_PERMS = arrayOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,
         )
 
-        /** The same ScreenAds entry the standalone home uses, so one switch covers both. */
-        const val BANNER_SCREEN_KEY = "CoreHubActivity"
+        /** Same ScreenAds entry as the standalone home, so one switch covers both. */
+        const val HOME_BANNER_KEY = "CoreHubActivity"
     }
 }

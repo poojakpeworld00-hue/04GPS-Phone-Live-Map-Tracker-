@@ -13,6 +13,8 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.SpotTallyBook.int
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSeatSpots
 import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordAdEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordAdLoadError
 import com.find.phone.gps.live.location.tracker.monetize.render.isNetworkConnected
 
 class TakeoverRear {
@@ -53,6 +55,7 @@ class TakeoverRear {
         val req = AdRequest.Builder().build()
 
         if (SpotSort.fromString(pref.getString("IsAdType")) == SpotSort.GOOGLE) {
+            activity.recordAdEvent("back_interstitial", "req")
             InterstitialAd.load(
                 activity, id, req,
                 object : InterstitialAdLoadCallback() {
@@ -61,12 +64,14 @@ class TakeoverRear {
                         googleInterBack = ad
                         Log.d("TakeoverRear", "Back Inter Loaded")
                         activity.safeLog("Back_Inter_Loaded")
+                        activity.recordAdEvent("back_interstitial", "loaded")
                     }
 
                     override fun onAdFailedToLoad(err: LoadAdError) {
                         googleInterBack = null
                         Log.e("TakeoverRear", "Back Inter Load Fail: ${err.message}")
-                        activity.safeLog("Back_Inter_Load_FAILED:${err.message}")
+                        activity.safeLog("Back_Inter_Load_FAILED_${err.code}")
+                        activity.recordAdLoadError("back_interstitial", err.code)
                     }
                 })
         }
@@ -178,11 +183,13 @@ class TakeoverRear {
             override fun onAdShowedFullScreenContent() {
                 super.onAdShowedFullScreenContent()
                 isInterBAckShow = true
+                runCatching { activity.recordAdEvent("back_interstitial", "show") }
             }
 
             override fun onAdDismissedFullScreenContent() {
                 googleInterBack = null
                 isInterBAckShow = false
+                runCatching { activity.recordAdEvent("back_interstitial", "close") }
                 safeClose("Google_Dismiss")
                 fetchBackInterAds(activity)
             }

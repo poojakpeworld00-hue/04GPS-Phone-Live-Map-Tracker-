@@ -29,65 +29,79 @@ enum class RowGenre { MOBILE, FIXED_LINE, FIXED_OR_MOBILE, TOLL_FREE, PREMIUM, V
 
 object NumNotesScanner {
 
-    private val util: PhoneNumberUtil by lazy { PhoneNumberUtil.getInstance() }
+    private const val UNKNOWN_REGION = "ZZ"
+    private const val UNKNOWN_ZONE = "Etc/Unknown"
 
-    /** Parses national [digits] for [iso2]; null when libphonenumber can't parse them at all. */
-    fun parse(digits: String, iso2: String): PhoneNumber? = try {
-        util.parse(digits, iso2.uppercase(Locale.ROOT))
-    } catch (_: NumberParseException) {
-        null
-    }
+    private val lib: PhoneNumberUtil by lazy { PhoneNumberUtil.getInstance() }
 
-    /**
-     * Splits a number as stored in the phone book ("+91 70460 24874", "070460 24874") into its
-     * region and national digits; [fallbackIso] is the region for numbers without a "+".
-     * Unparseable input comes back as its bare digits under [fallbackIso].
-     */
+    private val genreByType: Map<PhoneNumberType, RowGenre> = mapOf(
+        PhoneNumberType.MOBILE to RowGenre.MOBILE,
+        PhoneNumberType.FIXED_LINE to RowGenre.FIXED_LINE,
+        PhoneNumberType.FIXED_LINE_OR_MOBILE to RowGenre.FIXED_OR_MOBILE,
+        PhoneNumberType.TOLL_FREE to RowGenre.TOLL_FREE,
+        PhoneNumberType.PREMIUM_RATE to RowGenre.PREMIUM,
+        PhoneNumberType.VOIP to RowGenre.VOIP,
+    )
+
+    fun parse(digits: String, iso2: String): PhoneNumber? =
+        runCatchingParse { lib.parse(digits, iso2.uppercase(Locale.ROOT)) }
+
+    private inline fun runCatchingParse(block: () -> PhoneNumber): PhoneNumber? =
+        try {
+            block()
+        } catch (_: NumberParseException) {
+            null
+        }
+
+    /** Phone-book entry to (region, national digits); falls back to [fallbackIso] and raw digits. */
     fun split(raw: String, fallbackIso: String): Pair<String, String> {
-        val parsed = parse(raw, fallbackIso)
-            ?: return fallbackIso to raw.filter(Char::isDigit)
-        val region = util.getRegionCodeForNumber(parsed)?.takeIf { it != "ZZ" } ?: fallbackIso
-        return region to util.getNationalSignificantNumber(parsed)
+        val number = parse(raw, fallbackIso) ?: return Pair(fallbackIso, raw.filter { it.isDigit() })
+        val regionCode = lib.getRegionCodeForNumber(number)
+        val region = if (regionCode == null || regionCode == UNKNOWN_REGION) fallbackIso else regionCode
+        return Pair(region, lib.getNationalSignificantNumber(number))
     }
 
-    /** True when the number is a real, dialable number for its region. */
-    fun isValid(digits: String, iso2: String): Boolean = parse(digits, iso2)?.let(util::isValidNumber) == true
+    fun isValid(digits: String, iso2: String): Boolean {
+        val number = parse(digits, iso2) ?: return false
+        return lib.isValidNumber(number)
+    }
 
-    /** E.164 for the search, or the naive "+dial digits" when parsing fails. */
-    fun e164(digits: String, iso2: String, dial: String): String =
-        parse(digits, iso2)?.let { util.format(it, PhoneNumberFormat.E164) } ?: "+$dial$digits"
+    fun e164(digits: String, iso2: String, dial: String): String {
+        val number = parse(digits, iso2) ?: return "+$dial$digits"
+        return lib.format(number, PhoneNumberFormat.E164)
+    }
 
     fun read(digits: String, iso2: String, dial: String): NumNotes {
-        val parsed = parse(digits, iso2)
-            ?: return NumNotes("+$dial$digits", "+$dial $digits", iso2.uppercase(Locale.ROOT), false, RowGenre.OTHER, null, null, null)
+        val upperIso = iso2.uppercase(Locale.ROOT)
+        val number = parse(digits, iso2)
+            ?: return NumNotes("+$dial$digits", "+$dial $digits", upperIso, false, RowGenre.OTHER, null, null, null)
 
-        val region = util.getRegionCodeForNumber(parsed) ?: iso2.uppercase(Locale.ROOT)
-        val countryName = Locale("", region).getDisplayCountry(Locale.ENGLISH)
-        val area = PhoneNumberOfflineGeocoder.getInstance()
-            .getDescriptionForNumber(parsed, Locale.ENGLISH).trim()
-            .takeIf { it.isNotEmpty() && !it.equals(countryName, ignoreCase = true) }
-        val carrier = PhoneNumberToCarrierMapper.getInstance()
-            .getNameForNumber(parsed, Locale.ENGLISH).trim().takeIf { it.isNotEmpty() }
-        val zone = PhoneNumberToTimeZonesMapper.getInstance().getTimeZonesForNumber(parsed)
-            .firstOrNull { it != "Etc/Unknown" }
-
+        val region = lib.getRegionCodeForNumber(number) ?: upperIso
         return NumNotes(
-            e164 = util.format(parsed, PhoneNumberFormat.E164),
-            international = util.format(parsed, PhoneNumberFormat.INTERNATIONAL),
+            e164 = lib.format(number, PhoneNumberFormat.E164),
+            international = lib.format(number, PhoneNumberFormat.INTERNATIONAL),
             iso2 = region,
-            valid = util.isValidNumber(parsed),
-            lineType = when (util.getNumberType(parsed)) {
-                PhoneNumberType.MOBILE -> RowGenre.MOBILE
-                PhoneNumberType.FIXED_LINE -> RowGenre.FIXED_LINE
-                PhoneNumberType.FIXED_LINE_OR_MOBILE -> RowGenre.FIXED_OR_MOBILE
-                PhoneNumberType.TOLL_FREE -> RowGenre.TOLL_FREE
-                PhoneNumberType.PREMIUM_RATE -> RowGenre.PREMIUM
-                PhoneNumberType.VOIP -> RowGenre.VOIP
-                else -> RowGenre.OTHER
-            },
-            carrier = carrier,
-            area = area,
-            timeZone = zone,
+            valid = lib.isValidNumber(number),
+            lineType = genreByType[lib.getNumberType(number)] ?: RowGenre.OTHER,
+            carrier = carrierOf(number),
+            area = areaOf(number, region),
+            timeZone = zoneOf(number),
         )
     }
+
+    private fun areaOf(number: PhoneNumber, region: String): String? {
+        val nationName = Locale("", region).getDisplayCountry(Locale.ENGLISH)
+        val described = PhoneNumberOfflineGeocoder.getInstance().getDescriptionForNumber(number, Locale.ENGLISH).trim()
+        return when {
+            described.isEmpty() -> null
+            described.equals(nationName, ignoreCase = true) -> null
+            else -> described
+        }
+    }
+
+    private fun carrierOf(number: PhoneNumber): String? =
+        PhoneNumberToCarrierMapper.getInstance().getNameForNumber(number, Locale.ENGLISH).trim().ifEmpty { null }
+
+    private fun zoneOf(number: PhoneNumber): String? =
+        PhoneNumberToTimeZonesMapper.getInstance().getTimeZonesForNumber(number).firstOrNull { it != UNKNOWN_ZONE }
 }

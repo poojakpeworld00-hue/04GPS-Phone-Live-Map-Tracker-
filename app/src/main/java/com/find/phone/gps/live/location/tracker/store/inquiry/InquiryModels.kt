@@ -4,16 +4,8 @@ import androidx.annotation.Keep
 import java.util.Locale
 
 /**
- * contact-saver `similar-phone-number` response:
- *
- * ```
- * { "success": true, "count": 8, "country": "IN", "spam": false,
- *   "location": { "city": "Junagadh", "state": "Gujarat", "pincode": "362720" },
- *   "data": [ { "name": "…" }, … ] }
- * ```
- *
- * Older servers put `country` / `carrier` / `location` / spam flags on each `data` item, so
- * those are read as a fallback. Everything is nullable: Gson ignores Kotlin defaults.
+ * Body of contact-saver `similar-phone-number`. Top-level fields win; per-item fields are a
+ * fallback for legacy servers. All fields stay nullable because Gson bypasses Kotlin defaults.
  */
 @Keep
 data class MobileAnswer(
@@ -24,28 +16,40 @@ data class MobileAnswer(
     val location: MobilePlace? = null,
     val data: List<MobilePayload?>? = null,
 ) {
-    val ok: Boolean get() = success == true
+    val ok: Boolean get() = success ?: false
 
-    /** Non-blank names in the server's order (first = best match), without repeats. */
+    /** Distinct (case-insensitive) non-blank names, server order preserved. */
     val names: List<String>
-        get() = data.orEmpty().mapNotNull { it?.name?.trim()?.takeIf(String::isNotEmpty) }
-            .distinctBy { it.lowercase(Locale.ROOT) }
+        get() {
+            val seen = HashSet<String>()
+            val out = ArrayList<String>()
+            for (item in data ?: emptyList()) {
+                val n = item?.name?.trim()
+                if (n.isNullOrEmpty()) continue
+                if (seen.add(n.lowercase(Locale.ROOT))) out.add(n)
+            }
+            return out
+        }
 
-    /** Registered area: top-level `location`, else the first item that has one. */
     val area: MobilePlace?
-        get() = location?.takeIf { it.hasAny }
-            ?: data.orEmpty().firstNotNullOfOrNull { d -> d?.location?.takeIf { it.hasAny } }
+        get() {
+            if (location != null && location.hasAny) return location
+            return data?.asSequence()?.mapNotNull { it?.location }?.firstOrNull { it.hasAny }
+        }
 
-    /** ISO code ("IN") or a legacy country name. */
     val countryCode: String?
-        get() = country?.trim()?.takeIf { it.isNotEmpty() }
-            ?: data.orEmpty().firstNotNullOfOrNull { it?.country?.trim()?.takeIf(String::isNotEmpty) }
+        get() = country.cleaned() ?: data?.firstNotNullOfOrNull { it?.country.cleaned() }
 
     val carrier: String?
-        get() = data.orEmpty().firstNotNullOfOrNull { it?.carrier?.trim()?.takeIf(String::isNotEmpty) }
+        get() = data?.firstNotNullOfOrNull { it?.carrier.cleaned() }
 
     val isSpam: Boolean
-        get() = spam == true || data.orEmpty().any { it?.is_spam == true || it?.is_user_spam == true }
+        get() = when {
+            spam == true -> true
+            else -> data?.any { p -> p != null && (p.is_spam == true || p.is_user_spam == true) } ?: false
+        }
+
+    private fun String?.cleaned(): String? = this?.trim()?.ifEmpty { null }
 }
 
 @Keep
@@ -58,12 +62,12 @@ data class MobilePayload(
     val location: MobilePlace? = null,
 )
 
-/** Where the number is registered: an area, not a live position. */
+/** Registration area of a number (not a live position). */
 @Keep
 data class MobilePlace(
     val city: String? = null,
     val state: String? = null,
     val pincode: String? = null,
 ) {
-    val hasAny: Boolean get() = !city.isNullOrBlank() || !state.isNullOrBlank() || !pincode.isNullOrBlank()
+    val hasAny: Boolean get() = listOf(city, state, pincode).any { !it.isNullOrBlank() }
 }

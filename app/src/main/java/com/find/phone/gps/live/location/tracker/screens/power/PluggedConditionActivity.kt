@@ -31,59 +31,67 @@ import com.find.phone.gps.live.location.tracker.helpers.OsModalAide
 import com.find.phone.gps.live.location.tracker.helpers.enactNativeAdTheme
 
 /**
- * The charging / discharging screen (ported from QRScanner's `PluggedConditionActivity`).
- *
- * Launched by [JuiceHappeningSentinel] on a power event, which has already passed every gate. It reads
- * the live battery (level, plug type, time-to-full) from `ACTION_BATTERY_CHANGED` and paints the
- * ring, the metrics and the status chip. `system_ads.<trigger>.native` fills the bottom slot
- * (`big` / `mid` / `mid2` / `native_banner`, QRScanner's `BigNative` / `MediumNative` /
- * `MediumNative2` / `NativeBanner` too, or `off`) and `close_ad` fires on the way out (`inter`,
- * `full_native`, `directlink` or `none`) — the same contract as [com.find.phone.gps.live.location.tracker.screens.recent.RecentAdActivity].
+ * Power connected / disconnected screen, started by [JuiceHappeningSentinel] once its gates pass.
+ * Paints the live battery snapshot, fills the bottom native slot per `system_ads.<trigger>.native`
+ * and plays the configured `close_ad` on exit.
  */
 class PluggedConditionActivity : AppCompatActivity() {
 
-    private val trigger: String
+    private var exiting = false
+
+    private val eventKey: String
         get() = intent.getStringExtra(EXTRA_TRIGGER) ?: TRIGGER_CHARGE
 
-    private val settings by lazy { HomeSpotsProfile.systemAdSettings(this, trigger) }
+    private val adCfg by lazy { HomeSpotsProfile.systemAdSettings(this, eventKey) }
 
-    private var closed = false
+    private val endsWithFullNative: Boolean
+        get() = adCfg.closeAd.trim().lowercase() in setOf("full_native", "fullnative", "full")
 
-    private val batteryReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) = render(intent)
+    private val powerReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) = paintBattery(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enactNativeAdTheme()
-        // Recents closes it: a charge/discharge screen is not something to come back to.
         lifecycle.addObserver(OsModalAide(this) { finishAndRemoveTask() })
-        presentOverLockAndWake()
+        wakeAboveKeyguard()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.screen_charging_status)
 
-        // Content under the transparent status bar; pad the functional block down past it.
-        val content = findViewById<View>(R.id.juiceFunctionalContent)
+        val body = findViewById<View>(R.id.juiceFunctionalContent)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.juiceRoot)) { _, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            content.updatePadding(top = bars.top)
-            findViewById<View>(R.id.juiceAdSlot).updatePadding(bottom = bars.bottom)
+            val sys = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            body.updatePadding(top = sys.top)
+            findViewById<View>(R.id.juiceAdSlot).updatePadding(bottom = sys.bottom)
             insets
         }
 
-        findViewById<ImageButton>(R.id.actCloseCharging).setOnClickListener { close() }
-        onBackPressedDispatcher.addCallback(this) { close() }
-        render(registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)))
-        fillAd()
-        // Loaded while the user reads the screen, so it is ready when they close it.
-        if (closesWithFullNative) SliderSpotDriver.preload(this, fullNativeFlow())
+        closeButton().setOnClickListener { leaveScreen() }
+        onBackPressedDispatcher.addCallback(this) { leaveScreen() }
+        paintBattery(registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)))
+        loadBodyNative()
+        // Warm the exit ad while the user is looking at the screen.
+        if (endsWithFullNative) SliderSpotDriver.preload(this, buildFullNativeFlow())
     }
 
-    /** QRScanner's `close_ad: full_native` — a full-screen native, from the app-wide `googleNative`. */
-    private val closesWithFullNative: Boolean
-        get() = settings.closeAd.trim().lowercase() in setOf("full_native", "fullnative", "full")
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        recreate()
+    }
 
-    private fun fullNativeFlow() = HomeSpotsProfile.DrawerAdFlow(
+    override fun onStart() {
+        super.onStart()
+        registerReceiver(powerReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+    }
+
+    override fun onStop() {
+        runCatching { unregisterReceiver(powerReceiver) }
+        super.onStop()
+    }
+
+    private fun buildFullNativeFlow() = HomeSpotsProfile.DrawerAdFlow(
         enabled = true,
         counter = 0,
         sequence = listOf(
@@ -95,140 +103,125 @@ class PluggedConditionActivity : AppCompatActivity() {
         startFromFirst = true,
     )
 
-    /** A second power event (this screen is singleTask) — re-create for the new charge/discharge. */
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        recreate()
+    private fun closeButton(): ImageButton = findViewById(R.id.actCloseCharging)
+
+    private fun label(id: Int): TextView = findViewById(id)
+
+    private fun percentOf(snapshot: Intent?): Int {
+        if (snapshot == null) return 0
+        val raw = snapshot.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val max = snapshot.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+        return if (raw < 0 || max <= 0) 0 else raw * 100 / max
     }
 
-    override fun onStart() {
-        super.onStart()
-        registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-    }
+    private fun paintBattery(snapshot: Intent?) {
+        val pct = percentOf(snapshot)
+        val plugFlags = snapshot?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
+        val onPower = plugFlags != 0
 
-    override fun onStop() {
-        runCatching { unregisterReceiver(batteryReceiver) }
-        super.onStop()
-    }
-
-    /** Reads the battery snapshot and paints both states. */
-    private fun render(battery: Intent?) {
-        val level = battery?.let {
-            val l = it.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
-            val scale = it.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
-            if (l >= 0 && scale > 0) l * 100 / scale else 0
-        } ?: 0
-        val plugged = battery?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
-        val connected = plugged != 0
-
-        findViewById<PluggedChargeView>(R.id.juiceEnergyView).apply {
-            setConnected(connected)
-            setProgress(level, animate = true)
+        findViewById<PluggedChargeView>(R.id.juiceEnergyView).run {
+            setConnected(onPower)
+            setProgress(pct, animate = true)
         }
-        findViewById<TextView>(R.id.juicePercentage).text =
-            getString(R.string.charging_percentage_value, level)
+        label(R.id.juicePercentage).text = getString(R.string.charging_percentage_value, pct)
 
-        if (connected) {
-            findViewById<TextView>(R.id.juiceModeLabel).setText(R.string.charging_live_energy)
-            findViewById<TextView>(R.id.juiceTitle).setText(R.string.charging_connected_title)
-            findViewById<TextView>(R.id.juiceSubtitle).text =
-                getString(R.string.charging_connected_subtitle, sourceLabel(plugged))
-            findViewById<TextView>(R.id.juiceMetricLeftLabel).setText(R.string.charging_until_full)
-            findViewById<TextView>(R.id.juiceMetricLeftValue).text = timeToFull(level)
-            findViewById<TextView>(R.id.juiceMetricRightLabel).setText(R.string.charging_power_source)
-            findViewById<TextView>(R.id.juiceMetricRightValue).text = sourceLabel(plugged)
-            findViewById<TextView>(R.id.juiceStatusText).setText(R.string.charging_power_flow_active)
-            findViewById<View>(R.id.juiceInfoCard).visibility = View.VISIBLE
-        } else {
-            findViewById<TextView>(R.id.juiceModeLabel).setText(R.string.charging_session_complete)
-            findViewById<TextView>(R.id.juiceTitle).setText(R.string.charging_disconnected_title)
-            findViewById<TextView>(R.id.juiceSubtitle).text =
-                getString(R.string.charging_ready_to_use, level)
-            findViewById<TextView>(R.id.juiceStatusText).setText(R.string.charging_disconnected_safely)
-            findViewById<View>(R.id.juiceInfoCard).visibility = View.GONE
-        }
+        if (onPower) paintCharging(pct, plugFlags) else paintUnplugged(pct)
     }
 
-    /** The system's charge-time estimate (API 28+), formatted; "Calculating…"/"Full" otherwise. */
-    private fun timeToFull(level: Int): String {
-        if (level >= 100) return getString(R.string.charging_time_full)
-        val remainingMs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            (getSystemService(BATTERY_SERVICE) as? BatteryManager)?.computeChargeTimeRemaining() ?: -1L
-        } else {
-            -1L
+    private fun paintCharging(pct: Int, plugFlags: Int) {
+        val source = describeSource(plugFlags)
+        label(R.id.juiceModeLabel).setText(R.string.charging_live_energy)
+        label(R.id.juiceTitle).setText(R.string.charging_connected_title)
+        label(R.id.juiceSubtitle).text = getString(R.string.charging_connected_subtitle, source)
+        label(R.id.juiceMetricLeftLabel).setText(R.string.charging_until_full)
+        label(R.id.juiceMetricLeftValue).text = fullChargeEta(pct)
+        label(R.id.juiceMetricRightLabel).setText(R.string.charging_power_source)
+        label(R.id.juiceMetricRightValue).text = describeSource(plugFlags)
+        label(R.id.juiceStatusText).setText(R.string.charging_power_flow_active)
+        findViewById<View>(R.id.juiceInfoCard).visibility = View.VISIBLE
+    }
+
+    private fun paintUnplugged(pct: Int) {
+        label(R.id.juiceModeLabel).setText(R.string.charging_session_complete)
+        label(R.id.juiceTitle).setText(R.string.charging_disconnected_title)
+        label(R.id.juiceSubtitle).text = getString(R.string.charging_ready_to_use, pct)
+        label(R.id.juiceStatusText).setText(R.string.charging_disconnected_safely)
+        findViewById<View>(R.id.juiceInfoCard).visibility = View.GONE
+    }
+
+    private fun fullChargeEta(pct: Int): String {
+        if (pct >= 100) return getString(R.string.charging_time_full)
+        val etaMs = when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.P ->
+                (getSystemService(BATTERY_SERVICE) as? BatteryManager)?.computeChargeTimeRemaining() ?: -1L
+            else -> -1L
         }
-        if (remainingMs <= 0L) return getString(R.string.charging_time_calculating)
-        val minutes = maxOf(1L, (remainingMs + 30_000) / 60_000)
-        val h = minutes / 60
-        val m = minutes % 60
-        return if (h > 0) {
-            getString(R.string.charging_time_hours_minutes, h, m)
-        } else {
-            getString(R.string.charging_time_minutes, m)
+        if (etaMs <= 0L) return getString(R.string.charging_time_calculating)
+        val totalMin = ((etaMs + 30_000) / 60_000).coerceAtLeast(1L)
+        val hrs = totalMin / 60
+        val mins = totalMin % 60
+        return when {
+            hrs > 0 -> getString(R.string.charging_time_hours_minutes, hrs, mins)
+            else -> getString(R.string.charging_time_minutes, mins)
         }
     }
 
-    private fun sourceLabel(plugged: Int): String = when {
-        plugged and BatteryManager.BATTERY_PLUGGED_WIRELESS != 0 ->
-            getString(R.string.charging_source_wireless)
-        plugged and BatteryManager.BATTERY_PLUGGED_USB != 0 -> getString(R.string.charging_source_usb)
-        plugged and BatteryManager.BATTERY_PLUGGED_AC != 0 -> getString(R.string.charging_source_ac)
-        else -> getString(R.string.charging_source_power)
+    private fun describeSource(plugFlags: Int): String {
+        val res = when {
+            plugFlags and BatteryManager.BATTERY_PLUGGED_WIRELESS != 0 -> R.string.charging_source_wireless
+            plugFlags and BatteryManager.BATTERY_PLUGGED_USB != 0 -> R.string.charging_source_usb
+            plugFlags and BatteryManager.BATTERY_PLUGGED_AC != 0 -> R.string.charging_source_ac
+            else -> R.string.charging_source_power
+        }
+        return getString(res)
     }
 
-    private fun fillAd() {
-        if (!settings.showsBodyNative) return
-        val slot = findViewById<FrameLayout>(R.id.juiceAdSlot)
-        slot.visibility = View.VISIBLE
-        when (settings.nativeType.trim().lowercase()) {
-            "big", "big_native", "bignative" -> EmbeddedTeaser().presentBigNative(this, slot)
-            "mid2", "mid_native2", "midnative2", "mediumnative2" -> EmbeddedTeaser().presentMidNative2(this, slot)
-            "native_banner", "nativebanner" -> EmbeddedTeaserRibbon().presentNativeBannerNative(this, slot)
-            else -> EmbeddedTeaser().presentMidNative(this, slot)
+    private fun loadBodyNative() {
+        if (!adCfg.showsBodyNative) return
+        val holder = findViewById<FrameLayout>(R.id.juiceAdSlot)
+        holder.visibility = View.VISIBLE
+        when (adCfg.nativeType.trim().lowercase()) {
+            "big", "big_native", "bignative" -> EmbeddedTeaser().presentBigNative(this, holder)
+            "mid2", "mid_native2", "midnative2", "mediumnative2" -> EmbeddedTeaser().presentMidNative2(this, holder)
+            "native_banner", "nativebanner" -> EmbeddedTeaserRibbon().presentNativeBannerNative(this, holder)
+            else -> EmbeddedTeaser().presentMidNative(this, holder)
         }
     }
 
-    /**
-     * Closes the screen, showing the configured close ad first. The screen closes either way — the
-     * close ad never becomes a reason the user cannot leave.
-     */
-    private fun close() {
-        if (closed) return
-        closed = true
-        findViewById<ImageButton>(R.id.actCloseCharging).isEnabled = false
-        // `charge_*` / `discharge_*` (`ad_flow` or a link chain) override `close_ad` when set.
-        if (HomeSeatSpots.hasOwnFlow(this, trigger)) {
-            HomeSeatSpots.showInterstitial(this, trigger) { concludeSafely() }
+    /** Leaves after the configured exit ad; the screen always closes, ad or not. */
+    private fun leaveScreen() {
+        if (exiting) return
+        exiting = true
+        closeButton().isEnabled = false
+        if (HomeSeatSpots.hasOwnFlow(this, eventKey)) {
+            HomeSeatSpots.showInterstitial(this, eventKey) { finishIfAlive() }
             return
         }
         when {
-            settings.closeShowsInterstitial -> {
-                // This screen has its own throttle (min_gap_sec); the app-wide InterCounter on top
-                // would skip the one ad it exists to show.
+            adCfg.closeShowsInterstitial -> {
+                // Bypass the global inter counter: this screen throttles itself.
                 SpotTallyBook.interCounter = SpotsLocker.getInstance(this).getInt("InterCounter")
-                TakeoverStandard().presentInterAds(this) { concludeSafely() }
+                TakeoverStandard().presentInterAds(this) { finishIfAlive() }
             }
-            // Shows only if it finished loading; either way the screen closes after.
-            closesWithFullNative ->
-                SliderSpotDriver.run(this, fullNativeFlow(), "__charging_full_native_ptr") { concludeSafely() }
-            settings.closeShowsLink -> {
+            endsWithFullNative ->
+                SliderSpotDriver.run(this, buildFullNativeFlow(), "__charging_full_native_ptr") { finishIfAlive() }
+            adCfg.closeShowsLink -> {
                 StraightHrefOpener.open(this, HomeSpotsProfile.directLink(this))
-                concludeSafely()
+                finishIfAlive()
             }
-            else -> concludeSafely()
+            else -> finishIfAlive()
         }
     }
 
-    private fun concludeSafely() {
-        if (!isFinishing) finish()
+    private fun finishIfAlive() {
+        if (isFinishing) return
+        finish()
     }
 
-    private fun presentOverLockAndWake() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            setShowWhenLocked(true)
-            setTurnScreenOn(true)
-        }
+    private fun wakeAboveKeyguard() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O_MR1) return
+        setShowWhenLocked(true)
+        setTurnScreenOn(true)
     }
 
     companion object {

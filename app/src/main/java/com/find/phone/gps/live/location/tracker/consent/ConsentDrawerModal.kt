@@ -43,48 +43,40 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 /**
- * The permission onboarding sheet (Claude Design "Permission Sheet"): one illustrated page per
- * permission — Notifications → SIM info → Contacts → Location — in a swipeable pager over Home.
- *
- * One Allow button runs the whole sequence: it slides to each page that still needs asking, opens
- * that page's Android prompt, shows the answer (a check pops and a green note for allowed, an amber
- * note for not allowed) and after 600 ms moves on to the next. When every page has been asked the
- * sheet closes. Pages already granted, and ones Android will no longer prompt for, are skipped;
- * the pager can't be swiped while the sequence runs.
- *
- * Skip, or dragging the sheet down, closes it without asking. Either way [onFinished] runs once.
- *
- * Notifications go through [ConsentDriver] so its Remote Config switch and ledger keep working;
- * the rest are asked directly and stamped in [LockerBook] for the permanent-denial check.
+ * Bottom sheet that walks the user through the permission pages (Notifications, SIM info,
+ * Contacts, Location) in a non-swipeable-while-running pager. A single Allow tap asks every page
+ * that still can be asked, showing each answer for a moment before sliding on; Skip or a
+ * swipe-down closes it. [onFinished] fires exactly once. Notifications are routed through
+ * [ConsentDriver]; the others are requested directly and stamped in [LockerBook].
  */
 class ConsentDrawerModal : BottomSheetDialogFragment() {
 
     /** Invoked once when the sheet finishes (sequence done, Skip, or dismiss). */
     var onFinished: (() -> Unit)? = null
 
-    private enum class Status { IDLE, REQUESTING, ALLOWED, DENIED, ALREADY }
+    private enum class PageState { IDLE, REQUESTING, ALLOWED, DENIED, ALREADY }
 
     private lateinit var pages: List<DrawerFolio>
-    private lateinit var statuses: Array<Status>
-    private lateinit var pageViews: List<View>
-    private val running = mutableMapOf<Int, MutableList<Animator>>()
+    private lateinit var pageStates: Array<PageState>
+    private lateinit var folioViews: List<View>
+    private val liveAnims = mutableMapOf<Int, MutableList<Animator>>()
 
     private var root: View? = null
     private var pager: ViewPager2? = null
-    private var current = 0
-    private var requestingIndex = -1
-    private var pageAnimator: ValueAnimator? = null
-    private val dotAnimators = mutableListOf<ValueAnimator>()
+    private var shownIdx = 0
+    private var promptingIdx = -1
+    private var slideAnim: ValueAnimator? = null
+    private val dotAnims = mutableListOf<ValueAnimator>()
     /** True from the Allow tap until every page has been asked. */
-    private var sequenceRunning = false
-    private var lastAsked = -1
-    private val continueSequence = Runnable { queryNext(after = lastAsked) }
+    private var chainActive = false
+    private var lastPrompted = -1
+    private val resumeChain = Runnable { stepChain(after = lastPrompted) }
 
-    private val requestPerms = registerForActivityResult(
+    private val permLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
         result.forEach { (perm, granted) -> context?.recordPermissionResult(perm, granted) }
-        onRequestResult()
+        afterPrompt()
     }
 
     override fun getTheme(): Int = R.style.Ds_BottomSheetDialog
@@ -99,27 +91,27 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         root = view
 
         pages = DrawerFolio.all(ctx)
-        statuses = Array(pages.size) { if (pages[it].isGranted(ctx)) Status.ALREADY else Status.IDLE }
-        current = pages.indices.firstOrNull { !pages[it].isGranted(ctx) } ?: 0
-        pageViews = pages.map { composePage(inflater, it) }
+        pageStates = Array(pages.size) { if (pages[it].isGranted(ctx)) PageState.ALREADY else PageState.IDLE }
+        shownIdx = pages.indices.firstOrNull { !pages[it].isGranted(ctx) } ?: 0
+        folioViews = pages.map { buildFolioView(inflater, it) }
 
         val pager = view.findViewById<ViewPager2>(R.id.swiper)
         this.pager = pager
-        pager.adapter = PagesAdapter(pageViews)
+        pager.adapter = FolioAdapter(folioViews)
         pager.offscreenPageLimit = pages.size.coerceAtLeast(1)
-        pager.setCurrentItem(current, false)
+        pager.setCurrentItem(shownIdx, false)
         pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(position: Int) = onPageShown(position)
+            override fun onPageSelected(position: Int) = handlePageVisible(position)
         })
         // Size the pager to its tallest page, so the sheet doesn't jump between pages.
-        pager.post { fitPagerHeight() }
+        pager.post { matchPagerToTallest() }
 
-        composeDots(view.findViewById(R.id.marks))
+        buildDots(view.findViewById(R.id.marks))
         view.findViewById<View>(R.id.actPrimary).apply {
             CraftMovement.pressScale(this)
-            setOnClickListener { onPrimaryClicked() }
+            setOnClickListener { startChain() }
         }
-        view.findViewById<View>(R.id.actSkip).setOnClickListener { onSkipClicked() }
+        view.findViewById<View>(R.id.actSkip).setOnClickListener { skipAll() }
 
         // 22dp + the navigation bar under the sheet.
         val basePadding = view.paddingBottom
@@ -128,7 +120,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
             insets
         }
 
-        onPageShown(current, animate = false)
+        handlePageVisible(shownIdx, animate = false)
         ctx.recordKeyEvent("PermissionSheet_Show")
         return view
     }
@@ -148,18 +140,16 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         if (!::pages.isInitialized || pages.isEmpty()) return
         // Granted elsewhere while we were away.
         val ctx = context ?: return
-        statuses.indices.forEach { i ->
-            if (statuses[i] == Status.IDLE && pages[i].isGranted(ctx)) statuses[i] = Status.ALREADY
-        }
-        render(animate = false)
+        for (i in pageStates.indices) promoteIfGranted(ctx, i)
+        refreshUi(animate = false)
     }
 
     override fun onDestroyView() {
-        root?.removeCallbacks(continueSequence)
-        pageAnimator?.cancel()
-        dotAnimators.forEach { it.cancel() }
-        if (::pageViews.isInitialized) {
-            pageViews.forEachIndexed { i, v -> DrawerDrawings.stop(pages[i], v, running.getOrPut(i) { mutableListOf() }) }
+        root?.removeCallbacks(resumeChain)
+        slideAnim?.cancel()
+        dotAnims.forEach { it.cancel() }
+        if (::folioViews.isInitialized) {
+            folioViews.forEachIndexed { i, v -> DrawerDrawings.stop(pages[i], v, liveAnims.getOrPut(i) { mutableListOf() }) }
         }
         pager = null
         root = null
@@ -168,7 +158,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
 
     // ─────────────────────────── Pages ───────────────────────────
 
-    private fun composePage(inflater: LayoutInflater, page: DrawerFolio): View {
+    private fun buildFolioView(inflater: LayoutInflater, page: DrawerFolio): View {
         val v = inflater.inflate(R.layout.pmt_page, null, false)
         v.layoutParams = RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         v.findViewById<TextView>(R.id.txtTitle).setText(page.title)
@@ -187,18 +177,18 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         return v
     }
 
-    private fun fitPagerHeight() {
+    private fun matchPagerToTallest() {
         val pager = pager ?: return
         if (pager.width == 0) return
         val wSpec = View.MeasureSpec.makeMeasureSpec(pager.width, View.MeasureSpec.EXACTLY)
         val hSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-        val tallest = pageViews.maxOfOrNull { it.measure(wSpec, hSpec); it.measuredHeight } ?: return
+        val tallest = folioViews.maxOfOrNull { it.measure(wSpec, hSpec); it.measuredHeight } ?: return
         if (tallest > 0 && pager.layoutParams.height != tallest) {
             pager.layoutParams = pager.layoutParams.apply { height = tallest }
         }
     }
 
-    private class PagesAdapter(private val views: List<View>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    private class FolioAdapter(private val views: List<View>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         // One view type per page: every page owns exactly one pre-inflated view.
         override fun getItemViewType(position: Int) = position
         override fun getItemCount() = views.size
@@ -207,26 +197,26 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) = Unit
     }
 
-    private fun onPageShown(position: Int, animate: Boolean = true) {
+    private fun handlePageVisible(position: Int, animate: Boolean = true) {
         if (position !in pages.indices) return
         val ctx = context ?: return
         // Only the page on screen animates.
-        pageViews.forEachIndexed { i, v ->
-            if (i != position) DrawerDrawings.stop(pages[i], v, running.getOrPut(i) { mutableListOf() })
+        folioViews.forEachIndexed { i, v ->
+            if (i != position) DrawerDrawings.stop(pages[i], v, liveAnims.getOrPut(i) { mutableListOf() })
         }
-        val list = running.getOrPut(position) { mutableListOf() }
-        if (list.isEmpty()) list += DrawerDrawings.start(pages[position], pageViews[position])
+        val list = liveAnims.getOrPut(position) { mutableListOf() }
+        if (list.isEmpty()) list += DrawerDrawings.start(pages[position], folioViews[position])
 
-        current = position
-        if (statuses[position] == Status.IDLE && pages[position].isGranted(ctx)) statuses[position] = Status.ALREADY
-        render(animate)
+        shownIdx = position
+        promoteIfGranted(ctx, position)
+        refreshUi(animate)
     }
 
     /** Moves the pager to [target] with the design's 450 ms cubic-bezier(.2,.8,.2,1) slide. */
-    private fun goTo(target: Int) {
+    private fun slideTo(target: Int) {
         val pager = pager ?: return
         if (target == pager.currentItem || target !in pages.indices) return
-        pageAnimator?.cancel()
+        slideAnim?.cancel()
         val ctx = pager.context
         val canFakeDrag = !CraftMovement.animationsDisabled(ctx) &&
             pager.layoutDirection == View.LAYOUT_DIRECTION_LTR && pager.width > 0
@@ -236,8 +226,8 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         }
         val distance = (target - pager.currentItem) * pager.width.toFloat()
         var dragged = 0f
-        pageAnimator = ValueAnimator.ofFloat(0f, distance).apply {
-            duration = PAGE_MS
+        slideAnim = ValueAnimator.ofFloat(0f, distance).apply {
+            duration = SLIDE_MS
             interpolator = PathInterpolator(0.2f, 0.8f, 0.2f, 1f)
             addUpdateListener {
                 val v = it.animatedValue as Float
@@ -254,88 +244,102 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
     }
 
     /** True when [index] still needs an Android prompt: not granted and Android will still show one. */
-    private fun needsAsking(index: Int): Boolean {
+    private fun promoteIfGranted(ctx: android.content.Context, index: Int) {
+        if (pageStates[index] != PageState.IDLE) return
+        if (pages[index].isGranted(ctx)) pageStates[index] = PageState.ALREADY
+    }
+
+    private fun stillAskable(index: Int): Boolean {
         val ctx = context ?: return false
-        return !pages[index].isGranted(ctx) && !isPagePermanentlyDenied(index)
+        if (pages[index].isGranted(ctx)) return false
+        return !blockedForever(index)
     }
 
     /** The next page after [after] that still needs asking; null when the sequence is complete. */
-    private fun nextToAsk(after: Int): Int? = (after + 1 until pages.size).firstOrNull { needsAsking(it) }
+    private fun nextAskable(after: Int): Int? {
+        var idx = after + 1
+        while (idx < pages.size) {
+            if (stillAskable(idx)) return idx
+            idx++
+        }
+        return null
+    }
 
     // ─────────────────────────── Sequence ───────────────────────────
 
-    private fun onPrimaryClicked() {
-        if (sequenceRunning) return
-        if (pages.isEmpty()) { concludeFlow(); return }
-        sequenceRunning = true
+    private fun startChain() {
+        if (chainActive) return
+        if (pages.isEmpty()) return finishSheet()
+        chainActive = true
         pager?.isUserInputEnabled = false
         context?.recordKeyEvent("PermissionSheet_AllowAll")
-        queryNext(after = -1)
+        stepChain(after = -1)
     }
 
     /** Slides to the next page still to ask and opens its prompt; closes the sheet when none is left. */
-    private fun queryNext(after: Int) {
-        root?.removeCallbacks(continueSequence)
+    private fun stepChain(after: Int) {
+        root?.removeCallbacks(resumeChain)
         if (!isAdded) return
-        val next = nextToAsk(after)
-        if (next == null) {
-            val ctx = context
-            if (ctx != null && pages.all { it.isGranted(ctx) }) ctx.recordKeyEvent("PermissionSheet_AllDone")
-            concludeFlow()
-            return
-        }
-        lastAsked = next
-        if (next == current) {
-            request(next)
-            return
-        }
-        goTo(next)
+        val next = nextAskable(after) ?: return wrapUpChain()
+        lastPrompted = next
+        if (next == shownIdx) return promptFor(next)
+        slideTo(next)
         // Let the slide (450 ms) land before the Android prompt covers the sheet.
-        root?.postDelayed({ if (isAdded && sequenceRunning) request(next) }, PAGE_MS + 80L)
+        root?.postDelayed({ if (isAdded && chainActive) promptFor(next) }, SLIDE_MS + 80L)
     }
 
-    private fun onSkipClicked() {
+    private fun wrapUpChain() {
+        context?.let { ctx ->
+            if (pages.all { it.isGranted(ctx) }) ctx.recordKeyEvent("PermissionSheet_AllDone")
+        }
+        finishSheet()
+    }
+
+    private fun skipAll() {
         context?.recordKeyEvent("PermissionSheet_Skip")
-        concludeFlow()
+        finishSheet()
     }
 
-    private fun request(index: Int) {
+    private fun promptFor(index: Int) {
         val act = activity ?: return
         val page = pages[index]
-        statuses[index] = Status.REQUESTING
-        requestingIndex = index
-        render(animate = true)
+        pageStates[index] = PageState.REQUESTING
+        promptingIdx = index
+        refreshUi(animate = true)
         if (page == DrawerFolio.NOTIFICATIONS) {
             // RC-driven: the engine logs, stamps its ledger and honours the remote switch.
-            ConsentDriver.request(act, page.key) { if (isAdded) onRequestResult() }
+            ConsentDriver.request(act, page.key) { if (isAdded) afterPrompt() }
             return
         }
         val vault = LockerBook(act)
         page.permissions.forEach { vault.flagPermissionRequested(it) }
         act.recordKeyEvent("PermissionSheet_Ask_${page.key}")
-        runCatching { requestPerms.launch(page.permissions) }.onFailure {
+        runCatching { permLauncher.launch(page.permissions) }.onFailure {
             WardenRail.error(TAG, "Permission request failed for ${page.key}", it)
-            onRequestResult()
+            afterPrompt()
         }
     }
 
-    private fun onRequestResult() {
-        val i = requestingIndex
-        requestingIndex = -1
+    private fun afterPrompt() {
+        val i = promptingIdx
+        promptingIdx = -1
         val ctx = context ?: return
         if (i !in pages.indices) return
         val granted = pages[i].isGranted(ctx)
-        statuses[i] = if (granted) Status.ALLOWED else Status.DENIED
-        if (i == current) {
-            render(animate = true)
-            if (granted) popCheck(pageViews[i].findViewById(R.id.lv_checkBadge))
+        pageStates[i] = when (granted) {
+            true -> PageState.ALLOWED
+            false -> PageState.DENIED
+        }
+        if (i == shownIdx) {
+            refreshUi(animate = true)
+            if (granted) bounceBadge(folioViews[i].findViewById(R.id.lv_checkBadge))
         }
         // Show the answer for 600 ms, then on to the next permission.
-        root?.removeCallbacks(continueSequence)
-        root?.postDelayed(continueSequence, ADVANCE_DELAY_MS)
+        root?.removeCallbacks(resumeChain)
+        root?.postDelayed(resumeChain, RESULT_HOLD_MS)
     }
 
-    private fun isPagePermanentlyDenied(index: Int): Boolean {
+    private fun blockedForever(index: Int): Boolean {
         val act = activity ?: return false
         val perm = pages[index].primaryPermission ?: return false
         return isPermanentlyDenied(act, pages[index].key, perm)
@@ -343,53 +347,58 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
 
     // ─────────────────────────── Rendering ───────────────────────────
 
-    private fun render(animate: Boolean) {
+    private fun refreshUi(animate: Boolean) {
         val view = root ?: return
         val ctx = view.context
         if (pages.isEmpty()) return
-        val i = current
+        val i = shownIdx
         val page = pages[i]
-        val status = statuses[i]
+        val status = pageStates[i]
 
         view.findViewById<TextView>(R.id.txtCounterCurrent).text = (i + 1).toString()
         view.findViewById<TextView>(R.id.txtCounterTotal).text = getString(R.string.ps_counter_total, pages.size)
-        view.findViewById<View>(R.id.actSkip).visibility = if (sequenceRunning) View.INVISIBLE else View.VISIBLE
-        paintDots(view.findViewById(R.id.marks), animate)
+        view.findViewById<View>(R.id.actSkip).visibility = if (chainActive) View.INVISIBLE else View.VISIBLE
+        drawDots(view.findViewById(R.id.marks), animate)
 
         // Check badge on the illustration: shown for allowed pages (popped by onGranted).
-        pageViews.forEachIndexed { idx, pv ->
+        folioViews.forEachIndexed { idx, pv ->
             val badge = pv.findViewById<View>(R.id.lv_checkBadge)
-            val show = statuses[idx] == Status.ALLOWED || statuses[idx] == Status.ALREADY
-            if (!show) badge.visibility = View.INVISIBLE
-            else if (badge.visibility != View.VISIBLE) { badge.visibility = View.VISIBLE; badge.scaleX = 1f; badge.scaleY = 1f }
+            when (pageStates[idx]) {
+                PageState.ALLOWED, PageState.ALREADY -> if (badge.visibility != View.VISIBLE) {
+                    badge.visibility = View.VISIBLE
+                    badge.scaleX = 1f
+                    badge.scaleY = 1f
+                }
+                else -> badge.visibility = View.INVISIBLE
+            }
         }
 
         val name = getString(page.shortName)
         when (status) {
-            Status.IDLE, Status.REQUESTING -> presentChip(null)
-            Status.ALLOWED -> presentChip(
-                Chip.SUCCESS,
-                getString(if (nextToAsk(i) != null) R.string.ps_allowed_moving_on else R.string.ps_allowed_done, name),
+            PageState.IDLE, PageState.REQUESTING -> showStatusChip(null)
+            PageState.ALLOWED -> showStatusChip(
+                BadgeTone.SUCCESS,
+                getString(if (nextAskable(i) != null) R.string.ps_allowed_moving_on else R.string.ps_allowed_done, name),
             )
-            Status.DENIED -> presentChip(Chip.WARNING, getString(R.string.ps_not_allowed, name))
-            Status.ALREADY -> presentChip(Chip.INFO, getString(R.string.ps_already_allowed))
+            PageState.DENIED -> showStatusChip(BadgeTone.WARNING, getString(R.string.ps_not_allowed, name))
+            PageState.ALREADY -> showStatusChip(BadgeTone.INFO, getString(R.string.ps_already_allowed))
         }
 
         // One button for the whole sequence: "Allow", or a spinner while it runs.
-        paintPrimary(
-            label = getString(if (sequenceRunning) R.string.ps_requesting else R.string.ps_allow),
-            spinner = sequenceRunning,
+        drawPrimary(
+            label = getString(if (chainActive) R.string.ps_requesting else R.string.ps_allow),
+            spinner = chainActive,
             animate = animate && !CraftMovement.animationsDisabled(ctx),
         )
     }
 
-    private enum class Chip(val bg: Int, val icon: Int, val iconTint: Int, val text: Int) {
+    private enum class BadgeTone(val bg: Int, val icon: Int, val iconTint: Int, val text: Int) {
         SUCCESS(R.drawable.pmt_bg_status_success, R.drawable.pmt_ic_check, R.color.ps_success, R.color.ps_success_ink),
         WARNING(R.drawable.pmt_bg_status_warning, R.drawable.pmt_ic_warning, R.color.ps_warning, R.color.ps_warning_ink),
         INFO(R.drawable.pmt_bg_status_info, R.drawable.pmt_ic_check, R.color.ps_accent_ink, R.color.ps_info_ink),
     }
 
-    private fun presentChip(kind: Chip?, text: String? = null) {
+    private fun showStatusChip(kind: BadgeTone?, text: String? = null) {
         val view = root ?: return
         val chip = view.findViewById<LinearLayout>(R.id.condChip)
         if (kind == null || text == null) { chip.isVisible = false; return }
@@ -413,7 +422,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         }
     }
 
-    private fun paintPrimary(label: String, spinner: Boolean, animate: Boolean) {
+    private fun drawPrimary(label: String, spinner: Boolean, animate: Boolean) {
         val view = root ?: return
         val btn = view.findViewById<View>(R.id.actPrimary)
         val content = view.findViewById<View>(R.id.lv_primaryContent)
@@ -438,7 +447,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         }.start()
     }
 
-    private fun composeDots(container: LinearLayout) {
+    private fun buildDots(container: LinearLayout) {
         val ctx = container.context
         container.removeAllViews()
         pages.indices.forEach { i ->
@@ -451,31 +460,31 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
     }
 
     /** Past dots tinted, the active one a 22dp gradient pill (width animated, 250 ms), the rest grey. */
-    private fun paintDots(container: LinearLayout, animate: Boolean) {
+    private fun drawDots(container: LinearLayout, animate: Boolean) {
         val ctx = container.context
         val small = ctx.dp(6f).toInt()
         val wide = ctx.dp(22f).toInt()
-        dotAnimators.forEach { it.cancel() }
-        dotAnimators.clear()
+        dotAnims.forEach { it.cancel() }
+        dotAnims.clear()
         for (i in 0 until container.childCount) {
             val dot = container.getChildAt(i)
-            if (i == current) {
+            if (i == shownIdx) {
                 dot.setBackgroundResource(R.drawable.pmt_bg_gradient_r3)
                 dot.backgroundTintList = null
             } else {
                 dot.setBackgroundResource(R.drawable.pmt_bg_dot)
                 dot.backgroundTintList = ContextCompat.getColorStateList(
-                    ctx, if (i < current) R.color.ps_dot_past else R.color.ps_dot_future,
+                    ctx, if (i < shownIdx) R.color.ps_dot_past else R.color.ps_dot_future,
                 )
             }
-            val target = if (i == current) wide else small
+            val target = if (i == shownIdx) wide else small
             val from = dot.layoutParams.width
             if (from == target) continue
             if (!animate || CraftMovement.animationsDisabled(ctx)) {
                 dot.layoutParams = dot.layoutParams.apply { width = target }
                 continue
             }
-            dotAnimators += ValueAnimator.ofInt(from, target).apply {
+            dotAnims += ValueAnimator.ofInt(from, target).apply {
                 duration = 250L
                 interpolator = CraftMovement.EASE
                 addUpdateListener { a -> dot.layoutParams = dot.layoutParams.apply { width = a.animatedValue as Int } }
@@ -485,7 +494,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
     }
 
     /** Granted check: springs in with an overshoot (dampingRatio ≈ 0.5). */
-    private fun popCheck(badge: View) {
+    private fun bounceBadge(badge: View) {
         badge.visibility = View.VISIBLE
         if (CraftMovement.animationsDisabled(badge.context)) return
         badge.scaleX = 0f
@@ -495,23 +504,26 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
 
     // ─────────────────────────── Finish ───────────────────────────
 
-    private fun concludeFlow() {
-        onFinished?.invoke()
+    private fun fireFinishedOnce() {
+        val cb = onFinished
+        cb?.invoke()
         onFinished = null
+    }
+
+    private fun finishSheet() {
+        fireFinishedOnce()
         runCatching { dismissAllowingStateLoss() }
     }
 
     override fun onDismiss(dialog: android.content.DialogInterface) {
         super.onDismiss(dialog)
-        // Dragged down / back pressed (not via concludeFlow): still notify once.
-        onFinished?.invoke()
-        onFinished = null
+        fireFinishedOnce()
     }
 
     companion object {
         const val TAG = "permission_sheet"
-        private const val ADVANCE_DELAY_MS = 600L
-        private const val PAGE_MS = 450L
+        private const val RESULT_HOLD_MS = 600L
+        private const val SLIDE_MS = 450L
 
         /** True while the sheet is on screen. */
         fun isShowing(activity: FragmentActivity): Boolean =
@@ -537,11 +549,14 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
          * the sheet at all.
          */
         @JvmStatic
-        fun hasPending(activity: FragmentActivity): Boolean =
-            DrawerFolio.all(activity).any { page ->
-                val perm = page.primaryPermission ?: return@any false
-                !page.isGranted(activity) && !isPermanentlyDenied(activity, page.key, perm)
+        fun hasPending(activity: FragmentActivity): Boolean {
+            for (page in DrawerFolio.all(activity)) {
+                val perm = page.primaryPermission ?: continue
+                if (page.isGranted(activity)) continue
+                if (!isPermanentlyDenied(activity, page.key, perm)) return true
             }
+            return false
+        }
 
         /**
          * True once the user has denied [perm] to the point Android no longer
@@ -553,13 +568,12 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
          */
         @JvmStatic
         fun isPermanentlyDenied(activity: FragmentActivity, key: String, perm: String): Boolean {
-            if (ContextCompat.checkSelfPermission(activity, perm) == PackageManager.PERMISSION_GRANTED) {
-                return false
+            val granted = ContextCompat.checkSelfPermission(activity, perm) == PackageManager.PERMISSION_GRANTED
+            return when {
+                granted -> false
+                !(ConsentLocker(activity).wasAsked(key) || LockerBook(activity).hasRequestedPermission(perm)) -> false
+                else -> !ActivityCompat.shouldShowRequestPermissionRationale(activity, perm)
             }
-            val askedAnywhere = ConsentLocker(activity).wasAsked(key) ||
-                LockerBook(activity).hasRequestedPermission(perm)
-            if (!askedAnywhere) return false
-            return !ActivityCompat.shouldShowRequestPermissionRationale(activity, perm)
         }
 
         /**
@@ -572,10 +586,8 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
          * **auto-launch only** — a manual "Manage" tap calls [show] directly.
          */
         @JvmStatic
-        fun mustAutoShow(activity: FragmentActivity): Boolean {
-            if (!hasPending(activity)) return false
-            return OpeningUnveilCharter.mustShowPermissionSheet(activity)
-        }
+        fun mustAutoShow(activity: FragmentActivity): Boolean =
+            hasPending(activity) && OpeningUnveilCharter.mustShowPermissionSheet(activity)
 
         /**
          * Shows the permission sheet on demand. Call from any click listener:

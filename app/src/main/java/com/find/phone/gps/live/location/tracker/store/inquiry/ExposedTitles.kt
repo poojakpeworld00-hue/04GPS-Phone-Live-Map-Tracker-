@@ -3,26 +3,28 @@ package com.find.phone.gps.live.location.tracker.store.inquiry
 import android.content.Context
 import java.util.Locale
 
-/**
- * "Also known as" names the user has revealed with a rewarded ad, per number, so a reopened
- * result keeps them readable. Stored as "e164|name" entries in one string set.
- */
+/** Names unlocked through a rewarded ad, remembered per number as "e164|name" tokens. */
 object ExposedTitles {
 
-    private const val PREFS = "revealed_names"
-    private const val KEY = "entries"
+    private const val STORE_NAME = "revealed_names"
+    private const val SET_KEY = "entries"
+
+    private fun store(ctx: Context) = ctx.applicationContext.getSharedPreferences(STORE_NAME, Context.MODE_PRIVATE)
+
+    private fun token(number: String, label: String): String =
+        buildString {
+            append(number)
+            append('|')
+            append(label.trim().lowercase(Locale.ROOT))
+        }
+
+    private fun saved(ctx: Context): Set<String> = store(ctx).getStringSet(SET_KEY, null) ?: emptySet()
 
     fun isRevealed(context: Context, e164: String, name: String): Boolean =
-        entries(context).contains(entry(e164, name))
+        token(e164, name) in saved(context)
 
     fun reveal(context: Context, e164: String, name: String) {
-        val next = entries(context) + entry(e164, name)
-        prefs(context).edit().putStringSet(KEY, next).apply()
+        val merged = saved(context).plus(token(e164, name))
+        store(context).edit().putStringSet(SET_KEY, merged).apply()
     }
-
-    private fun entries(context: Context): Set<String> = prefs(context).getStringSet(KEY, null).orEmpty()
-
-    private fun entry(e164: String, name: String) = "$e164|${name.trim().lowercase(Locale.ROOT)}"
-
-    private fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 }

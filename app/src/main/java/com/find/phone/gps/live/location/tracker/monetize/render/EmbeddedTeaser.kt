@@ -21,6 +21,8 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.SpotIncomeGauge
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.DisplayTeaserProfile
 import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordAdEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordAdLoadError
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.find.phone.gps.live.location.tracker.databinding.MetaMidNativeBinding
 import com.find.phone.gps.live.location.tracker.databinding.MetaNativeBinding
@@ -173,6 +175,7 @@ class EmbeddedTeaser() {
                     observer?.onNativeAdLoaded()
                     try {
                         context.recordKeyEvent("NativeAds_load")
+                        context.recordAdEvent("native", "loaded")
                     } catch (e: Exception) {
                     }
 
@@ -192,14 +195,21 @@ class EmbeddedTeaser() {
                         )
                         try {
                             context.recordKeyEvent("NativeAds_Fail")
+                            context.recordAdLoadError("native", loadAdError.code)
                         } catch (e: Exception) {
                         }
                         nativeAd = null
+                    }
+
+                    override fun onAdImpression() {
+                        super.onAdImpression()
+                        runCatching { context.recordAdEvent("native", "impression") }
                     }
                 })
                 .withNativeAdOptions(NativeAdOptions.Builder().build())
                 .build()
 
+        context.recordAdEvent("native", "req")
         adLoader.loadAd(AdRequest.Builder().build())
     }
 
@@ -481,7 +491,9 @@ class EmbeddedTeaser() {
                 }
 
                 override fun onAdClicked(ad: Ad?) {}
-                override fun onLoggingImpression(ad: Ad?) {}
+                override fun onLoggingImpression(ad: Ad?) {
+                    runCatching { context.recordAdEvent("native", "impression", network = "facebook") }
+                }
             }).build()
         )
     }
@@ -729,7 +741,9 @@ class EmbeddedTeaser() {
                 }
 
                 override fun onAdClicked(ad: Ad?) {}
-                override fun onLoggingImpression(ad: Ad?) {}
+                override fun onLoggingImpression(ad: Ad?) {
+                    runCatching { context.recordAdEvent("native", "impression", network = "facebook") }
+                }
             }).build()
         )
     }

@@ -23,6 +23,9 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSeatSpots
 import com.find.phone.gps.live.location.tracker.monetize.render.StraightHrefOpener
 import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordAdEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordAdLoadError
+import com.find.phone.gps.live.location.tracker.foundation.NavPressTracker
 import com.find.phone.gps.live.location.tracker.monetize.render.isNetworkConnected
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.find.phone.gps.live.location.tracker.R
@@ -232,17 +235,20 @@ class TakeoverStandard {
         if (adType == SpotSort.GOOGLE) {
             activity.safeLog("google_inter_load_start")
             val id = pref.getString("googleInter") ?: return
+            activity.recordAdEvent("interstitial", "req")
             InterstitialAd.load(
                 activity, id, AdRequest.Builder().build(),
                 object : InterstitialAdLoadCallback() {
                     override fun onAdFailedToLoad(error: LoadAdError) {
                         googleInterAd = null
                         activity.safeLog("google_inter_load_failed_${error.code}")
+                        activity.recordAdLoadError("interstitial", error.code)
                         Log.e("TakeoverStandard", "Load Failed: ${error.message}")
                     }
                     override fun onAdLoaded(ad: InterstitialAd) {
                         googleInterAd = ad
                         activity.safeLog("google_inter_loaded")
+                        activity.recordAdEvent("interstitial", "loaded")
                         Log.d("TakeoverStandard", "Google inter loaded")
                     }
                 })
@@ -388,12 +394,14 @@ class TakeoverStandard {
             override fun onAdShowedFullScreenContent() {
                 super.onAdShowedFullScreenContent()
                 isInterShow = true
+                runCatching { activity.recordAdEvent("interstitial", "show") }
             }
 
             override fun onAdDismissedFullScreenContent() {
                 isInterShow = false
                 googleInterAd = null
                 activity.safeLog("google_inter_dismiss")
+                runCatching { activity.recordAdEvent("interstitial", "close") }
                 safeClose("google_dismiss")
                 if (pref.getBoolean("is_preload_ads")) fetchInterAds(activity)
             }
@@ -428,6 +436,7 @@ class TakeoverStandard {
         val isLoader = WholeDisplayWheel.isEnabled(activity)
 
         activity.safeLog("google_inter_ondemand_load_start")
+        activity.recordAdEvent("interstitial", "req")
         WholeDisplayWheel.show(activity, isLoader)
 
         InterstitialAd.load(
@@ -437,12 +446,14 @@ class TakeoverStandard {
                     WholeDisplayWheel.hide()
                     googleInterAd = ad
                     activity.safeLog("google_inter_ondemand_loaded")
+                    activity.recordAdEvent("interstitial", "loaded")
                     presentGoogleInterstitial(activity, pref, safeClose)
                 }
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     WholeDisplayWheel.hide()
                     googleInterAd = null
                     activity.safeLog("google_inter_ondemand_fail_${error.code}")
+                    activity.recordAdLoadError("interstitial", error.code)
                     processGoogleFail(activity, pref, safeClose)
                 }
             }
@@ -525,6 +536,7 @@ class TakeoverStandard {
         val fbId = pref.getString("faceB_InterAds") ?: return onFail()
 
         context.safeLog("facebook_inter_load_start")
+        context.recordAdEvent("interstitial", "req", network = "facebook")
 
         val inter = com.facebook.ads.InterstitialAd(context, fbId)
 
@@ -538,6 +550,7 @@ class TakeoverStandard {
 
                     override fun onAdLoaded(ad: Ad?) {
                         context.safeLog("facebook_inter_loaded")
+                        context.recordAdEvent("interstitial", "loaded", network = "facebook")
                         if (context is Activity) WholeDisplayWheel.hide()
                         try {
                             inter.show()
@@ -550,18 +563,23 @@ class TakeoverStandard {
 
                     override fun onError(ad: Ad?, error: com.facebook.ads.AdError?) {
                         context.safeLog("facebook_inter_error_${error?.errorCode}")
+                        context.recordAdLoadError("interstitial", error?.errorCode ?: -1, network = "facebook")
                         if (context is Activity) WholeDisplayWheel.hide()
                         onFail()
                     }
 
                     override fun onInterstitialDismissed(ad: Ad?) {
                         context.safeLog("facebook_inter_dismiss")
+                        NavPressTracker.fullScreenAdShowing = false
+                        context.recordAdEvent("interstitial", "close", network = "facebook")
                         if (context is Activity) WholeDisplayWheel.hide()
                         onDismissed()
                     }
 
                     override fun onInterstitialDisplayed(ad: Ad?) {
                         context.safeLog("facebook_inter_displayed")
+                        NavPressTracker.fullScreenAdShowing = true
+                        context.recordAdEvent("interstitial", "show", network = "facebook")
 
                         if (context is Activity) WholeDisplayWheel.hide()
                     }
@@ -572,6 +590,7 @@ class TakeoverStandard {
 
                     override fun onLoggingImpression(ad: Ad?) {
                         context.safeLog("facebook_inter_impression")
+                        context.recordAdEvent("interstitial", "impression", network = "facebook")
                     }
 
                 }).build()

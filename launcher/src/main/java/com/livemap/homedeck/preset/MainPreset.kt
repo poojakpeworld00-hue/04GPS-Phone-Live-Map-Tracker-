@@ -110,86 +110,99 @@ data class MainPreset(
     }
 
     /**
-     * Lays the launcher's own numbers over this profile. [ownIconDp] is the icon size our grid
-     * would draw at the resulting column count on this display, so an OEM icon size becomes a
-     * scale against it.
+     * Applies an APK's own [numbers] on top of this profile. [ownIconDp] gives the icon size our grid
+     * draws at a column count, turning an OEM icon dp into a relative scale.
      */
     fun overlay(numbers: Numbers, ownIconDp: (cols: Int) -> Float = { 0f }): MainPreset {
         if (numbers.isEmpty) return this
-        val cols = numbers.homeCols ?: homeCols
-        val scale = numbers.iconSizeDp?.let { oem ->
-            val ours = ownIconDp(cols)
-            if (ours > 0f) (oem / ours).coerceIn(MIN_ICON_SCALE, MAX_ICON_SCALE) else null
+        val columns = numbers.homeCols ?: homeCols
+        val relativeScale = numbers.iconSizeDp?.let { oemDp ->
+            val baseline = ownIconDp(columns)
+            when {
+                baseline > 0f -> (oemDp / baseline).coerceIn(MIN_ICON_SCALE, MAX_ICON_SCALE)
+                else -> null
+            }
         }
-        // Every field keeps the tier it had before; only what the APK supplied moves to APK.
-        val tagged = FIELD_KEYS.associateWith { sourceOf(it) }.toMutableMap()
-        if (numbers.homeCols != null) tagged[KEY_HOME_COLS] = PresetFeed.APK
-        if (numbers.homeRows != null) tagged[KEY_HOME_ROWS] = PresetFeed.APK
-        if (numbers.dockSize != null) tagged[KEY_DOCK_SIZE] = PresetFeed.APK
-        if (numbers.drawerCols != null) tagged[KEY_DRAWER_COLS] = PresetFeed.APK
-        if (scale != null) tagged[KEY_ICON_SCALE] = PresetFeed.APK
-        val label = numbers.labelSp?.takeIf { it in MIN_LABEL_SP..MAX_LABEL_SP }
-        if (label != null) tagged[KEY_LABEL_SP] = PresetFeed.APK
-        val dp = numbers.iconSizeDp?.takeIf { it in MIN_ICON_DP..MAX_ICON_DP }
-        if (dp != null) tagged[KEY_ICON_DP] = PresetFeed.APK
-        val dockDp = numbers.dockIconDp?.takeIf { it in MIN_ICON_DP..MAX_ICON_DP }
-        if (dockDp != null) tagged[KEY_DOCK_ICON_DP] = PresetFeed.APK
-        val drawerDp = numbers.drawerIconDp?.takeIf { it in MIN_ICON_DP..MAX_ICON_DP }
-        if (drawerDp != null) tagged[KEY_DRAWER_ICON_DP] = PresetFeed.APK
-        if (numbers.drawerMode != null) tagged[KEY_DRAWER_MODE] = PresetFeed.APK
+        val labelSize = numbers.labelSp?.takeIf { it in MIN_LABEL_SP..MAX_LABEL_SP }
+        val workspaceDp = drawableDpOrNull(numbers.iconSizeDp)
+        val hotseatDp = drawableDpOrNull(numbers.dockIconDp)
+        val trayDp = drawableDpOrNull(numbers.drawerIconDp)
+
+        val fromApk = buildList {
+            if (numbers.homeCols != null) add(KEY_HOME_COLS)
+            if (numbers.homeRows != null) add(KEY_HOME_ROWS)
+            if (numbers.dockSize != null) add(KEY_DOCK_SIZE)
+            if (numbers.drawerCols != null) add(KEY_DRAWER_COLS)
+            if (relativeScale != null) add(KEY_ICON_SCALE)
+            if (labelSize != null) add(KEY_LABEL_SP)
+            if (workspaceDp != null) add(KEY_ICON_DP)
+            if (hotseatDp != null) add(KEY_DOCK_ICON_DP)
+            if (trayDp != null) add(KEY_DRAWER_ICON_DP)
+            if (numbers.drawerMode != null) add(KEY_DRAWER_MODE)
+        }
+        val tiers = FIELD_KEYS.associateWith { sourceOf(it) }.toMutableMap()
+        fromApk.forEach { tiers[it] = PresetFeed.APK }
+
         return copy(
-            homeCols = cols,
+            homeCols = columns,
             homeRows = numbers.homeRows ?: homeRows,
             dockSize = numbers.dockSize ?: dockSize,
             drawerCols = numbers.drawerCols ?: drawerCols,
-            iconScale = scale ?: iconScale,
-            labelSp = label ?: labelSp,
-            iconDp = dp ?: iconDp,
-            dockIconDp = dockDp ?: dockIconDp,
-            drawerIconDp = drawerDp ?: drawerIconDp,
+            iconScale = relativeScale ?: iconScale,
+            labelSp = labelSize ?: labelSp,
+            iconDp = workspaceDp ?: iconDp,
+            dockIconDp = hotseatDp ?: dockIconDp,
+            drawerIconDp = trayDp ?: drawerIconDp,
             drawerMode = numbers.drawerMode ?: drawerMode,
             source = PresetFeed.APK,
-            fieldSources = tagged,
+            fieldSources = tiers,
         )
     }
 
+    private fun drawableDpOrNull(value: Int?): Int? = value?.takeIf { it in MIN_ICON_DP..MAX_ICON_DP }
+
     /**
-     * The dp fields settled for a display [widthDp] wide. A fraction stated by the profile wins over
-     * a dp read from the APK: it is the launcher's own formula (One UI sizes icons off the window
-     * width), while its `app_icon_size` dimen is only that formula at the default screen zoom - on a
-     * phone zoomed out to 411 dp, 63 dp against the 67 dp One UI really draws. Idempotent.
+     * Resolves width fractions into dp for a display [widthDp] wide. A stated fraction beats an
+     * APK dp because it is the launcher's actual sizing rule. Calling it twice changes nothing.
      */
     fun settleFractions(widthDp: Int, densityDpi: Int = 0): MainPreset {
         if (widthDp <= 0) return this
-        fun dp(current: Int, fraction: Float) = if (fraction > 0f) Math.round(fraction * widthDp).takeIf { it in MIN_ICON_DP..MAX_ICON_DP } ?: current else current
-        val iconFraction = iconFractionFor(densityDpi)
-        val resolved = copy(
-            iconDp = dp(iconDp, iconFraction),
-            dockIconDp = dp(dockIconDp, dockIconWidthFraction),
-            drawerIconDp = dp(drawerIconDp, drawerIconWidthFraction),
+        fun fromFraction(fallback: Int, fraction: Float): Int =
+            fraction.takeIf { it > 0f }
+                ?.let { Math.round(it * widthDp) }
+                ?.takeIf { it in MIN_ICON_DP..MAX_ICON_DP }
+                ?: fallback
+
+        val settled = copy(
+            iconDp = fromFraction(iconDp, iconFractionFor(densityDpi)),
+            dockIconDp = fromFraction(dockIconDp, dockIconWidthFraction),
+            drawerIconDp = fromFraction(drawerIconDp, drawerIconWidthFraction),
         )
-        // A dp the fraction replaced now carries the fraction's tier, so the resolve log stays true.
-        val retagged = fieldSources.toMutableMap()
-        fun retag(key: String, fractionKey: String, before: Int, after: Int) {
-            if (before != after) retagged[key] = sourceOf(fractionKey)
+        val tiers = fieldSources.toMutableMap()
+        listOf(
+            Triple(KEY_ICON_DP, KEY_ICON_WIDTH_FRACTION, iconDp to settled.iconDp),
+            Triple(KEY_DOCK_ICON_DP, KEY_DOCK_ICON_WIDTH_FRACTION, dockIconDp to settled.dockIconDp),
+            Triple(KEY_DRAWER_ICON_DP, KEY_DRAWER_ICON_WIDTH_FRACTION, drawerIconDp to settled.drawerIconDp),
+        ).forEach { (dpKey, fractionKey, change) ->
+            if (change.first != change.second) tiers[dpKey] = sourceOf(fractionKey)
         }
-        retag(KEY_ICON_DP, KEY_ICON_WIDTH_FRACTION, iconDp, resolved.iconDp)
-        retag(KEY_DOCK_ICON_DP, KEY_DOCK_ICON_WIDTH_FRACTION, dockIconDp, resolved.dockIconDp)
-        retag(KEY_DRAWER_ICON_DP, KEY_DRAWER_ICON_WIDTH_FRACTION, drawerIconDp, resolved.drawerIconDp)
-        return resolved.copy(fieldSources = retagged)
+        return settled.copy(fieldSources = tiers)
     }
 
-    /** The workspace icon fraction at [densityDpi]: the nearest per-density entry, else the flat one. */
-    fun iconFractionFor(densityDpi: Int): Float =
-        iconWidthFractionByDpi.takeIf { densityDpi > 0 && it.isNotEmpty() }
-            ?.minByOrNull { (dpi, _) -> kotlin.math.abs(dpi - densityDpi) }?.value
-            ?: iconWidthFraction
+    /** Workspace icon fraction for [densityDpi]: closest per-density entry, otherwise the flat value. */
+    fun iconFractionFor(densityDpi: Int): Float {
+        if (densityDpi <= 0 || iconWidthFractionByDpi.isEmpty()) return iconWidthFraction
+        return iconWidthFractionByDpi.entries.minBy { kotlin.math.abs(it.key - densityDpi) }.value
+    }
 
-    /** The dp each surface draws: the launcher's item size times [iconInset]; dock and drawer fall back to the workspace. 0 = unknown. */
-    private fun artDp(item: Int): Int = if (item == 0) 0 else Math.round(item * (if (iconInset > 0f) iconInset else 1f)).coerceIn(MIN_ICON_DP, MAX_ICON_DP)
-    val homeArtDp: Int get() = artDp(iconDp)
-    val dockArtDp: Int get() = artDp(if (dockIconDp > 0) dockIconDp else iconDp)
-    val drawerArtDp: Int get() = artDp(if (drawerIconDp > 0) drawerIconDp else iconDp)
+    private fun insetDp(itemDp: Int): Int {
+        if (itemDp == 0) return 0
+        val share = iconInset.takeIf { it > 0f } ?: 1f
+        return Math.round(itemDp * share).coerceIn(MIN_ICON_DP, MAX_ICON_DP)
+    }
+    val homeArtDp: Int get() = insetDp(iconDp)
+    val dockArtDp: Int get() = insetDp(dockIconDp.takeIf { it > 0 } ?: iconDp)
+    val drawerArtDp: Int get() = insetDp(drawerIconDp.takeIf { it > 0 } ?: iconDp)
 
     /** The tier behind one field, for the log. */
     fun sourceOf(key: String): PresetFeed = fieldSources[key] ?: source
@@ -283,67 +296,77 @@ data class MainPreset(
         )
 
         /**
-         * A profile from a rule's `profile` object. Missing fields fall back to [defaults] so a
-         * console row only has to state what differs from AOSP. Returns null when there is no id or
-         * a number is out of the range the grid can draw.
+         * Builds a profile from a rule's `profile` object; unspecified fields come from [defaults].
+         * Null when the id is blank or a value falls outside what the grid can draw.
          */
         fun fromJson(o: JSONObject, defaults: MainPreset = AOSP, source: PresetFeed): MainPreset? {
-            val id = o.optString(KEY_ID).trim()
-            if (id.isEmpty()) return null
-            val profile = MainPreset(
+            val id = o.optString(KEY_ID).trim().takeUnless { it.isEmpty() } ?: return null
+            fun dbl(key: String, fallback: Float): Float = o.optDouble(key, fallback.toDouble()).toFloat()
+            val candidate = MainPreset(
                 id = id,
                 homeCols = o.optInt(KEY_HOME_COLS, defaults.homeCols),
                 homeRows = o.optInt(KEY_HOME_ROWS, defaults.homeRows),
                 dockSize = o.optInt(KEY_DOCK_SIZE, defaults.dockSize),
-                drawerMode = drawerMode(o.optString(KEY_DRAWER_MODE)) ?: defaults.drawerMode,
+                drawerMode = enumNamed<SliderWay>(o.optString(KEY_DRAWER_MODE)) ?: defaults.drawerMode,
                 drawerCols = o.optInt(KEY_DRAWER_COLS, defaults.drawerCols),
                 drawerRows = o.optInt(KEY_DRAWER_ROWS, defaults.drawerRows),
                 drawerSearch = o.optBoolean(KEY_DRAWER_SEARCH, defaults.drawerSearch),
                 homeLabels = o.optBoolean(KEY_HOME_LABELS, defaults.homeLabels),
                 drawerLabels = o.optBoolean(KEY_DRAWER_LABELS, defaults.drawerLabels),
                 source = source,
-                drawerSearchPosition = drawerSearchPosition(o.optString(KEY_DRAWER_SEARCH_POSITION)) ?: defaults.drawerSearchPosition,
-                iconScale = o.optDouble(KEY_ICON_SCALE, defaults.iconScale.toDouble()).toFloat(),
-                labelSp = o.optDouble(KEY_LABEL_SP, defaults.labelSp.toDouble()).toFloat(),
+                drawerSearchPosition = enumNamed<SliderHuntPlacement>(o.optString(KEY_DRAWER_SEARCH_POSITION))
+                    ?: defaults.drawerSearchPosition,
+                iconScale = dbl(KEY_ICON_SCALE, defaults.iconScale),
+                labelSp = dbl(KEY_LABEL_SP, defaults.labelSp),
                 iconDp = o.optInt(KEY_ICON_DP, defaults.iconDp),
                 dockIconDp = o.optInt(KEY_DOCK_ICON_DP, defaults.dockIconDp),
                 drawerIconDp = o.optInt(KEY_DRAWER_ICON_DP, defaults.drawerIconDp),
-                iconWidthFraction = o.optDouble(KEY_ICON_WIDTH_FRACTION, defaults.iconWidthFraction.toDouble()).toFloat(),
-                dockIconWidthFraction = o.optDouble(KEY_DOCK_ICON_WIDTH_FRACTION, defaults.dockIconWidthFraction.toDouble()).toFloat(),
-                drawerIconWidthFraction = o.optDouble(KEY_DRAWER_ICON_WIDTH_FRACTION, defaults.drawerIconWidthFraction.toDouble()).toFloat(),
-                iconWidthFractionByDpi = o.optJSONObject(KEY_ICON_WIDTH_FRACTION_BY_DPI)?.let { table ->
-                    table.keys().asSequence().mapNotNull { key ->
-                        key.trim().toIntOrNull()?.let { dpi -> dpi to table.optDouble(key, Double.NaN).toFloat() }
-                    }.toMap()
-                } ?: defaults.iconWidthFractionByDpi,
-                iconInset = o.optDouble(KEY_ICON_INSET, defaults.iconInset.toDouble()).toFloat(),
+                iconWidthFraction = dbl(KEY_ICON_WIDTH_FRACTION, defaults.iconWidthFraction),
+                dockIconWidthFraction = dbl(KEY_DOCK_ICON_WIDTH_FRACTION, defaults.dockIconWidthFraction),
+                drawerIconWidthFraction = dbl(KEY_DRAWER_ICON_WIDTH_FRACTION, defaults.drawerIconWidthFraction),
+                iconWidthFractionByDpi = o.optJSONObject(KEY_ICON_WIDTH_FRACTION_BY_DPI)?.let(::dpiTable)
+                    ?: defaults.iconWidthFractionByDpi,
+                iconInset = dbl(KEY_ICON_INSET, defaults.iconInset),
                 legacyIconTray = o.optString(KEY_LEGACY_ICON_TRAY).trim().lowercase().ifEmpty { defaults.legacyIconTray },
             )
-            return profile.takeIf { it.isSane() }
+            return if (candidate.isSane()) candidate else null
         }
 
-        private fun drawerMode(raw: String): SliderWay? =
-            SliderWay.entries.firstOrNull { it.name.equals(raw.trim(), ignoreCase = true) }
+        private fun dpiTable(node: JSONObject): Map<Int, Float> {
+            val out = LinkedHashMap<Int, Float>()
+            for (key in node.keys()) {
+                val dpi = key.trim().toIntOrNull() ?: continue
+                out[dpi] = node.optDouble(key, Double.NaN).toFloat()
+            }
+            return out
+        }
 
-        private fun drawerSearchPosition(raw: String): SliderHuntPlacement? =
-            SliderHuntPlacement.entries.firstOrNull { it.name.equals(raw.trim(), ignoreCase = true) }
+        private inline fun <reified E : Enum<E>> enumNamed(raw: String): E? {
+            val wanted = raw.trim()
+            return enumValues<E>().firstOrNull { it.name.equals(wanted, ignoreCase = true) }
+        }
 
         /** Bounds the grid can actually draw; a console typo must not produce a 0-column home. */
         const val MIN_CELLS = 2
         const val MAX_CELLS = 12
     }
 
-    fun isSane(): Boolean =
-        homeCols in MIN_CELLS..MAX_CELLS && homeRows in MIN_CELLS..MAX_CELLS &&
-                dockSize in 0..MAX_CELLS && drawerCols in MIN_CELLS..MAX_CELLS &&
-                drawerRows in 0..MAX_CELLS && !iconScale.isNaN() &&
-                iconScale in MIN_ICON_SCALE..MAX_ICON_SCALE &&
-                !labelSp.isNaN() && (labelSp == 0f || labelSp in MIN_LABEL_SP..MAX_LABEL_SP) &&
-                (iconDp == 0 || iconDp in MIN_ICON_DP..MAX_ICON_DP) &&
-                (dockIconDp == 0 || dockIconDp in MIN_ICON_DP..MAX_ICON_DP) &&
-                (drawerIconDp == 0 || drawerIconDp in MIN_ICON_DP..MAX_ICON_DP) &&
-                (listOf(iconWidthFraction, dockIconWidthFraction, drawerIconWidthFraction) + iconWidthFractionByDpi.values).all { !it.isNaN() && (it == 0f || it in MIN_ICON_FRACTION..MAX_ICON_FRACTION) } &&
-                iconWidthFractionByDpi.keys.all { it in 100..1000 } &&
-                !iconInset.isNaN() && (iconInset == 0f || iconInset in 0.5f..1f) &&
-                legacyIconTray in setOf(LEGACY_TRAY_WHITE, LEGACY_TRAY_DOMINANT)
+    fun isSane(): Boolean {
+        val cells = MIN_CELLS..MAX_CELLS
+        val optionalCells = 0..MAX_CELLS
+        fun dpOk(v: Int) = v == 0 || v in MIN_ICON_DP..MAX_ICON_DP
+        fun fractionOk(v: Float) = !v.isNaN() && (v == 0f || v in MIN_ICON_FRACTION..MAX_ICON_FRACTION)
+        val fractions = listOf(iconWidthFraction, dockIconWidthFraction, drawerIconWidthFraction) + iconWidthFractionByDpi.values
+        return when {
+            homeCols !in cells || homeRows !in cells -> false
+            dockSize !in optionalCells || drawerCols !in cells || drawerRows !in optionalCells -> false
+            iconScale.isNaN() || iconScale !in MIN_ICON_SCALE..MAX_ICON_SCALE -> false
+            labelSp.isNaN() || (labelSp != 0f && labelSp !in MIN_LABEL_SP..MAX_LABEL_SP) -> false
+            !dpOk(iconDp) || !dpOk(dockIconDp) || !dpOk(drawerIconDp) -> false
+            !fractions.all(::fractionOk) -> false
+            iconWidthFractionByDpi.keys.any { it !in 100..1000 } -> false
+            iconInset.isNaN() || (iconInset != 0f && iconInset !in 0.5f..1f) -> false
+            else -> legacyIconTray == LEGACY_TRAY_WHITE || legacyIconTray == LEGACY_TRAY_DOMINANT
+        }
+    }
 }

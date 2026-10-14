@@ -24,93 +24,48 @@ import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.isQPlus
 
 /**
- * The "Set as default launcher?" decision point (design 4b).
- *
- * A fresh arrival opens the first stage by itself; the CTA re-runs it. Two chances, in order:
- * the system home-app settings page, then the Q+ role dialog. Grant → home (with
- * `skip_rest_on_grant`), cancel → stay, Skip → whatever `onboarding.order` has next.
- * The two stages are driven separately because the launcher module's helper fires whichever
- * intent resolves first and never reaches the role dialog on a device with a settings page.
- *
- * Opened with [EXTRA_ROLE_GRANTED] (the role was just granted and the OS started the launcher
- * instead of returning here, see [HomeStream.resumeIfUnfinished]) it never shows itself: the
- * screen stays blank and the grant path runs at once — interstitial, then the next step.
+ * Onboarding step asking the user to make this app the default home app. Tries the system
+ * home-app settings first, then the Q+ role dialog. When opened with [EXTRA_ROLE_GRANTED] the
+ * page stays blank and the post-grant path runs immediately.
  */
 class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
 
-    companion object {
-        private const val REQ_HOME_SETTINGS = 7011
-        private const val REQ_ROLE_HOME = 7012
-        private const val TAG = "HomeRoleStep"
-
-        /** Finish a grant that happened while this screen was away: no page, straight to the ad. */
-        const val EXTRA_ROLE_GRANTED = "role_granted"
-
-        /**
-         * The surface last asked for the role, for the grant event — kept for the process, since a
-         * grant through the settings list comes back to a new instance (EXTRA_ROLE_GRANTED).
-         */
-        private var lastRequest = 0
-        private var grantLogged = false
-    }
-
     private val binding by viewBinding(ScreenOnboardingDefaultLauncherBinding::inflate)
-    private val animators = mutableListOf<Animator>()
+    private val floatAnims = mutableListOf<Animator>()
 
-    /** One-way latch: once a destination is committed, nothing else may pick another. */
-    private var leaving = false
-
-    /** True between launching a request and its result. */
-    private var requestInFlight = false
-
-    /** Open the home-app page on the first onResume. */
-    private var autoOpenPending = false
-
-    /** The decline-time permission ask runs once per visit. */
-    private var askedOnDecline = false
-
-    /** Whether Skip is on screen — without it, a cancelled role dialog has to move on. */
-    private var skipEnabled = true
-
-    /** Here only to finish a grant ([EXTRA_ROLE_GRANTED]): nothing shown, no delay. */
-    private var finishingGrant = false
+    /** Latched once a destination has been chosen. */
+    private var exitCommitted = false
+    private var awaitingResult = false
+    private var openSettingsOnResume = false
+    private var declineAskDone = false
+    private var skipShown = true
+    private var grantOnlyVisit = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
         excludeAppFromRecents()
 
-        if (intent.getBooleanExtra(EXTRA_ROLE_GRANTED, false)) {
-            finishingGrant = true
-            binding.root.isInvisible = true
-            return
-        }
+        if (arrivedWithGrant(intent)) return
 
         if (savedInstanceState == null) recordKeyEvent("default_home_view")
 
-        CraftMovement.pressScale(binding.inductSetDefault)
-        binding.inductSetDefault.setOnClickListener {
-            if (isDefaultLauncher()) goHome() else enterHomeSettings()
-        }
-        binding.inductSkip.setOnClickListener {
-            recordKeyEvent("default_home_skip")
-            headToNextStep()
-        }
+        wireButtons()
 
-        val ui = HomeSpotsProfile.onboardingUi(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT)
-        skipEnabled = ui.skipEnabled
-        binding.inductSkip.isVisible = ui.skipEnabled
+        val stepUi = HomeSpotsProfile.onboardingUi(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT)
+        skipShown = stepUi.skipEnabled
+        binding.inductSkip.isVisible = stepUi.skipEnabled
 
-        // Paid users: Back gets one last ask (the role dialog). Organic users: Back is Back.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (HomeStream.backMovesForward(this@MainPartPhaseActivity)) nudgeForRole()
-                else HomeStream.passBackThrough(this@MainPartPhaseActivity, this)
+                val host = this@MainPartPhaseActivity
+                when {
+                    HomeStream.backMovesForward(host) -> askRoleDialog()
+                    else -> HomeStream.passBackThrough(host, this)
+                }
             }
         })
 
-        // Native big ad card, `launcher_ads.onboarding.set_default.slot`; the frame is hidden
-        // outright when the slot is off.
         HomeSpotsProfile.presentSlot(
             activity = this,
             slot = HomeSpotsProfile.onboardingSlot(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT),
@@ -118,164 +73,183 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
             shimmer = binding.spotShimmer,
         )
 
-        // Small phones: the hero card gives way to the ad while one is on screen.
         binding.pictureHero.concealWhileAdVisible(binding.spotNativeFrame, binding.leadCompact)
 
         HomeStream.wireStepHeader(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT, binding.root)
 
-        // First arrival: open the system default-app page straight away, not on a restore.
-        // Debug builds accept `qa_no_auto_open` so the screen itself can be inspected via adb.
-        val qaHold = BuildConfig.DEBUG && intent.getBooleanExtra("qa_no_auto_open", false)
-        // Not when it is back only to be skipped past (Home was pressed here, InductionMainOnward).
-        if (savedInstanceState == null && !qaHold && !InductionMainOnward.isSavedFor(this)) autoOpenPending = true
+        // Debug-only `qa_no_auto_open` keeps the page up for inspection.
+        val holdForQa = BuildConfig.DEBUG && intent.getBooleanExtra("qa_no_auto_open", false)
+        openSettingsOnResume = savedInstanceState == null && !holdForQa && !InductionMainOnward.isSavedFor(this)
 
-        playMotion()
+        startFloatAnimations()
     }
 
-    /** The chooser card and the swipe chip float (`floaty 4s`, the chip offset 1.4s). */
-    private fun playMotion() {
+    private fun arrivedWithGrant(source: Intent): Boolean {
+        if (!source.getBooleanExtra(EXTRA_ROLE_GRANTED, false)) return false
+        grantOnlyVisit = true
+        binding.root.isInvisible = true
+        return true
+    }
+
+    private fun wireButtons() {
+        binding.inductSetDefault.let { cta ->
+            CraftMovement.pressScale(cta)
+            cta.setOnClickListener {
+                when {
+                    isDefaultLauncher() -> completeToHome()
+                    else -> openDefaultAppsPage()
+                }
+            }
+        }
+        binding.inductSkip.setOnClickListener {
+            recordKeyEvent("default_home_skip")
+            skipToNextStep()
+        }
+    }
+
+    private fun startFloatAnimations() {
         if (CraftMovement.animationsDisabled(this)) return
-        animators += CraftMovement.floaty(binding.lvChooserCard)
-        animators += CraftMovement.floaty(binding.pillSwipe, delayMs = 1400L)
+        floatAnims.add(CraftMovement.floaty(binding.lvChooserCard))
+        floatAnims.add(CraftMovement.floaty(binding.pillSwipe, delayMs = 1400L))
     }
 
-    // ===== the two-stage request =====
+    // ── stage 1: settings page, stage 2: role dialog ──
 
-    /** Stage 1 — the settings page listing the installed home apps. */
-    private fun enterHomeSettings() {
-        if (leaving || requestInFlight) return
-        fireHomeSettings()
-        // The coach-mark follows the list rather than racing it — see HomeClueCue.
+    private fun openDefaultAppsPage() {
+        if (exitCommitted || awaitingResult) return
+        launchHomeSettingsPages()
         HomeClueCue.presentAfterSettings(this)
     }
 
-    private fun fireHomeSettings() {
-        if (leaving) return
-        val opened = fireForResult(Intent(Settings.ACTION_HOME_SETTINGS), REQ_HOME_SETTINGS) ||
-            fireForResult(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS), REQ_HOME_SETTINGS)
-        // A ROM with neither page would otherwise dead-end the CTA, so skip to stage 2.
-        if (!opened) nudgeForRole()
+    private fun launchHomeSettingsPages() {
+        if (exitCommitted) return
+        val pageOpened = sequenceOf(Settings.ACTION_HOME_SETTINGS, Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+            .any { action -> startForResultSafely(Intent(action), REQ_HOME_SETTINGS) }
+        // No settings page on this ROM: fall through to the role dialog.
+        if (!pageOpened) askRoleDialog()
     }
 
-    /** Stage 2 — the one-tap role dialog, for when stage 1 came back with nothing changed. */
-    private fun nudgeForRole() {
-        if (leaving || requestInFlight) return
-        if (!isQPlus()) {
-            headToNextStep()
-            return
-        }
-        if (!fireForResult(roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME), REQ_ROLE_HOME)) {
-            headToNextStep()
-        }
+    private fun askRoleDialog() {
+        if (exitCommitted || awaitingResult) return
+        val launched = isQPlus() &&
+            startForResultSafely(roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME), REQ_ROLE_HOME)
+        if (!launched) skipToNextStep()
     }
 
     @Suppress("DEPRECATION")
-    private fun fireForResult(intent: Intent, requestCode: Int): Boolean = try {
-        startActivityForResult(intent, requestCode)
-        requestInFlight = true
-        lastRequest = requestCode
-        true
-    } catch (_: ActivityNotFoundException) {
-        false
+    private fun startForResultSafely(request: Intent, code: Int): Boolean {
+        try {
+            startActivityForResult(request, code)
+        } catch (_: ActivityNotFoundException) {
+            return false
+        }
+        awaitingResult = true
+        lastSurfaceCode = code
+        return true
     }
 
     @Suppress("DEPRECATION")
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
         super.onActivityResult(requestCode, resultCode, resultData)
-        requestInFlight = false
-        if (leaving) return
-        // Whether we hold the role is the only honest signal (both surfaces report CANCELED on Back).
-        if (isDefaultLauncher()) return
-        when (requestCode) {
-            REQ_HOME_SETTINGS -> nudgeForRole()
-            REQ_ROLE_HOME -> {
-                // Still not the default home after the role popup: it was declined.
-                recordKeyEvent("default_home_declined")
-                if (resultCode == RESULT_OK || !skipEnabled) headToNextStep() else queryOnDecline()
-            }
+        awaitingResult = false
+        // Holding the role is the only reliable signal; both surfaces return CANCELED on Back.
+        if (exitCommitted || isDefaultLauncher()) return
+        if (requestCode == REQ_HOME_SETTINGS) {
+            askRoleDialog()
+        } else if (requestCode == REQ_ROLE_HOME) {
+            recordKeyEvent("default_home_declined")
+            val moveOn = resultCode == RESULT_OK || !skipShown
+            if (moveOn) skipToNextStep() else askOnceAfterDecline()
         }
     }
 
-    /** Declined the home role: a one-time `permission_engine` ask for this screen, if any. */
-    private fun queryOnDecline() {
-        if (askedOnDecline) return
-        askedOnDecline = true
+    private fun askOnceAfterDecline() {
+        if (declineAskDone) return
+        declineAskDone = true
         ConsentDriver.check(this)
     }
 
-    /** The instance still waiting from before the grant, raised to finish it. */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent.getBooleanExtra(EXTRA_ROLE_GRANTED, false)) {
-            finishingGrant = true
-            binding.root.isInvisible = true
-        }
+        arrivedWithGrant(intent)
     }
 
     override fun onResume() {
         super.onResume()
         HomeClueCue.dismiss()
         if (isDefaultLauncher()) {
-            recordGrant()
-            if (finishingGrant) goHome() else advanceAfterGrant()
-            return
-        }
-        if (autoOpenPending) {
-            autoOpenPending = false
-            enterHomeSettings()
+            reportGrantSurface()
+            if (grantOnlyVisit) completeToHome() else scheduleAutoNext()
+        } else if (openSettingsOnResume) {
+            openSettingsOnResume = false
+            openDefaultAppsPage()
         }
     }
 
-    /** The role was just granted from this step: which surface did it, once per process. */
-    private fun recordGrant() {
-        if (grantLogged || lastRequest == 0) return
-        grantLogged = true
-        recordKeyEvent(if (lastRequest == REQ_ROLE_HOME) "default_home_granted_dialog" else "default_home_granted_settings")
+    private fun reportGrantSurface() {
+        if (grantReported || lastSurfaceCode == 0) return
+        grantReported = true
+        val event = when (lastSurfaceCode) {
+            REQ_ROLE_HOME -> "default_home_granted_dialog"
+            else -> "default_home_granted_settings"
+        }
+        recordKeyEvent(event)
     }
 
-    /** The role is held: `auto_next` (default on) moves on after `auto_next_delay_ms`. */
-    private fun advanceAfterGrant() {
-        val (auto, delayMs) = HomeSpotsProfile.onboardingAutoNext(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT)
-        if (!auto) return
+    private fun scheduleAutoNext() {
+        val (enabled, waitMs) = HomeSpotsProfile.onboardingAutoNext(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT)
+        if (!enabled) return
         binding.root.postDelayed({
-            if (!isFinishing && !isDestroyed) goHome()
-        }, delayMs)
+            if (!isFinishing && !isDestroyed) completeToHome()
+        }, waitMs)
     }
 
-    // ===== destinations =====
+    // ── exits ──
 
-    private fun goHome() {
-        if (leaving) return
-        leaving = true
-        val next = {
+    private fun completeToHome() {
+        if (exitCommitted) return
+        exitCommitted = true
+        val proceed = {
             HomeStream.advance(
                 activity = this,
                 skipRest = HomeSpotsProfile.defaultHomeStep(this).skipRestOnGrant,
             )
         }
-        // Straight after the grant: the preloaded interstitial if it is ready, else the next
-        // step at once — no loader, no fallback format in between.
-        if (finishingGrant && !TakeoverStandard.hasReadyInter(this)) {
+        val skipInter = grantOnlyVisit && !TakeoverStandard.hasReadyInter(this)
+        if (skipInter) {
             Log.d(TAG, "grant finished, no interstitial ready → next step")
-            return next()
+            proceed()
+            return
         }
-        HomeSpotsProfile.execOnboardingInter(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT) { next() }
+        HomeSpotsProfile.execOnboardingInter(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT) { proceed() }
     }
 
-    /** Home pressed here: on return, skip to the next step — Back would only ask for the role again. */
-    override fun onHomeForward() = headToNextStep()
+    override fun onHomeForward() = skipToNextStep()
 
-    private fun headToNextStep() {
-        if (leaving) return
-        leaving = true
+    private fun skipToNextStep() {
+        if (exitCommitted) return
+        exitCommitted = true
         HomeSpotsProfile.execOnboardingInter(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT) {
             HomeStream.advance(this)
         }
     }
 
     override fun onDestroy() {
-        CraftMovement.abortAll(animators)
+        CraftMovement.abortAll(floatAnims)
         HomeClueCue.dismiss()
         super.onDestroy()
+    }
+
+    companion object {
+        private const val TAG = "HomeRoleStep"
+        private const val REQ_HOME_SETTINGS = 7011
+        private const val REQ_ROLE_HOME = 7012
+
+        /** Finish a grant that happened while this screen was away: no page, straight to the ad. */
+        const val EXTRA_ROLE_GRANTED = "role_granted"
+
+        /** Process-wide: a grant via the settings list returns to a fresh instance. */
+        private var lastSurfaceCode = 0
+        private var grantReported = false
     }
 }

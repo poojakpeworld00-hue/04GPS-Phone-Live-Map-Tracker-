@@ -1,72 +1,69 @@
 package com.find.phone.gps.live.location.tracker.memo
 
 import android.content.Context
+import android.content.SharedPreferences
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /**
- * How often the "Turn on reminders" prompt may appear, from `feature_config`'s
- * `prompt_frequency` + `prompt_interval`:
- *
- * | prompt_frequency     | Behaviour                                         | prompt_interval |
- * |----------------------|---------------------------------------------------|-----------------|
- * | `always`             | every time it is reachable                        | ignored         |
- * | `once`               | once, ever                                        | ignored         |
- * | `every_days`         | then rest X days                                  | days            |
- * | `app_launches`       | once every X app opens                            | launches        |
- * | `reminder_creations` | once X more reminders have been saved             | count           |
- * | `never`              | never                                             | ignored         |
- *
- * Unknown / blank → `always`, so a typo never hides the prompt for good. The host feeds two
- * counters: [onAppLaunch] (splash) and [onReminderCreated] (after a new reminder is saved).
+ * Rate limiter for the "Turn on reminders" prompt, driven by `feature_config` keys
+ * `prompt_frequency` (always / once / every_days / app_launches / reminder_creations / never)
+ * and `prompt_interval`. Anything unrecognised behaves like `always`.
+ * Counters are bumped via [onAppLaunch] and [onReminderCreated].
  */
 object CuePortal {
 
-    private const val PREFS = "reminder_prompt_gate"
-    private const val KEY_SHOWN_ONCE = "shown_once"
-    private const val KEY_LAST_SHOWN_AT = "last_shown_at"
-    private const val KEY_LAUNCH_COUNT = "launch_count"
-    private const val KEY_LAUNCH_AT_LAST_SHOWN = "launch_at_last_shown"
-    private const val KEY_CREATED_COUNT = "created_count"
-    private const val KEY_CREATED_AT_LAST_SHOWN = "created_at_last_shown"
+    private const val FILE = "reminder_prompt_gate"
+    private const val K_ONCE = "shown_once"
+    private const val K_LAST_AT = "last_shown_at"
+    private const val K_LAUNCHES = "launch_count"
+    private const val K_LAUNCHES_MARK = "launch_at_last_shown"
+    private const val K_CREATED = "created_count"
+    private const val K_CREATED_MARK = "created_at_last_shown"
 
-    private fun prefs(c: Context) = c.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    private fun store(ctx: Context): SharedPreferences =
+        ctx.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
-    fun onAppLaunch(c: Context) {
-        val p = prefs(c)
-        p.edit().putInt(KEY_LAUNCH_COUNT, p.getInt(KEY_LAUNCH_COUNT, 0) + 1).apply()
+    private fun bump(ctx: Context, counterKey: String) {
+        val sp = store(ctx)
+        val next = sp.getInt(counterKey, 0) + 1
+        sp.edit().putInt(counterKey, next).apply()
     }
 
-    fun onReminderCreated(c: Context) {
-        val p = prefs(c)
-        p.edit().putInt(KEY_CREATED_COUNT, p.getInt(KEY_CREATED_COUNT, 0) + 1).apply()
-    }
+    private fun SharedPreferences.sinceMark(counterKey: String, markKey: String): Int =
+        getInt(counterKey, 0) - getInt(markKey, 0)
+
+    fun onAppLaunch(c: Context) = bump(c, K_LAUNCHES)
+
+    fun onReminderCreated(c: Context) = bump(c, K_CREATED)
 
     fun mustShow(c: Context): Boolean {
-        val cfg = MemoProfile.get(c)
-        val x = cfg.promptInterval.coerceAtLeast(1)
-        val p = prefs(c)
-        return when (cfg.promptFrequency.trim().lowercase(Locale.ROOT)) {
-            "never" -> false
-            "once" -> !p.getBoolean(KEY_SHOWN_ONCE, false)
-            "every_days" -> {
-                val last = p.getLong(KEY_LAST_SHOWN_AT, 0L)
-                last == 0L || System.currentTimeMillis() - last >= TimeUnit.DAYS.toMillis(x.toLong())
-            }
-            "app_launches" -> p.getInt(KEY_LAUNCH_COUNT, 0) - p.getInt(KEY_LAUNCH_AT_LAST_SHOWN, 0) >= x
-            "reminder_creations" -> p.getInt(KEY_CREATED_COUNT, 0) - p.getInt(KEY_CREATED_AT_LAST_SHOWN, 0) >= x
-            else -> true
+        val options = MemoProfile.get(c)
+        val step = maxOf(options.promptInterval, 1)
+        val sp = store(c)
+        val mode = options.promptFrequency.trim().lowercase(Locale.ROOT)
+        if (mode == "never") return false
+        if (mode == "once") return !sp.getBoolean(K_ONCE, false)
+        if (mode == "every_days") {
+            val lastAt = sp.getLong(K_LAST_AT, 0L)
+            if (lastAt == 0L) return true
+            return System.currentTimeMillis() - lastAt >= TimeUnit.DAYS.toMillis(step.toLong())
         }
+        if (mode == "app_launches") return sp.sinceMark(K_LAUNCHES, K_LAUNCHES_MARK) >= step
+        if (mode == "reminder_creations") return sp.sinceMark(K_CREATED, K_CREATED_MARK) >= step
+        return true
     }
 
-    /** Stamps every counter the moment the prompt is actually on screen. */
+    /** Records the display moment and snapshots both counters. */
     fun flagShown(c: Context) {
-        val p = prefs(c)
-        p.edit()
-            .putBoolean(KEY_SHOWN_ONCE, true)
-            .putLong(KEY_LAST_SHOWN_AT, System.currentTimeMillis())
-            .putInt(KEY_LAUNCH_AT_LAST_SHOWN, p.getInt(KEY_LAUNCH_COUNT, 0))
-            .putInt(KEY_CREATED_AT_LAST_SHOWN, p.getInt(KEY_CREATED_COUNT, 0))
-            .apply()
+        val sp = store(c)
+        val launches = sp.getInt(K_LAUNCHES, 0)
+        val created = sp.getInt(K_CREATED, 0)
+        sp.edit().apply {
+            putBoolean(K_ONCE, true)
+            putLong(K_LAST_AT, System.currentTimeMillis())
+            putInt(K_LAUNCHES_MARK, launches)
+            putInt(K_CREATED_MARK, created)
+        }.apply()
     }
 }
