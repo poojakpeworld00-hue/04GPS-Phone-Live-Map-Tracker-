@@ -23,7 +23,7 @@ import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.store.plus.PlusCheckout
 import com.find.phone.gps.live.location.tracker.store.plus.PlusProfile
@@ -32,8 +32,8 @@ import com.find.phone.gps.live.location.tracker.databinding.CellPremiumPlanBindi
 import com.find.phone.gps.live.location.tracker.databinding.ScreenPremiumBinding
 import com.find.phone.gps.live.location.tracker.induction.HomeStream
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
-import com.find.phone.gps.live.location.tracker.helpers.openPolicyLink
-import com.find.phone.gps.live.location.tracker.helpers.openTermLink
+import com.find.phone.gps.live.location.tracker.helpers.enterPolicyLink
+import com.find.phone.gps.live.location.tracker.helpers.enterTermLink
 import kotlin.math.roundToInt
 
 /**
@@ -64,7 +64,7 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         config = PlusProfile.read(this)
         plans = config.plans.take(3)
         selected = plans.indexOfFirst { it.preselected }.coerceAtLeast(0)
-        logKeyEvent(if (afterIntro) "premium_view_after_intro" else "premium_view")
+        recordKeyEvent(if (afterIntro) "premium_view_after_intro" else "premium_view")
 
         // The light map runs under the status bar (edge to edge on every API level): dark icons,
         // and the close sits below the bar.
@@ -87,20 +87,20 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
             row.root.isVisible = i < plans.size
             row.lvPlanCard.setOnClickListener { select(i) }
         }
-        bindPlans()
+        wirePlans()
 
         CraftMovement.pressScale(binding.actContinue)
         binding.actContinue.clipToOutline = true
         binding.actContinue.setOnClickListener { buy() }
         binding.actRestore.setOnClickListener { restore() }
-        binding.actTerms.setOnClickListener { openTermLink() }
-        binding.actPrivacy.setOnClickListener { openPolicyLink() }
+        binding.actTerms.setOnClickListener { enterTermLink() }
+        binding.actPrivacy.setOnClickListener { enterPolicyLink() }
         binding.actClose.setOnClickListener { if (binding.actClose.closable) leave() }
         binding.actClose.start(config.closeDelaySec, config.closeButtonOpacity) {}
         binding.actContinueFree.paintFlags = binding.actContinueFree.paintFlags or Paint.UNDERLINE_TEXT_FLAG
         // Shown and usable from the start: close_delay_sec paces only the X.
         binding.actContinueFree.setOnClickListener {
-            logKeyEvent("premium_continue_free")
+            recordKeyEvent("premium_continue_free")
             leave()
         }
 
@@ -112,8 +112,8 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         })
 
         PlusCheckout.onPurchaseResult = { onPurchase(it) }
-        loadPrices()
-        startShine()
+        fetchPrices()
+        beginShine()
     }
 
     private val afterIntro: Boolean get() = intent.getBooleanExtra(EXTRA_AFTER_INTRO, false)
@@ -125,10 +125,10 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
     private fun select(index: Int) {
         if (index == selected) return
         selected = index
-        bindPlans()
+        wirePlans()
     }
 
-    private fun bindPlans() {
+    private fun wirePlans() {
         plans.forEachIndexed { i, plan ->
             val row = rows[i]
             val on = i == selected
@@ -155,7 +155,7 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         }
         val plan = plans.getOrNull(selected) ?: return
         val trial = trialOf(plan)
-        bindConsent(
+        wireConsent(
             when {
                 trial > 0 -> R.string.ds_premium_consent_trial
                 plan.isSubscription -> R.string.ds_premium_consent_subs
@@ -197,23 +197,23 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
      * Asks Play for the plans' localized prices (usually already in memory from app start).
      * Retries twice on its own; after that the CTA offers Retry.
      */
-    private fun loadPrices() {
+    private fun fetchPrices() {
         priceState = PriceState.LOADING
-        bindPlans()
-        PlusCheckout.loadDetails(this, plans) {
+        wirePlans()
+        PlusCheckout.fetchDetails(this, plans) {
             runOnUiThread {
                 if (isFinishing || isDestroyed) return@runOnUiThread
                 priceAttempts++
                 priceState = when {
                     plans.all { PlusCheckout.price(it) != null } -> PriceState.READY
                     priceAttempts < PRICE_AUTO_ATTEMPTS -> {
-                        binding.root.postDelayed({ if (!isFinishing && !isDestroyed) loadPrices() }, PRICE_RETRY_MS * priceAttempts)
+                        binding.root.postDelayed({ if (!isFinishing && !isDestroyed) fetchPrices() }, PRICE_RETRY_MS * priceAttempts)
                         PriceState.LOADING
                     }
                     else -> PriceState.FAILED
                 }
-                if (priceState == PriceState.FAILED) logKeyEvent("premium_price_unavailable")
-                bindPlans()
+                if (priceState == PriceState.FAILED) recordKeyEvent("premium_price_unavailable")
+                wirePlans()
             }
         }
     }
@@ -225,7 +225,7 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
     private fun trialOf(plan: PlusOffer): Int = PlusCheckout.trialDays(plan) ?: plan.fallbackTrialDays
 
     /** "By continuing you agree to our Terms & Privacy. <tail>" with both words as links. */
-    private fun bindConsent(tail: Int) {
+    private fun wireConsent(tail: Int) {
         val terms = getString(R.string.ds_premium_terms)
         val privacy = getString(R.string.ds_premium_privacy)
         val text = getString(R.string.ds_premium_consent, terms, privacy) + " " + getString(tail)
@@ -237,8 +237,8 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
                 override fun onClick(widget: View) = open()
             }, start, start + word.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
-        link(terms) { openTermLink() }
-        link(privacy) { openPolicyLink() }
+        link(terms) { enterTermLink() }
+        link(privacy) { enterPolicyLink() }
         binding.txtNote.text = spannable
         binding.txtNote.movementMethod = LinkMovementMethod.getInstance()
     }
@@ -264,11 +264,11 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
             // Never sell without Play's price on screen: still loading → wait, failed → ask again.
             if (priceState == PriceState.FAILED) {
                 priceAttempts = 0
-                loadPrices()
+                fetchPrices()
             }
             return
         }
-        logKeyEvent("premium_cta_${plan.kind.name.lowercase()}")
+        recordKeyEvent("premium_cta_${plan.kind.name.lowercase()}")
         if (!PlusCheckout.purchase(this, plan)) {
             Toast.makeText(this, R.string.ds_premium_unavailable, Toast.LENGTH_LONG).show()
             return
@@ -280,7 +280,7 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         setBuying(false)
         when (outcome) {
             PlusCheckout.PurchaseOutcome.PURCHASED -> {
-                logKeyEvent("premium_purchased")
+                recordKeyEvent("premium_purchased")
                 Toast.makeText(this, R.string.ds_premium_welcome, Toast.LENGTH_SHORT).show()
                 leave()
             }
@@ -325,7 +325,7 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
     // ── Shine ─────────────────────────────────────────────────────────────
 
     /** The light streak sweeping across the CTA every 3 s (design `shine`). */
-    private fun startShine() {
+    private fun beginShine() {
         if (CraftMovement.animationsDisabled(this)) {
             binding.lvShine.isVisible = false
             return

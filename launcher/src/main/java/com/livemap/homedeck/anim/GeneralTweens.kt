@@ -63,7 +63,7 @@ object GeneralTweens {
      * overshoot. Safe to call while the reverse is mid-flight - it cancels and takes over from
      * wherever the view is. No-op when the view is already fully shown and at rest.
      */
-    fun revealCard(view: View) {
+    fun unveilCard(view: View) {
         if (view.getTag(R_TAG_SHOWN) == true) return
         view.setTag(R_TAG_SHOWN, true)
 
@@ -88,7 +88,7 @@ object GeneralTweens {
     }
 
     /**
-     * The reverse of [revealCard]: shrinks and fades [view] out, then hides it. Calling it again
+     * The reverse of [unveilCard]: shrinks and fades [view] out, then hides it. Calling it again
      * while the fade is running is a no-op - the running animation owns the view until it ends.
      * Snapping to hidden here is what made the card blink when a re-render landed mid-fade.
      */
@@ -121,7 +121,7 @@ object GeneralTweens {
      * Bottom-sheet style entrance: [view] becomes visible and slides up from a quarter of its
      * height while fading in. Idempotent while already shown.
      */
-    fun revealSheet(view: View) {
+    fun unveilSheet(view: View) {
         if (view.getTag(R_TAG_SHOWN) == true) return
         view.setTag(R_TAG_SHOWN, true)
         view.animate().cancel()
@@ -145,7 +145,7 @@ object GeneralTweens {
             .setInterpolator(DecelerateInterpolator(2f)).withLayer().start()
     }
 
-    /** The reverse of [revealSheet]: slides down and fades, then GONE. */
+    /** The reverse of [unveilSheet]: slides down and fades, then GONE. */
     fun concealSheet(view: View) {
         if (view.getTag(R_TAG_SHOWN) != true) return
         view.setTag(R_TAG_SHOWN, false)

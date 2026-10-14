@@ -89,7 +89,7 @@ object HomeTeaserDirector {
         val url = if (HomeSpotsProfile.isAppLaunch(gesture)) "" else HomeSpotsProfile.promoUrl(gesture)
         if (url.isNotEmpty()) {
             Log.d(TAG, "$gesture: opening promo link")
-            openLink(activity, url)
+            enterLink(activity, url)
             once()
             return
         }
@@ -112,7 +112,7 @@ object HomeTeaserDirector {
         }
     }
 
-    private fun openLink(activity: Activity, url: String) {
+    private fun enterLink(activity: Activity, url: String) {
         runCatching {
             activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         }.onFailure {

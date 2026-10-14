@@ -124,7 +124,7 @@ object HomeSurvey {
             // The on-demand cache must agree: an app whose APK moved (an update) is decoded again,
             // not handed back the icon a tile cached before the update. Same for a tray change.
             val legacyTray = launcherConfig.legacyIconTray
-            BadgePuller.syncTray(legacyTray)
+            BadgePuller.alignTray(legacyTray)
             BadgePuller.invalidate(sourceDirs.keys.filter { key -> knownDirs[key] != null && knownDirs[key] != sourceDirs[key] })
 
             // One icon per installed app: an XML inflate, a render and a colour average each, all
@@ -193,7 +193,7 @@ object HomeSurvey {
         return list.filter { info ->
             val packageName = info.activityInfo.applicationInfo.packageName
             // Our own app is listed too (unless the fake uninstall hid it); tapping it goes
-            // through openHostApp, not its LAUNCHER entry, which would only route back here.
+            // through enterHostApp, not its LAUNCHER entry, which would only route back here.
             (packageName != own || !selfHidden) && packageName != MICRO_G &&
                 !hiddenIcons.contains("$packageName/${info.activityInfo.name}")
         }
@@ -220,7 +220,7 @@ object HomeSurvey {
             val bitmap = (hit as? BitmapDrawable)?.bitmap
             return CoreHome(
                 id = null, title = label, packageName = packageName, activityName = activityName, order = 0,
-                thumbnailColor = bitmap?.let(::calculateAverageColor) ?: 0, drawable = hit,
+                thumbnailColor = bitmap?.let(::computeAverageColor) ?: 0, drawable = hit,
             )
         }
         val drawable = info.loadIcon(context.packageManager)?.let { BadgeMolder.shape(it, tray) }
@@ -239,7 +239,7 @@ object HomeSurvey {
             packageName = packageName,
             activityName = activityName,
             order = 0,
-            thumbnailColor = calculateAverageColor(bitmap),
+            thumbnailColor = computeAverageColor(bitmap),
             drawable = icon
         )
     }
@@ -276,7 +276,7 @@ object HomeSurvey {
      *
      * One reused row buffer and at most [COLOR_SAMPLE_EDGE]² samples instead.
      */
-    private fun calculateAverageColor(bitmap: Bitmap): Int {
+    private fun computeAverageColor(bitmap: Bitmap): Int {
         val width = bitmap.width
         val height = bitmap.height
         if (width <= 0 || height <= 0) {

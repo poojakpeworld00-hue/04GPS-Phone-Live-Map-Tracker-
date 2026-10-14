@@ -36,7 +36,7 @@ object WardenRail {
     }
 
     /** Executes a block only in Debug builds */
-    inline fun runDebug(block: () -> Unit) {
+    inline fun execDebug(block: () -> Unit) {
         if (BuildConfig.DEBUG) block()
     }
 }

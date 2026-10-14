@@ -25,8 +25,8 @@ import androidx.core.view.updatePadding
 import androidx.core.widget.TextViewCompat
 import androidx.lifecycle.lifecycleScope
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
-import com.find.phone.gps.live.location.tracker.monetize.logic.logPermissionResult
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordPermissionResult
 import com.find.phone.gps.live.location.tracker.monetize.render.CoreOpenSpotBook
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.store.LockerBook
@@ -59,7 +59,7 @@ class MineNumActivity : StageActivity<ScreenMyNumberBinding>() {
     private val phonePermission = registerForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
-        result.forEach { (permission, granted) -> logPermissionResult(permission, granted) }
+        result.forEach { (permission, granted) -> recordPermissionResult(permission, granted) }
         if (MineChipNums.isGranted(this)) ChipNumDiary.log(this)
         render()
     }
@@ -74,7 +74,7 @@ class MineNumActivity : StageActivity<ScreenMyNumberBinding>() {
         }
         binding.actBack.setOnClickListener { goBack() }
         binding.actShow.setOnClickListener { onShow() }
-        binding.lineShareQr.setOnClickListener { openShare() }
+        binding.lineShareQr.setOnClickListener { enterShare() }
         binding.lineDashboard.setOnClickListener { startActivity(DoubleChipOverviewActivity.intent(this)) }
         binding.lineCarrierCodes.setOnClickListener {
             startActivity(FrameDialsActivity.intent(this, selectedSlot))
@@ -88,12 +88,12 @@ class MineNumActivity : StageActivity<ScreenMyNumberBinding>() {
     }
 
     override fun onPause() {
-        stopSignals()
+        haltSignals()
         super.onPause()
     }
 
     private fun render() {
-        stopSignals()
+        haltSignals()
         val lines = if (MineChipNums.hasReadySim(this)) MineChipNums.read(this) else emptyList()
         val showing = lines.isNotEmpty()
         binding.chipcardCards.isVisible = showing
@@ -117,14 +117,14 @@ class MineNumActivity : StageActivity<ScreenMyNumberBinding>() {
         }
         if (cards.none { it.line.slot == selectedSlot }) selectedSlot = cards.first().line.slot
         cards.forEach { card ->
-            bindStatic(card)
+            wireStatic(card)
             card.views.root.setOnClickListener { select(card.line.slot) }
         }
-        applySelection()
-        registerSignals()
+        enactSelection()
+        enlistSignals()
     }
 
-    private fun bindStatic(card: Card) {
+    private fun wireStatic(card: Card) {
         val v = card.views
         val line = card.line
         v.txtBadge.text = getString(R.string.my_number_sim_badge, line.slot)
@@ -157,10 +157,10 @@ class MineNumActivity : StageActivity<ScreenMyNumberBinding>() {
     private fun select(slot: Int) {
         if (slot == selectedSlot) return
         selectedSlot = slot
-        applySelection()
+        enactSelection()
     }
 
-    private fun applySelection() {
+    private fun enactSelection() {
         cards.forEach { styleCard(it, it.line.slot == selectedSlot) }
     }
 
@@ -202,7 +202,7 @@ class MineNumActivity : StageActivity<ScreenMyNumberBinding>() {
 
     @SuppressLint("MissingPermission")
     @Suppress("DEPRECATION")
-    private fun registerSignals() {
+    private fun enlistSignals() {
         if (!MineChipNums.isGranted(this)) return
         cards.forEach { card ->
             val subId = card.subId ?: return@forEach
@@ -220,7 +220,7 @@ class MineNumActivity : StageActivity<ScreenMyNumberBinding>() {
     }
 
     @Suppress("DEPRECATION")
-    private fun stopSignals() {
+    private fun haltSignals() {
         signals.values.forEach { (tm, l) -> runCatching { tm.listen(l, PhoneStateListener.LISTEN_NONE) } }
         signals.clear()
     }
@@ -229,7 +229,7 @@ class MineNumActivity : StageActivity<ScreenMyNumberBinding>() {
 
     private fun selected(): Card? = cards.firstOrNull { it.line.slot == selectedSlot } ?: cards.firstOrNull()
 
-    private fun openShare() {
+    private fun enterShare() {
         val card = selected()
         val e164 = card?.line?.e164
         val number = card?.line?.number
@@ -244,17 +244,17 @@ class MineNumActivity : StageActivity<ScreenMyNumberBinding>() {
     // ── permission / helpers ───────────────────────────────────────────────────
 
     private fun onShow() {
-        logKeyEvent("MyNumberPage_Show_Click")
+        recordKeyEvent("MyNumberPage_Show_Click")
         val permission = MineChipNums.PERMISSIONS.first()
         when {
             MineChipNums.isGranted(this) -> render()
             !prefs.hasRequestedPermission(permission) -> {
-                prefs.markPermissionRequested(permission)
+                prefs.flagPermissionRequested(permission)
                 phonePermission.launch(MineChipNums.PERMISSIONS)
             }
             androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(this, permission) ->
                 phonePermission.launch(MineChipNums.PERMISSIONS)
-            else -> openPhoneSettings()
+            else -> enterPhoneSettings()
         }
     }
 
@@ -265,7 +265,7 @@ class MineNumActivity : StageActivity<ScreenMyNumberBinding>() {
             !androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(this, permission)
     }
 
-    private fun openPhoneSettings() {
+    private fun enterPhoneSettings() {
         Toast.makeText(this, R.string.my_number_denied, Toast.LENGTH_LONG).show()
         CoreOpenSpotBook.skipNextAppOpenAd = true
         runCatching {
@@ -277,7 +277,7 @@ class MineNumActivity : StageActivity<ScreenMyNumberBinding>() {
         val clipboard = getSystemService(ClipboardManager::class.java) ?: return
         clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.my_number_title), number))
         Toast.makeText(this, R.string.my_number_copied, Toast.LENGTH_SHORT).show()
-        logKeyEvent("MyNumberPage_Copy")
+        recordKeyEvent("MyNumberPage_Copy")
     }
 
     private fun color(id: Int) = ContextCompat.getColor(this, id)

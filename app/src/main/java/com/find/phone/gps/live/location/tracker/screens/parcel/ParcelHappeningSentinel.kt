@@ -77,7 +77,7 @@ object ParcelHappeningSentinel {
 
         // Cache metadata for every installed app up front, so removing any of them — not only ones
         // installed while we were running — can still show its icon and version.
-        thread { ParcelSpecificsStash.seedAll(app) }
+        thread { ParcelSpecificsStash.plantAll(app) }
     }
 
     private object Receiver : BroadcastReceiver() {

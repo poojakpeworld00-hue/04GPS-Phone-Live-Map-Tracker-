@@ -42,7 +42,7 @@ object DriftToolbox {
      * key keeps today's behaviour. Read live, so a Remote Config change applies on the next
      * prompt without a restart.
      */
-    private fun askForOverlay(context: Context): Boolean =
+    private fun queryForOverlay(context: Context): Boolean =
         SpotsLocker.getInstance(context).getBoolean(OVERLAY_SWITCH_KEY, true)
 
     /** Remote Config master switch for the "display over other apps" prompts. */
@@ -74,7 +74,7 @@ object DriftToolbox {
      * keeps working for them, because this gates the prompt, not the feature.
      */
     fun isOfferable(context: Context): Boolean {
-        if (!askForOverlay(context)) return false
+        if (!queryForOverlay(context)) return false
         if (runCatching { context.isDefaultLauncher() }.getOrDefault(false)) return false
         return !SpotsLocker.getInstance(context).isNShowLocation
     }
@@ -95,7 +95,7 @@ object DriftToolbox {
      * CLEAR_TASK|CLEAR_TOP flags were inert here — CLEAR_TASK needs NEW_TASK — and
      * left the page without NO_HISTORY, so it never self-disposed.)
      */
-    fun buildOverlayIntent(packageName: String): Intent =
+    fun composeOverlayIntent(packageName: String): Intent =
         Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
             Uri.parse("package:$packageName")
@@ -105,20 +105,20 @@ object DriftToolbox {
 
     /**
      * Stacks the [ClueDrawerActivity] coach-mark on top of the system page that
-     * [buildOverlayIntent] just opened, so the user sees which row to find and which
+     * [composeOverlayIntent] just opened, so the user sees which row to find and which
      * switch to flip while they are actually looking at the list.
      *
      * Call it **immediately after** launching the Settings intent, from the same task:
      * both starts are queued in order, so the guide lands on top of the page rather
      * than under it. Its own window is translucent, so the list stays readable behind.
      *
-     * Note this is why [buildOverlayIntent] no longer carries `FLAG_ACTIVITY_NO_HISTORY` —
+     * Note this is why [composeOverlayIntent] no longer carries `FLAG_ACTIVITY_NO_HISTORY` —
      * that flag finishes the Settings page the moment anything else comes on top of it,
      * which is exactly what this does. The page is instead disposed of by the caller's
      * grant poll bringing the host back to the front.
      *
      * Best effort: a guide that fails to start must never take the Settings page with it.
      */
-    fun showGuide(context: Context) =
+    fun presentGuide(context: Context) =
         ClueDrawerActivity.show(context, ClueDrawerActivity.MODE_OVERLAY)
 }

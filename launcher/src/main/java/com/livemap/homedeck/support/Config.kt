@@ -50,7 +50,7 @@ class Config(context: Context) : BaseConfig(context) {
     fun isGuideStepDone(step: HomeMentorPhase): Boolean =
         prefs.getBoolean(GUIDE_STEP_DONE_PREFIX + step.name, false)
 
-    fun markGuideStepDone(step: HomeMentorPhase) =
+    fun flagGuideStepDone(step: HomeMentorPhase) =
         prefs.edit().putBoolean(GUIDE_STEP_DONE_PREFIX + step.name, true).apply()
 
     /**
@@ -153,9 +153,9 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(SHOW_SEARCH_BAR, true)
         set(showSearchBar) = prefs.edit().putBoolean(SHOW_SEARCH_BAR, showSearchBar).apply()
 
-    var closeAppDrawer: Boolean
+    var shutAppDrawer: Boolean
         get() = prefs.getBoolean(CLOSE_APP_DRAWER, false)
-        set(closeAppDrawer) = prefs.edit().putBoolean(CLOSE_APP_DRAWER, closeAppDrawer).apply()
+        set(shutAppDrawer) = prefs.edit().putBoolean(CLOSE_APP_DRAWER, shutAppDrawer).apply()
 
     var autoShowKeyboardInAppDrawer: Boolean
         get() = prefs.getBoolean(AUTO_SHOW_KEYBOARD_IN_APP_DRAWER, false)
@@ -205,7 +205,7 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(SEARCH_WIDGET_SHOWN, true)
         set(searchWidgetShown) = prefs.edit().putBoolean(SEARCH_WIDGET_SHOWN, searchWidgetShown).apply()
 
-    /** True once the time widget sits on the top row, above the default-home banner - see MainAppletSower.moveTimeWidgetToTop. */
+    /** True once the time widget sits on the top row, above the default-home banner - see MainAppletSower.shiftTimeWidgetToTop. */
     var timeWidgetAtTop: Boolean
         get() = prefs.getBoolean(TIME_WIDGET_AT_TOP, false)
         set(timeWidgetAtTop) = prefs.edit().putBoolean(TIME_WIDGET_AT_TOP, timeWidgetAtTop).apply()

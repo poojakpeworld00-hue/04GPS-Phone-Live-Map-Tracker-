@@ -15,8 +15,8 @@ interface CoreHomesDao {
     fun insertAll(appLaunchers: List<CoreHome>)
 
     @Query("DELETE FROM apps WHERE package_name = :packageName")
-    fun deleteApp(packageName: String)
+    fun eraseApp(packageName: String)
 
     @Query("DELETE FROM apps WHERE id = :id")
-    fun deleteById(id: Long)
+    fun eraseById(id: Long)
 }

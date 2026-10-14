@@ -63,14 +63,14 @@ class LiveHistoryActivity : StageActivity<ScreenHistoryBinding>() {
             section.txtSection.setText(bucket.label)
             rows.forEachIndexed { i, recent ->
                 val row = CellRecentSearchBinding.inflate(inflater, section.lvRows, false)
-                bindRow(row, recent, i, i < rows.lastIndex)
+                wireRow(row, recent, i, i < rows.lastIndex)
                 section.lvRows.addView(row.root)
             }
             binding.lvSections.addView(section.root)
         }
     }
 
-    private fun bindRow(row: CellRecentSearchBinding, recent: FreshHunt, index: Int, divider: Boolean) {
+    private fun wireRow(row: CellRecentSearchBinding, recent: FreshHunt, index: Int, divider: Boolean) {
         val (tile, tint) = TILE_PALETTE[index % TILE_PALETTE.size]
         row.badgeTile.setBackgroundResource(tile)
         row.badgeVw.imageTintList = ContextCompat.getColorStateList(this, tint)

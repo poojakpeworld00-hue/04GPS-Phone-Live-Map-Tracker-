@@ -22,9 +22,9 @@ import kotlin.math.floor
 object EmbeddedSpotGuise {
 
     fun bind(adView: NativeAdView, nativeAd: NativeAd) {
-        applyCardSpacing(adView)
-        applyRemoteColors(adView)
-        bindStars(adView, nativeAd)
+        enactCardSpacing(adView)
+        enactRemoteColors(adView)
+        wireStars(adView, nativeAd)
         adView.findViewById<TextView?>(R.id.ad_call_to_action)?.let { cta ->
             if (cta.tag == "glow") glow(cta)
         }
@@ -35,7 +35,7 @@ object EmbeddedSpotGuise {
      * layout file are dropped on the way into their frame; set here to the same values the layouts
      * give their shimmer placeholders. Kept on existing params when the view already has some.
      */
-    private fun applyCardSpacing(adView: NativeAdView) {
+    private fun enactCardSpacing(adView: NativeAdView) {
         val res = adView.resources
         val h = res.getDimensionPixelSize(R.dimen.ad_card_margin_h)
         val top = res.getDimensionPixelSize(R.dimen.ad_card_margin_top)
@@ -80,7 +80,7 @@ object EmbeddedSpotGuise {
         adView.layoutParams = params
     }
 
-    private fun applyRemoteColors(adView: NativeAdView) {
+    private fun enactRemoteColors(adView: NativeAdView) {
         val pref = com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker.getInstance(adView.context)
         fun rc(key: String): Int? = pref.getString(key)?.trim()?.takeIf { it.isNotEmpty() }?.let {
             try { android.graphics.Color.parseColor(it) } catch (_: IllegalArgumentException) { null }
@@ -109,7 +109,7 @@ object EmbeddedSpotGuise {
     }
 
     /** "★★★★☆ 4.6" (mid) or "★ 4.6 · Free" (big) — hidden when the ad has no rating. */
-    private fun bindStars(adView: NativeAdView, nativeAd: NativeAd) {
+    private fun wireStars(adView: NativeAdView, nativeAd: NativeAd) {
         val stars = adView.findViewById<TextView?>(R.id.ad_stars) ?: return
         val rating = nativeAd.starRating
         if (rating == null || rating <= 0.0) {

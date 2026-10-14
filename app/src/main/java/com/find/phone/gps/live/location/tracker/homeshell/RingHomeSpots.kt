@@ -57,7 +57,7 @@ class RingHomeSpots : HomeSpots {
         // paint when it lands; the second pass has a cached ad and cannot come back here.
         val emptyFrame = container.childCount == 0
         if (slot.needsNativePreload && emptyFrame && !EmbeddedTeaser.hasPreloadedNative()) {
-            EmbeddedTeaser().loadNativeADs(activity, object : EmbeddedTeaser.NativeAdObserver {
+            EmbeddedTeaser().fetchNativeADs(activity, object : EmbeddedTeaser.NativeAdObserver {
                 override fun onNativeAdLoaded() {
                     if (activity.isFinishing || activity.isDestroyed) return
                     paint(activity, slot, container, key)
@@ -72,9 +72,9 @@ class RingHomeSpots : HomeSpots {
     }
 
     private fun paint(activity: Activity, slot: HomeSpotsProfile.Slot, container: FrameLayout, key: String) {
-        // refreshSlot keeps an ad already on screen rather than swapping it for a blank when the
+        // renewSlot keeps an ad already on screen rather than swapping it for a blank when the
         // shared native cache is momentarily empty.
-        HomeSpotsProfile.refreshSlot(activity, slot, container)
+        HomeSpotsProfile.renewSlot(activity, slot, container)
         // A slot that was GONE at the last inset dispatch has no nav-bar padding yet.
         ViewCompat.requestApplyInsets(container)
         if (key == HomeSpots.SLOT_DRAWER_TOP) shapeAdIcon(container)
@@ -87,16 +87,16 @@ class RingHomeSpots : HomeSpots {
      */
     private fun shapeAdIcon(container: FrameLayout) {
         val apply = {
-            (container.findNativeAdView()?.iconView as? ImageView)?.let(HomeBadges::applyTo)
+            (container.locateNativeAdView()?.iconView as? ImageView)?.let(HomeBadges::enactTo)
         }
         runCatching(apply)
         container.post { runCatching(apply) }
     }
 
-    private fun View.findNativeAdView(): NativeAdView? {
+    private fun View.locateNativeAdView(): NativeAdView? {
         if (this is NativeAdView) return this
         if (this !is ViewGroup) return null
-        for (i in 0 until childCount) getChildAt(i).findNativeAdView()?.let { return it }
+        for (i in 0 until childCount) getChildAt(i).locateNativeAdView()?.let { return it }
         return null
     }
 
@@ -113,7 +113,7 @@ class RingHomeSpots : HomeSpots {
             HOME_PRESS_TAG -> HomeSpotsProfile.HomePlane.HOME_PRESS
             else -> return onDone()
         }
-        HomeSpotsProfile.runSurface(activity, surface, onDone)
+        HomeSpotsProfile.execSurface(activity, surface, onDone)
     }
 
     /**
@@ -128,7 +128,7 @@ class RingHomeSpots : HomeSpots {
             DRAWER_LAUNCH_TAG -> HomeSpotsProfile.clickSurface(activity, HomeSpotsProfile.HomePlane.DRAWER_CLICK)
             else -> return onDone()
         }
-        HomeSpotsProfile.runSurface(activity, surface, onDone)
+        HomeSpotsProfile.execSurface(activity, surface, onDone)
     }
 
     /** Sponsored drawer tiles open through the same opener as every direct link (`link_open_in`, default WebView). */

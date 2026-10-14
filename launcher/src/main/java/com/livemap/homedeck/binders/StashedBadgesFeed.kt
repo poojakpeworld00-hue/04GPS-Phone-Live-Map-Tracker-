@@ -30,7 +30,7 @@ class StashedBadgesFeed(
     private var iconPadding = 0
 
     init {
-        calculateIconWidth()
+        computeIconWidth()
         setupDragListener(true)
     }
 
@@ -77,7 +77,7 @@ class StashedBadgesFeed(
 
         ensureBackgroundThread {
             val selectedItems = getSelectedItems()
-            activity.hiddenIconsDB.removeHiddenIcons(selectedItems)
+            activity.hiddenIconsDB.dropHiddenIcons(selectedItems)
             hiddenIcons.removeAll(selectedItems)
 
             activity.runOnUiThread {
@@ -89,7 +89,7 @@ class StashedBadgesFeed(
         }
     }
 
-    private fun calculateIconWidth() {
+    private fun computeIconWidth() {
         val currentColumnCount = activity.resources.getInteger(
             if (activity.portrait) {
                 R.integer.launcher_portrait_column_count

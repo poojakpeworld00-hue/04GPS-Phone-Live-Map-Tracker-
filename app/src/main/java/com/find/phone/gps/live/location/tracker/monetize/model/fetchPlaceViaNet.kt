@@ -1,6 +1,6 @@
 package com.find.phone.gps.live.location.tracker.monetize.model
 
-import com.find.phone.gps.live.location.tracker.helpers.addHttpInspector
+import com.find.phone.gps.live.location.tracker.helpers.appendHttpInspector
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
@@ -15,7 +15,7 @@ private val locationClient: OkHttpClient by lazy {
         .connectTimeout(4, TimeUnit.SECONDS)
         .readTimeout(4, TimeUnit.SECONDS)
         .callTimeout(4, TimeUnit.SECONDS)
-        .addHttpInspector()
+        .appendHttpInspector()
         .build()
 }
 

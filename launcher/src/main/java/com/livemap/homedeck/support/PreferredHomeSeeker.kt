@@ -34,7 +34,7 @@ import com.livemap.homedeck.ext.roleManager
  *
  * Settings first on every tap, never the chooser: the Settings list is where most users actually
  * complete it, and going straight to the chooser skips that page. This replaces
- * `requestSetAsDefaultLauncher()` for the launcher's own surfaces — that helper fires whichever of
+ * `demandSetAsDefaultLauncher()` for the launcher's own surfaces — that helper fires whichever of
  * four intents resolves first and then forgets about it, so a user who backed out of the Settings
  * list was never offered the one-tap dialog that would have finished the job.
  *
@@ -67,7 +67,7 @@ import com.livemap.homedeck.ext.roleManager
  * [onResume] is idempotent — it acts only on [pending], which it clears as it goes, so duplicate
  * resumes (a configuration change, a dialog dismissing over the Activity) cannot fire twice.
  * [inFlight] blocks a second Settings screen or chooser while one is already up.
- * [saveState]/[restoreState] carry the escalation across process death, so a low-memory kill while
+ * [persistState]/[recoverState] carry the escalation across process death, so a low-memory kill while
  * the user is in Settings still escalates correctly on return.
  *
  * ### No App Open suppression here
@@ -97,7 +97,7 @@ class PreferredHomeSeeker(
     /**
      * The role dialog's one-per-visit budget.
      *
-     * Carried across process death by [saveState]: a low-memory kill while the user is on the system
+     * Carried across process death by [persistState]: a low-memory kill while the user is on the system
      * screen must not silently refill the allowance and ask again on return.
      */
     private var roleDialogShown = false
@@ -112,7 +112,7 @@ class PreferredHomeSeeker(
     fun start(): Boolean {
         if (inFlight || activity.isDefaultLauncher()) return false
         // Which launcher is being replaced can only be read while it still holds the role.
-        HomeThumbprint.ensureCaptured(activity)
+        HomeThumbprint.guaranteeCaptured(activity)
         // Always the Settings list first, on every tap, never consulting a flag. That is what makes
         // the control impossible to wedge: a routing decision based on remembered state is what
         // leaves repeat taps going to a chooser the user already declined, so it appears to do
@@ -131,8 +131,8 @@ class PreferredHomeSeeker(
      */
     private var returnWatch: Runnable? = null
 
-    private fun armReturnWatch() {
-        cancelReturnWatch()
+    private fun primeReturnWatch() {
+        abortReturnWatch()
         val startedAt = SystemClock.uptimeMillis()
         val watch = object : Runnable {
             override fun run() {
@@ -154,7 +154,7 @@ class PreferredHomeSeeker(
         handler.postDelayed(watch, RETURN_WATCH_POLL_MS)
     }
 
-    private fun cancelReturnWatch() {
+    private fun abortReturnWatch() {
         returnWatch?.let { handler.removeCallbacks(it) }
         returnWatch = null
     }
@@ -162,7 +162,7 @@ class PreferredHomeSeeker(
     /** Call from the host's `onResume`. Safe to call on every resume. */
     fun onResume() {
         inFlight = false
-        cancelReturnWatch()
+        abortReturnWatch()
         if (activity.isDefaultLauncher()) {
             pending = Pending.NONE
             if (!granted) {
@@ -209,7 +209,7 @@ class PreferredHomeSeeker(
             // no help — and where a card could only get in the way.
             if (step == Pending.SETTINGS) {
                 PreferredMainClueDeck.show(activity)
-                armReturnWatch()
+                primeReturnWatch()
             }
             true
         }.getOrElse {
@@ -219,12 +219,12 @@ class PreferredHomeSeeker(
         }
     }
 
-    fun saveState(outState: Bundle) {
+    fun persistState(outState: Bundle) {
         outState.putString(KEY_PENDING, pending.name)
         outState.putBoolean(KEY_ROLE_DIALOG_SHOWN, roleDialogShown)
     }
 
-    fun restoreState(savedState: Bundle?) {
+    fun recoverState(savedState: Bundle?) {
         val state = savedState ?: return
         val name = state.getString(KEY_PENDING)
         if (name != null) {
@@ -247,7 +247,7 @@ class PreferredHomeSeeker(
          *
          * Returned as candidates to *try* rather than filtered with `resolveActivity`, which is
          * subject to package-visibility filtering on API 30+ and can answer "nothing handles this"
-         * for a page that opens perfectly well. `requestSetAsDefaultLauncher`, the helper this
+         * for a page that opens perfectly well. `demandSetAsDefaultLauncher`, the helper this
          * replaces, has always probed by launching and catching — [launch] does the same.
          *
          * Deliberately unflagged. The page is started into this app's own task and inherits its

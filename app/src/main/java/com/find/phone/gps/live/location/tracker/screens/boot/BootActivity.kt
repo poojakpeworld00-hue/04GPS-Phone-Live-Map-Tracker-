@@ -18,7 +18,7 @@ import io.lighthouse.push.extended.LightHouseRichPush
 import com.find.phone.gps.live.location.tracker.monetize.model.UponPayloadPrepared
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.render.CoreOpenSpotBook
-import com.find.phone.gps.live.location.tracker.monetize.render.showAppRedirectPopup
+import com.find.phone.gps.live.location.tracker.monetize.render.presentAppRedirectPopup
 import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.store.LockerBook
@@ -30,7 +30,7 @@ import com.find.phone.gps.live.location.tracker.screens.opening.OpeningUnveilCha
 import com.find.phone.gps.live.location.tracker.screens.tongue.TongueSelectorActivity
 import com.find.phone.gps.live.location.tracker.screens.welcome.BriefingActivity
 import com.find.phone.gps.live.location.tracker.screens.policy.PolicyPortalActivity
-import com.find.phone.gps.live.location.tracker.helpers.openActivity
+import com.find.phone.gps.live.location.tracker.helpers.enterActivity
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -101,7 +101,7 @@ class BootActivity : StageActivity<ScreenSplashBinding>() {
         handler.postDelayed({
             Log.d(SPLASH_FLOW_TAG, "animation min elapsed (${animMin}ms) → maybeProceed")
             animMinElapsed.set(true)
-            maybeProceed()
+            perhapsProceed()
         }, animMin)
 
         printHashKey(this)
@@ -113,19 +113,19 @@ class BootActivity : StageActivity<ScreenSplashBinding>() {
                 Log.d(SPLASH_FLOW_TAG, "getData onSuccess → dataReady")
                 CoreOpenSpotBook.loadAd(this@BootActivity)
                 dataReady.set(true)
-                maybeProceed()
+                perhapsProceed()
             }
 
             override fun onError() {
                 Log.d(SPLASH_FLOW_TAG, "getData onError → dataReady")
                 dataReady.set(true)
-                maybeProceed()
+                perhapsProceed()
             }
         })
     }
 
     /** Navigate only once BOTH gates are met: data ready AND the intro has played. */
-    private fun maybeProceed() {
+    private fun perhapsProceed() {
         if (dataReady.get() && animMinElapsed.get()) {
             Log.d(SPLASH_FLOW_TAG, "both gates met (data + animation) → proceedNow")
             proceedNow()
@@ -145,14 +145,14 @@ class BootActivity : StageActivity<ScreenSplashBinding>() {
         val redirectLink = SpotsLocker.getInstance(this).getString("In_App_Update_Link")
         if (!redirectLink.isNullOrEmpty()) {
             Log.d(SPLASH_FLOW_TAG, "proceedNow → showAppRedirectPopup")
-            showAppRedirectPopup { launchNext() }
+            presentAppRedirectPopup { fireNext() }
         } else {
             Log.d(SPLASH_FLOW_TAG, "proceedNow → launchNext")
-            launchNext()
+            fireNext()
         }
     }
 
-    private fun launchNext() {
+    private fun fireNext() {
         if (isFinishing || isDestroyed) {
             Log.d(SPLASH_FLOW_TAG, "launchNext skipped (finishing/destroyed)")
             return
@@ -179,7 +179,7 @@ class BootActivity : StageActivity<ScreenSplashBinding>() {
                 else -> Intent(this, next)
             }
             // Splash → onboarding/main: no interstitial on the very first launch.
-            openActivity(intent, isShowAd = false)
+            enterActivity(intent, isShowAd = false)
             finish()
         }
     }
@@ -201,9 +201,9 @@ class BootActivity : StageActivity<ScreenSplashBinding>() {
         // Left with Home mid-run: back at that screen, which then moves on (InductionMainOnward).
         !HomeStream.wasOnboardingCompleted(this) ->
             InductionMainOnward.resumeScreen(this) ?: HomeStream.firstScreen(this)
-        OpeningUnveilCharter.shouldShowLanguage(this) -> TongueSelectorActivity::class.java
-        OpeningUnveilCharter.shouldShowTerms(this) -> PolicyPortalActivity::class.java
-        OpeningUnveilCharter.shouldShowOnboarding(this) -> BriefingActivity::class.java
+        OpeningUnveilCharter.mustShowLanguage(this) -> TongueSelectorActivity::class.java
+        OpeningUnveilCharter.mustShowTerms(this) -> PolicyPortalActivity::class.java
+        OpeningUnveilCharter.mustShowOnboarding(this) -> BriefingActivity::class.java
         else -> HomeStream.homeActivity()
     }
 

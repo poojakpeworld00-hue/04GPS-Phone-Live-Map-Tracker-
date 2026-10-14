@@ -17,7 +17,7 @@ import com.google.android.gms.ads.LoadAdError
 import com.find.phone.gps.live.location.tracker.monetize.model.SpotSort
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotIncomeGauge
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.facebook.ads.AdView as FbAdView
 
@@ -50,7 +50,7 @@ class RibbonTeaser {
     // -----------------------------
     // SHOW BANNER ENTRY POINT
     // -----------------------------
-    fun showBanner(
+    fun presentBanner(
         activity: Activity,
         container: FrameLayout,
         type: RibbonSort = RibbonSort.AUTO,
@@ -82,7 +82,7 @@ class RibbonTeaser {
         when (type) {
             RibbonSort.AUTO -> {
                 when (SpotSort.fromString(pref.getString("IsAdType"))) {
-                    SpotSort.GOOGLE -> loadGoogleBanner(
+                    SpotSort.GOOGLE -> fetchGoogleBanner(
                         activity,
                         container,
                         size,
@@ -93,7 +93,7 @@ class RibbonTeaser {
                         disableInternalFallback
                     )
 
-                    SpotSort.FACEBOOK -> loadFacebookBanner(
+                    SpotSort.FACEBOOK -> fetchFacebookBanner(
                         activity, container, shimmer, observer, disableInternalFallback
                     )
 
@@ -101,7 +101,7 @@ class RibbonTeaser {
                         if (disableInternalFallback) {
                             observer?.onAdFailed()
                         } else {
-                            BespokeSpotsBook().loadCustomAd(
+                            BespokeSpotsBook().fetchCustomAd(
                                 activity,
                                 container,
                                 BespokeSpotsBook.CustomAdType.BANNER
@@ -111,7 +111,7 @@ class RibbonTeaser {
                 }
             }
 
-            RibbonSort.GOOGLE -> loadGoogleBanner(
+            RibbonSort.GOOGLE -> fetchGoogleBanner(
                 activity,
                 container,
                 size,
@@ -122,7 +122,7 @@ class RibbonTeaser {
                 disableInternalFallback
             )
 
-            RibbonSort.FACEBOOK -> loadFacebookBanner(
+            RibbonSort.FACEBOOK -> fetchFacebookBanner(
                 activity, container, shimmer, observer, disableInternalFallback
             )
 
@@ -130,7 +130,7 @@ class RibbonTeaser {
                 if (disableInternalFallback) {
                     observer?.onAdFailed()
                 } else {
-                    BespokeSpotsBook().loadCustomAd(
+                    BespokeSpotsBook().fetchCustomAd(
                         activity,
                         container,
                         BespokeSpotsBook.CustomAdType.BANNER
@@ -143,7 +143,7 @@ class RibbonTeaser {
     // -----------------------------
     // GOOGLE BANNER
     // -----------------------------
-    private fun loadGoogleBanner(
+    private fun fetchGoogleBanner(
         activity: Activity,
         container: FrameLayout,
         size: RibbonSpan,
@@ -188,12 +188,12 @@ class RibbonTeaser {
                     "Ad loaded. adView.isCollapsible() is ${googleBanner?.isCollapsible}.",
                 )
                 // Log load
-                activity.logKeyEvent("Banner_Load")
+                activity.recordKeyEvent("Banner_Load")
 
                 if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(activity)
 
                 googleBanner!!.setOnPaidEventListener {
-                    SpotIncomeGauge.logPaidEvent(activity, it)
+                    SpotIncomeGauge.recordPaidEvent(activity, it)
                 }
 
 
@@ -211,7 +211,7 @@ class RibbonTeaser {
                 shimmer?.stopShimmer()
                 shimmer?.visibility = View.GONE
                 try {
-                    activity.logKeyEvent("Banner_fail_Load")
+                    activity.recordKeyEvent("Banner_fail_Load")
                 } catch (_: Exception) {
                 }
                 Log.e("RibbonTeaser", "Google Banner Failed: ${error.message}")
@@ -222,7 +222,7 @@ class RibbonTeaser {
             }
 
             override fun onAdClicked() {
-                activity.logKeyEvent("google_banner")
+                activity.recordKeyEvent("google_banner")
             }
         }
 
@@ -280,7 +280,7 @@ class RibbonTeaser {
     // -----------------------------
     // FACEBOOK BANNER
     // -----------------------------
-    private fun loadFacebookBanner(
+    private fun fetchFacebookBanner(
         activity: Activity,
         container: FrameLayout,
         shimmer: ShimmerFrameLayout? = null,
@@ -294,7 +294,7 @@ class RibbonTeaser {
             if (disableInternalFallback) {
                 observer?.onAdFailed()
             } else {
-                BespokeSpotsBook().loadCustomAd(
+                BespokeSpotsBook().fetchCustomAd(
                     activity,
                     container,
                     BespokeSpotsBook.CustomAdType.BANNER
@@ -325,7 +325,7 @@ class RibbonTeaser {
                         container.addView(facebookBanner)
                         container.visibility = View.VISIBLE
                         observer?.onAdLoaded()
-                        activity.logKeyEvent("facebook_banner_load")
+                        activity.recordKeyEvent("facebook_banner_load")
                     }
 
                     override fun onError(
@@ -337,7 +337,7 @@ class RibbonTeaser {
                         observer?.onAdFailed()
                         Log.e("RibbonTeaser", "FB Banner Failed: ${error?.errorMessage}")
                         if (!disableInternalFallback) {
-                            BespokeSpotsBook().loadCustomAd(
+                            BespokeSpotsBook().fetchCustomAd(
                                 activity,
                                 container,
                                 BespokeSpotsBook.CustomAdType.BANNER
@@ -366,12 +366,12 @@ class RibbonTeaser {
         val pref = SpotsLocker.getInstance(activity)
         if (pref.getBoolean("IsFail_FB")) {
             // Pass shimmer to Facebook banner loader
-            loadFacebookBanner(activity, container, shimmer, observer)
+            fetchFacebookBanner(activity, container, shimmer, observer)
         } else {
             // Optionally, you can show shimmer for custom ads if BespokeSpotsBook supports it
             shimmer?.startShimmer()
             shimmer?.visibility = View.VISIBLE
-            BespokeSpotsBook().loadCustomAd(
+            BespokeSpotsBook().fetchCustomAd(
                 activity,
                 container,
                 BespokeSpotsBook.CustomAdType.BANNER

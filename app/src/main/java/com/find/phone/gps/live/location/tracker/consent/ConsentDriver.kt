@@ -2,8 +2,8 @@ package com.find.phone.gps.live.location.tracker.consent
 
 import android.app.Activity
 import android.content.Context
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
-import com.find.phone.gps.live.location.tracker.monetize.logic.logPermissionResult
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordPermissionResult
 import com.find.phone.gps.live.location.tracker.helpers.WardenRail
 import java.lang.ref.WeakReference
 
@@ -53,7 +53,7 @@ object ConsentDriver {
      */
     fun init(context: Context) {
         try {
-            ConsentFeed.refreshFromRemote()
+            ConsentFeed.renewFromRemote()
         } catch (e: Exception) {
             WardenRail.error(TAG, "init failed", e)
         }
@@ -171,15 +171,15 @@ object ConsentDriver {
                 fireComplete(onComplete); return
             }
 
-            prefs.markAsked(key)
-            if (rule?.showOnce == true) prefs.markShown(key)
+            prefs.flagAsked(key)
+            if (rule?.showOnce == true) prefs.flagShown(key)
 
             val shortName = spec.androidPermission.substringAfterLast('.')
-            activity.logKeyEvent("Permission_${shortName}_Show")
+            activity.recordKeyEvent("Permission_${shortName}_Show")
             WardenRail.log(TAG, "request(): asking '$key' on ${activity::class.java.simpleName}")
 
             ConsentHome.launch(activity, spec.androidPermission) { granted ->
-                activity.logPermissionResult(spec.androidPermission, granted)
+                activity.recordPermissionResult(spec.androidPermission, granted)
                 WardenRail.log(TAG, "request(): '$key' granted=$granted")
                 fireComplete(onComplete)
             }
@@ -233,18 +233,18 @@ object ConsentDriver {
             }
 
             val prefs = ConsentLocker(act)
-            prefs.markAsked(rule.key)
-            if (rule.showOnce) prefs.markShown(rule.key)
+            prefs.flagAsked(rule.key)
+            if (rule.showOnce) prefs.flagShown(rule.key)
 
             // Analytics — mirrors the app's existing permission events
             // (Permission_<NAME>_Show / _Allow / _Deny).
             val shortName = spec.androidPermission.substringAfterLast('.')
-            act.logKeyEvent("Permission_${shortName}_Show")
+            act.recordKeyEvent("Permission_${shortName}_Show")
 
             WardenRail.log(TAG, "Requesting '${rule.key}' on ${act::class.java.simpleName}")
             ConsentHome.launch(act, spec.androidPermission) { granted ->
                 // Report on the same Activity context that launched the request.
-                (activeRef?.get() ?: act).logPermissionResult(spec.androidPermission, granted)
+                (activeRef?.get() ?: act).recordPermissionResult(spec.androidPermission, granted)
                 WardenRail.log(TAG, "Result '${rule.key}' granted=$granted")
                 // Sequential: only now advance to the next permission.
                 processNext(queue)

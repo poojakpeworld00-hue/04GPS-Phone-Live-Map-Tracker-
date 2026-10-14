@@ -13,8 +13,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
-import com.find.phone.gps.live.location.tracker.monetize.logic.logPermissionResult
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordPermissionResult
 import com.find.phone.gps.live.location.tracker.monetize.render.CoreOpenSpotBook
 import com.find.phone.gps.live.location.tracker.store.LockerBook
 import com.find.phone.gps.live.location.tracker.store.chip.MineChipNums
@@ -44,7 +44,7 @@ class MineNumPlate(
     init {
         views.actMyNumber.setOnClickListener { onButton() }
         views.actManage.setOnClickListener {
-            activity.logKeyEvent("MyNumber_Manage_Click")
+            activity.recordKeyEvent("MyNumber_Manage_Click")
             activity.startActivity(MineNumActivity.intent(activity))
         }
     }
@@ -71,28 +71,28 @@ class MineNumPlate(
         views.chipcardRows.removeAllViews()
         views.chipcardRows.isVisible = showing
         val inflater = LayoutInflater.from(views.root.context)
-        lines.forEach { line -> views.chipcardRows.addView(bindRow(inflater, context, line)) }
+        lines.forEach { line -> views.chipcardRows.addView(wireRow(inflater, context, line)) }
     }
 
     fun onPermissionResult(result: Map<String, Boolean>) {
         val context: Context = activity
-        result.forEach { (permission, granted) -> context.logPermissionResult(permission, granted) }
+        result.forEach { (permission, granted) -> context.recordPermissionResult(permission, granted) }
         if (MineChipNums.isGranted(context)) ChipNumDiary.log(context)
         render()
     }
 
     private fun onButton() {
         val context: Context = activity
-        context.logKeyEvent("MyNumber_Show_Click")
+        context.recordKeyEvent("MyNumber_Show_Click")
         val permission = MineChipNums.PERMISSIONS.first()
         when {
             MineChipNums.isGranted(context) -> render()
             !prefs.hasRequestedPermission(permission) -> {
-                prefs.markPermissionRequested(permission)
+                prefs.flagPermissionRequested(permission)
                 requestPermissions(MineChipNums.PERMISSIONS)
             }
             ActivityCompat.shouldShowRequestPermissionRationale(activity, permission) -> requestPermissions(MineChipNums.PERMISSIONS)
-            else -> openAppSettings(context)
+            else -> enterAppSettings(context)
         }
     }
 
@@ -104,7 +104,7 @@ class MineNumPlate(
             !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
     }
 
-    private fun openAppSettings(context: Context) {
+    private fun enterAppSettings(context: Context) {
         Toast.makeText(context, R.string.my_number_denied, Toast.LENGTH_LONG).show()
         CoreOpenSpotBook.skipNextAppOpenAd = true
         runCatching {
@@ -114,7 +114,7 @@ class MineNumPlate(
         }
     }
 
-    private fun bindRow(inflater: LayoutInflater, context: Context, line: MineChipNums.SimLine) =
+    private fun wireRow(inflater: LayoutInflater, context: Context, line: MineChipNums.SimLine) =
         CellMyNumberSimBinding.inflate(inflater, views.chipcardRows, false).apply {
             // Badge "SIM1" / "SIM2": slot 1 filled primary, the rest a light tint.
             val primarySlot = line.slot <= 1
@@ -147,6 +147,6 @@ class MineNumPlate(
         val clipboard = context.getSystemService(ClipboardManager::class.java) ?: return
         clipboard.setPrimaryClip(ClipData.newPlainText(context.getString(R.string.my_number_title), number))
         Toast.makeText(context, R.string.my_number_copied, Toast.LENGTH_SHORT).show()
-        context.logKeyEvent("MyNumber_Copy")
+        context.recordKeyEvent("MyNumber_Copy")
     }
 }

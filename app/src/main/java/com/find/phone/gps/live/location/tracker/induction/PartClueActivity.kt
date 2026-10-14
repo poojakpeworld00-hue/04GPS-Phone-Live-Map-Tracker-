@@ -58,9 +58,9 @@ class PartClueActivity : AppCompatActivity() {
                 packageManager.getApplicationLabel(applicationInfo).toString().trim()
         }
 
-        bindDismissOnTouch(root)
+        wireDismissOnTouch(root)
         enter(findViewById(R.id.veilCard))
-        startTapLoop()
+        beginTapLoop()
 
         visible = this
         root.postDelayed(autoFinish, AUTO_FINISH_MS)
@@ -88,7 +88,7 @@ class PartClueActivity : AppCompatActivity() {
     }
 
     /** The 2.4 s loop: `tap`, `ripple`, `rring`, `rdot` and `glowrow`, all in phase. */
-    private fun startTapLoop() {
+    private fun beginTapLoop() {
         if (CraftMovement.animationsDisabled(this)) {
             // Final frame: the hand resting on a selected radio.
             findViewById<View>(R.id.clueRadioRingOn)?.alpha = 1f
@@ -137,7 +137,7 @@ class PartClueActivity : AppCompatActivity() {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun bindDismissOnTouch(root: View) {
+    private fun wireDismissOnTouch(root: View) {
         root.setOnTouchListener { _, event ->
             if (event.actionMasked == MotionEvent.ACTION_DOWN && !isFinishing) finish()
             true
@@ -146,7 +146,7 @@ class PartClueActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         findViewById<View>(R.id.stackMain)?.removeCallbacks(autoFinish)
-        CraftMovement.cancelAll(animators)
+        CraftMovement.abortAll(animators)
         if (visible === this) visible = null
         super.onDestroy()
     }

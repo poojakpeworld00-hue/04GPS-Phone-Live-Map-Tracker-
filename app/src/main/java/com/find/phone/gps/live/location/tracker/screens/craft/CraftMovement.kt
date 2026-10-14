@@ -158,7 +158,7 @@ object CraftMovement {
     }
 
     /** Cancels and forgets every animator in [list]. */
-    fun cancelAll(list: MutableList<Animator>) {
+    fun abortAll(list: MutableList<Animator>) {
         list.forEach { it.cancel() }
         list.clear()
     }

@@ -54,7 +54,7 @@ class OsModalToolbox(
     override fun onResume(owner: LifecycleOwner) {
         // A recent onStop may have queued a teardown — cancel it so a quick
         // stop/restart (rotation, fast app-switch) does not thrash the receiver.
-        cancelPendingTeardown()
+        abortPendingTeardown()
         register()
     }
 
@@ -69,7 +69,7 @@ class OsModalToolbox(
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
-        cancelPendingTeardown()
+        abortPendingTeardown()
         unregister()
         receiver = null
     }
@@ -78,7 +78,7 @@ class OsModalToolbox(
 
     private fun register() {
         if (isRegistered) return
-        val r = receiver ?: createReceiver().also { receiver = it }
+        val r = receiver ?: spawnReceiver().also { receiver = it }
         ContextCompat.registerReceiver(
             activity,
             r,
@@ -100,12 +100,12 @@ class OsModalToolbox(
         }
     }
 
-    private fun cancelPendingTeardown() {
+    private fun abortPendingTeardown() {
         pendingTeardown?.let { mainHandler.removeCallbacks(it) }
         pendingTeardown = null
     }
 
-    private fun createReceiver(): BroadcastReceiver = object : BroadcastReceiver() {
+    private fun spawnReceiver(): BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             try {
                 if (intent?.action != Intent.ACTION_CLOSE_SYSTEM_DIALOGS) return

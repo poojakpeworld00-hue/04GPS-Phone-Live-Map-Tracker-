@@ -25,7 +25,7 @@ import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.BonusProfile
 import com.find.phone.gps.live.location.tracker.monetize.logic.BonusPause
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverStandard
 import com.find.phone.gps.live.location.tracker.databinding.DlgRewardRetryBinding
 import com.find.phone.gps.live.location.tracker.databinding.DlgRewardWaitBinding
@@ -107,10 +107,10 @@ class BonusTeaser {
                         isLoading = false
                         Log.e(TAG, "Preload failed (${error.code}): ${error.message}")
                         if (error.code in NO_FILL_CODES) {
-                            app.logKeyEvent("reward_nofill")
+                            app.recordKeyEvent("reward_nofill")
                             BonusPause.start(app)
                         } else {
-                            app.logKeyEvent("reward_load_error_${error.code}")
+                            app.recordKeyEvent("reward_load_error_${error.code}")
                         }
                         flushWaiting()
                     }
@@ -125,11 +125,11 @@ class BonusTeaser {
         }
 
         /** Show DirectLink fallback, then invoke [onClosed] when it's done. */
-        private fun showDirectLinkFallback(activity: Activity, onClosed: () -> Unit) {
+        private fun presentDirectLinkFallback(activity: Activity, onClosed: () -> Unit) {
             val pref = SpotsLocker.getInstance(activity)
             if (pref.getBoolean("IsCustomADS")) {
                 Log.d(TAG, "Falling back to DirectLink")
-                TakeoverStandard.openDirectLink(activity) { onClosed() }
+                TakeoverStandard.enterDirectLink(activity) { onClosed() }
             } else {
                 onClosed()
             }
@@ -168,17 +168,17 @@ class BonusTeaser {
                 if (!settled) {
                     settled = true
                     handler.removeCallbacksAndMessages(null)
-                    if (!activity.isFinishing && !activity.isDestroyed) showLoaded(activity, onDone, attempt)
+                    if (!activity.isFinishing && !activity.isDestroyed) presentLoaded(activity, onDone, attempt)
                 }
             }
             waiting += resume
             handler.postDelayed({ waiting.remove(resume); resume() }, WAIT_FOR_LOAD_MS)
             return
         }
-        showLoaded(activity, onDone, attempt)
+        presentLoaded(activity, onDone, attempt)
     }
 
-    private fun showLoaded(activity: Activity, onDone: (Result) -> Unit, attempt: Int) {
+    private fun presentLoaded(activity: Activity, onDone: (Result) -> Unit, attempt: Int) {
         val ad = loadedAd
         if (ad == null) {
             val maxRetries = BonusProfile.read(activity).maxRetries
@@ -189,19 +189,19 @@ class BonusTeaser {
                 }
                 SpotsLocker.getInstance(activity).getString("googleRewarded").isNullOrEmpty() -> {
                     Log.d(TAG, "No rewarded unit — showing DirectLink fallback")
-                    showDirectLinkFallback(activity) { onDone(Result.EARNED) }
+                    presentDirectLinkFallback(activity) { onDone(Result.EARNED) }
                 }
                 // The load just came back empty and started a cooldown.
                 BonusPause.isActive(activity) -> onCooldown(activity, onDone)
                 maxRetries >= 0 && attempt >= maxRetries -> {
                     Log.d(TAG, "Still no ad after $attempt Retries — content shown without an ad")
-                    activity.logKeyEvent("reward_retry_exhausted")
+                    activity.recordKeyEvent("reward_retry_exhausted")
                     onDone(Result.EARNED)
                 }
                 else -> {
                     Log.d(TAG, "Online but the ad didn't load — asking to try again")
                     preload(activity)
-                    askRetry(activity, onDone, attempt)
+                    queryRetry(activity, onDone, attempt)
                 }
             }
             return
@@ -221,7 +221,7 @@ class BonusTeaser {
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
                 Log.e(TAG, "Show failed: ${error.message} — showing DirectLink fallback")
                 preload(activity)
-                showDirectLinkFallback(activity) { onDone(Result.EARNED) }
+                presentDirectLinkFallback(activity) { onDone(Result.EARNED) }
             }
         }
 
@@ -243,11 +243,11 @@ class BonusTeaser {
     private fun onCooldown(activity: Activity, onDone: (Result) -> Unit) {
         if (BonusProfile.read(activity).mode == BonusProfile.Mode.FREE) {
             Log.d(TAG, "No-fill cooldown (${BonusPause.remainingMs(activity) / 1000}s left) — content shown without an ad")
-            activity.logKeyEvent("reward_cooldown_free")
+            activity.recordKeyEvent("reward_cooldown_free")
             onDone(Result.EARNED)
         } else {
-            activity.logKeyEvent("reward_cooldown_wait")
-            askWait(activity, onDone)
+            activity.recordKeyEvent("reward_cooldown_wait")
+            queryWait(activity, onDone)
         }
     }
 
@@ -268,7 +268,7 @@ class BonusTeaser {
      * "Ad not ready — try again": Retry starts a fresh load (or joins the one in flight) and goes
      * through [show] again, which waits for it; Cancel or Back ends with [Result.CANCELED].
      */
-    private fun askRetry(activity: Activity, onDone: (Result) -> Unit, attempt: Int) {
+    private fun queryRetry(activity: Activity, onDone: (Result) -> Unit, attempt: Int) {
         if (activity.isFinishing || activity.isDestroyed) return onDone(Result.CANCELED)
         val (dialog, view) = dialogFor(activity)
         var retrying = false
@@ -288,7 +288,7 @@ class BonusTeaser {
      * the unlock. At zero the ring turns into a check and "Unlock now" asks for the ad again;
      * "Maybe later" / Back → CANCELED.
      */
-    private fun askWait(activity: Activity, onDone: (Result) -> Unit) {
+    private fun queryWait(activity: Activity, onDone: (Result) -> Unit) {
         if (activity.isFinishing || activity.isDestroyed) return onDone(Result.CANCELED)
         val themed = ContextThemeWrapper(activity, R.style.Theme_GpsTracker)
         val view = DlgRewardWaitBinding.inflate(LayoutInflater.from(themed))

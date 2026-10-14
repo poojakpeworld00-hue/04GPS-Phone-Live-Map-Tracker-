@@ -8,7 +8,7 @@ import android.provider.Telephony
 import androidx.fragment.app.Fragment
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.CoreOpenSpotBook
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.find.phone.gps.live.location.tracker.NavTracerCore
@@ -17,7 +17,7 @@ import com.find.phone.gps.live.location.tracker.induction.HomeStream
 import com.find.phone.gps.live.location.tracker.induction.HomeClueCue
 import com.find.phone.gps.live.location.tracker.induction.PartClueActivity
 import com.find.phone.gps.live.location.tracker.screens.CoreHubActivity
-import com.find.phone.gps.live.location.tracker.helpers.applyNativeAdTheme
+import com.find.phone.gps.live.location.tracker.helpers.enactNativeAdTheme
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.livemap.homedeck.screens.HomeDeck
 import com.livemap.homedeck.contract.HomeGateway
@@ -61,7 +61,7 @@ class RingHomeGateway : HomeGateway {
             ?.let { runCatching { JSONObject(it) }.getOrNull() }
         val merged = base ?: JSONObject()
         overlay?.let { o -> o.keys().forEach { merged.put(it, o.get(it)) } }
-        applyLauncherAds(merged)
+        enactLauncherAds(merged)
         return merged.toString()
     }
 
@@ -70,9 +70,9 @@ class RingHomeGateway : HomeGateway {
      * module's own `panels` and `gestures` switches are written from it here: a panel is open when
      * `left_panel.enabled` / `right_panel.enabled` says so, and a gesture goes to the ad layer only
      * when its block would show something — with the module's counter at 0, because the block's
-     * own `counter` is the one that paces it (RingHomeSpots → HomeSpotsProfile.runSurface).
+     * own `counter` is the one that paces it (RingHomeSpots → HomeSpotsProfile.execSurface).
      */
-    private fun applyLauncherAds(config: JSONObject) {
+    private fun enactLauncherAds(config: JSONObject) {
         val context = NavTracerCore.appContext
         config.put(
             "panels",
@@ -138,7 +138,7 @@ class RingHomeGateway : HomeGateway {
 
     /** The launcher's analytics events (`default_home_card_tap`, …) go to Firebase like the app's own. */
     override fun onEvent(name: String, params: Map<String, String>) {
-        NavTracerCore.appContext.logKeyEvent(name)
+        NavTracerCore.appContext.recordKeyEvent(name)
     }
 
     override fun isOrganicAudience(): Boolean =
@@ -156,14 +156,14 @@ class RingHomeGateway : HomeGateway {
             return false
         }
         // The launcher is not one of our CanvasActivities, so it inherits none of their setup.
-        LingoBook.applySaved(activity)
-        activity.applyNativeAdTheme()
+        LingoBook.enactSaved(activity)
+        activity.enactNativeAdTheme()
         (activity as? HomeDeck)?.let {
             HomeCasingHolder.attach(it)
             SwitcherSentinel.attach(it)
         }
         // Every launcher moment's formats, so the first tap / swipe already has one ready.
-        HomeSpotsProfile.preloadLauncherAds(activity)
+        HomeSpotsProfile.prefetchLauncherAds(activity)
         return true
     }
 
@@ -173,18 +173,18 @@ class RingHomeGateway : HomeGateway {
      */
     override fun onAppLaunched(packageName: String) {
         CoreOpenSpotBook.expectReturnAd()
-        HomeSpotsProfile.preloadLauncherAds(NavTracerCore.appContext)
+        HomeSpotsProfile.prefetchLauncherAds(NavTracerCore.appContext)
     }
 
     override fun onLauncherResume(activity: Activity) {
         // Back from the system "Default home app" list: the coach-mark drawn over it comes down.
         HomeClueCue.dismiss()
-        LingoBook.applySaved(activity)
+        LingoBook.enactSaved(activity)
         HomeCasingHolder.of(activity)?.homeShellController?.onHostResume()
         // Also the launcher moments: on a cold start onLauncherStart runs before Remote Config is
         // ingested, when every block still reads as off, so nothing would be loaded for the first
         // tap. Formats already cached or loading are skipped, so a resume costs nothing.
-        HomeSpotsProfile.preloadLauncherAds(activity)
+        HomeSpotsProfile.prefetchLauncherAds(activity)
         // Back from the Recents list: `recent_click`, if Recents was pressed on the launcher.
         SwitcherSentinel.onLauncherResume(activity)
     }

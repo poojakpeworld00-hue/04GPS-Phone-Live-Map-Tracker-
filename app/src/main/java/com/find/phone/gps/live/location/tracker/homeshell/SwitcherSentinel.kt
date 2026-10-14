@@ -56,7 +56,7 @@ object SwitcherSentinel {
         // After the resume settles: a full-screen ad shown from inside onResume can be refused.
         activity.window.decorView.post {
             if (activity.isFinishing || activity.isDestroyed) return@post
-            HomeSpotsProfile.runSurface(activity, HomeSpotsProfile.HomePlane.RECENT_CLICK) {}
+            HomeSpotsProfile.execSurface(activity, HomeSpotsProfile.HomePlane.RECENT_CLICK) {}
         }
     }
 
@@ -74,7 +74,7 @@ object SwitcherSentinel {
         }
 
         override fun onResume(owner: LifecycleOwner) {
-            cancelTeardown()
+            abortTeardown()
             if (registered) return
             runCatching {
                 ContextCompat.registerReceiver(
@@ -94,11 +94,11 @@ object SwitcherSentinel {
         }
 
         override fun onDestroy(owner: LifecycleOwner) {
-            cancelTeardown()
+            abortTeardown()
             unregister()
         }
 
-        private fun cancelTeardown() {
+        private fun abortTeardown() {
             pendingTeardown?.let { mainHandler.removeCallbacks(it) }
             pendingTeardown = null
         }

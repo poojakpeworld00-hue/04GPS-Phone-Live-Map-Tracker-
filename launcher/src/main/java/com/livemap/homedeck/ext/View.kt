@@ -19,7 +19,7 @@ import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.helpers.isSPlus
 import org.fossify.commons.views.MySearchMenu
 
-fun View.animateScale(
+fun View.tweenScale(
     from: Float,
     to: Float,
     duration: Long,
@@ -57,7 +57,7 @@ fun View.setupDrawerBackground(
 // the drawer sits on a translucent background over the wallpaper, so the search bar is
 // forced to the same fixed white-on-translucent skin instead of the theme colors.
 // must be called after MySearchMenu.updateColors(), which re-applies the theme tint.
-fun MySearchMenu.applyDrawerSkin() {
+fun MySearchMenu.enactDrawerSkin() {
     val res = com.livemap.homedeck.R.drawable.hd_drawer_search_bg
     val dp = resources.displayMetrics.density
     setBackgroundColor(Color.TRANSPARENT)

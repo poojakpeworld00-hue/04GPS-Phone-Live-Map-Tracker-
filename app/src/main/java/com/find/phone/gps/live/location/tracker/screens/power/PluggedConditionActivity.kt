@@ -28,7 +28,7 @@ import com.find.phone.gps.live.location.tracker.monetize.render.EmbeddedTeaserRi
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverStandard
 import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.helpers.OsModalAide
-import com.find.phone.gps.live.location.tracker.helpers.applyNativeAdTheme
+import com.find.phone.gps.live.location.tracker.helpers.enactNativeAdTheme
 
 /**
  * The charging / discharging screen (ported from QRScanner's `PluggedConditionActivity`).
@@ -55,10 +55,10 @@ class PluggedConditionActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        applyNativeAdTheme()
+        enactNativeAdTheme()
         // Recents closes it: a charge/discharge screen is not something to come back to.
         lifecycle.addObserver(OsModalAide(this) { finishAndRemoveTask() })
-        showOverLockAndWake()
+        presentOverLockAndWake()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.screen_charging_status)
 
@@ -182,10 +182,10 @@ class PluggedConditionActivity : AppCompatActivity() {
         val slot = findViewById<FrameLayout>(R.id.juiceAdSlot)
         slot.visibility = View.VISIBLE
         when (settings.nativeType.trim().lowercase()) {
-            "big", "big_native", "bignative" -> EmbeddedTeaser().showBigNative(this, slot)
-            "mid2", "mid_native2", "midnative2", "mediumnative2" -> EmbeddedTeaser().showMidNative2(this, slot)
-            "native_banner", "nativebanner" -> EmbeddedTeaserRibbon().showNativeBannerNative(this, slot)
-            else -> EmbeddedTeaser().showMidNative(this, slot)
+            "big", "big_native", "bignative" -> EmbeddedTeaser().presentBigNative(this, slot)
+            "mid2", "mid_native2", "midnative2", "mediumnative2" -> EmbeddedTeaser().presentMidNative2(this, slot)
+            "native_banner", "nativebanner" -> EmbeddedTeaserRibbon().presentNativeBannerNative(this, slot)
+            else -> EmbeddedTeaser().presentMidNative(this, slot)
         }
     }
 
@@ -199,7 +199,7 @@ class PluggedConditionActivity : AppCompatActivity() {
         findViewById<ImageButton>(R.id.actCloseCharging).isEnabled = false
         // `charge_*` / `discharge_*` (`ad_flow` or a link chain) override `close_ad` when set.
         if (HomeSeatSpots.hasOwnFlow(this, trigger)) {
-            HomeSeatSpots.showInterstitial(this, trigger) { finishSafely() }
+            HomeSeatSpots.showInterstitial(this, trigger) { concludeSafely() }
             return
         }
         when {
@@ -207,24 +207,24 @@ class PluggedConditionActivity : AppCompatActivity() {
                 // This screen has its own throttle (min_gap_sec); the app-wide InterCounter on top
                 // would skip the one ad it exists to show.
                 SpotTallyBook.interCounter = SpotsLocker.getInstance(this).getInt("InterCounter")
-                TakeoverStandard().showInterAds(this) { finishSafely() }
+                TakeoverStandard().presentInterAds(this) { concludeSafely() }
             }
             // Shows only if it finished loading; either way the screen closes after.
             closesWithFullNative ->
-                SliderSpotDriver.run(this, fullNativeFlow(), "__charging_full_native_ptr") { finishSafely() }
+                SliderSpotDriver.run(this, fullNativeFlow(), "__charging_full_native_ptr") { concludeSafely() }
             settings.closeShowsLink -> {
                 StraightHrefOpener.open(this, HomeSpotsProfile.directLink(this))
-                finishSafely()
+                concludeSafely()
             }
-            else -> finishSafely()
+            else -> concludeSafely()
         }
     }
 
-    private fun finishSafely() {
+    private fun concludeSafely() {
         if (!isFinishing) finish()
     }
 
-    private fun showOverLockAndWake() {
+    private fun presentOverLockAndWake() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)

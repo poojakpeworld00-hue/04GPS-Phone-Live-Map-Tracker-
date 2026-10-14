@@ -34,7 +34,7 @@ object MemoCueModal {
         onButton: () -> Unit,
     ) {
         if (activity.isFinishing || activity.isDestroyed) return
-        dismissIfShowing()
+        retireIfShowing()
 
         val dialog = Dialog(activity)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -67,7 +67,7 @@ object MemoCueModal {
         dialog.show()
     }
 
-    fun dismissIfShowing() {
+    fun retireIfShowing() {
         current?.get()?.let { d -> if (d.isShowing) runCatching { d.dismiss() } }
         current = null
     }

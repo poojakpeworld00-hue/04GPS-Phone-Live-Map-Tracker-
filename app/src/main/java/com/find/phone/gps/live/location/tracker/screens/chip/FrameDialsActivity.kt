@@ -15,7 +15,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.CoreOpenSpotBook
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.store.chip.MineChipNums
@@ -51,11 +51,11 @@ class FrameDialsActivity : StageActivity<ScreenCarrierCodesBinding>() {
         val wantSlot = intent.getIntExtra(EXTRA_SLOT, -1)
         selected = tabs.indexOfFirst { it.slot == wantSlot }.coerceAtLeast(0)
 
-        buildTabs()
+        composeTabs()
         render()
     }
 
-    private fun buildTabs() {
+    private fun composeTabs() {
         binding.lvCarrierTabs.removeAllViews()
         if (tabs.size < 2) {
             binding.lvCarrierTabs.visibility = View.GONE
@@ -142,7 +142,7 @@ class FrameDialsActivity : StageActivity<ScreenCarrierCodesBinding>() {
         }.root
 
     private fun dial(code: String) {
-        logKeyEvent("CarrierCodes_Dial")
+        recordKeyEvent("CarrierCodes_Dial")
         CoreOpenSpotBook.skipNextAppOpenAd = true
         runCatching {
             startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + Uri.encode(code))))

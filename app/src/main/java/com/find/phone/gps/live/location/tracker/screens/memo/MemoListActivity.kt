@@ -23,7 +23,7 @@ import androidx.core.view.updatePadding
 import androidx.core.widget.ImageViewCompat
 import androidx.lifecycle.lifecycleScope
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.EmbeddedTeaser
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.databinding.DlgReminderDeleteBinding
@@ -81,11 +81,11 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
         }
         binding.actBack.setOnClickListener { goBack() }
         CraftMovement.pressScale(binding.actNewReminder)
-        binding.actNewReminder.setOnClickListener { openSheet(null) }
-        logKeyEvent("Reminders_Open")
+        binding.actNewReminder.setOnClickListener { enterSheet(null) }
+        recordKeyEvent("Reminders_Open")
 
         // Bottom mid native (ScreenAds["MemoListActivity"].show turns it off).
-        EmbeddedTeaser().showMidNative(this, binding.spotNativeFrame, binding.spotShimmer)
+        EmbeddedTeaser().presentMidNative(this, binding.spotNativeFrame, binding.spotShimmer)
         binding.spotNativeDivider.followAdContainer(binding.spotNativeFrame)
     }
 
@@ -93,13 +93,13 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
         super.onResume()
         accessPollJob?.cancel()
         MemoConsent.onHostResume(this)
-        MemoShelf.seedDefaultsIfNeeded(this)
+        MemoShelf.plantDefaultsIfNeeded(this)
         render()
     }
 
     override fun onDestroy() {
         accessPollJob?.cancel()
-        MemoCueModal.dismissIfShowing()
+        MemoCueModal.retireIfShowing()
         super.onDestroy()
     }
 
@@ -157,25 +157,25 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
         lvSwEnabled.isChecked = item.isActive
         lvSwEnabled.setOnCheckedChangeListener { _, checked -> onToggle(item, checked) }
 
-        elemReminder.setOnClickListener { openSheet(item) }
-        elemReminder.setOnLongClickListener { confirmDelete(item); true }
+        elemReminder.setOnClickListener { enterSheet(item) }
+        elemReminder.setOnLongClickListener { affirmDelete(item); true }
     }.root
 
     private fun onToggle(item: MemoElement, on: Boolean) {
         // Turning a finished one-off back on needs a new time: open it instead.
         if (on && item.repeatOrOnce == Repeat.ONCE && item.dateTime <= System.currentTimeMillis()) {
             render()
-            openSheet(item)
+            enterSheet(item)
             return
         }
         MemoTimer.save(this, item.copy(enabled = on, done = false))
-        logKeyEvent(if (on) "Reminder_Enable" else "Reminder_Disable")
+        recordKeyEvent(if (on) "Reminder_Enable" else "Reminder_Disable")
         render()
     }
 
     // ───────────────────────────── edit / delete ─────────────────────────────
 
-    private fun openSheet(item: MemoElement?) {
+    private fun enterSheet(item: MemoElement?) {
         MemoAmendDrawer(
             activity = this,
             existing = item,
@@ -184,7 +184,7 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
                 contactPicker.launch(BuddyChooserActivity.intent(this))
             },
             onSave = { saved, isNew -> onSaved(saved, isNew) },
-            onDelete = { confirmDelete(it) },
+            onDelete = { affirmDelete(it) },
         ).show()
     }
 
@@ -193,10 +193,10 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
         render()
         val stored = MemoShelf.get(this, item.id) ?: item
         Toast.makeText(this, getString(R.string.rem_saved, MemoShaper.dayAndTime(this, stored.dateTime)), Toast.LENGTH_SHORT).show()
-        logKeyEvent(if (isNew) "Reminder_Create" else "Reminder_Edit")
+        recordKeyEvent(if (isNew) "Reminder_Create" else "Reminder_Edit")
         if (isNew) {
             CuePortal.onReminderCreated(this)
-            askAfterSave(stored)
+            queryAfterSave(stored)
         }
     }
 
@@ -206,15 +206,15 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
      * prompt does not show but notifications are off, ask for those anyway: nothing can be shown
      * without them.
      */
-    private fun askAfterSave(item: MemoElement) {
+    private fun queryAfterSave(item: MemoElement) {
         MemoConsent.prime(
             activity = this,
             returnTo = MemoListActivity::class.java,
             reminderTitle = item.title,
             reminderTime = MemoShaper.time(this, item.dateTime),
-            onReady = { if (needsNotificationPermission()) askNotifications {} },
-            onSettingsOpened = { startAccessPoll() },
-            onManage = { proceed -> if (needsNotificationPermission()) askNotifications(proceed) else proceed() },
+            onReady = { if (needsNotificationPermission()) queryNotifications {} },
+            onSettingsOpened = { beginAccessPoll() },
+            onManage = { proceed -> if (needsNotificationPermission()) queryNotifications(proceed) else proceed() },
         )
     }
 
@@ -222,14 +222,14 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             !NotificationManagerCompat.from(this).areNotificationsEnabled()
 
-    private fun askNotifications(then: () -> Unit) {
+    private fun queryNotifications(then: () -> Unit) {
         afterNotificationAsk = then
         runCatching { notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS) }
             .onFailure { afterNotificationAsk = null; then() }
     }
 
     /** The primary return path: Settings sits in this task, so this Activity may bring itself back. */
-    private fun startAccessPoll() {
+    private fun beginAccessPoll() {
         accessPollJob?.cancel()
         accessPollJob = lifecycleScope.launch {
             while (isActive) {
@@ -242,7 +242,7 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
         }
     }
 
-    private fun confirmDelete(item: MemoElement) {
+    private fun affirmDelete(item: MemoElement) {
         val dialog = Dialog(this)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         val view = DlgReminderDeleteBinding.inflate(layoutInflater)
@@ -254,7 +254,7 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
         view.actConfirmDelete.setOnClickListener {
             dialog.dismiss()
             MemoTimer.delete(this, item.id)
-            logKeyEvent("Reminder_Delete")
+            recordKeyEvent("Reminder_Delete")
             render()
         }
         dialog.show()

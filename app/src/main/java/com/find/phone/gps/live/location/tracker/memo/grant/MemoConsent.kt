@@ -9,7 +9,7 @@ import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.CoreOpenSpotBook
 import com.find.phone.gps.live.location.tracker.memo.CuePortal
 import com.find.phone.gps.live.location.tracker.memo.MemoProfile
@@ -54,14 +54,14 @@ object MemoConsent {
     }
 
     /** Something to switch on: ungranted on 14+, or a Settings page exists below that. */
-    fun shouldOfferManage(c: Context): Boolean =
+    fun mustOfferManage(c: Context): Boolean =
         if (Build.VERSION.SDK_INT >= 34) !isGranted(c) else alertAccessAvailable(c)
 
     /** Usable: granted on 14+, allowed by default on 13 and lower. Gate features on this. */
-    fun isAllowed(c: Context): Boolean = !shouldOfferManage(c)
+    fun isAllowed(c: Context): Boolean = !mustOfferManage(c)
 
     /** The one place the project asks for the full-screen presentation. */
-    fun attachAlertIntent(builder: NotificationCompat.Builder, target: PendingIntent) {
+    fun linkAlertIntent(builder: NotificationCompat.Builder, target: PendingIntent) {
         builder.setFullScreenIntent(target, true)
     }
 
@@ -72,9 +72,9 @@ object MemoConsent {
      * launch. NO_HISTORY finishes the page as soon as we come back over it, so it never lingers.
      * The return must not trigger an App Open ad.
      */
-    fun openSettings(c: Context) {
+    fun enterSettings(c: Context) {
         CoreOpenSpotBook.skipNextAppOpenAd = true
-        c.logKeyEvent("Reminder_Access_Settings")
+        c.recordKeyEvent("Reminder_Access_Settings")
         val flags = Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS or
             (if (c is Activity) 0 else Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching { c.startActivity(manageIntent(c).addFlags(flags)) }
@@ -89,7 +89,7 @@ object MemoConsent {
     fun returnIntent(c: Context, host: Class<out Activity>): Intent =
         Intent(c, host).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
-    fun shouldShowHint(reason: CuePassMotive): Boolean = reason == CuePassMotive.FREQUENCY_SUPPRESSED
+    fun mustShowHint(reason: CuePassMotive): Boolean = reason == CuePassMotive.FREQUENCY_SUPPRESSED
 
     /**
      * The "Turn on reminders" prompt, in one call. Three gates, in order: `is_feature_prompt`
@@ -115,22 +115,22 @@ object MemoConsent {
         if (!cfg.isFeaturePrompt || !MemoProfile.isCountryAllowed(activity)) {
             onReady?.invoke(CuePassMotive.DISABLED); return
         }
-        if (!shouldOfferManage(activity)) { onReady?.invoke(CuePassMotive.ALREADY_GRANTED); return }
-        if (!CuePortal.shouldShow(activity)) { onReady?.invoke(CuePassMotive.FREQUENCY_SUPPRESSED); return }
+        if (!mustOfferManage(activity)) { onReady?.invoke(CuePassMotive.ALREADY_GRANTED); return }
+        if (!CuePortal.mustShow(activity)) { onReady?.invoke(CuePassMotive.FREQUENCY_SUPPRESSED); return }
 
         val title = cfg.featureTitle.ifBlank { activity.getString(R.string.rem_prompt_title) }
         val desc = describe(activity, cfg.featureDesc, reminderTitle, reminderTime)
         val button = cfg.featureAction.ifBlank { activity.getString(R.string.rem_prompt_action) }
 
-        CuePortal.markShown(activity)
-        activity.logKeyEvent("Reminder_Prompt_Show")
+        CuePortal.flagShown(activity)
+        activity.recordKeyEvent("Reminder_Prompt_Show")
         MemoCueModal.show(
             activity, title, desc, button,
             onDismiss = { onClosed?.invoke() },
             onButton = {
-                activity.logKeyEvent("Reminder_Prompt_Allow")
+                activity.recordKeyEvent("Reminder_Prompt_Allow")
                 val open: () -> Unit = {
-                    openSettings(activity)
+                    enterSettings(activity)
                     MemoConsentSentinel.start(activity, returnTo)
                     armed = true
                     onSettingsOpened?.invoke()
@@ -153,6 +153,6 @@ object MemoConsent {
         if (!armed) return
         armed = false
         MemoConsentSentinel.stop(activity)
-        MemoCueModal.dismissIfShowing()
+        MemoCueModal.retireIfShowing()
     }
 }

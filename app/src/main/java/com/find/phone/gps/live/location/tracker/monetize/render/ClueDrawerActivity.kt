@@ -75,7 +75,7 @@ class ClueDrawerActivity : AppCompatActivity() {
          * in home mode because that is what the home-app list labels it with, where the
          * overlay list uses the longer overlay name.
          */
-        fun applyMode(root: View, mode: String) {
+        fun enactMode(root: View, mode: String) {
             if (mode != MODE_HOME) return
             root.findViewById<TextView>(R.id.coachTitleTv)?.setText(R.string.home_guide_title)
             root.findViewById<TextView>(R.id.coachDescTv)?.setText(R.string.home_guide_desc)
@@ -141,7 +141,7 @@ class ClueDrawerActivity : AppCompatActivity() {
 
         val root = findViewById<View>(R.id.stackMain)
 
-        applyMode(root, mode)
+        enactMode(root, mode)
 
         // Edge-to-edge is forced on Android 15+/16 (targetSdk 37), so the bottom
         // hint card would otherwise draw behind the navigation bar. Pad the root

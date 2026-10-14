@@ -55,10 +55,10 @@ object MentorDrawerPane {
             main.postDelayed({ show(app, mode) }, delayMs)
             return true
         }
-        return showNow(context, mode)
+        return presentNow(context, mode)
     }
 
-    private fun showNow(context: Context, mode: String): Boolean {
+    private fun presentNow(context: Context, mode: String): Boolean {
         val app = context.applicationContext
         if (!Settings.canDrawOverlays(app)) {
             // The one thing that decides whether the card can sit on the system page.
@@ -73,7 +73,7 @@ object MentorDrawerPane {
             val inflated = LayoutInflater.from(app).inflate(R.layout.screen_overlay_guide, null)
             val card = inflated.findViewById<View>(R.id.veilCard)
             (card.parent as? ViewGroup)?.removeView(card)
-            ClueDrawerActivity.applyMode(card, mode)
+            ClueDrawerActivity.enactMode(card, mode)
 
             val params = WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,

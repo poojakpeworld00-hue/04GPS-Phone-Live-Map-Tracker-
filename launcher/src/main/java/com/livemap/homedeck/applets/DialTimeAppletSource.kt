@@ -14,7 +14,7 @@ class DialTimeAppletSource : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
     ) {
-        appWidgetIds.forEach { updateWidget(context, appWidgetManager, it) }
+        appWidgetIds.forEach { reviseWidget(context, appWidgetManager, it) }
     }
 
     override fun onAppWidgetOptionsChanged(
@@ -23,10 +23,10 @@ class DialTimeAppletSource : AppWidgetProvider() {
         appWidgetId: Int,
         newOptions: Bundle?,
     ) {
-        updateWidget(context, appWidgetManager, appWidgetId)
+        reviseWidget(context, appWidgetManager, appWidgetId)
     }
 
-    private fun updateWidget(
+    private fun reviseWidget(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetId: Int,

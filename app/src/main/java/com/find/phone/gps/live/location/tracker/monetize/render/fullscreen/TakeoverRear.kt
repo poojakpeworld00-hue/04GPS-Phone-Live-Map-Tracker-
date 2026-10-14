@@ -12,7 +12,7 @@ import com.find.phone.gps.live.location.tracker.monetize.model.SpotSort
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotTallyBook.interBackCounter
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSeatSpots
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.isNetworkConnected
 
 class TakeoverRear {
@@ -30,7 +30,7 @@ class TakeoverRear {
     // ----------------------------------------------------------------------
     // LOAD GOOGLE INTERSTITIAL (Back Ads)
     // ----------------------------------------------------------------------
-    fun loadBackInterAds(activity: Activity) {
+    fun fetchBackInterAds(activity: Activity) {
         val pref = SpotsLocker.getInstance(activity)
 
         if (!pref.getBoolean("IsAdsON")) {
@@ -75,14 +75,14 @@ class TakeoverRear {
     // ----------------------------------------------------------------------
     // PUBLIC: SHOW BACK INTER AD
     // ----------------------------------------------------------------------
-    fun showBackAds(activity: Activity?, adsClose: () -> Unit) {
-        showBackInternal(activity, adsClose)
+    fun presentBackAds(activity: Activity?, adsClose: () -> Unit) {
+        presentBackInternal(activity, adsClose)
     }
 
     // ----------------------------------------------------------------------
     // INTERNAL SHOW LOGIC (BACK ADS ONLY)
     // ----------------------------------------------------------------------
-    private fun showBackInternal(activity: Activity?, adsClose: () -> Unit) {
+    private fun presentBackInternal(activity: Activity?, adsClose: () -> Unit) {
         val act = activity ?: return adsClose()
         val pref = SpotsLocker.getInstance(act)
         var closedOnce = false
@@ -131,18 +131,18 @@ class TakeoverRear {
             SpotSort.GOOGLE -> {
                 // `Inter_Loader_Ms`: a short loader before a back interstitial that is already loaded.
                 if (googleInterBack != null) {
-                    WholeDisplayWheel.beforeShow(act) { showGoogleBackInter(act, pref, ::safeClose) }
+                    WholeDisplayWheel.beforeShow(act) { presentGoogleBackInter(act, pref, ::safeClose) }
                 } else {
-                    showGoogleBackInter(act, pref, ::safeClose)
+                    presentGoogleBackInter(act, pref, ::safeClose)
                 }
             }
 
             SpotSort.FACEBOOK -> {
-                showFacebookBackInter(
+                presentFacebookBackInter(
                     act,
                     onDismiss = { safeClose("fb_back_dismiss") },
                     onFail = {
-                        showCustomAfterFBFail(act, pref) {
+                        presentCustomAfterFBFail(act, pref) {
                             safeClose("fb_back_fail")
                         }
                     }
@@ -151,7 +151,7 @@ class TakeoverRear {
 
             SpotSort.CUSTOM, SpotSort.UNKNOWN -> {
                 if (pref.getBoolean("IsCustomADS"))
-                    TakeoverStandard.openDirectLink(act) { safeClose("custom_open") }
+                    TakeoverStandard.enterDirectLink(act) { safeClose("custom_open") }
                 else safeClose("custom_disabled")
             }
 
@@ -163,14 +163,14 @@ class TakeoverRear {
     // GOOGLE BACK INTERSTITIAL
     // ----------------------------------------------------------------------
 
-    private fun showGoogleBackInter(
+    private fun presentGoogleBackInter(
         activity: Activity,
         pref: SpotsLocker,
         safeClose: (String) -> Unit
     ) {
         val ad = googleInterBack
         if (ad == null) {
-            return handleGoogleFail(activity, pref, safeClose)
+            return processGoogleFail(activity, pref, safeClose)
         }
         activity.safeLog("google_back_inter_show_attempt")
 
@@ -184,13 +184,13 @@ class TakeoverRear {
                 googleInterBack = null
                 isInterBAckShow = false
                 safeClose("Google_Dismiss")
-                loadBackInterAds(activity)
+                fetchBackInterAds(activity)
             }
 
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
                 googleInterBack = null
-                handleGoogleFail(activity, pref, safeClose)
-                loadBackInterAds(activity)
+                processGoogleFail(activity, pref, safeClose)
+                fetchBackInterAds(activity)
             }
         }
 
@@ -198,29 +198,29 @@ class TakeoverRear {
             ad.show(activity)
         } catch (e: Exception) {
             googleInterBack = null
-            handleGoogleFail(activity, pref, safeClose)
-            loadBackInterAds(activity)
+            processGoogleFail(activity, pref, safeClose)
+            fetchBackInterAds(activity)
         }
     }
 
     // ----------------------------------------------------------------------
     // GOOGLE FAIL → FB or CUSTOM
     // ----------------------------------------------------------------------
-    private fun handleGoogleFail(
+    private fun processGoogleFail(
         activity: Activity,
         pref: SpotsLocker,
         safeClose: (String) -> Unit
     ) {
         if (pref.getBoolean("IsFail_FB")) {
-            showFacebookBackInter(
+            presentFacebookBackInter(
                 activity,
                 onDismiss = { safeClose("fb_dismiss") },
-                onFail = { showCustomAfterFBFail(activity, pref, safeClose) }
+                onFail = { presentCustomAfterFBFail(activity, pref, safeClose) }
             )
 
         } else {
             if (pref.getBoolean("IsCustomADS")) {
-                TakeoverStandard.openDirectLink(activity) { safeClose("google_fail_custom") }
+                TakeoverStandard.enterDirectLink(activity) { safeClose("google_fail_custom") }
             } else safeClose("google_fail_no_fb_no_custom")
         }
     }
@@ -228,7 +228,7 @@ class TakeoverRear {
     // ----------------------------------------------------------------------
     // FACEBOOK — BACK ADS
     // ----------------------------------------------------------------------
-    private fun showFacebookBackInter(
+    private fun presentFacebookBackInter(
         context: Context,
         onDismiss: () -> Unit,
         onFail: () -> Unit
@@ -276,13 +276,13 @@ class TakeoverRear {
         )
     }
 
-    private fun showCustomAfterFBFail(
+    private fun presentCustomAfterFBFail(
         context: Activity,
         pref: SpotsLocker,
         safeClose: (String) -> Unit
     ) {
         if (pref.getBoolean("IsCustomADS"))
-            TakeoverStandard.openDirectLink(context) { safeClose("fb_fail_custom") }
+            TakeoverStandard.enterDirectLink(context) { safeClose("fb_fail_custom") }
         else safeClose("fb_fail_no_custom")
     }
 
@@ -295,7 +295,7 @@ class TakeoverRear {
 //    // ----------------------------------------------------------------------
 //    // OPEN CUSTOM DIRECT LINK
 //    // ----------------------------------------------------------------------
-//    private fun openDirectLink(context: Activity, onClosed: () -> Unit) {
+//    private fun enterDirectLink(context: Activity, onClosed: () -> Unit) {
 //        val url = SpotsLocker.getInstance(context).getString("DirectLink")
 //
 //        if (url.isNullOrEmpty()) {
@@ -317,7 +317,7 @@ class TakeoverRear {
 //            try {
 //                customTab.launchUrl(context, uri)
 //            } catch (e: Exception) {
-//                openInBrowser(context, uri, onClosed)
+//                enterInBrowser(context, uri, onClosed)
 //            }
 //        }
 //    }
@@ -357,7 +357,7 @@ class TakeoverRear {
 //        )
 //    }
 //
-//    private fun openInBrowser(
+//    private fun enterInBrowser(
 //        context: Activity,
 //        uri: Uri,
 //        onClosed: () -> Unit
@@ -412,7 +412,7 @@ class TakeoverRear {
 */
     private fun Context.safeLog(event: String) {
         try {
-            this.logKeyEvent(event)
+            this.recordKeyEvent(event)
         } catch (_: Exception) {
         }
     }

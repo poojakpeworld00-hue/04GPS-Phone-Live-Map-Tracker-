@@ -50,7 +50,7 @@ object HomeRibbonMovement {
         val root = binding.root
         // the card's rounded shape is its outline: clip the corner discs and the sheen to it
         binding.ribbonCardUi.clipToOutline = true
-        if (!shouldAnimate(root.context)) return
+        if (!mustAnimate(root.context)) return
 
         var loops = mutableListOf<Animator>()
         var wasVisible = root.isVisible
@@ -181,7 +181,7 @@ object HomeRibbonMovement {
         start()
     }
 
-    private fun shouldAnimate(context: Context): Boolean = runCatching {
+    private fun mustAnimate(context: Context): Boolean = runCatching {
         Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
     }.getOrDefault(1f) > 0f
 }

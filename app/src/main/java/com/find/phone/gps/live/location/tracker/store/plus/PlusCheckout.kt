@@ -144,7 +144,7 @@ object PlusCheckout {
      * logged, so an id that doesn't match Play Console shows up in logcat). [onLoaded] runs
      * either way, with whatever is known.
      */
-    fun loadDetails(context: Context, plans: List<PlusOffer>, onLoaded: (Map<String, ProductDetails>) -> Unit) {
+    fun fetchDetails(context: Context, plans: List<PlusOffer>, onLoaded: (Map<String, ProductDetails>) -> Unit) {
         connected(context) { c ->
             if (c == null) return@connected onLoaded(HashMap(details))
             val groups = plans.groupBy { if (it.isSubscription) BillingClient.ProductType.SUBS else BillingClient.ProductType.INAPP }
@@ -175,7 +175,7 @@ object PlusCheckout {
      */
     fun prefetchDetails(context: Context) {
         val app = context.applicationContext
-        loadDetails(app, PlusProfile.read(app).plans) {}
+        fetchDetails(app, PlusProfile.read(app).plans) {}
     }
 
     private fun detailsOf(plan: PlusOffer): ProductDetails? = synchronized(details) { details[plan.productId] }

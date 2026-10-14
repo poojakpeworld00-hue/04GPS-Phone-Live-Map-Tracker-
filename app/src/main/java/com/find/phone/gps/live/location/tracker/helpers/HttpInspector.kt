@@ -14,7 +14,7 @@ import okhttp3.OkHttpClient
  * [redact] headers are masked in the recording (the lookup `x-api-key`), so a shared debug build
  * does not hand the key to whoever opens the inspector.
  */
-fun OkHttpClient.Builder.addHttpInspector(vararg redact: String): OkHttpClient.Builder {
+fun OkHttpClient.Builder.appendHttpInspector(vararg redact: String): OkHttpClient.Builder {
     val context = NavTracerCore.appContext
     val collector = ChuckerCollector(
         context = context,

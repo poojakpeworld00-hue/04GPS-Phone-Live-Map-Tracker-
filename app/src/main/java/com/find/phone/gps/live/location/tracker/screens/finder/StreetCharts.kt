@@ -57,7 +57,7 @@ object StreetCharts {
     fun place(map: MapView, report: NumDigest, coarse: Boolean): SectorThrobVeil? {
         val pin = report.pin ?: return null
         val precision = if (coarse && report.precision.zoom > SectorExactness.STATE.zoom) SectorExactness.STATE else report.precision
-        return placeAt(map, pin, precision)
+        return siteAt(map, pin, precision)
     }
 
     /**
@@ -72,7 +72,7 @@ object StreetCharts {
     }
 
     /** Centres [map] on [pin] at [zoom] (default: [precision]'s own), with its pulsing circle. */
-    fun placeAt(map: MapView, pin: TerraTack, precision: SectorExactness, zoom: Double = precision.zoom): SectorThrobVeil {
+    fun siteAt(map: MapView, pin: TerraTack, precision: SectorExactness, zoom: Double = precision.zoom): SectorThrobVeil {
         val point = GeoPoint(pin.lat, pin.lng)
         map.controller.setZoom(zoom)
         map.controller.setCenter(point)

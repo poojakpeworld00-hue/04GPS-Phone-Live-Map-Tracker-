@@ -62,7 +62,7 @@ class HuntCeilingDrawer(
         dialog.behavior.skipCollapsed = true
         dialog.setOnDismissListener { shine?.cancel() }
         dialog.show()
-        startShine()
+        beginShine()
     }
 
     private fun watch() {
@@ -88,7 +88,7 @@ class HuntCeilingDrawer(
     }
 
     /** The light streak sweeping across the gold button (design `shine`). */
-    private fun startShine() {
+    private fun beginShine() {
         if (CraftMovement.animationsDisabled(themed)) {
             binding.lvShine.isVisible = false
             return

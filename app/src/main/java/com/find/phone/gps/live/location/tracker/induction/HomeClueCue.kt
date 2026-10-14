@@ -25,8 +25,8 @@ object HomeClueCue {
     private var pending: Runnable? = null
 
     /** Call immediately after starting the home-app list. */
-    fun showAfterSettings(context: Context) {
-        cancelPending()
+    fun presentAfterSettings(context: Context) {
+        abortPending()
         val app = context.applicationContext
         val task = Runnable {
             pending = null
@@ -44,11 +44,11 @@ object HomeClueCue {
      * comes straight back.
      */
     fun dismiss() {
-        cancelPending()
+        abortPending()
         PartClueActivity.dismiss()
     }
 
-    private fun cancelPending() {
+    private fun abortPending() {
         pending?.let { main.removeCallbacks(it) }
         pending = null
     }

@@ -24,7 +24,7 @@ class StashedBadgesDeck : HomeBaseDeck(), RefreshRecyclerViewListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-        updateIcons()
+        reviseIcons()
 
         setupEdgeToEdge(padBottomSystem = listOf(binding.mngHiddenIconsListUi))
         setupMaterialScrollListener(binding.mngHiddenIconsListUi, binding.mngHiddenIconsAppbarUi)
@@ -38,7 +38,7 @@ class StashedBadgesDeck : HomeBaseDeck(), RefreshRecyclerViewListener {
         setupTopAppBar(binding.mngHiddenIconsAppbarUi, NavigationIcon.Arrow)
     }
 
-    private fun updateIcons() {
+    private fun reviseIcons() {
         ensureBackgroundThread {
             val hiddenIcons = hiddenIconsDB.getHiddenIcons().sortedWith(
                 compareBy({
@@ -75,7 +75,7 @@ class StashedBadgesDeck : HomeBaseDeck(), RefreshRecyclerViewListener {
 
             val iconsToRemove = hiddenIcons.filter { it.drawable == null }
             if (iconsToRemove.isNotEmpty()) {
-                hiddenIconsDB.removeHiddenIcons(iconsToRemove)
+                hiddenIconsDB.dropHiddenIcons(iconsToRemove)
                 hiddenIcons.removeAll(iconsToRemove)
             }
 
@@ -89,6 +89,6 @@ class StashedBadgesDeck : HomeBaseDeck(), RefreshRecyclerViewListener {
     }
 
     override fun refreshItems() {
-        updateIcons()
+        reviseIcons()
     }
 }

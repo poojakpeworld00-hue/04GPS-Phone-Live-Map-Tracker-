@@ -25,7 +25,7 @@ class RetitleElementBasket(val activity: Activity, val item: MainDisplayLatticeE
                         val newTitle = binding.lvRenameItemEdittextUi.value
                         if (newTitle.isNotEmpty()) {
                             ensureBackgroundThread {
-                                val result = activity.homeScreenGridItemsDB.updateItemTitle(newTitle, item.id!!)
+                                val result = activity.homeScreenGridItemsDB.reviseItemTitle(newTitle, item.id!!)
                                 if (result == 1) {
                                     callback()
                                     alertDialog.dismiss()

@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
  * Three knobs (see code):
  *  - shown ONCE  -> [LockerBook.isOverlayTutorialShown]
  *  - lasts 3 sec -> [AUTO_DISMISS_MS]
- *  - the HAND    -> [startHandHint] animating R.id.imgHand
+ *  - the HAND    -> [beginHandHint] animating R.id.imgHand
  *
  * It never navigates; [PolicyPortalActivity] owns the flow. This screen just finishes
  * itself: on grant detected, after the timeout, or on tap.
@@ -56,7 +56,7 @@ class DriftPortalActivity : AppCompatActivity() {
         // Tapping anywhere outside the card dismisses the hint.
         findViewById<View>(R.id.stackMain)?.setOnClickListener { finish() }
 
-        startHandHint()
+        beginHandHint()
 
         // Auto-dismiss after the tutorial duration.
         autoDismissJob = lifecycleScope.launch {
@@ -92,7 +92,7 @@ class DriftPortalActivity : AppCompatActivity() {
     }
 
     /** Looping "tap" gesture: the hand nudges up into the toggle and shrinks. */
-    private fun startHandHint() {
+    private fun beginHandHint() {
         val hand = findViewById<ImageView>(R.id.imgHand) ?: return
         val up = dp(2f)
         val down = dp(12f)

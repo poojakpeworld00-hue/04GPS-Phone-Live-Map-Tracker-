@@ -66,7 +66,7 @@ class HomeCasingFragment : Fragment(), HomeDeckMatter, MainHubFragment.MenuHost 
                 activity,
                 binding.sliderMenu,
                 requestPhonePermission = { phonePermission.launch(it) },
-            ) { closeMenu() }.also { it.bind() }
+            ) { shutMenu() }.also { it.bind() }
         }
     }
 
@@ -81,7 +81,7 @@ class HomeCasingFragment : Fragment(), HomeDeckMatter, MainHubFragment.MenuHost 
         _binding?.deckDrawer?.openDrawer(GravityCompat.START)
     }
 
-    private fun closeMenu() {
+    private fun shutMenu() {
         _binding?.deckDrawer?.closeDrawer(GravityCompat.START)
     }
 
@@ -102,14 +102,14 @@ class HomeCasingFragment : Fragment(), HomeDeckMatter, MainHubFragment.MenuHost 
         drawerMenu?.refresh()
         // First-run priming only once the user can see the panel, and never during onboarding.
         if (HomeStream.wasOnboardingCompleted(requireContext())) {
-            host?.homeShellController?.startFirstRunPriming()
+            host?.homeShellController?.beginFirstRunPriming()
         }
     }
 
     /** Back closes the drawer first; with it shut, the panel closes. */
     override fun handleBack(): Boolean {
         if (!isMenuOpen) return false
-        closeMenu()
+        shutMenu()
         return true
     }
 }

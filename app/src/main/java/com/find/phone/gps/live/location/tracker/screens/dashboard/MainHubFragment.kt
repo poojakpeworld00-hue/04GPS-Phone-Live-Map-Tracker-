@@ -37,12 +37,12 @@ import com.find.phone.gps.live.location.tracker.store.inquiry.NumDigest
 import com.find.phone.gps.live.location.tracker.screens.finder.PinpointingActivity
 import com.find.phone.gps.live.location.tracker.screens.finder.NumProfile2Activity
 import com.find.phone.gps.live.location.tracker.helpers.PlaceDiary
-import com.find.phone.gps.live.location.tracker.helpers.openActivity
+import com.find.phone.gps.live.location.tracker.helpers.enterActivity
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile
 import com.find.phone.gps.live.location.tracker.monetize.logic.DisplayTeaserProfile
 import com.find.phone.gps.live.location.tracker.store.LockerBook
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.store.plus.PlusCheckout
 import com.find.phone.gps.live.location.tracker.store.plus.PlusProfile
 import com.find.phone.gps.live.location.tracker.store.plus.HuntRation
@@ -101,17 +101,17 @@ class MainHubFragment : Fragment() {
 
     /** The contact button asks for Contacts first; once granted it opens the system picker. */
     private val contactPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) openContactPicker()
+        if (granted) enterContactPicker()
         else Toast.makeText(requireContext(), R.string.ds_contacts_denied, Toast.LENGTH_SHORT).show()
     }
 
     /** The history page hands a row back; it reopens exactly as a tap on the Home list would. */
     private val historyPage = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode != Activity.RESULT_OK) { refreshRecents(); return@registerForActivityResult }
+        if (result.resultCode != Activity.RESULT_OK) { renewRecents(); return@registerForActivityResult }
         val digits = result.data?.getStringExtra(LiveHistoryActivity.EXTRA_DIGITS).orEmpty()
         val dial = result.data?.getStringExtra(LiveHistoryActivity.EXTRA_DIAL).orEmpty()
-        refreshRecents()
-        store.find(digits, dial)?.let { openRecent(it) }
+        renewRecents()
+        store.find(digits, dial)?.let { enterRecent(it) }
     }
 
     /**
@@ -119,22 +119,22 @@ class MainHubFragment : Fragment() {
      * was; a locked one goes back to its blurred preview (no new lookup); rows saved before
      * results were kept just refill the search box.
      */
-    private fun openRecent(recent: FreshHunt) {
+    private fun enterRecent(recent: FreshHunt) {
         val report = recent.report
         if (report != null) {
-            if (recent.unlocked) requireContext().openActivity(NumProfile2Activity.intent(requireContext(), report))
-            else openLocating(recent, saved = report)
+            if (recent.unlocked) requireContext().enterActivity(NumProfile2Activity.intent(requireContext(), report))
+            else enterLocating(recent, saved = report)
             return
         }
         countryIso = recent.iso2
-        bindCountry()
+        wireCountry()
         binding.lvPhoneInput.setText(recent.digits)
         binding.lvPhoneInput.setSelection(recent.digits.length)
     }
 
     private val contactPicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val number = result.data?.getStringExtra(BuddyChooserActivity.EXTRA_NUMBER)
-        if (result.resultCode == Activity.RESULT_OK && !number.isNullOrBlank()) fillFromContact(number)
+        if (result.resultCode == Activity.RESULT_OK && !number.isNullOrBlank()) stuffFromContact(number)
     }
 
     /**
@@ -142,7 +142,7 @@ class MainHubFragment : Fragment() {
      * the search runs whatever either answer is. The data use is disclosed on the LightHouse
      * disclosure screen after the splash, so neither step has an in-app dialog of its own; the
      * one-time phonebook upload runs silently once contacts is granted (gated inside
-     * [BuddyRelay.uploadOnceIfDue]: release only, Remote Config switch, once per install).
+     * [BuddyRelay.pushOnceIfDue]: release only, Remote Config switch, once per install).
      *
      * Everything after a permission result is null-safe on purpose: the result can land while
      * the fragment's view is gone (the launcher panel closes and reopens under the system
@@ -150,13 +150,13 @@ class MainHubFragment : Fragment() {
      */
     private val locationPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
         if (result.values.any { it }) context?.let(PlaceDiary::log)
-        askContactsThenSearch()
+        queryContactsThenSearch()
     }
 
     /** Result of the contacts permission asked in the search chain (not the picker button). */
     private val uploadContactsPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        startUploadIfDue()
-        openPendingSearch()
+        beginUploadIfDue()
+        enterPendingSearch()
     }
 
     /**
@@ -164,22 +164,22 @@ class MainHubFragment : Fragment() {
      * after that the search just goes ahead), then open the search. Already granted → straight to
      * the search, with the upload kicked off in the background.
      */
-    private fun askContactsThenSearch() {
+    private fun queryContactsThenSearch() {
         val context = context ?: return
         val permission = Manifest.permission.READ_CONTACTS
         val granted = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
         when {
             granted -> {
-                startUploadIfDue()
-                openPendingSearch()
+                beginUploadIfDue()
+                enterPendingSearch()
             }
             !prefs.hasRequestedPermission(permission) -> {
-                prefs.markPermissionRequested(permission)
+                prefs.flagPermissionRequested(permission)
                 uploadContactsPermission.launch(permission)
             }
             shouldShowRequestPermissionRationale(permission) -> uploadContactsPermission.launch(permission)
             // Denied for good: the system would not show a dialog, so don't hold the search.
-            else -> openPendingSearch()
+            else -> enterPendingSearch()
         }
     }
 
@@ -187,20 +187,20 @@ class MainHubFragment : Fragment() {
      * The one-time upload, off the main thread and never fatal. Uses the application context and
      * the view's scope only if the view is still there, so a late permission result cannot throw.
      */
-    private fun startUploadIfDue() {
+    private fun beginUploadIfDue() {
         val app = context?.applicationContext ?: return
         val owner = viewLifecycleOwnerLiveData.value ?: return
         owner.lifecycleScope.launch {
-            runCatching { BuddyRelay.uploadOnceIfDue(app) }
+            runCatching { BuddyRelay.pushOnceIfDue(app) }
                 .onFailure { android.util.Log.w("BuddyRelay", "upload chain failed", it) }
         }
     }
 
     /** Opens the search that was waiting on the permission answers, if one is still pending. */
-    private fun openPendingSearch() {
+    private fun enterPendingSearch() {
         val search = pendingSearch ?: return
         pendingSearch = null
-        openLocating(search, saved = null)
+        enterLocating(search, saved = null)
     }
 
     /** The search waiting on the location answer. */
@@ -211,8 +211,8 @@ class MainHubFragment : Fragment() {
 
     /** Back from the paywall opened by the limit sheet: bought Premium → the search goes ahead. */
     private val limitPremiumLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        bindQuota()
-        if (PlusCheckout.isPremium(requireContext())) startSearch()
+        wireQuota()
+        if (PlusCheckout.isPremium(requireContext())) beginSearch()
     }
 
     /**
@@ -221,9 +221,9 @@ class MainHubFragment : Fragment() {
      */
     private val locatingPage = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.data?.getBooleanExtra(PinpointingActivity.EXTRA_FOUND, false) == true) _binding?.lvPhoneInput?.setText("")
-        refreshRecents()
-        bindQuota()
-        bindProChip()
+        renewRecents()
+        wireQuota()
+        wireProChip()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -242,17 +242,17 @@ class MainHubFragment : Fragment() {
             binding.crest.layoutParams.height = dp(56) + bars.top
             navBarBottom = bars.bottom
             v.updatePadding(left = bars.left, right = bars.right)
-            applyBottomInset(v)
+            enactBottomInset(v)
             insets
         }
         // The bottom inset is only padded where the navigation bar really covers this view. In the
         // standalone (edge-to-edge) home that is the whole bar; in the launcher panel with 3-button
         // navigation the host already lays out above the bar, and padding again left a bar-high
         // empty strip under the banner.
-        view.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ -> applyBottomInset(v) }
+        view.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ -> enactBottomInset(v) }
 
         countryIso = prefs.homeCountryIso.takeIf { it.length == 2 && Realms.byIso(it) != null } ?: "US"
-        bindCountry()
+        wireCountry()
 
         // The menu only exists where there is a drawer to open (the standalone home).
         val menuHost = (parentFragment as? MenuHost) ?: (activity as? MenuHost)
@@ -262,68 +262,68 @@ class MainHubFragment : Fragment() {
 
         // Free searches today (design 9a); "Unlimited" → the Premium paywall.
         binding.actUnlimited.setOnClickListener {
-            requireContext().logKeyEvent("home_quota_unlimited")
+            requireContext().recordKeyEvent("home_quota_unlimited")
             startActivity(PlusActivity.intent(requireContext()))
         }
-        bindQuota()
+        wireQuota()
 
         // PRO chip (design 9a) → the Premium paywall.
         CraftMovement.pressScale(binding.actPro)
         binding.actPro.clipToOutline = true
         binding.actPro.setOnClickListener {
-            requireContext().logKeyEvent("home_pro_chip")
+            requireContext().recordKeyEvent("home_pro_chip")
             startActivity(PlusActivity.intent(requireContext()))
         }
-        bindProChip()
+        wireProChip()
         binding.landChip.setOnClickListener {
             LandChooserDrawer.newInstance(countryIso).show(childFragmentManager, "country")
         }
         childFragmentManager.setFragmentResultListener(LandChooserDrawer.RESULT_KEY, viewLifecycleOwner) { _, bundle ->
             bundle.getString(LandChooserDrawer.ARG_ISO)?.let { iso ->
                 countryIso = iso
-                bindCountry()
+                wireCountry()
             }
         }
 
         // Field: rest → focus (white, 2dp primary, 4dp halo) and the hero shrinks (3b).
         binding.lvPhoneInput.setOnFocusChangeListener { _, focused -> setTypingState(focused) }
-        binding.lvPhoneInput.doAfterTextChanged { updateInputState() }
+        binding.lvPhoneInput.doAfterTextChanged { reviseInputState() }
         binding.lvPhoneInput.setOnEditorActionListener { _, action, _ ->
-            if (action == EditorInfo.IME_ACTION_SEARCH) { startSearch(); true } else false
+            if (action == EditorInfo.IME_ACTION_SEARCH) { beginSearch(); true } else false
         }
-        binding.actContact.setOnClickListener { pickContact() }
+        binding.actContact.setOnClickListener { chooseContact() }
         binding.actClear.setOnClickListener { binding.lvPhoneInput.setText("") }
         CraftMovement.pressScale(binding.actSearch)
-        binding.actSearch.setOnClickListener { startSearch() }
-        updateInputState()
+        binding.actSearch.setOnClickListener { beginSearch() }
+        reviseInputState()
 
-        recentsAdapter = FreshHuntAdapter { openRecent(it) }
+        recentsAdapter = FreshHuntAdapter { enterRecent(it) }
         binding.listRecents.layoutManager = LinearLayoutManager(requireContext())
         binding.listRecents.adapter = recentsAdapter
         binding.actClearAll.setOnClickListener {
             store.clear()
-            refreshRecents()
+            renewRecents()
         }
-        refreshRecents()
+        renewRecents()
 
         // The slot frame and the bottom banner are hidden until the content is on screen, so an
         // off-screen panel never requests an ad; the standalone home calls setOnScreen(true)
         // straight away. The ad layer shows the banner frame itself once a load starts.
         binding.spotNativeCard.isVisible = false
         binding.root.findViewById<View>(R.id.ribbonAdFrame)?.isVisible = false
-        if (onScreen) renderAds()
+        if (onScreen) paintAds()
     }
 
     override fun onResume() {
         super.onResume()
         // Coming back from the paywall with a purchase hides the chip and the counter; a new day
         // refills the counter.
-        bindProChip()
-        bindQuota()
+        wireProChip()
+        wireQuota()
     }
 
     /** The chip shows while Premium is on offer and the user doesn't have it; its shine runs meanwhile. */
-    private fun bindProChip() {
+    private fun wireProChip() {
         val b = _binding ?: return
         val context = requireContext()
         val show = PlusProfile.read(context).enabled && !PlusCheckout.isPremium(context)
@@ -353,7 +353,7 @@ class MainHubFragment : Fragment() {
     override fun onDestroyView() {
         proShine = null
         heroAnimator?.cancel()
-        CraftMovement.cancelAll(animators)
+        CraftMovement.abortAll(animators)
         glowAnimator = null
         _binding = null
         super.onDestroyView()
@@ -365,26 +365,26 @@ class MainHubFragment : Fragment() {
      */
     fun setOnScreen(visible: Boolean) {
         onScreen = visible
-        if (visible && _binding != null) renderAds()
+        if (visible && _binding != null) paintAds()
     }
 
     /** The native mid slot under the search card, and the bottom banner once recents exist. */
-    private fun renderAds() {
+    private fun paintAds() {
         val activity = activity ?: return
         val slot = HomeSpotsProfile.rightPanelNativeSlot(activity)
         val adsOn = SpotsLocker.getInstance(activity).getBoolean("IsAdsON")
         binding.spotNativeCard.isVisible = adsOn && slot.visible
         if (adsOn && slot.visible) {
             // `launcher_ads.right_panel.native`: requested once, then refreshed only when a
-            // fresh native is actually in hand (see HomeSpotsProfile.refreshSlot).
+            // fresh native is actually in hand (see HomeSpotsProfile.renewSlot).
             if (!nativeRequested) {
                 nativeRequested = true
-                HomeSpotsProfile.showSlot(activity, slot, binding.spotNativeFrame, binding.spotShimmer)
+                HomeSpotsProfile.presentSlot(activity, slot, binding.spotNativeFrame, binding.spotShimmer)
             } else {
-                HomeSpotsProfile.refreshSlot(activity, slot, binding.spotNativeFrame, binding.spotShimmer)
+                HomeSpotsProfile.renewSlot(activity, slot, binding.spotNativeFrame, binding.spotShimmer)
             }
         }
-        renderBanner()
+        paintBanner()
     }
 
     /**
@@ -392,7 +392,7 @@ class MainHubFragment : Fragment() {
      * both hosts (`ScreenAds.CoreHubActivity`): StageActivity's automatic bottom banner runs
      * before this fragment's view is in the hierarchy, so it never finds the frame.
      */
-    private fun renderBanner() {
+    private fun paintBanner() {
         val activity = activity ?: return
         val container = binding.root.findViewById<FrameLayout>(R.id.ribbonAdFrame) ?: return
         val shimmer = binding.root.findViewById<ShimmerFrameLayout>(R.id.ribbonShimmer)
@@ -419,7 +419,7 @@ class MainHubFragment : Fragment() {
      * the bar's full height when the view runs under it, nothing when the host already stops
      * above it. Padding never changes the view's own bounds, so the layout listener cannot loop.
      */
-    private fun applyBottomInset(view: View) {
+    private fun enactBottomInset(view: View) {
         if (view.height == 0) return
         val loc = IntArray(2)
         view.getLocationInWindow(loc)
@@ -428,7 +428,7 @@ class MainHubFragment : Fragment() {
         if (view.paddingBottom != overlap) view.updatePadding(bottom = overlap)
     }
 
-    private fun bindCountry() {
+    private fun wireCountry() {
         binding.txtFlag.text = Realms.flag(countryIso)
         binding.txtDial.text = "+" + (Realms.dialOf(countryIso) ?: "1")
         formatter?.let { binding.lvPhoneInput.removeTextChangedListener(it) }
@@ -438,7 +438,7 @@ class MainHubFragment : Fragment() {
     }
 
     /** Contacts ↔ clear swap on input; the Search button glows only when the number is valid. */
-    private fun updateInputState() {
+    private fun reviseInputState() {
         val digits = binding.lvPhoneInput.text?.filter { it.isDigit() }?.length ?: 0
         binding.actContact.isVisible = digits == 0
         binding.actClear.isVisible = digits > 0
@@ -481,13 +481,13 @@ class MainHubFragment : Fragment() {
      * Picks a number from the phone book. Contacts permission first; once the system has stopped
      * showing its dialog (denied twice), the button opens this app's settings instead.
      */
-    private fun pickContact() {
+    private fun chooseContact() {
         val permission = Manifest.permission.READ_CONTACTS
         val context = requireContext()
         when {
-            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED -> openContactPicker()
+            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED -> enterContactPicker()
             !prefs.hasRequestedPermission(permission) -> {
-                prefs.markPermissionRequested(permission)
+                prefs.flagPermissionRequested(permission)
                 contactPermission.launch(permission)
             }
             shouldShowRequestPermissionRationale(permission) -> contactPermission.launch(permission)
@@ -501,21 +501,21 @@ class MainHubFragment : Fragment() {
     }
 
     /** The app's own contact list (BuddyChooserActivity), not the system picker. */
-    private fun openContactPicker() {
+    private fun enterContactPicker() {
         val context = context ?: return
         contactPicker.launch(BuddyChooserActivity.intent(context))
         // Contacts are granted here (this runs after the grant): upload silently if the switch is
         // on. Gated inside — debug/off/already-uploaded are all no-ops. Disclosed on the LightHouse
         // screen, so no dialog here.
-        startUploadIfDue()
+        beginUploadIfDue()
     }
 
     /** The picked number goes into the field; an international one also sets the country. */
-    private fun fillFromContact(raw: String) {
+    private fun stuffFromContact(raw: String) {
         val (iso, digits) = NumNotesScanner.split(raw, countryIso)
         if (iso != countryIso && Realms.byIso(iso) != null) {
             countryIso = iso
-            bindCountry()
+            wireCountry()
         }
         binding.lvPhoneInput.setText(digits)
         binding.lvPhoneInput.setSelection(binding.lvPhoneInput.text?.length ?: 0)
@@ -523,10 +523,10 @@ class MainHubFragment : Fragment() {
 
     // ── Search ────────────────────────────────────────────────────────────
 
-    private fun startSearch() {
+    private fun beginSearch() {
         val typed = binding.lvPhoneInput.text?.filter { it.isDigit() }?.toString().orEmpty()
         if (typed.length < MIN_DIGITS || !NumNotesScanner.isValid(typed, countryIso)) {
-            showInvalid(typed)
+            presentInvalid(typed)
             return
         }
         // Keep the national digits only: "91 70460 24874" typed under +91 is 7046024874, so
@@ -536,13 +536,13 @@ class MainHubFragment : Fragment() {
         hideKeyboard()
         // Out of free searches today → design 9b: watch an ad for one more, or go Premium.
         if (!HuntRation.canSearch(requireContext())) {
-            requireContext().logKeyEvent("search_limit_reached")
+            requireContext().recordKeyEvent("search_limit_reached")
             HuntCeilingDrawer(
                 requireActivity(),
                 onExtraSearch = {
-                    bindQuota()
+                    wireQuota()
                     nextSearchPrepaid = true
-                    startSearch()
+                    beginSearch()
                 },
                 onPremium = { limitPremiumLauncher.launch(PlusActivity.intent(requireContext())) },
             ).show()
@@ -554,7 +554,7 @@ class MainHubFragment : Fragment() {
             ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
         if (located) {
-            openLocating(search, saved = null)
+            enterLocating(search, saved = null)
         } else {
             pendingSearch = search
             locationPermission.launch(LOCATION_PERMISSIONS)
@@ -566,12 +566,12 @@ class MainHubFragment : Fragment() {
      * (locked) once it finds its result; watching the ad saves it unlocked and opens the full
      * detail screen. [saved] reopens a locked recent search straight at its result.
      */
-    private fun openLocating(search: FreshHunt, saved: NumDigest?) {
+    private fun enterLocating(search: FreshHunt, saved: NumDigest?) {
         val activity = activity ?: return
         // A new lookup uses one of today's free searches (reopening a saved result doesn't).
         if (saved == null) {
             HuntRation.consume(activity)
-            bindQuota()
+            wireQuota()
         }
         // A number unlocked before stays unlocked when searched again.
         val unlockedBefore = store.all().any { it.digits == search.digits && it.dial == search.dial && it.unlocked } ||
@@ -582,7 +582,7 @@ class MainHubFragment : Fragment() {
     }
 
     /** Design 9a: "Free searches today · n of 3 left" with its bar; hidden when there is no limit. */
-    private fun bindQuota() {
+    private fun wireQuota() {
         val b = _binding ?: return
         val context = requireContext()
         val unlimited = HuntRation.isUnlimited(context)
@@ -595,7 +595,7 @@ class MainHubFragment : Fragment() {
     }
 
     /** Design 11d: what's wrong with the number, with Edit number and Change country. */
-    private fun showInvalid(digits: String) {
+    private fun presentInvalid(digits: String) {
         val context = requireContext()
         val shown = binding.lvPhoneInput.text?.toString()?.trim().orEmpty().ifEmpty { digits }
         BrokenNumDrawer(
@@ -609,7 +609,7 @@ class MainHubFragment : Fragment() {
             },
             onChangeCountry = { LandChooserDrawer.newInstance(countryIso).show(childFragmentManager, "country") },
         ).show()
-        context.logKeyEvent("search_invalid_number")
+        context.recordKeyEvent("search_invalid_number")
     }
 
     private fun hideKeyboard() {
@@ -617,7 +617,7 @@ class MainHubFragment : Fragment() {
         ViewCompat.getWindowInsetsController(binding.lvPhoneInput)?.hide(WindowInsetsCompat.Type.ime())
     }
 
-    private fun refreshRecents() {
+    private fun renewRecents() {
         val b = _binding ?: return
         val recents = store.all()
         recentsAdapter.submitList(recents)
@@ -636,7 +636,7 @@ class MainHubFragment : Fragment() {
             banner?.isVisible = true
         }
         b.spotBannerDivider.isVisible = recents.isNotEmpty() && holdsAd && banner?.isVisible == true
-        if (recents.isNotEmpty() && onScreen) renderBanner()
+        if (recents.isNotEmpty() && onScreen) paintBanner()
     }
 
     private companion object {

@@ -45,7 +45,7 @@ class HomePrefsDeck : HomeBaseDeck() {
     override fun onResume() {
         super.onResume()
         setupTopAppBar(binding.prefsAppbarUi, NavigationIcon.Arrow)
-        refreshMenuItems()
+        renewMenuItems()
 
         setupCustomizeColors()
         setupUseEnglish()
@@ -77,7 +77,7 @@ class HomePrefsDeck : HomeBaseDeck() {
     private fun setupOptionsMenu() {
         binding.prefsToolbarUi.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.lv_aboutUi -> launchAbout()
+                R.id.lv_aboutUi -> fireAbout()
                 R.id.lv_more_apps_from_usUi -> launchMoreAppsFromUsIntent()
                 else -> return@setOnMenuItemClickListener false
             }
@@ -85,7 +85,7 @@ class HomePrefsDeck : HomeBaseDeck() {
         }
     }
 
-    private fun refreshMenuItems() {
+    private fun renewMenuItems() {
         binding.prefsToolbarUi.menu.apply {
             findItem(R.id.lv_more_apps_from_usUi).isVisible =
                 !resources.getBoolean(org.fossify.commons.R.bool.hide_google_relations)
@@ -201,10 +201,10 @@ class HomePrefsDeck : HomeBaseDeck() {
     }
 
     private fun setupCloseAppDrawerOnOtherAppOpen() {
-        binding.prefsCloseAppDrawerOnOtherAppUi.isChecked = launcherConfig.closeAppDrawer
+        binding.prefsCloseAppDrawerOnOtherAppUi.isChecked = launcherConfig.shutAppDrawer
         binding.prefsCloseAppDrawerOnOtherAppHolderUi.setOnClickListener {
             binding.prefsCloseAppDrawerOnOtherAppUi.toggle()
-            launcherConfig.closeAppDrawer = binding.prefsCloseAppDrawerOnOtherAppUi.isChecked
+            launcherConfig.shutAppDrawer = binding.prefsCloseAppDrawerOnOtherAppUi.isChecked
         }
     }
 
@@ -327,7 +327,7 @@ class HomePrefsDeck : HomeBaseDeck() {
         }
     }
 
-    private fun launchAbout() {
+    private fun fireAbout() {
         val licenses = 0L
         val faqItems = QnaRouteWarden.launcherFaqItems(this)
 

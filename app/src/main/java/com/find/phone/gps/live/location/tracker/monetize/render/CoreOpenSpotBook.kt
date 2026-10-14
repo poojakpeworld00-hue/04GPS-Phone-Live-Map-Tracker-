@@ -13,7 +13,7 @@ import io.lighthouse.push.extended.LightHouseRichPush
 import com.find.phone.gps.live.location.tracker.monetize.model.SpotSort
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotIncomeGauge
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverRear
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverStandard
 import com.find.phone.gps.live.location.tracker.BuildConfig
@@ -47,7 +47,7 @@ object CoreOpenSpotBook {
         skipNextAppOpenAd = false
     }
 
-    fun consumeExpectReturnAd(): Boolean {
+    fun absorbExpectReturnAd(): Boolean {
         val v = expectReturnAd
         expectReturnAd = false
         return v
@@ -81,7 +81,7 @@ object CoreOpenSpotBook {
                             override fun onAdLoaded(ad: AppOpenAd) {
 
                                 try {
-                                    context.logKeyEvent("appopen_ad_loaded")
+                                    context.recordKeyEvent("appopen_ad_loaded")
                                 } catch (e: Exception) {
                                 }
 
@@ -96,7 +96,7 @@ object CoreOpenSpotBook {
                                 )
 
                                 try {
-                                    context.logKeyEvent("appopen_ad_fail")
+                                    context.recordKeyEvent("appopen_ad_fail")
                                 } catch (e: Exception) {
                                 }
                                 isLoadingAd = false
@@ -110,7 +110,7 @@ object CoreOpenSpotBook {
         }
     }
 
-    fun showAdIfAvailable(
+    fun presentAdIfAvailable(
         activity: Activity, onShowAdCompleteListener: OnShowAdCompleteListener
     ) {
         if (!SpotsLocker.getInstance(activity).getBoolean("IsAdsON")) {
@@ -167,7 +167,7 @@ object CoreOpenSpotBook {
                 )
 
                 try {
-                    activity.logKeyEvent("appopen_ad_dismissed")
+                    activity.recordKeyEvent("appopen_ad_dismissed")
                 } catch (_: Exception) {
                 }
 
@@ -185,7 +185,7 @@ object CoreOpenSpotBook {
                     LOG_TAG, adError.message
                 )
                 try {
-                    activity.logKeyEvent("appopen_ad_fail")
+                    activity.recordKeyEvent("appopen_ad_fail")
                 } catch (_: Exception) {
                 }
                 appOpenAd = null
@@ -204,12 +204,12 @@ object CoreOpenSpotBook {
         }
 
         // Log load
-        activity.logKeyEvent("appopen_ad_shown")
+        activity.recordKeyEvent("appopen_ad_shown")
 
         if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(activity)
 
         appOpenAd!!.setOnPaidEventListener {
-            SpotIncomeGauge.logPaidEvent(activity, it)
+            SpotIncomeGauge.recordPaidEvent(activity, it)
         }
 
         isShowingAd = true

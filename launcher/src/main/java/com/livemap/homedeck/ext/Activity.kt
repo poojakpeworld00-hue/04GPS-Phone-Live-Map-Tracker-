@@ -53,7 +53,7 @@ import com.livemap.homedeck.entities.MainDisplayLatticeElement
  * interaction. The window still draws edge to edge behind a transparent bar — the *space* is given
  * back by the insets padding each screen already applies, not here.
  */
-fun Activity.restoreNavigationBar() {
+fun Activity.recoverNavigationBar() {
     val decorView = window.decorView
 
     @Suppress("DEPRECATION")
@@ -80,12 +80,12 @@ fun Activity.restoreNavigationBar() {
  * [gesture] names where the tap came from (`HomeSpotsProfile.HOME_LAUNCH` / `DRAWER_LAUNCH`), so the
  * host can pace each source on its own; the default is the shared `APP_LAUNCH`.
  */
-fun Activity.launchApp(
+fun Activity.fireApp(
     packageName: String,
     activityName: String,
     gesture: String = com.livemap.homedeck.teaser.HomeSpotsProfile.APP_LAUNCH,
 ) {
-    if (packageName == applicationContext.packageName) return launchAppNow(packageName, activityName)
+    if (packageName == applicationContext.packageName) return fireAppNow(packageName, activityName)
     com.livemap.homedeck.contract.HomeBook.launchingPackage = packageName
     com.livemap.homedeck.teaser.HomeTeaserDirector.run(this, gesture) {
         // Just as the app opens, so the host can arm the ad it shows on the way back.
@@ -93,13 +93,13 @@ fun Activity.launchApp(
         com.livemap.homedeck.contract.HomeBook.bridge.onAppLaunched(packageName)
         // A direct-link ad can outlive this launcher instance (recreated while the user was on the
         // landing page); the tap still has to open the app, so launch from the application then.
-        if (isDestroyed) applicationContext.launchAppFromContext(packageName, activityName)
-        else launchAppNow(packageName, activityName)
+        if (isDestroyed) applicationContext.fireAppFromContext(packageName, activityName)
+        else fireAppNow(packageName, activityName)
     }
 }
 
-/** [launchAppNow] without an Activity: a new task from the application context. */
-private fun Context.launchAppFromContext(packageName: String, activityName: String) {
+/** [fireAppNow] without an Activity: a new task from the application context. */
+private fun Context.fireAppFromContext(packageName: String, activityName: String) {
     runCatching {
         startActivity(
             Intent(Intent.ACTION_MAIN).apply {
@@ -116,7 +116,7 @@ private fun Context.launchAppFromContext(packageName: String, activityName: Stri
 }
 
 /** The bare launch, with no promo. */
-fun Activity.launchAppNow(packageName: String, activityName: String) {
+fun Activity.fireAppNow(packageName: String, activityName: String) {
     try {
         Intent(Intent.ACTION_MAIN).apply {
             addCategory(Intent.CATEGORY_LAUNCHER)
@@ -137,11 +137,11 @@ fun Activity.launchAppNow(packageName: String, activityName: String) {
     // Every launch from the home screen, dock, drawer and search passes here: the launcher's own
     // "most / recently opened" record, which the drawer's search suggests from. Local only.
     ensureBackgroundThread {
-        runCatching { appUsageDB.recordLaunch(packageName, activityName) }
+        runCatching { appUsageDB.noteLaunch(packageName, activityName) }
     }
 }
 
-fun Activity.launchAppInfo(packageName: String) {
+fun Activity.fireAppInfo(packageName: String) {
     Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
         data = Uri.fromParts("package", packageName, null)
         startActivity(this)
@@ -153,9 +153,9 @@ fun Activity.launchAppInfo(packageName: String) {
  * confirmation instead of a settings list), the generic default-apps settings, then plain
  * Settings. Used by the long-press "Set as default" menu item and by onboarding.
  */
-fun Activity.requestSetAsDefaultLauncher() {
+fun Activity.demandSetAsDefaultLauncher() {
     // Which launcher is being replaced can only be read while it still holds the role.
-    HomeThumbprint.ensureCaptured(this)
+    HomeThumbprint.guaranteeCaptured(this)
     // Paired with whether the surface is the role *dialog*, because the hint below must not be
     // raised over that one — see the loop.
     val intents = buildList<Pair<Intent, Boolean>> {
@@ -200,7 +200,7 @@ fun Activity.uninstallApp(packageName: String) {
     (this as? com.livemap.homedeck.screens.HomeDeck)?.watchUninstall(packageName)
 }
 
-fun Activity.handleGridItemPopupMenu(
+fun Activity.processGridItemPopupMenu(
     anchorView: View,
     gridItem: MainDisplayLatticeElement,
     isOnAllAppsFragment: Boolean,
@@ -256,11 +256,11 @@ fun Activity.handleGridItemPopupMenu(
             // One of the host's own shortcuts that it wants handled as an in-place removal: no
             // funnel, the icon leaves the launcher right here. The host decides which shortcut and
             // for whom - see removesHostIconInPlace.
-            val host = this@handleGridItemPopupMenu
+            val host = this@processGridItemPopupMenu
             if (packageName == host.packageName && host is HomeDeck &&
                 HomeBook.bridge.removesHostIconInPlace(host, id)
             ) {
-                host.removeSelfFromHome()
+                host.dropSelfFromHome()
                 return@Shortcut
             }
             launcherApps.startShortcut(packageName, id, Rect(), null, Process.myUserHandle())

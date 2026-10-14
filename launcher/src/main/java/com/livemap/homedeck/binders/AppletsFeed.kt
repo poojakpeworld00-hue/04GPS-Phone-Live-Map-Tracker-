@@ -112,7 +112,7 @@ class AppletsFeed(
         }
     }
 
-    fun updateItems(newItems: ArrayList<AppletsListElement>) {
+    fun reviseItems(newItems: ArrayList<AppletsListElement>) {
         val oldSum = widgetListItems.sumOf { it.getHashToCompare() }
         val newSum = newItems.sumOf { it.getHashToCompare() }
         if (oldSum != newSum) {
@@ -121,7 +121,7 @@ class AppletsFeed(
         }
     }
 
-    fun updateTextColor(newTextColor: Int) {
+    fun reviseTextColor(newTextColor: Int) {
         if (newTextColor != textColor) {
             textColor = newTextColor
             notifyDataSetChanged()

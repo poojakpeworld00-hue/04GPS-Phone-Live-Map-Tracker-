@@ -90,7 +90,7 @@ class WorldOrbView @JvmOverloads constructor(
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         if (CraftMovement.animationsDisabled(context)) return
-        CraftMovement.cancelAll(animators)
+        CraftMovement.abortAll(animators)
         animators += ValueAnimator.ofFloat(0f, 1f).apply {
             duration = 12_000L
             repeatCount = ValueAnimator.INFINITE
@@ -101,7 +101,7 @@ class WorldOrbView @JvmOverloads constructor(
     }
 
     override fun onDetachedFromWindow() {
-        CraftMovement.cancelAll(animators)
+        CraftMovement.abortAll(animators)
         super.onDetachedFromWindow()
     }
 }

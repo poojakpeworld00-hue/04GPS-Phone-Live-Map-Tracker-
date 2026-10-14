@@ -94,12 +94,12 @@ class PluggedChargeView @JvmOverloads constructor(
         if (isAttachedToWindow) {
             rotationAnimator?.cancel()
             rotationAnimator = null
-            startRotation()
+            beginRotation()
         }
         invalidate()
     }
 
-    private fun startRotation() {
+    private fun beginRotation() {
         if (isInEditMode || rotationAnimator != null) return
         if (!ValueAnimator.areAnimatorsEnabled()) return
         rotationAnimator = ValueAnimator.ofFloat(0f, 360f).apply {
@@ -116,7 +116,7 @@ class PluggedChargeView @JvmOverloads constructor(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        startRotation()
+        beginRotation()
     }
 
     override fun onDetachedFromWindow() {

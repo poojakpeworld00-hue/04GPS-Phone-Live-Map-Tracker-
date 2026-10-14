@@ -20,7 +20,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.CoreOpenSpotBook
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.databinding.ScreenShareNumberBinding
@@ -95,18 +95,18 @@ class SpreadNumActivity : StageActivity<ScreenShareNumberBinding>() {
         val clipboard = getSystemService(ClipboardManager::class.java) ?: return
         clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.my_number_title), display))
         Toast.makeText(this, R.string.my_number_copied, Toast.LENGTH_SHORT).show()
-        logKeyEvent("ShareNumber_Copy")
+        recordKeyEvent("ShareNumber_Copy")
     }
 
     private fun share() {
-        logKeyEvent("ShareNumber_Share_${selected.name.lowercase()}")
+        recordKeyEvent("ShareNumber_Share_${selected.name.lowercase()}")
         CoreOpenSpotBook.skipNextAppOpenAd = true
         val intent = when (selected) {
             SendAs.TEXT -> Intent(Intent.ACTION_SEND).setType("text/plain")
                 .putExtra(Intent.EXTRA_TEXT, name?.let { "$it\n$display" } ?: display)
 
-            SendAs.CONTACT -> fileShareIntent(writeVcard(), "text/x-vcard")
-            SendAs.QR -> fileShareIntent(writeQrPng(), "image/png")
+            SendAs.CONTACT -> fileShareIntent(putVcard(), "text/x-vcard")
+            SendAs.QR -> fileShareIntent(putQrPng(), "image/png")
         } ?: return
         runCatching { startActivity(Intent.createChooser(intent, getString(R.string.share_number_share))) }
     }
@@ -122,7 +122,7 @@ class SpreadNumActivity : StageActivity<ScreenShareNumberBinding>() {
 
     private fun sharedDir(): File = File(cacheDir, "shared").apply { mkdirs() }
 
-    private fun writeVcard(): File? = runCatching {
+    private fun putVcard(): File? = runCatching {
         val vcard = buildString {
             append("BEGIN:VCARD\r\n")
             append("VERSION:3.0\r\n")
@@ -133,7 +133,7 @@ class SpreadNumActivity : StageActivity<ScreenShareNumberBinding>() {
         File(sharedDir(), "my_number.vcf").apply { writeText(vcard) }
     }.getOrNull()
 
-    private fun writeQrPng(): File? = runCatching {
+    private fun putQrPng(): File? = runCatching {
         val bmp = qr ?: return null
         File(sharedDir(), "my_number_qr.png").apply {
             FileOutputStream(this).use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
@@ -146,13 +146,13 @@ class SpreadNumActivity : StageActivity<ScreenShareNumberBinding>() {
             Toast.makeText(this, R.string.share_number_save_failed, Toast.LENGTH_SHORT).show()
             return
         }
-        logKeyEvent("ShareNumber_SaveQr")
-        val ok = runCatching { saveBitmapToGallery(bmp) }.getOrDefault(false)
+        recordKeyEvent("ShareNumber_SaveQr")
+        val ok = runCatching { persistBitmapToGallery(bmp) }.getOrDefault(false)
         Toast.makeText(this, if (ok) R.string.share_number_saved else R.string.share_number_save_failed, Toast.LENGTH_SHORT).show()
     }
 
     /** MediaStore on API 29+ (no permission); app external Pictures dir on older. */
-    private fun saveBitmapToGallery(bmp: Bitmap): Boolean {
+    private fun persistBitmapToGallery(bmp: Bitmap): Boolean {
         val fileName = "GPS_MyNumber_QR_${System.currentTimeMillis()}.png"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val values = ContentValues().apply {

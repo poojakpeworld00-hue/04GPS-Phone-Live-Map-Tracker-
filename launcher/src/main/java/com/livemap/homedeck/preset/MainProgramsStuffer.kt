@@ -14,14 +14,14 @@ import timber.log.Timber
  * Puts icons on the workspace: row-major, first free cell, never moving what is already there -
  * existing icons, folders, widgets and the dock all stay. Two callers, both on a background
  * thread with the launcher list the drawer would have shown, so hidden icons stay hidden:
- * [placeMissing] for the no-drawer home ([SliderWay.NONE], the MIUI / Funtouch / EMUI factory
+ * [siteMissing] for the no-drawer home ([SliderWay.NONE], the MIUI / Funtouch / EMUI factory
  * look, where every app lives on a page), and [MainSower] for each app installed afterwards.
  * Icons start on [FIRST_APPS_PAGE]: the first page belongs to the time and search widgets.
  */
 object MainProgramsStuffer {
 
     /** Places every app not on the workspace yet; returns how many icons were added. */
-    fun placeMissing(context: Context, launchers: List<CoreHome>): Int =
+    fun siteMissing(context: Context, launchers: List<CoreHome>): Int =
         place(context, launchers.sortedWith(appLauncherComparator), spread = true)
 
     /**

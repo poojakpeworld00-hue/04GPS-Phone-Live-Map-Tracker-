@@ -24,7 +24,7 @@ class ConsentLocker(context: Context) {
     fun wasShown(key: String): Boolean = prefs.getBoolean(shownKey(key), false)
 
     /** Mark a `showOnce` request for [key] as presented so it is never re-offered. */
-    fun markShown(key: String) {
+    fun flagShown(key: String) {
         prefs.edit().putBoolean(shownKey(key), true).apply()
     }
 
@@ -32,7 +32,7 @@ class ConsentLocker(context: Context) {
     fun wasAsked(key: String): Boolean = prefs.getBoolean(askedKey(key), false)
 
     /** Record that the OS dialog for [key] was requested at least once. */
-    fun markAsked(key: String) {
+    fun flagAsked(key: String) {
         prefs.edit().putBoolean(askedKey(key), true).apply()
     }
 

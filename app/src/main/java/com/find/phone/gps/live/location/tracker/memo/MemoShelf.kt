@@ -51,7 +51,7 @@ object MemoShelf {
      * `is_default_config` is on and the list is empty. Samples are switched off, so nothing
      * fires until the user opens one and saves it.
      */
-    fun seedDefaultsIfNeeded(context: Context) {
+    fun plantDefaultsIfNeeded(context: Context) {
         val prefs = prefs(context)
         if (prefs.getBoolean(KEY_SEEDED, false)) return
         val cfg = MemoProfile.get(context)

@@ -56,7 +56,7 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
     private var descending = false
 
     private val permission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) onGranted() else showPermissionState()
+        if (granted) onGranted() else presentPermissionState()
     }
 
     override fun initView() {
@@ -73,16 +73,16 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
 
         binding.huntInput.doAfterTextChanged {
             binding.actClearSearch.isVisible = !it.isNullOrEmpty()
-            applyFilter()
+            enactFilter()
         }
         binding.actClearSearch.setOnClickListener { binding.huntInput.setText("") }
-        binding.lvAccountChip.setOnClickListener { showAccountMenu() }
-        binding.actTools.setOnClickListener { showToolsMenu() }
-        binding.actAllow.setOnClickListener { askPermission() }
+        binding.lvAccountChip.setOnClickListener { presentAccountMenu() }
+        binding.actTools.setOnClickListener { presentToolsMenu() }
+        binding.actAllow.setOnClickListener { queryPermission() }
         listOf(binding.lvAccountChip, binding.actTools, binding.actAllow).forEach { CraftMovement.pressScale(it) }
         setupRail()
 
-        if (hasPermission()) onGranted() else showPermissionState()
+        if (hasPermission()) onGranted() else presentPermissionState()
     }
 
     // ===== permission (8b) =====
@@ -91,11 +91,11 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
         ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
 
     /** First ask through the system dialog; once it stops showing (denied twice), app settings. */
-    private fun askPermission() {
+    private fun queryPermission() {
         val perm = Manifest.permission.READ_CONTACTS
         when {
             !prefs.hasRequestedPermission(perm) -> {
-                prefs.markPermissionRequested(perm)
+                prefs.flagPermissionRequested(perm)
                 permission.launch(perm)
             }
             shouldShowRequestPermissionRationale(perm) -> permission.launch(perm)
@@ -111,7 +111,7 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
         if (binding.grantState.isVisible && hasPermission()) onGranted()
     }
 
-    private fun showPermissionState() {
+    private fun presentPermissionState() {
         binding.grantState.isVisible = true
         binding.lvListGroup.isVisible = false
         binding.lvRailBox.isVisible = false
@@ -120,7 +120,7 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
     private fun onGranted() {
         binding.grantState.isVisible = false
         binding.lvListGroup.isVisible = true
-        renderAd()
+        paintAd()
         load()
     }
 
@@ -133,12 +133,12 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
             all = withContext(Dispatchers.IO) { runCatching { GadgetBuddies.load(this@BuddyChooserActivity) }.getOrDefault(emptyList()) }
             binding.spinLoading.isVisible = false
             if (account != null && all.none { it.account == account }) account = null
-            bindAccountChip()
-            applyFilter()
+            wireAccountChip()
+            enactFilter()
         }
     }
 
-    private fun bindAccountChip() {
+    private fun wireAccountChip() {
         val scope = all.filter { account == null || it.account == account }
         binding.txtAccount.text = account ?: getString(R.string.ds_contacts_all_accounts)
         binding.txtAccountCount.text = scope.distinctBy { it.contactId }.size.toString()
@@ -146,7 +146,7 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
     }
 
     /** Account scope, then name contains the text or — when it has digits — the number does. */
-    private fun applyFilter() {
+    private fun enactFilter() {
         if (binding.spinLoading.isVisible) return
         val query = binding.huntInput.text?.toString()?.trim().orEmpty()
         val needle = query.lowercase(Locale.getDefault())
@@ -157,9 +157,9 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
                 (digits.isNotEmpty() && it.number.filter(Char::isDigit).contains(digits))
         }
         if (descending) shown = shown.sortedWith(compareBy<BuddyNum> { it.letter == "#" }.thenByDescending { it.name.lowercase(Locale.getDefault()) })
-        adapter.submitContacts(shown) {
+        adapter.lodgeContacts(shown) {
             binding.listContacts.scrollToPosition(0)
-            buildRail()
+            composeRail()
         }
 
         // Favorites: the starred contacts of the scope, hidden while searching (design 8a).
@@ -169,14 +169,14 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
         binding.txtFavoritesCount.text = favs.size.toString()
 
         when {
-            all.isEmpty() -> showEmpty(R.string.ds_contacts_empty, R.string.ds_contacts_empty_body)
-            shown.isEmpty() -> showEmpty(R.string.ds_contacts_no_match, R.string.ds_contacts_no_match_body)
+            all.isEmpty() -> presentEmpty(R.string.ds_contacts_empty, R.string.ds_contacts_empty_body)
+            shown.isEmpty() -> presentEmpty(R.string.ds_contacts_no_match, R.string.ds_contacts_no_match_body)
             else -> binding.blankState.isVisible = false
         }
         binding.lvRailBox.isVisible = shown.isNotEmpty()
     }
 
-    private fun showEmpty(title: Int, body: Int) {
+    private fun presentEmpty(title: Int, body: Int) {
         binding.txtEmpty.setText(title)
         binding.txtEmptyBody.setText(body)
         binding.blankState.isVisible = true
@@ -185,7 +185,7 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
     // ===== menus =====
 
     /** "All accounts" plus every account the phone book has, each with its contact count. */
-    private fun showAccountMenu() {
+    private fun presentAccountMenu() {
         val people = all.distinctBy { it.contactId }
         val counts = people.groupingBy { it.account }.eachCount()
         val popup = KitFlyout(this)
@@ -194,7 +194,7 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
             icon = R.drawable.lv_ic_contact_card,
             badge = people.size.toString(),
             selected = account == null,
-        ) { selectAccount(null) }
+        ) { highlightAccount(null) }
         counts.keys.sorted().forEach { name ->
             popup.add(
                 label = name,
@@ -205,24 +205,24 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
                 },
                 badge = counts.getValue(name).toString(),
                 selected = account == name,
-            ) { selectAccount(name) }
+            ) { highlightAccount(name) }
         }
         popup.show(binding.lvAccountChip, Gravity.START)
     }
 
-    private fun selectAccount(name: String?) {
+    private fun highlightAccount(name: String?) {
         account = name
-        bindAccountChip()
-        applyFilter()
+        wireAccountChip()
+        enactFilter()
     }
 
     /** The tools button: sort direction and a refresh. */
-    private fun showToolsMenu() {
+    private fun presentToolsMenu() {
         KitFlyout(this)
             .add(
                 label = getString(if (descending) R.string.ds_contacts_sort_az else R.string.ds_contacts_sort_za),
                 icon = R.drawable.lv_ic_grid,
-            ) { descending = !descending; applyFilter() }
+            ) { descending = !descending; enactFilter() }
             .add(label = getString(R.string.ds_contacts_refresh), icon = R.drawable.lv_ic_history) { load() }
             .show(binding.actTools, Gravity.END)
     }
@@ -242,15 +242,15 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
     // ===== small native ad =====
 
     /** The small native card under the search field (`ScreenAds.BuddyChooserActivity`). */
-    private fun renderAd() {
+    private fun paintAd() {
         val show = SpotsLocker.getInstance(this).getBoolean("IsAdsON") && DisplayTeaserProfile.resolve(this, javaClass.simpleName).show
         binding.spotCard.isVisible = show
-        if (show) EmbeddedTeaserRibbon().showNativeBannerNative(this, binding.spotNativeFrame, binding.spotShimmer)
+        if (show) EmbeddedTeaserRibbon().presentNativeBannerNative(this, binding.spotNativeFrame, binding.spotShimmer)
     }
 
     // ===== letter rail =====
 
-    private fun buildRail() {
+    private fun composeRail() {
         binding.lvRail.removeAllViews()
         val font = ResourcesCompat.getFont(this, R.font.figtree_bold)
         adapter.letterPositions.keys.forEach { letter ->

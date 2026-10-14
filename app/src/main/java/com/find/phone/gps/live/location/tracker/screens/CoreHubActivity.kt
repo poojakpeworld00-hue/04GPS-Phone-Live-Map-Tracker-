@@ -92,7 +92,7 @@ class CoreHubActivity : StageActivity<ScreenMainBinding>(), MainCasingHolder, Ma
             else onShellBackExhausted()
         }
 
-        homeShellController.startFirstRunPriming()
+        homeShellController.beginFirstRunPriming()
     }
 
     /** The home content requests its own bottom banner (its view is not in place when this runs). */

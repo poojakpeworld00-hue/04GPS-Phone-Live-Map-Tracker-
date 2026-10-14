@@ -69,7 +69,7 @@ object WholeDisplayWheel {
             if (activity.isFinishing || activity.isDestroyed) return
 
             // Dismiss existing one if still active
-            dismissSafely()
+            retireSafely()
 
             dialog = Dialog(activity).apply {
                 requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -111,10 +111,10 @@ object WholeDisplayWheel {
     }
 
     fun hide() {
-        dismissSafely()
+        retireSafely()
     }
 
-    private fun dismissSafely() {
+    private fun retireSafely() {
         try {
             dialog?.let {
                 if (it.isShowing) {

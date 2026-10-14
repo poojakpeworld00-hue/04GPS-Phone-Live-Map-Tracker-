@@ -38,7 +38,7 @@ class HomeCasingHolder private constructor(private val panel: HomeDeck) : MainCa
     override val isShellOnScreen: Boolean get() = shellVisible
 
     /** Back inside the panel with the shell's own tab history exhausted just closes it. */
-    override fun onShellBackExhausted() = panel.closeHostPanel()
+    override fun onShellBackExhausted() = panel.shutHostPanel()
 
     /**
      * With the panel open the shell's own Snackbar is right; with it shut the shell is parked off

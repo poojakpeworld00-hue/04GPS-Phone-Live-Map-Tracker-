@@ -24,7 +24,7 @@ class BuddyAdapter(
     val letterPositions = LinkedHashMap<String, Int>()
 
     /** Groups [contacts] (already sorted) under their letters. */
-    fun submitContacts(contacts: List<BuddyNum>, onDone: () -> Unit = {}) {
+    fun lodgeContacts(contacts: List<BuddyNum>, onDone: () -> Unit = {}) {
         val items = ArrayList<Item>(contacts.size + 27)
         val positions = LinkedHashMap<String, Int>()
         var letter: String? = null

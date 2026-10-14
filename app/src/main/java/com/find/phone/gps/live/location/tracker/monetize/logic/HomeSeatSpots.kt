@@ -124,7 +124,7 @@ object HomeSeatSpots {
         return vault.getString(key).orEmpty()
     }
 
-    private fun resolveFullNative(vault: SpotsLocker, placement: String?): String =
+    private fun settleFullNative(vault: SpotsLocker, placement: String?): String =
         resolve(vault, placement, "googleFullNative").ifBlank { vault.getString("googleNative").orEmpty() }
 
     /** `<placement>_ads_on` (or its parent's) set to `false` mutes it; default on. */
@@ -153,7 +153,7 @@ object HomeSeatSpots {
             "inter", "interstitial" -> DrawerAdSpec(DrawerAdType.INTER, resolve(vault, placement, "googleInter"))
             "app_open", "appopen" -> DrawerAdSpec(DrawerAdType.APPOPEN, resolve(vault, placement, "googleAppopen"))
             "full_native", "fullscreen_native", "fullnative", "full" ->
-                DrawerAdSpec(DrawerAdType.FULLSCREEN_NATIVE, resolveFullNative(vault, placement))
+                DrawerAdSpec(DrawerAdType.FULLSCREEN_NATIVE, settleFullNative(vault, placement))
             // This app's house ad; needs `IsCustomADS`, like QRScanner's `custom` step.
             "custom", "custom_ads" ->
                 if (vault.getBoolean("IsCustomADS")) DrawerAdSpec(DrawerAdType.CUSTOM, "custom") else null
@@ -228,7 +228,7 @@ object HomeSeatSpots {
     private fun fullNativeFlow(vault: SpotsLocker, placement: String?): DrawerAdFlow {
         adFlow(vault, placement)?.let { return it }
         val sequence = buildList {
-            resolveFullNative(vault, placement).takeIf { it.isNotBlank() }
+            settleFullNative(vault, placement).takeIf { it.isNotBlank() }
                 ?.let { add(DrawerAdSpec(DrawerAdType.FULLSCREEN_NATIVE, it)) }
             resolve(vault, placement, "googleInter").takeIf { it.isNotBlank() }
                 ?.let { add(DrawerAdSpec(DrawerAdType.INTER, it)) }
@@ -254,7 +254,7 @@ object HomeSeatSpots {
         val vault = SpotsLocker.getInstance(activity)
         if (!vault.getBoolean("IsAdsON") || !placementEnabled(activity, placement)) return proceed()
 
-        if (runLinkFirst(activity, vault, placement, proceed)) return
+        if (execLinkFirst(activity, vault, placement, proceed)) return
 
         val flow = interFlow(vault, placement)
         log("$placement: inter chain ${flow.sequence.map { "${it.type.key}(${it.adUnitId})" }}")
@@ -266,7 +266,7 @@ object HomeSeatSpots {
         val vault = SpotsLocker.getInstance(activity)
         if (!vault.getBoolean("IsAdsON") || !placementEnabled(activity, placement)) return proceed()
         // A link-first chain configured for the drawer placement takes the app click too.
-        if (runLinkFirst(activity, vault, placement, proceed)) return
+        if (execLinkFirst(activity, vault, placement, proceed)) return
         val flow = fullNativeFlow(vault, placement)
         log("$placement: full-native chain ${flow.sequence.map { "${it.type.key}(${it.adUnitId})" }}")
         SliderSpotDriver.run(activity, flow, pointerKey(placement), proceed)
@@ -279,7 +279,7 @@ object HomeSeatSpots {
      * them in the listed order and each close reveals the next. The follow-ups run once the whole
      * stack is gone and the launcher is back in front.
      */
-    private fun runLinkFirst(activity: Activity, vault: SpotsLocker, placement: String?, proceed: () -> Unit): Boolean {
+    private fun execLinkFirst(activity: Activity, vault: SpotsLocker, placement: String?, proceed: () -> Unit): Boolean {
         val chain = linkFirst(vault, placement) ?: return false
         // The follow-ups load while the user reads the links, so they are ready on the way back.
         SliderSpotDriver.preload(activity, chain.then)
@@ -301,7 +301,7 @@ object HomeSeatSpots {
      * One named ad for [placement] — `custom`, `rewarded`, `directlink`, … (the `inter_fallback`
      * vocabulary) — then [proceed], whether or not it could show.
      */
-    fun showStep(activity: Activity, placement: String?, step: String, proceed: () -> Unit) {
+    fun presentStep(activity: Activity, placement: String?, step: String, proceed: () -> Unit) {
         val vault = SpotsLocker.getInstance(activity)
         val spec = followUp(vault, placement, step) ?: return proceed()
         SliderSpotDriver.run(activity, DrawerAdFlow(true, 0, listOf(spec), startFromFirst = true, onDemand = true), pointerKey(placement), proceed)
@@ -318,7 +318,7 @@ object HomeSeatSpots {
      * (`rewarded`, `full_native`, `custom`, `directlink`, in the configured order) and show the
      * first that can. [proceed] runs exactly once, after it or straight away when nothing shows.
      */
-    fun runFallback(activity: Activity, placement: String?, proceed: () -> Unit) {
+    fun execFallback(activity: Activity, placement: String?, proceed: () -> Unit) {
         val vault = SpotsLocker.getInstance(activity)
         val sequence = fallbacks(vault, placement).mapNotNull { followUp(vault, placement, it) }
         if (sequence.isEmpty()) return proceed()
@@ -327,7 +327,7 @@ object HomeSeatSpots {
     }
 
     /** Runs [placement]'s `ad_flow` if it has one (false = none, the caller shows its own ad). */
-    fun showAdFlow(activity: Activity, placement: String, proceed: () -> Unit): Boolean {
+    fun presentAdFlow(activity: Activity, placement: String, proceed: () -> Unit): Boolean {
         val vault = SpotsLocker.getInstance(activity)
         val flow = adFlow(vault, placement) ?: return false
         log("$placement: ad_flow ${flow.sequence.map { it.type.key }}${if (flow.showAll) " [show_all]" else ""}")
@@ -339,10 +339,10 @@ object HomeSeatSpots {
      * Runs [placement]'s link-first chain if it has one and ads are on. False means nothing was
      * started and the caller shows its own ad; true means [proceed] will be called by the chain.
      */
-    fun showLinkFirst(activity: Activity, placement: String, proceed: () -> Unit): Boolean {
+    fun presentLinkFirst(activity: Activity, placement: String, proceed: () -> Unit): Boolean {
         val vault = SpotsLocker.getInstance(activity)
         if (!vault.getBoolean("IsAdsON") || !placementEnabled(activity, placement)) return false
-        return runLinkFirst(activity, vault, placement, proceed)
+        return execLinkFirst(activity, vault, placement, proceed)
     }
 
     private fun pointerKey(placement: String?) = "__launcher_placement_ptr_${normalize(placement)}"

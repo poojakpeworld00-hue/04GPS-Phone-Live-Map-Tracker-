@@ -25,7 +25,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.EmbeddedTeaser
 import com.find.phone.gps.live.location.tracker.databinding.ScreenReminderAlertBinding
 import com.find.phone.gps.live.location.tracker.memo.MemoProfile
@@ -62,7 +62,7 @@ class MemoSirenActivity : AppCompatActivity() {
 
     /** The user unlocked while the sheet is up: now the ad may show. */
     private val unlockReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) = loadAdIfUnlocked()
+        override fun onReceive(context: Context?, intent: Intent?) = fetchAdIfUnlocked()
     }
 
     private val systemDialogHelper by lazy {
@@ -71,7 +71,7 @@ class MemoSirenActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        showOverLockScreen()
+        presentOverLockScreen()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         binding = ScreenReminderAlertBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -99,7 +99,7 @@ class MemoSirenActivity : AppCompatActivity() {
         bind(intent)
     }
 
-    private fun showOverLockScreen() {
+    private fun presentOverLockScreen() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
@@ -115,7 +115,7 @@ class MemoSirenActivity : AppCompatActivity() {
         val reminder = MemoShelf.get(this, intent.getLongExtra(EXTRA_ID, -1L))
         if (reminder == null) { finishAndRemoveTask(); return }
         item = reminder
-        logKeyEvent("Reminder_Alert_Show")
+        recordKeyEvent("Reminder_Alert_Show")
 
         binding.sirenTitle.text = reminder.title
         binding.sirenNote.text = reminder.note
@@ -128,32 +128,32 @@ class MemoSirenActivity : AppCompatActivity() {
         binding.actPrimary.setIconResource(if (call) R.drawable.lv_ic_call else 0)
         binding.actPrimary.backgroundTintList =
             ContextCompat.getColorStateList(this, if (call) R.color.ds_success else R.color.ds_primary)
-        binding.actPrimary.setOnClickListener { if (call) callBack(reminder) else openList() }
-        binding.actSecondary.setOnClickListener { showSnooze() }
+        binding.actPrimary.setOnClickListener { if (call) callBack(reminder) else enterList() }
+        binding.actSecondary.setOnClickListener { presentSnooze() }
         binding.actDone.setOnClickListener {
-            logKeyEvent("Reminder_Alert_Done")
+            recordKeyEvent("Reminder_Alert_Done")
             finishAndRemoveTask()
         }
         listOf(binding.actPrimary, binding.actSecondary, binding.actDone).forEach { CraftMovement.pressScale(it) }
         binding.lvSnoozeOverlay.isVisible = false
         riseSheet()
-        startMotion()
+        beginMotion()
     }
 
     override fun onResume() {
         super.onResume()
-        loadAdIfUnlocked()
+        fetchAdIfUnlocked()
     }
 
     /** The mid native ad, once per alert and never while the keyguard is up. */
-    private fun loadAdIfUnlocked() {
+    private fun fetchAdIfUnlocked() {
         if (adRequested || isFinishing || isDestroyed) return
         val km = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         if (km.isKeyguardLocked) return
         adRequested = true
         binding.sirenAdFrame.isVisible = true
-        EmbeddedTeaser().showMidNative(this, binding.sirenAdFrame)
-        logKeyEvent("Reminder_Alert_Ad")
+        EmbeddedTeaser().presentMidNative(this, binding.sirenAdFrame)
+        recordKeyEvent("Reminder_Alert_Ad")
     }
 
     /** The sheet rises from below (300 ms, decelerate) while the dim fades in. */
@@ -176,15 +176,15 @@ class MemoSirenActivity : AppCompatActivity() {
     // ───────────────────────────── actions ─────────────────────────────
 
     private fun callBack(reminder: MemoElement) {
-        logKeyEvent("Reminder_Alert_Call")
+        recordKeyEvent("Reminder_Alert_Call")
         afterUnlock {
             runCatching { startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + Uri.encode(reminder.number)))) }
             finishAndRemoveTask()
         }
     }
 
-    private fun openList() {
-        logKeyEvent("Reminder_Alert_Open")
+    private fun enterList() {
+        recordKeyEvent("Reminder_Alert_Open")
         afterUnlock {
             startActivity(MemoListActivity.intent(this).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             finishAndRemoveTask()
@@ -201,7 +201,7 @@ class MemoSirenActivity : AppCompatActivity() {
     }
 
     /** Snooze choices from `action_delay_options`, two per row; the second is preselected. */
-    private fun showSnooze() {
+    private fun presentSnooze() {
         val options = MemoProfile.get(this).actionDelayOptions.split(',')
             .mapNotNull { it.trim().toIntOrNull() }.filter { it in 1..24 * 60 }.distinct()
             .ifEmpty { listOf(5, 10, 30, 60) }
@@ -243,7 +243,7 @@ class MemoSirenActivity : AppCompatActivity() {
     private fun snooze() {
         val reminder = item ?: return finishAndRemoveTask()
         MemoTimer.snooze(this, reminder.id, snoozeMinutes)
-        logKeyEvent("Reminder_Alert_Snooze_$snoozeMinutes")
+        recordKeyEvent("Reminder_Alert_Snooze_$snoozeMinutes")
         val until = MemoShaper.time(this, System.currentTimeMillis() + snoozeMinutes * 60_000L)
         Toast.makeText(this, getString(R.string.rem_snoozed, until), Toast.LENGTH_SHORT).show()
         finishAndRemoveTask()
@@ -256,8 +256,8 @@ class MemoSirenActivity : AppCompatActivity() {
     // ───────────────────────────── motion ─────────────────────────────
 
     /** Ring pulse (2.4s) and a bell swing every 3s, as on the prompt. */
-    private fun startMotion() {
-        CraftMovement.cancelAll(animators)
+    private fun beginMotion() {
+        CraftMovement.abortAll(animators)
         if (CraftMovement.animationsDisabled(this)) return
         val e = CraftMovement.EASE_OUT
         animators += loop(
@@ -277,7 +277,7 @@ class MemoSirenActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         runCatching { unregisterReceiver(unlockReceiver) }
-        CraftMovement.cancelAll(animators)
+        CraftMovement.abortAll(animators)
         super.onDestroy()
     }
 

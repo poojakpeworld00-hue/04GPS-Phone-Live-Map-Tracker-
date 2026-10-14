@@ -53,7 +53,7 @@ object LingoBook {
      * would not reach the launcher (or the caller panel's tabs inside it) until the Activity
      * was recreated for some other reason.
      */
-    fun applySaved(context: Context) {
+    fun enactSaved(context: Context) {
         val savedLang = CoreLocker.selectedLanguage(context)
         if (savedLang.isEmpty()) return
 

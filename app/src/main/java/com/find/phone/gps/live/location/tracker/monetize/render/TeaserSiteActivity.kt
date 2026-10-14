@@ -88,11 +88,11 @@ class TeaserSiteActivity : Activity() {
 
         // Pad the root, not the WebView: the page then scrolls under nothing and its own content
         // still starts below the status bar.
-        applyInsets(root)
+        enactInsets(root)
         web.loadUrl(url)
     }
 
-    private fun applyInsets(root: FrameLayout) {
+    private fun enactInsets(root: FrameLayout) {
         fun apply(insets: WindowInsetsCompat?) {
             val bars = insets?.getInsets(WindowInsetsCompat.Type.systemBars()) ?: return
             root.setPadding(bars.left, bars.top, bars.right, bars.bottom)

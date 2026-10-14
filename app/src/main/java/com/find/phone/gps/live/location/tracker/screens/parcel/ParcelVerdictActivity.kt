@@ -65,12 +65,12 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
         // Recents closes it: an install/uninstall screen is not something to come back to.
         lifecycle.addObserver(OsModalAide(this) { finishAndRemoveTask() })
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        applyInsets()
-        bindHeader()
+        enactInsets()
+        wireHeader()
         wireButtons()
         fillAd()
         playEntrance()
-        runCheck()
+        execCheck()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -84,7 +84,7 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
         super.onDestroy()
     }
 
-    private fun applyInsets() {
+    private fun enactInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.parcelContent) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             binding.parcelHero.updatePadding(top = bars.top)
@@ -98,7 +98,7 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
         ViewCompat.requestApplyInsets(binding.parcelContent)
     }
 
-    private fun bindHeader() = with(binding) {
+    private fun wireHeader() = with(binding) {
         parcelHero.setBackgroundResource(R.drawable.bgx_pkgres_hero_installed)
         parcelBadge.setBackgroundResource(R.drawable.bgx_pkgres_badge_installed)
         parcelBadgeIcon.setImageResource(if (installed) R.drawable.icn_shield_check else R.drawable.icn_check)
@@ -109,7 +109,7 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
         }
         parcelTitle.text = getString(
             if (installed) R.string.pkgres_privacy_title else R.string.pkgres_optimize_title,
-            resolveLabel(),
+            settleLabel(),
         )
         parcelSubtitle.text = ""
 
@@ -125,7 +125,7 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
         parcelAppIcon.setImageDrawable(icon)
     }
 
-    private fun resolveLabel(): String {
+    private fun settleLabel(): String {
         if (installed) {
             runCatching {
                 val info = packageManager.getApplicationInfo(affectedPackage, 0)
@@ -140,7 +140,7 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
     // ---------------- The check ----------------
 
     /** The stepped progress, then the results. The steps are paced; the results are real. */
-    private fun runCheck() {
+    private fun execCheck() {
         val steps = if (installed) {
             listOf(R.string.pkgres_privacy_step_read, R.string.pkgres_privacy_step_sensitive, R.string.pkgres_privacy_step_allowed)
         } else {
@@ -152,12 +152,12 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
                 binding.parcelProgressBar.setProgressCompat((i + 1) * 100 / steps.size, true)
             }, STEP_MS * i)
         }
-        handler.postDelayed({ showResults() }, STEP_MS * steps.size)
+        handler.postDelayed({ presentResults() }, STEP_MS * steps.size)
     }
 
-    private fun showResults() {
+    private fun presentResults() {
         if (isFinishing || isDestroyed) return
-        if (installed) showPrivacyResults() else showOptimizeResults()
+        if (installed) presentPrivacyResults() else presentOptimizeResults()
         binding.parcelProgress.visibility = View.GONE
         // An app asking for nothing sensitive has no rows: the subtitle says so, no empty card.
         if (binding.parcelChecks.childCount > 0) binding.parcelChecks.apply {
@@ -168,10 +168,10 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
         binding.parcelOpen.isEnabled = true
     }
 
-    private fun showPrivacyResults() {
+    private fun presentPrivacyResults() {
         val groups = sensitiveGroups()
         val allowed = groups.count { it.second }
-        binding.parcelTitle.text = getString(R.string.pkgres_privacy_done_title, resolveLabel())
+        binding.parcelTitle.text = getString(R.string.pkgres_privacy_done_title, settleLabel())
         binding.parcelSubtitle.text = if (groups.isEmpty()) {
             getString(R.string.pkgres_privacy_summary_none)
         } else {
@@ -186,8 +186,8 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
         }
     }
 
-    private fun showOptimizeResults() {
-        binding.parcelTitle.text = getString(R.string.pkgres_optimize_done_title, resolveLabel())
+    private fun presentOptimizeResults() {
+        binding.parcelTitle.text = getString(R.string.pkgres_optimize_done_title, settleLabel())
         binding.parcelSubtitle.setText(R.string.pkgres_optimize_summary)
         addRow(getString(R.string.pkgres_optimize_row_removed), getString(R.string.pkgres_optimize_removed), R.color.pkgres_installed)
 
@@ -258,7 +258,7 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
             // Review permissions: the new app's own settings page, where each one can be changed.
             parcelOpen.setText(R.string.pkgres_privacy_review)
             parcelOpen.isEnabled = false // until the check has run
-            parcelOpen.setOnClickListener { openNewAppSettings() }
+            parcelOpen.setOnClickListener { enterNewAppSettings() }
         } else {
             // Nothing to review once it is removed — let Done fill the row.
             parcelOpen.visibility = View.GONE
@@ -269,14 +269,14 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
         }
     }
 
-    private fun openNewAppSettings() {
+    private fun enterNewAppSettings() {
         runCatching {
             startActivity(
                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", affectedPackage, null))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             )
         }
-        finishSafely()
+        concludeSafely()
     }
 
     /** The icon settles in and the copy rises — the screen arrives rather than snapping on. */
@@ -305,7 +305,7 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
     private fun fillAd() {
         if (!HomeSpotsProfile.packageResultSettings(this).bodyNative) return
         binding.spotNativeFrame.visibility = View.VISIBLE
-        EmbeddedTeaser().showMidNative2(this, binding.spotNativeFrame, binding.spotShimmer)
+        EmbeddedTeaser().presentMidNative2(this, binding.spotNativeFrame, binding.spotShimmer)
     }
 
     private fun close() {
@@ -317,16 +317,16 @@ class ParcelVerdictActivity : StageActivity<ScreenPackageResultBinding>() {
         // `install_*` / `uninstall_*` (`ad_flow` or a link chain): a close ad, then the screen goes.
         val placement = if (installed) "install" else "uninstall"
         if (HomeSeatSpots.hasOwnFlow(this, placement)) {
-            HomeSeatSpots.showInterstitial(this, placement) { finishSafely() }
+            HomeSeatSpots.showInterstitial(this, placement) { concludeSafely() }
             return
         }
-        finishSafely()
+        concludeSafely()
     }
 
     /** Back behaves as Done, so the screen has one way out. */
     override fun performBack() = close()
 
-    private fun finishSafely() {
+    private fun concludeSafely() {
         if (!isFinishing) finish()
     }
 

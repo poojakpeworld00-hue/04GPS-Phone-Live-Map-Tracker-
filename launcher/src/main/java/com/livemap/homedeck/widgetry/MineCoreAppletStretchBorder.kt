@@ -58,7 +58,7 @@ class MineCoreAppletStretchBorder(context: Context, attrs: AttributeSet, defStyl
         }
     }
 
-    fun updateFrameCoords(
+    fun reviseFrameCoords(
         coords: Rect,
         cellWidth: Int,
         cellHeight: Int,

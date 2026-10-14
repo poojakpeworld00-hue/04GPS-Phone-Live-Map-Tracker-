@@ -13,7 +13,7 @@ import com.find.phone.gps.live.location.tracker.databinding.ScreenOnboardingWelc
 import com.find.phone.gps.live.location.tracker.consent.ConsentDriver
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
 import com.find.phone.gps.live.location.tracker.helpers.followAdContainer
-import com.find.phone.gps.live.location.tracker.helpers.hideWhileAdVisible
+import com.find.phone.gps.live.location.tracker.helpers.concealWhileAdVisible
 import org.fossify.commons.extensions.viewBinding
 
 /**
@@ -32,8 +32,8 @@ class HelloPhaseActivity : CasingDeckActivity() {
         excludeAppFromRecents()
 
         CraftMovement.pressScale(binding.inductContinue)
-        binding.inductContinue.setOnClickListener { requestOnboardingPermissions() }
-        binding.inductSkip.setOnClickListener { goToNextStep() }
+        binding.inductContinue.setOnClickListener { demandOnboardingPermissions() }
+        binding.inductSkip.setOnClickListener { headToNextStep() }
 
         // `onboarding.welcome.skip_enabled: false` makes the screen a required step.
         val ui = HomeSpotsProfile.onboardingUi(this, HomeSpotsProfile.OnboardScreen.WELCOME)
@@ -42,14 +42,14 @@ class HelloPhaseActivity : CasingDeckActivity() {
         // Paid users: Back behaves like Skip and moves the flow on. Organic users: Back is Back.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (HomeStream.backMovesForward(this@HelloPhaseActivity)) goToNextStep()
+                if (HomeStream.backMovesForward(this@HelloPhaseActivity)) headToNextStep()
                 else HomeStream.passBackThrough(this@HelloPhaseActivity, this)
             }
         })
 
-        // Ad frame pinned at the bottom, `launcher_ads.onboarding.welcome.slot`. showSlot hides
+        // Ad frame pinned at the bottom, `launcher_ads.onboarding.welcome.slot`. presentSlot hides
         // the frame outright when the slot is off, and followAdContainer drops the hairline.
-        HomeSpotsProfile.showSlot(
+        HomeSpotsProfile.presentSlot(
             activity = this,
             slot = HomeSpotsProfile.onboardingSlot(this, HomeSpotsProfile.OnboardScreen.WELCOME),
             container = binding.spotNativeFrame,
@@ -57,23 +57,23 @@ class HelloPhaseActivity : CasingDeckActivity() {
         )
         binding.spotNativeDivider.followAdContainer(binding.spotNativeFrame)
         // Small phones: the hero card gives way to the ad while one is on screen.
-        binding.inductHero.hideWhileAdVisible(binding.spotNativeFrame, binding.leadCompact)
+        binding.inductHero.concealWhileAdVisible(binding.spotNativeFrame, binding.leadCompact)
 
-        HomeStream.bindStepHeader(this, HomeSpotsProfile.OnboardScreen.WELCOME, binding.root)
+        HomeStream.wireStepHeader(this, HomeSpotsProfile.OnboardScreen.WELCOME, binding.root)
 
-        bindGestureTiles()
+        wireGestureTiles()
         playMotion()
     }
 
     /** The four launcher gestures: one arrow glyph rotated per direction; "Swipe right" is active. */
-    private fun bindGestureTiles() = with(binding) {
-        bindTile(cellSwipeUp, -90f, R.string.gesture_swipe_up, R.string.gesture_swipe_up_body, active = false)
-        bindTile(cellSwipeRight, 0f, R.string.gesture_swipe_right, R.string.gesture_swipe_right_body, active = true)
-        bindTile(cellSwipeDown, 90f, R.string.gesture_swipe_down, R.string.gesture_swipe_down_body, active = false)
-        bindTile(cellSwipeLeft, 180f, R.string.gesture_swipe_left, R.string.gesture_swipe_left_body, active = false)
+    private fun wireGestureTiles() = with(binding) {
+        wireTile(cellSwipeUp, -90f, R.string.gesture_swipe_up, R.string.gesture_swipe_up_body, active = false)
+        wireTile(cellSwipeRight, 0f, R.string.gesture_swipe_right, R.string.gesture_swipe_right_body, active = true)
+        wireTile(cellSwipeDown, 90f, R.string.gesture_swipe_down, R.string.gesture_swipe_down_body, active = false)
+        wireTile(cellSwipeLeft, 180f, R.string.gesture_swipe_left, R.string.gesture_swipe_left_body, active = false)
     }
 
-    private fun bindTile(tile: CellGestureTileBinding, rotation: Float, title: Int, body: Int, active: Boolean) {
+    private fun wireTile(tile: CellGestureTileBinding, rotation: Float, title: Int, body: Int, active: Boolean) {
         tile.cellIcon.rotation = rotation
         tile.cellTitle.setText(title)
         tile.cellBody.setText(body)
@@ -96,19 +96,19 @@ class HelloPhaseActivity : CasingDeckActivity() {
     }
 
     override fun onDestroy() {
-        CraftMovement.cancelAll(animators)
+        CraftMovement.abortAll(animators)
         super.onDestroy()
     }
 
-    private fun requestOnboardingPermissions() {
+    private fun demandOnboardingPermissions() {
         // onComplete fires once the whole configured queue is done — or straight away when
         // there is nothing to ask.
-        ConsentDriver.check(this) { goToNextStep() }
+        ConsentDriver.check(this) { headToNextStep() }
     }
 
     /** Whatever `launcher_ads.onboarding.order` puts after this screen, behind its exit interstitial. */
-    private fun goToNextStep() {
-        HomeSpotsProfile.runOnboardingInter(this, HomeSpotsProfile.OnboardScreen.WELCOME) {
+    private fun headToNextStep() {
+        HomeSpotsProfile.execOnboardingInter(this, HomeSpotsProfile.OnboardScreen.WELCOME) {
             HomeStream.advance(this)
         }
     }

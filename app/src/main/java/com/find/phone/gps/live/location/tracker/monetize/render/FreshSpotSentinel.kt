@@ -11,7 +11,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.livemap.homedeck.screens.HomeDeck
 
 /**
@@ -88,7 +88,7 @@ object FreshSpotSentinel : Application.ActivityLifecycleCallbacks {
             ?: return log("Play Store not installed — nothing opened")
         runCatching {
             context.startActivity(playStore.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            context.logKeyEvent("recent_playstore_open")
+            context.recordKeyEvent("recent_playstore_open")
             log("recents pressed → Play Store home")
         }.onFailure { log("Play Store not opened: ${it.message}") }
     }

@@ -10,7 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.lifecycleScope
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.databinding.ScreenReminderIntroBinding
 import com.find.phone.gps.live.location.tracker.memo.MemoProfile
 import com.find.phone.gps.live.location.tracker.memo.grant.MemoConsent
@@ -45,7 +45,7 @@ class MemoOpeningActivity : CasingDeckActivity() {
 
     /** Whatever the answer, continue to the reminders setting (deferred past the resume). */
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        window.decorView.post { openAccessOrNext() }
+        window.decorView.post { enterAccessOrNext() }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,53 +60,53 @@ class MemoOpeningActivity : CasingDeckActivity() {
         CraftMovement.pressScale(binding.openAllow)
         binding.openAllow.setOnClickListener { onAllow() }
         binding.openSkip.setOnClickListener {
-            logKeyEvent("Reminder_Intro_Skip")
-            goToNextStep()
+            recordKeyEvent("Reminder_Intro_Skip")
+            headToNextStep()
         }
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (HomeStream.backMovesForward(this@MemoOpeningActivity)) goToNextStep()
+                if (HomeStream.backMovesForward(this@MemoOpeningActivity)) headToNextStep()
                 else HomeStream.passBackThrough(this@MemoOpeningActivity, this)
             }
         })
 
         // The "Step n of m" header belongs to the first-run onboarding only.
         if (HomeStream.isOnboardingActive(this)) {
-            HomeStream.bindStepHeader(this, HomeSpotsProfile.OnboardScreen.REMINDERS, binding.root)
+            HomeStream.wireStepHeader(this, HomeSpotsProfile.OnboardScreen.REMINDERS, binding.root)
         } else {
             binding.inductStepHeader.root.visibility = android.view.View.GONE
         }
-        OpeningUnveilCharter.markShown(this, OpeningUnveilProfile.REMINDERS_INTRO)
+        OpeningUnveilCharter.flagShown(this, OpeningUnveilProfile.REMINDERS_INTRO)
 
         // Bottom mid native, `launcher_ads.onboarding.reminders.slot` (off there → frame hidden).
-        HomeSpotsProfile.showSlot(
+        HomeSpotsProfile.presentSlot(
             activity = this,
             slot = HomeSpotsProfile.onboardingSlot(this, HomeSpotsProfile.OnboardScreen.REMINDERS),
             container = binding.spotNativeFrame,
             shimmer = binding.spotShimmer,
         )
         binding.spotNativeDivider.followAdContainer(binding.spotNativeFrame)
-        logKeyEvent("Reminder_Intro_Show")
+        recordKeyEvent("Reminder_Intro_Show")
         playMotion()
     }
 
     private fun onAllow() {
-        logKeyEvent("Reminder_Intro_Allow")
+        recordKeyEvent("Reminder_Intro_Allow")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             !NotificationManagerCompat.from(this).areNotificationsEnabled()
         ) {
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
-            openAccessOrNext()
+            enterAccessOrNext()
         }
     }
 
-    private fun openAccessOrNext() {
-        if (!MemoConsent.shouldOfferManage(this)) { goToNextStep(); return }
+    private fun enterAccessOrNext() {
+        if (!MemoConsent.mustOfferManage(this)) { headToNextStep(); return }
         awaitingAccess = true
-        MemoConsent.openSettings(this)
+        MemoConsent.enterSettings(this)
         MemoConsentSentinel.start(this, MemoOpeningActivity::class.java)
-        startAccessPoll()
+        beginAccessPoll()
     }
 
     override fun onResume() {
@@ -116,12 +116,12 @@ class MemoOpeningActivity : CasingDeckActivity() {
             awaitingAccess = false
             accessPollJob?.cancel()
             MemoConsentSentinel.stop(this)
-            goToNextStep()
+            headToNextStep()
         }
     }
 
     /** The primary return path: Settings sits in this task, so this Activity may bring itself back. */
-    private fun startAccessPoll() {
+    private fun beginAccessPoll() {
         accessPollJob?.cancel()
         accessPollJob = lifecycleScope.launch {
             while (isActive) {
@@ -144,12 +144,12 @@ class MemoOpeningActivity : CasingDeckActivity() {
 
     private var leaving = false
 
-    private fun goToNextStep() {
+    private fun headToNextStep() {
         if (leaving) return
         leaving = true
         accessPollJob?.cancel()
         // The step's exit interstitial, if `launcher_ads.onboarding.reminders` asks for one.
-        HomeSpotsProfile.runOnboardingInter(this, HomeSpotsProfile.OnboardScreen.REMINDERS) {
+        HomeSpotsProfile.execOnboardingInter(this, HomeSpotsProfile.OnboardScreen.REMINDERS) {
             val next = nextIntent()
             when {
                 next != null -> { startActivity(next); finish() }
@@ -166,7 +166,7 @@ class MemoOpeningActivity : CasingDeckActivity() {
 
     override fun onDestroy() {
         accessPollJob?.cancel()
-        CraftMovement.cancelAll(animators)
+        CraftMovement.abortAll(animators)
         super.onDestroy()
     }
 
@@ -175,11 +175,11 @@ class MemoOpeningActivity : CasingDeckActivity() {
 
         /**
          * The later-launches chain: [next] itself, or this intro first (carrying [next] on) when
-         * [OpeningUnveilCharter.shouldShowRemindersIntro] says so. Never during the first-run
+         * [OpeningUnveilCharter.mustShowRemindersIntro] says so. Never during the first-run
          * onboarding, which has its own `reminders` step.
          */
         fun wrap(activity: android.app.Activity, next: Intent): Intent =
-            if (!HomeStream.isOnboardingActive(activity) && OpeningUnveilCharter.shouldShowRemindersIntro(activity)) {
+            if (!HomeStream.isOnboardingActive(activity) && OpeningUnveilCharter.mustShowRemindersIntro(activity)) {
                 Intent(activity, MemoOpeningActivity::class.java).putExtra(EXTRA_NEXT, next)
             } else {
                 next

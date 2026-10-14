@@ -7,7 +7,7 @@ const val REPOSITORY_NAME = "Launcher"
 
 // shared prefs
 const val WAS_HOME_SCREEN_INIT = "was_home_screen_init"
-/** The package last given the dock's messaging slot - see HomeDeck.syncHostDockItem. */
+/** The package last given the dock's messaging slot - see HomeDeck.alignHostDockItem. */
 const val DOCK_HOST_PACKAGE = "dock_sms_package"
 /** Set by the uninstall flow's fake uninstall - our own icon never returns to the dock. */
 const val SELF_ICON_HIDDEN = "self_icon_hidden"

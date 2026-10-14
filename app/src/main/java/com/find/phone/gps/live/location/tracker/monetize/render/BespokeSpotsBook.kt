@@ -23,7 +23,7 @@ class BespokeSpotsBook {
     companion object {
         private var cachedAds: List<InhouseSpot>? = null
         
-        fun clearCache() {
+        fun wipeCache() {
             cachedAds = null
         }
     }
@@ -35,7 +35,7 @@ class BespokeSpotsBook {
         FULLSCREEN_NATIVE
     }
 
-    fun loadCustomAd(
+    fun fetchCustomAd(
         context: Context,
         container: FrameLayout,
         type: CustomAdType,
@@ -94,8 +94,8 @@ class BespokeSpotsBook {
             return
         }
 
-        applyTheme(context, view, pref)
-        bindData( view, ad)
+        enactTheme(context, view, pref)
+        wireData( view, ad)
         setClickListeners(view)
 
         // Final UI setup (defer to next frame to avoid NestedScrollView layout issues)
@@ -118,7 +118,7 @@ class BespokeSpotsBook {
     // --------------------------------------------------------
     // THEME APPLY
     // --------------------------------------------------------
-    private fun applyTheme(context: Context, view: View, pref: SpotsLocker) {
+    private fun enactTheme(context: Context, view: View, pref: SpotsLocker) {
         try {
 
             val bgColor = color(pref.getString("NativeBgColor"), "#FFFFFF")
@@ -151,7 +151,7 @@ class BespokeSpotsBook {
     // --------------------------------------------------------
     // DATA BINDING
     // --------------------------------------------------------
-    private fun bindData(view: View, ad: InhouseSpot) {
+    private fun wireData(view: View, ad: InhouseSpot) {
         // Big / Mid Native
         view.findViewById<TextView?>(R.id.titileText)?.text = ad.title
         view.findViewById<TextView?>(R.id.Texttext)?.text = ad.description
@@ -163,12 +163,12 @@ class BespokeSpotsBook {
         view.findViewById<TextView?>(R.id.only_banner_button)?.text = ad.buttonText
 
         // Images
-        view.findViewById<ImageView?>(R.id.gif_image)?.let { bindGlideSafe(it, ad.icon) }
-        view.findViewById<ImageView?>(R.id.only_banner_logo)?.let { bindGlideSafe(it, ad.icon) }
-        view.findViewById<ImageView?>(R.id.custom_native)?.let { bindGlideSafe(it, ad.bannerImage) }
+        view.findViewById<ImageView?>(R.id.gif_image)?.let { wireGlideSafe(it, ad.icon) }
+        view.findViewById<ImageView?>(R.id.only_banner_logo)?.let { wireGlideSafe(it, ad.icon) }
+        view.findViewById<ImageView?>(R.id.custom_native)?.let { wireGlideSafe(it, ad.bannerImage) }
     }
 
-    private fun Context.findHostActivity(): Activity? {
+    private fun Context.locateHostActivity(): Activity? {
         var ctx: Context = this
         while (ctx is ContextWrapper) {
             if (ctx is Activity) return ctx
@@ -178,12 +178,12 @@ class BespokeSpotsBook {
     }
 
     private fun Context.isHostActivityDead(): Boolean {
-        val act = this as? Activity ?: findHostActivity() ?: return false
+        val act = this as? Activity ?: locateHostActivity() ?: return false
         if (act.isFinishing) return true
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && act.isDestroyed
     }
 
-    private fun bindGlideSafe(imageView: ImageView, url: String?) {
+    private fun wireGlideSafe(imageView: ImageView, url: String?) {
         if (url.isNullOrEmpty()) return
         if (imageView.context.isHostActivityDead()) return
         try {

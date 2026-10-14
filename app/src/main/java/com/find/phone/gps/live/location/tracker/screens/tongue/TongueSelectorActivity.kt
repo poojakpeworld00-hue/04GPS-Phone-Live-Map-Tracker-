@@ -53,7 +53,7 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
     private var navigated = false
 
     override fun initView() {
-        if (!standalone) OpeningUnveilCharter.markShown(this, OpeningUnveilProfile.LANGUAGE)
+        if (!standalone) OpeningUnveilCharter.flagShown(this, OpeningUnveilProfile.LANGUAGE)
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.tongueRoot) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -65,7 +65,7 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
         viewModel.init(current)
 
         // Big native under the list, `launcher_ads.onboarding.language.slot`.
-        HomeSpotsProfile.showSlot(
+        HomeSpotsProfile.presentSlot(
             activity = this,
             slot = HomeSpotsProfile.onboardingSlot(this, HomeSpotsProfile.OnboardScreen.LANGUAGE),
             container = binding.spotNativeFrame,
@@ -74,13 +74,13 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
         binding.spotNativeDivider.followAdContainer(binding.spotNativeFrame)
 
         if (!standalone) {
-            HomeStream.bindStepHeader(this, HomeSpotsProfile.OnboardScreen.LANGUAGE, binding.root)
+            HomeStream.wireStepHeader(this, HomeSpotsProfile.OnboardScreen.LANGUAGE, binding.root)
         } else {
             binding.root.findViewById<View>(R.id.induct_step_header).isVisible = false
         }
 
         // Resolve the region FIRST, so the Suggested list is right on the very first frame.
-        resolveRegion()
+        settleRegion()
 
         val onPick: (LingoElement) -> Unit = { viewModel.select(it.tag) }
         suggestedAdapter = LingoAdapter(onPick).apply { setCurrent(current) }
@@ -90,7 +90,7 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
         binding.listLanguages.layoutManager = LinearLayoutManager(this)
         binding.listLanguages.adapter = allAdapter
 
-        binding.actInfo.setOnClickListener { showInfoDialog() }
+        binding.actInfo.setOnClickListener { presentInfoDialog() }
         CraftMovement.pressScale(binding.actContinue)
         binding.actContinue.setOnClickListener { onContinue() }
 
@@ -128,11 +128,11 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
         }
     }
 
-    private fun resolveRegion() {
+    private fun settleRegion() {
         val device = deviceCountry()
         WardenRail.log(TAG, "resolveRegion: device=$device (sync seed)")
-        viewModel.applyCountry(device)
-        detectCountryByIp()
+        viewModel.enactCountry(device)
+        senseCountryByIp()
     }
 
     private fun deviceCountry(): String? {
@@ -143,14 +143,14 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
         return (sim ?: network ?: locale)?.uppercase()
     }
 
-    private fun detectCountryByIp() {
+    private fun senseCountryByIp() {
         lifecycleScope.launch {
-            val geo = ZoneSpotter.detectCountry(this@TongueSelectorActivity) ?: run {
+            val geo = ZoneSpotter.senseCountry(this@TongueSelectorActivity) ?: run {
                 WardenRail.log(TAG, "IP geo unavailable → keeping device seed")
                 return@launch
             }
             WardenRail.log(TAG, "IP refine → country=${geo.iso}")
-            viewModel.applyCountry(geo.iso)
+            viewModel.enactCountry(geo.iso)
         }
     }
 
@@ -166,7 +166,7 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
             .start()
     }
 
-    private fun showInfoDialog() {
+    private fun presentInfoDialog() {
         val view = layoutInflater.inflate(R.layout.popup_language_info, binding.tongueRoot, false)
         val dialog = MaterialAlertDialogBuilder(this).setView(view).create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
@@ -192,12 +192,12 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
         ConsentDriver.check(this) {
             val next = when {
                 !standalone && HomeStream.isOnboardingActive(this) -> HomeStream.nextActivity(this)
-                OpeningUnveilCharter.shouldShowTerms(this) -> PolicyPortalActivity::class.java
-                OpeningUnveilCharter.shouldShowOnboarding(this) -> BriefingActivity::class.java
+                OpeningUnveilCharter.mustShowTerms(this) -> PolicyPortalActivity::class.java
+                OpeningUnveilCharter.mustShowOnboarding(this) -> BriefingActivity::class.java
                 else -> HomeStream.homeActivity()
             }
             if (next == HomeStream.homeActivity()) {
-                HomeStream.markOnboardingCompleted(this)
+                HomeStream.flagOnboardingCompleted(this)
             }
             val intent = when {
                 !standalone && HomeStream.isOnboardingActive(this) && next != HomeStream.homeActivity() ->
@@ -206,8 +206,8 @@ class TongueSelectorActivity : StageActivity<ScreenLanguageBinding>() {
                 next == HomeStream.homeActivity() -> MemoOpeningActivity.wrap(this, Intent(this, next))
                 else -> Intent(this, next)
             }
-            HomeSpotsProfile.runOnboardingInter(this, HomeSpotsProfile.OnboardScreen.LANGUAGE) {
-                if (navigated) return@runOnboardingInter
+            HomeSpotsProfile.execOnboardingInter(this, HomeSpotsProfile.OnboardScreen.LANGUAGE) {
+                if (navigated) return@execOnboardingInter
                 navigated = true
                 // Apply the locale BEFORE starting the next screen, so it inflates in the chosen
                 // language instead of the old one (the recreate this triggers never lands: this

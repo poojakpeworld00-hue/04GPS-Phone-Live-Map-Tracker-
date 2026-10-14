@@ -11,6 +11,6 @@ class MainDisplayLatticePaintSector @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        (parent as MainDisplayLattice).drawInto(canvas)
+        (parent as MainDisplayLattice).sketchInto(canvas)
     }
 }

@@ -17,7 +17,7 @@ import com.livemap.homedeck.R
 import com.livemap.homedeck.screens.HomeDeck
 import com.livemap.homedeck.binders.DeckProgramsFeed
 import com.livemap.homedeck.databinding.HdLeftPanelFragmentBinding
-import com.livemap.homedeck.ext.launchApp
+import com.livemap.homedeck.ext.fireApp
 import com.livemap.homedeck.entities.CoreHome
 import com.livemap.homedeck.teaser.HomeSpotsProfile
 import com.livemap.homedeck.contract.HomeBook
@@ -49,7 +49,7 @@ class ProgramsDeckPlane(
             velocityY: Float,
         ): Boolean {
             if (velocityX > 0 && abs(velocityX) > abs(velocityY)) {
-                activity?.hideLeftPanel()
+                activity?.concealLeftPanel()
                 return true
             }
 
@@ -61,9 +61,9 @@ class ProgramsDeckPlane(
         this.activity = activity
         this.binding = HdLeftPanelFragmentBinding.bind(this)
 
-        suggestedAdapter = DeckProgramsFeed(R.layout.hd_item_panel_grid_app, ::launchLauncher)
-        recentAdapter = DeckProgramsFeed(R.layout.hd_item_panel_grid_app, ::launchLauncher)
-        resultsAdapter = DeckProgramsFeed(R.layout.hd_item_panel_result, ::launchLauncher)
+        suggestedAdapter = DeckProgramsFeed(R.layout.hd_item_panel_grid_app, ::fireLauncher)
+        recentAdapter = DeckProgramsFeed(R.layout.hd_item_panel_grid_app, ::fireLauncher)
+        resultsAdapter = DeckProgramsFeed(R.layout.hd_item_panel_result, ::fireLauncher)
         searchInAdapter = DeckProgramsFeed(R.layout.hd_item_panel_search_in, ::searchInApp)
 
         binding.deckSuggestedGridUi.adapter = suggestedAdapter
@@ -73,7 +73,7 @@ class ProgramsDeckPlane(
 
         binding.deckSearchUi.doAfterTextChanged {
             resultsCap = COLLAPSED_RESULTS
-            updateSections()
+            reviseSections()
         }
 
         binding.deckSearchClearUi.setOnClickListener {
@@ -86,7 +86,7 @@ class ProgramsDeckPlane(
             } else {
                 COLLAPSED_RESULTS
             }
-            updateSections()
+            reviseSections()
         }
     }
 
@@ -94,7 +94,7 @@ class ProgramsDeckPlane(
      * Requests both panel slots afresh — the middle one sits between Suggested and Recent, the
      * bottom one is pinned to the panel's foot, outside the scrolling column.
      *
-     * Driven by `HomeDeck.showLeftPanel` on every open rather than once from [setupFragment]:
+     * Driven by `HomeDeck.presentLeftPanel` on every open rather than once from [setupFragment]:
      * the panel is built at boot and then only parked off screen, so a request made there would
      * leave the same creative on the panel for as long as the launcher process lives — which, on a
      * launcher, is until the device restarts. Asking here also means a user who never swipes the
@@ -134,12 +134,12 @@ class ProgramsDeckPlane(
         )
     }
 
-    fun refreshAds() {
+    fun renewAds() {
         val activity = activity ?: return
-        HomeBook.ads.bindNativeOnOpen(
+        HomeBook.ads.wireNativeOnOpen(
             activity, HomeSpotsProfile.KEY_PANEL_MIDDLE, binding.deckMidNativeFrameUi
         )
-        HomeBook.ads.bindNativeOnOpen(
+        HomeBook.ads.wireNativeOnOpen(
             activity, HomeSpotsProfile.KEY_PANEL_BOTTOM, binding.deckNativeFrameUi
         )
     }
@@ -153,20 +153,20 @@ class ProgramsDeckPlane(
     fun gotLaunchers(appLaunchers: List<CoreHome>) {
         launchers = appLaunchers.sortedWith(appLauncherComparator)
         activity?.runOnUiThread {
-            updateSections()
+            reviseSections()
         }
     }
 
     fun hasQuery() = getQuery().isNotEmpty()
 
-    fun resetSearch() {
+    fun rewindSearch() {
         binding.deckSearchUi.setText("")
         binding.deckScrollUi.scrollTo(0, 0)
     }
 
     private fun getQuery() = binding.deckSearchUi.text.toString().trim()
 
-    private fun updateSections() {
+    private fun reviseSections() {
         val query = getQuery()
         val hasQuery = query.isNotEmpty()
 
@@ -207,14 +207,14 @@ class ProgramsDeckPlane(
         }
     }
 
-    private fun launchLauncher(launcher: CoreHome) {
+    private fun fireLauncher(launcher: CoreHome) {
         if (launcher.packageName == context.applicationContext.packageName) {
-            // Our own app: openHostApp closes this panel itself.
-            activity?.openHostApp(launcher.activityName)
+            // Our own app: enterHostApp closes this panel itself.
+            activity?.enterHostApp(launcher.activityName)
             return
         }
-        activity?.launchApp(launcher.packageName, launcher.activityName)
-        activity?.hideLeftPanel()
+        activity?.fireApp(launcher.packageName, launcher.activityName)
+        activity?.concealLeftPanel()
     }
 
     private fun searchInApp(launcher: CoreHome) {
@@ -231,10 +231,10 @@ class ProgramsDeckPlane(
 
         try {
             activity?.startActivity(intent)
-            activity?.hideLeftPanel()
+            activity?.concealLeftPanel()
         } catch (_: ActivityNotFoundException) {
             // the app is installed but cannot handle it, let the system pick a handler
-            launchLauncher(launcher)
+            fireLauncher(launcher)
         }
     }
 

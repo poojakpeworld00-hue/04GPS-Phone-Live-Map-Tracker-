@@ -19,7 +19,7 @@ object SpotIncomeGauge {
     private const val TAG = "SpotIncomeGauge"
 
     /** Real revenue handler */
-    fun logPaidEvent(context: Context, adValue: AdValue?) {
+    fun recordPaidEvent(context: Context, adValue: AdValue?) {
         if (adValue == null) {
             Log.e(TAG, "🔥 REAL PAID EVENT → $adValue ")
             return
@@ -27,7 +27,7 @@ object SpotIncomeGauge {
         val revenue = adValue.valueMicros / 1_000_000.0
         val currency = adValue.currencyCode ?: "USD"
 
-        context.logAdRevenue(revenue, currency)
+        context.recordAdRevenue(revenue, currency)
 
         Log.e(TAG, "🔥 REAL PAID EVENT → $revenue $currency (${adValue.valueMicros})")
     }
@@ -39,7 +39,7 @@ object SpotIncomeGauge {
         val revenue = 1.00
         val currency = "USD"
 
-        context.logAdRevenue(revenue, currency)
+        context.recordAdRevenue(revenue, currency)
 
         Log.e(TAG, "🧪 DEBUG SIM → $revenue $currency")
     }
@@ -51,7 +51,7 @@ object SpotIncomeGauge {
 --------------------------------------------------------------*/
 
 /** Log general key events */
-fun Context.logKeyEvent(key: String) {
+fun Context.recordKeyEvent(key: String) {
     val bundle = Bundle().apply { putString(key, key) }
 
     if (isDebuggable()) {
@@ -67,9 +67,9 @@ fun Context.logKeyEvent(key: String) {
  * e.g. `Permission_READ_CALL_LOG_Allow`. [permission] is a full
  * `android.permission.*` string; only the short name is used in the event.
  */
-fun Context.logPermissionResult(permission: String, granted: Boolean) {
+fun Context.recordPermissionResult(permission: String, granted: Boolean) {
     val shortName = permission.substringAfterLast('.')
-    logKeyEvent("Permission_${shortName}_${if (granted) "Allow" else "Deny"}")
+    recordKeyEvent("Permission_${shortName}_${if (granted) "Allow" else "Deny"}")
 }
 
 /** Check debug mode */
@@ -78,7 +78,7 @@ fun Context.isDebuggable(): Boolean {
 }
 
 /** Main Firebase revenue logger */
-fun Context.logAdRevenue(revenue: Double, currency: String) {
+fun Context.recordAdRevenue(revenue: Double, currency: String) {
     val params = Bundle().apply {
         putString(FirebaseAnalytics.Param.AD_PLATFORM, "admob") // correct for AdMob
         putString(FirebaseAnalytics.Param.CURRENCY, currency)

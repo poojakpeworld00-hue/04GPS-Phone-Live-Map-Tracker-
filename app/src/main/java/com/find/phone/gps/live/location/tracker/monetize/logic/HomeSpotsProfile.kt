@@ -170,7 +170,7 @@ object HomeSpotsProfile {
             }
             if (link != null) normalised.put("ads", JSONObject().put("directlink", link))
         }
-        return parseFlow(context, normalised, normalised, surface.label)
+        return decodeFlow(context, normalised, normalised, surface.label)
     }
 
     /** Whether [surface] would show anything at all (used to switch the launcher's own gate). */
@@ -181,7 +181,7 @@ object HomeSpotsProfile {
      * Runs [surface]'s ads, then [proceed] — exactly once on every path (ads off, block off,
      * counter skip, nothing ready, failure), so the gesture always completes.
      */
-    fun runSurface(activity: Activity, surface: HomePlane, proceed: () -> Unit) {
+    fun execSurface(activity: Activity, surface: HomePlane, proceed: () -> Unit) {
         if (!SpotsLocker.getInstance(activity).getBoolean("IsAdsON")) return proceed()
         val flow = surfaceFlow(activity, surface)
         if (!flow.enabled || flow.sequence.isEmpty()) {
@@ -205,7 +205,7 @@ object HomeSpotsProfile {
     )
 
     /** Preloads every surface's formats so each moment has an ad ready (one load per format). */
-    fun preloadLauncherAds(context: Context) {
+    fun prefetchLauncherAds(context: Context) {
         if (!SpotsLocker.getInstance(context).getBoolean("IsAdsON")) return
         HomePlane.entries.map { surfaceFlow(context, it) }
             .filter { it.enabled && it.sequence.isNotEmpty() }
@@ -508,7 +508,7 @@ object HomeSpotsProfile {
      * Parses one surface's flow. [block] carries the switches (`enabled`, `counter`, `sequence`,
      * `show_all`, `always_start_first`, `on_demand`); [idsFrom] is where per-format objects live.
      */
-    private fun parseFlow(
+    private fun decodeFlow(
         context: Context,
         block: JSONObject,
         idsFrom: JSONObject,
@@ -534,7 +534,7 @@ object HomeSpotsProfile {
                 ?: block.optJSONObject(type.key)
                 ?: idsFrom.optJSONObject(type.key)
             if (ad != null && !ad.optBoolean("enabled", true)) return@forEach
-            val id = resolveDrawerAdId(context, type, ad)
+            val id = settleDrawerAdId(context, type, ad)
             val urls = if (type == DrawerAdType.DIRECTLINK) directLinkUrls(ad) else emptyList()
             if (id.isBlank() && urls.isEmpty()) {
                 log("$label: ${type.key} dropped — no ad_unit_id (nor '${type.idFallbackKey}')")
@@ -594,7 +594,7 @@ object HomeSpotsProfile {
         return out
     }
 
-    private fun resolveDrawerAdId(context: Context, type: DrawerAdType, ad: JSONObject?): String {
+    private fun settleDrawerAdId(context: Context, type: DrawerAdType, ad: JSONObject?): String {
         val keys = if (type == DrawerAdType.DIRECTLINK) {
             listOf("ad_unit_id", "url", "link", "landing_url")
         } else {
@@ -611,7 +611,7 @@ object HomeSpotsProfile {
      * Renders [slot] into [container]. Hides the frame outright when the slot is off, so a
      * screen that follows the frame's visibility (the hairline dividers do) collapses with it.
      */
-    fun showSlot(
+    fun presentSlot(
         activity: Activity,
         slot: Slot,
         container: FrameLayout,
@@ -639,7 +639,7 @@ object HomeSpotsProfile {
 
             // disableInternalFallback=true → RibbonTeaser reports a single onAdFailed() so the
             // native-banner fallback owns the failure path, same as DisplayTeaserProfile.showAd.
-            RibbonTeaser().showBanner(
+            RibbonTeaser().presentBanner(
                 activity = activity,
                 container = container,
                 type = RibbonSort.AUTO,
@@ -651,7 +651,7 @@ object HomeSpotsProfile {
                 observer = object : RibbonSpotSentinel {
                     override fun onAdFailed() {
                         log("slot: banner failed, falling back to native banner")
-                        EmbeddedTeaserRibbon().showNativeBannerNative(activity, container, shimmer)
+                        EmbeddedTeaserRibbon().presentNativeBannerNative(activity, container, shimmer)
                     }
                 }
             )
@@ -661,10 +661,10 @@ object HomeSpotsProfile {
         log("slot: native type=${slot.nativeType}")
         val render = {
             when (slot.nativeType.lowercase()) {
-                "big" -> EmbeddedTeaser().showBigNative(activity, container, shimmer)
-                "mid" -> EmbeddedTeaser().showMidNative(activity, container, shimmer)
-                "native_banner" -> EmbeddedTeaserRibbon().showNativeBannerNative(activity, container, shimmer)
-                else -> EmbeddedTeaser().showMidNative2(activity, container, shimmer)
+                "big" -> EmbeddedTeaser().presentBigNative(activity, container, shimmer)
+                "mid" -> EmbeddedTeaser().presentMidNative(activity, container, shimmer)
+                "native_banner" -> EmbeddedTeaserRibbon().presentNativeBannerNative(activity, container, shimmer)
+                else -> EmbeddedTeaser().presentMidNative2(activity, container, shimmer)
             }
         }
         // The native pool is one shared ad, and every screen that renders it starts a refill. A
@@ -677,7 +677,7 @@ object HomeSpotsProfile {
             shimmer?.visibility = View.VISIBLE
             shimmer?.startShimmer()
             val renderIfAlive = { if (!activity.isFinishing && !activity.isDestroyed) render() }
-            EmbeddedTeaser().loadNativeADs(activity, object : EmbeddedTeaser.NativeAdObserver {
+            EmbeddedTeaser().fetchNativeADs(activity, object : EmbeddedTeaser.NativeAdObserver {
                 override fun onNativeAdLoaded() = renderIfAlive()
                 override fun onNativeAdFailed() = renderIfAlive()
             })
@@ -687,7 +687,7 @@ object HomeSpotsProfile {
     }
 
     /**
-     * [showSlot] with a refresh policy, for the surfaces that are opened over and over — the
+     * [presentSlot] with a refresh policy, for the surfaces that are opened over and over — the
      * app drawer and the left panel.
      *
      * Re-showing unconditionally is what made those two look broken. The native pool is a
@@ -700,7 +700,7 @@ object HomeSpotsProfile {
      * native is actually in hand, and otherwise leave what is on screen and warm the next.
      * Banner slots are untouched — they own their own refresh.
      */
-    fun refreshSlot(
+    fun renewSlot(
         activity: Activity,
         slot: Slot,
         container: FrameLayout,
@@ -709,12 +709,12 @@ object HomeSpotsProfile {
         // The shimmer placeholder is a child too; only a real ad view counts as "holding an ad".
         val holdsAnAd = (0 until container.childCount).any { container.getChildAt(it) !== shimmer }
         if (!slot.needsNativePreload || !holdsAnAd || EmbeddedTeaser.hasPreloadedNative()) {
-            showSlot(activity, slot, container, shimmer)
+            presentSlot(activity, slot, container, shimmer)
             return
         }
 
         log("slot: no fresh native — keeping the one on screen, warming the next")
-        EmbeddedTeaser().loadNativeADs(activity)
+        EmbeddedTeaser().fetchNativeADs(activity)
     }
 
     private fun slot(block: JSONObject?, defaultNativeType: String, label: String): Slot {
@@ -867,7 +867,7 @@ object HomeSpotsProfile {
      * Runs [screen]'s exit interstitial, then [proceed] — invoked exactly once on every path,
      * so a first-run screen never dead-ends on a missing ad.
      */
-    fun runOnboardingInter(activity: Activity, screen: OnboardScreen, proceed: () -> Unit) {
+    fun execOnboardingInter(activity: Activity, screen: OnboardScreen, proceed: () -> Unit) {
         val block = onboardingBlock(activity, screen)
         val enabled = block?.optBoolean("inter_enabled", screen.defaults().first)
             ?: screen.defaults().first
@@ -890,12 +890,12 @@ object HomeSpotsProfile {
         // Link-first replaces the interstitial when configured: `onboarding_<screen>_DirectLink` +
         // `onboarding_<screen>_link_first_then`, each falling back to the shared `onboarding_…`
         // keys, so screens differ only where they are configured to.
-        if (HomeSeatSpots.showLinkFirst(activity, "onboarding_${screen.key}", proceed)) {
+        if (HomeSeatSpots.presentLinkFirst(activity, "onboarding_${screen.key}", proceed)) {
             log("onboarding.${screen.key}: link-first")
             return
         }
         log("onboarding.${screen.key}: showing interstitial")
-        TakeoverStandard().showInterAds(activity) { proceed() }
+        TakeoverStandard().presentInterAds(activity) { proceed() }
     }
 
     /**

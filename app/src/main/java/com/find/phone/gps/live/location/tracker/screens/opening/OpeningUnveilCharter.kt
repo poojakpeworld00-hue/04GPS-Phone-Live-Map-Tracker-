@@ -8,17 +8,17 @@ import com.find.phone.gps.live.location.tracker.memo.grant.MemoConsent
 /**
  * Decides whether an intro screen (Language / Onboarding) shows this launch, from
  * its [OpeningUnveil] Remote Config policy plus the persisted ledger in
- * [LockerBook]. A screen calls [markShown] when it actually appears.
+ * [LockerBook]. A screen calls [flagShown] when it actually appears.
  *
  * Session = one cold start: [LockerBook.appLaunchCount] is bumped once per launch
- * (in Splash), so `app_launches` counts launches and [markShown] can de-dupe within
+ * (in Splash), so `app_launches` counts launches and [flagShown] can de-dupe within
  * a single launch even if the gate is evaluated at several points in the funnel.
  */
 object OpeningUnveilCharter {
 
     private const val DAY_MS = 24L * 60L * 60L * 1000L
 
-    fun shouldShow(context: Context, key: String, config: OpeningUnveil): Boolean {
+    fun mustShow(context: Context, key: String, config: OpeningUnveil): Boolean {
         if (!config.enabled) return false
         val prefs = LockerBook(context)
         return when (config.frequency) {
@@ -37,33 +37,33 @@ object OpeningUnveilCharter {
     }
 
     /** Record that [key] was shown this launch (bumps count + stamps time, once per launch). */
-    fun markShown(context: Context, key: String) {
+    fun flagShown(context: Context, key: String) {
         val prefs = LockerBook(context)
         val session = prefs.appLaunchCount
         if (prefs.introLastShownSession(key) == session) return
-        prefs.recordIntroShown(key, session)
+        prefs.noteIntroShown(key, session)
     }
 
-    fun shouldShowLanguage(context: Context): Boolean =
-        shouldShow(context, OpeningUnveilProfile.LANGUAGE, OpeningUnveilProfile.language(context))
+    fun mustShowLanguage(context: Context): Boolean =
+        mustShow(context, OpeningUnveilProfile.LANGUAGE, OpeningUnveilProfile.language(context))
 
-    fun shouldShowTerms(context: Context): Boolean =
-        shouldShow(context, OpeningUnveilProfile.TERMS, OpeningUnveilProfile.terms(context))
+    fun mustShowTerms(context: Context): Boolean =
+        mustShow(context, OpeningUnveilProfile.TERMS, OpeningUnveilProfile.terms(context))
 
-    fun shouldShowOnboarding(context: Context): Boolean =
-        shouldShow(context, OpeningUnveilProfile.ONBOARDING, OpeningUnveilProfile.onboarding(context))
+    fun mustShowOnboarding(context: Context): Boolean =
+        mustShow(context, OpeningUnveilProfile.ONBOARDING, OpeningUnveilProfile.onboarding(context))
 
     /**
      * The reminders intro on later launches: `intro_display.reminders_intro` cadence, AND
      * feature_config's `is_intro_screen` + country filter, AND reminders still to be allowed.
      */
-    fun shouldShowRemindersIntro(context: Context): Boolean =
+    fun mustShowRemindersIntro(context: Context): Boolean =
         MemoProfile.get(context).isIntroScreen &&
-            MemoConsent.shouldOfferManage(context) &&
+            MemoConsent.mustOfferManage(context) &&
             MemoProfile.isCountryAllowed(context) &&
-            shouldShow(context, OpeningUnveilProfile.REMINDERS_INTRO, OpeningUnveilProfile.remindersIntro(context))
+            mustShow(context, OpeningUnveilProfile.REMINDERS_INTRO, OpeningUnveilProfile.remindersIntro(context))
 
     /** Frequency gate only — callers still AND this with their own "is anything pending?" check. */
-    fun shouldShowPermissionSheet(context: Context): Boolean =
-        shouldShow(context, OpeningUnveilProfile.PERMISSION_SHEET, OpeningUnveilProfile.permissionSheet(context))
+    fun mustShowPermissionSheet(context: Context): Boolean =
+        mustShow(context, OpeningUnveilProfile.PERMISSION_SHEET, OpeningUnveilProfile.permissionSheet(context))
 }

@@ -26,10 +26,10 @@ import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
 import com.find.phone.gps.live.location.tracker.screens.tongue.TongueSelectorActivity
 import com.find.phone.gps.live.location.tracker.screens.tongue.LiveLocales
 import com.find.phone.gps.live.location.tracker.helpers.CoreLocker
-import com.find.phone.gps.live.location.tracker.helpers.openPolicyLink
-import com.find.phone.gps.live.location.tracker.helpers.openTermLink
+import com.find.phone.gps.live.location.tracker.helpers.enterPolicyLink
+import com.find.phone.gps.live.location.tracker.helpers.enterTermLink
 import com.find.phone.gps.live.location.tracker.helpers.rateApp
-import com.find.phone.gps.live.location.tracker.helpers.shareApp
+import com.find.phone.gps.live.location.tracker.helpers.spreadApp
 import java.util.Locale
 
 /**
@@ -71,29 +71,29 @@ class MainSliderOptions(
             activity.startActivity(MemoListActivity.intent(activity))
         }
         binding.lineRate.setOnClickListener { onNavigate(); activity.rateApp() }
-        binding.lineShare.setOnClickListener { onNavigate(); activity.shareApp() }
-        binding.linePrivacy.setOnClickListener { onNavigate(); activity.openPolicyLink() }
-        binding.lineTerms.setOnClickListener { onNavigate(); activity.openTermLink() }
-        binding.lineDeleteContacts.setOnClickListener { onNavigate(); confirmDeleteContacts() }
+        binding.lineShare.setOnClickListener { onNavigate(); activity.spreadApp() }
+        binding.linePrivacy.setOnClickListener { onNavigate(); activity.enterPolicyLink() }
+        binding.lineTerms.setOnClickListener { onNavigate(); activity.enterTermLink() }
+        binding.lineDeleteContacts.setOnClickListener { onNavigate(); affirmDeleteContacts() }
         listOf(binding.lineLanguage, binding.lineReminders, binding.lineRate, binding.lineShare, binding.linePrivacy, binding.lineTerms, binding.lineDeleteContacts)
             .forEach { CraftMovement.pressScale(it) }
 
-        binding.partLight.setOnClickListener { pickTheme(CoreLocker.THEME_LIGHT, AppCompatDelegate.MODE_NIGHT_NO) }
-        binding.partDark.setOnClickListener { pickTheme(CoreLocker.THEME_DARK, AppCompatDelegate.MODE_NIGHT_YES) }
-        binding.partSystem.setOnClickListener { pickTheme(CoreLocker.THEME_SYSTEM, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) }
+        binding.partLight.setOnClickListener { chooseTheme(CoreLocker.THEME_LIGHT, AppCompatDelegate.MODE_NIGHT_NO) }
+        binding.partDark.setOnClickListener { chooseTheme(CoreLocker.THEME_DARK, AppCompatDelegate.MODE_NIGHT_YES) }
+        binding.partSystem.setOnClickListener { chooseTheme(CoreLocker.THEME_SYSTEM, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) }
 
         refresh()
     }
 
     /** Confirms, then deletes everything this install uploaded and hides the row. */
-    private fun confirmDeleteContacts() {
+    private fun affirmDeleteContacts() {
         androidx.appcompat.app.AlertDialog.Builder(activity)
             .setTitle(R.string.ds_delete_contacts_title)
             .setMessage(R.string.ds_delete_contacts_body)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(R.string.ds_delete_contacts_confirm) { _, _ ->
                 activity.lifecycleScope.launch {
-                    val deleted = BuddyRelay.deleteUploaded(activity)
+                    val deleted = BuddyRelay.eraseUploaded(activity)
                     val msg = if (deleted != null) R.string.ds_delete_contacts_done else R.string.ds_delete_contacts_failed
                     android.widget.Toast.makeText(activity, msg, android.widget.Toast.LENGTH_SHORT).show()
                     binding.lineDeleteContacts.isVisible = BuddyRelay.hasUploaded(activity)
@@ -125,7 +125,7 @@ class MainSliderOptions(
         myNumberCard.render()
     }
 
-    private fun pickTheme(theme: String, mode: Int) {
+    private fun chooseTheme(theme: String, mode: Int) {
         if (CoreLocker.effectiveTheme(activity) == theme) return
         CoreLocker.setTheme(activity, theme)
         refresh()

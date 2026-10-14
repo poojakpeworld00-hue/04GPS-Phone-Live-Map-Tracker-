@@ -43,7 +43,7 @@ object InCoreRefreshBook {
      * Call this in onCreate() BEFORE the activity is STARTED.
      * Registers the ActivityResultLauncher.
      */
-    fun registerLauncher(activity: ComponentActivity) {
+    fun enlistLauncher(activity: ComponentActivity) {
         // Held weakly: this launcher lives in a static field, so capturing the
         // activity in the result lambda would pin it for the process lifetime.
         activityRef = WeakReference(activity)
@@ -95,7 +95,7 @@ object InCoreRefreshBook {
             updateManager?.registerListener(installStateUpdatedListener)
         }
 
-        checkForUpdates()
+        verifyForUpdates()
     }
 
     /**
@@ -108,7 +108,7 @@ object InCoreRefreshBook {
         when (state.installStatus()) {
             InstallStatus.DOWNLOADED -> {
                 Log.d(TAG, "Flexible update downloaded — asking the host to install.")
-                notifyDownloaded()
+                signalDownloaded()
             }
             InstallStatus.INSTALLED -> {
                 Log.d(TAG, "Update installed successfully.")
@@ -126,7 +126,7 @@ object InCoreRefreshBook {
     }
 
     /** Checks for updates and starts the flow if available. */
-    private fun checkForUpdates() {
+    private fun verifyForUpdates() {
         val manager = updateManager ?: return
         manager.appUpdateInfo
             .addOnSuccessListener { info ->
@@ -134,7 +134,7 @@ object InCoreRefreshBook {
                 // this is the state we come back to after an activity recreate.
                 if (info.installStatus() == InstallStatus.DOWNLOADED) {
                     Log.d(TAG, "Update already downloaded — asking the host to install.")
-                    notifyDownloaded()
+                    signalDownloaded()
                     return@addOnSuccessListener
                 }
                 // Download/install already running (it survives our activity) — no prompt.
@@ -160,7 +160,7 @@ object InCoreRefreshBook {
                             AppUpdateOptions.newBuilder(updateType).build()
                         )
                     } else {
-                        // Fallback — deprecated but works if registerLauncher wasn't called
+                        // Fallback — deprecated but works if enlistLauncher wasn't called
                         activityRef?.get()?.let { activity ->
                             @Suppress("DEPRECATION")
                             manager.startUpdateFlowForResult(
@@ -201,7 +201,7 @@ object InCoreRefreshBook {
                 info.installStatus() == InstallStatus.DOWNLOADED
             ) {
                 // Downloaded while we were in the background — let the host offer the restart.
-                notifyDownloaded()
+                signalDownloaded()
             }
         }
     }
@@ -218,11 +218,11 @@ object InCoreRefreshBook {
     /** Re-runs the Play check. Used by the force-update retry when the check failed. */
     fun retryCheck() {
         Log.d(TAG, "retryCheck()")
-        checkForUpdates()
+        verifyForUpdates()
     }
 
     /** Hands a ready-to-install download to the host; without a listener it waits for next launch. */
-    private fun notifyDownloaded() {
+    private fun signalDownloaded() {
         val listener = callback
         if (listener == null) {
             Log.w(TAG, "Update downloaded but no listener attached — deferring to the next launch.")

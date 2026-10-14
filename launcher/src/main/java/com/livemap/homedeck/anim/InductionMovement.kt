@@ -46,7 +46,7 @@ object InductionMovement {
     fun staggerDelay(index: Int): Long = index * STAGGER_MS
 
     /** Motion is skipped when the system animator scale is 0. Pure, so it is unit-tested. */
-    fun shouldAnimate(animatorDurationScale: Float): Boolean = animatorDurationScale > 0f
+    fun mustAnimate(animatorDurationScale: Float): Boolean = animatorDurationScale > 0f
 
     private fun animatorScale(context: Context): Float = runCatching {
         Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
@@ -58,7 +58,7 @@ object InductionMovement {
      */
     fun enter(hero: View?, vararg views: View) {
         val context = (hero ?: views.firstOrNull())?.context ?: return
-        if (!shouldAnimate(animatorScale(context))) return
+        if (!mustAnimate(animatorScale(context))) return
 
         val rise = RISE_DP * context.resources.displayMetrics.density
         val interpolator = FastOutSlowInInterpolator()
@@ -93,7 +93,7 @@ object InductionMovement {
      */
     fun hero(art: View?, glow: View?, ring: View?, sparkles: List<View> = emptyList(), chips: List<View> = emptyList()) {
         val anchor = art ?: glow ?: ring ?: sparkles.firstOrNull() ?: chips.firstOrNull() ?: return
-        if (!shouldAnimate(animatorScale(anchor.context))) return
+        if (!mustAnimate(animatorScale(anchor.context))) return
         val density = anchor.resources.displayMetrics.density
         val loops = mutableListOf<Animator>()
 
@@ -164,7 +164,7 @@ object InductionMovement {
     fun turn(outgoing: View, incoming: View, forward: Boolean, vararg cascade: View) {
         val density = incoming.resources.displayMetrics.density
         val shift = SLIDE_DP * density * if (forward) 1f else -1f
-        if (!shouldAnimate(animatorScale(incoming.context))) {
+        if (!mustAnimate(animatorScale(incoming.context))) {
             outgoing.alpha = 0f
             incoming.alpha = 1f
             incoming.translationX = 0f
@@ -228,7 +228,7 @@ object InductionMovement {
 
     /** Soft infinite breathe for hero rings. Caller cancels the returned animator in onDestroy. */
     fun pulse(view: View): Animator? {
-        if (!shouldAnimate(animatorScale(view.context))) return null
+        if (!mustAnimate(animatorScale(view.context))) return null
         return ObjectAnimator.ofPropertyValuesHolder(
             view,
             PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, PULSE_TO_SCALE),

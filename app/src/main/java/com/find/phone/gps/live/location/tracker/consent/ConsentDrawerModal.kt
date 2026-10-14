@@ -28,8 +28,8 @@ import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
-import com.find.phone.gps.live.location.tracker.monetize.logic.logPermissionResult
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordPermissionResult
 import com.find.phone.gps.live.location.tracker.store.LockerBook
 import com.find.phone.gps.live.location.tracker.consent.drawer.DrawerDrawings
 import com.find.phone.gps.live.location.tracker.consent.drawer.DrawerFolio
@@ -78,12 +78,12 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
     /** True from the Allow tap until every page has been asked. */
     private var sequenceRunning = false
     private var lastAsked = -1
-    private val continueSequence = Runnable { askNext(after = lastAsked) }
+    private val continueSequence = Runnable { queryNext(after = lastAsked) }
 
     private val requestPerms = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
-        result.forEach { (perm, granted) -> context?.logPermissionResult(perm, granted) }
+        result.forEach { (perm, granted) -> context?.recordPermissionResult(perm, granted) }
         onRequestResult()
     }
 
@@ -101,7 +101,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         pages = DrawerFolio.all(ctx)
         statuses = Array(pages.size) { if (pages[it].isGranted(ctx)) Status.ALREADY else Status.IDLE }
         current = pages.indices.firstOrNull { !pages[it].isGranted(ctx) } ?: 0
-        pageViews = pages.map { buildPage(inflater, it) }
+        pageViews = pages.map { composePage(inflater, it) }
 
         val pager = view.findViewById<ViewPager2>(R.id.swiper)
         this.pager = pager
@@ -114,7 +114,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         // Size the pager to its tallest page, so the sheet doesn't jump between pages.
         pager.post { fitPagerHeight() }
 
-        buildDots(view.findViewById(R.id.marks))
+        composeDots(view.findViewById(R.id.marks))
         view.findViewById<View>(R.id.actPrimary).apply {
             CraftMovement.pressScale(this)
             setOnClickListener { onPrimaryClicked() }
@@ -129,7 +129,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         }
 
         onPageShown(current, animate = false)
-        ctx.logKeyEvent("PermissionSheet_Show")
+        ctx.recordKeyEvent("PermissionSheet_Show")
         return view
     }
 
@@ -168,7 +168,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
 
     // ─────────────────────────── Pages ───────────────────────────
 
-    private fun buildPage(inflater: LayoutInflater, page: DrawerFolio): View {
+    private fun composePage(inflater: LayoutInflater, page: DrawerFolio): View {
         val v = inflater.inflate(R.layout.pmt_page, null, false)
         v.layoutParams = RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         v.findViewById<TextView>(R.id.txtTitle).setText(page.title)
@@ -266,22 +266,22 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
 
     private fun onPrimaryClicked() {
         if (sequenceRunning) return
-        if (pages.isEmpty()) { finishFlow(); return }
+        if (pages.isEmpty()) { concludeFlow(); return }
         sequenceRunning = true
         pager?.isUserInputEnabled = false
-        context?.logKeyEvent("PermissionSheet_AllowAll")
-        askNext(after = -1)
+        context?.recordKeyEvent("PermissionSheet_AllowAll")
+        queryNext(after = -1)
     }
 
     /** Slides to the next page still to ask and opens its prompt; closes the sheet when none is left. */
-    private fun askNext(after: Int) {
+    private fun queryNext(after: Int) {
         root?.removeCallbacks(continueSequence)
         if (!isAdded) return
         val next = nextToAsk(after)
         if (next == null) {
             val ctx = context
-            if (ctx != null && pages.all { it.isGranted(ctx) }) ctx.logKeyEvent("PermissionSheet_AllDone")
-            finishFlow()
+            if (ctx != null && pages.all { it.isGranted(ctx) }) ctx.recordKeyEvent("PermissionSheet_AllDone")
+            concludeFlow()
             return
         }
         lastAsked = next
@@ -295,8 +295,8 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
     }
 
     private fun onSkipClicked() {
-        context?.logKeyEvent("PermissionSheet_Skip")
-        finishFlow()
+        context?.recordKeyEvent("PermissionSheet_Skip")
+        concludeFlow()
     }
 
     private fun request(index: Int) {
@@ -311,8 +311,8 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
             return
         }
         val vault = LockerBook(act)
-        page.permissions.forEach { vault.markPermissionRequested(it) }
-        act.logKeyEvent("PermissionSheet_Ask_${page.key}")
+        page.permissions.forEach { vault.flagPermissionRequested(it) }
+        act.recordKeyEvent("PermissionSheet_Ask_${page.key}")
         runCatching { requestPerms.launch(page.permissions) }.onFailure {
             WardenRail.error(TAG, "Permission request failed for ${page.key}", it)
             onRequestResult()
@@ -354,7 +354,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         view.findViewById<TextView>(R.id.txtCounterCurrent).text = (i + 1).toString()
         view.findViewById<TextView>(R.id.txtCounterTotal).text = getString(R.string.ps_counter_total, pages.size)
         view.findViewById<View>(R.id.actSkip).visibility = if (sequenceRunning) View.INVISIBLE else View.VISIBLE
-        renderDots(view.findViewById(R.id.marks), animate)
+        paintDots(view.findViewById(R.id.marks), animate)
 
         // Check badge on the illustration: shown for allowed pages (popped by onGranted).
         pageViews.forEachIndexed { idx, pv ->
@@ -366,17 +366,17 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
 
         val name = getString(page.shortName)
         when (status) {
-            Status.IDLE, Status.REQUESTING -> showChip(null)
-            Status.ALLOWED -> showChip(
+            Status.IDLE, Status.REQUESTING -> presentChip(null)
+            Status.ALLOWED -> presentChip(
                 Chip.SUCCESS,
                 getString(if (nextToAsk(i) != null) R.string.ps_allowed_moving_on else R.string.ps_allowed_done, name),
             )
-            Status.DENIED -> showChip(Chip.WARNING, getString(R.string.ps_not_allowed, name))
-            Status.ALREADY -> showChip(Chip.INFO, getString(R.string.ps_already_allowed))
+            Status.DENIED -> presentChip(Chip.WARNING, getString(R.string.ps_not_allowed, name))
+            Status.ALREADY -> presentChip(Chip.INFO, getString(R.string.ps_already_allowed))
         }
 
         // One button for the whole sequence: "Allow", or a spinner while it runs.
-        renderPrimary(
+        paintPrimary(
             label = getString(if (sequenceRunning) R.string.ps_requesting else R.string.ps_allow),
             spinner = sequenceRunning,
             animate = animate && !CraftMovement.animationsDisabled(ctx),
@@ -389,7 +389,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         INFO(R.drawable.pmt_bg_status_info, R.drawable.pmt_ic_check, R.color.ps_accent_ink, R.color.ps_info_ink),
     }
 
-    private fun showChip(kind: Chip?, text: String? = null) {
+    private fun presentChip(kind: Chip?, text: String? = null) {
         val view = root ?: return
         val chip = view.findViewById<LinearLayout>(R.id.condChip)
         if (kind == null || text == null) { chip.isVisible = false; return }
@@ -413,7 +413,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         }
     }
 
-    private fun renderPrimary(label: String, spinner: Boolean, animate: Boolean) {
+    private fun paintPrimary(label: String, spinner: Boolean, animate: Boolean) {
         val view = root ?: return
         val btn = view.findViewById<View>(R.id.actPrimary)
         val content = view.findViewById<View>(R.id.lv_primaryContent)
@@ -438,7 +438,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         }.start()
     }
 
-    private fun buildDots(container: LinearLayout) {
+    private fun composeDots(container: LinearLayout) {
         val ctx = container.context
         container.removeAllViews()
         pages.indices.forEach { i ->
@@ -451,7 +451,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
     }
 
     /** Past dots tinted, the active one a 22dp gradient pill (width animated, 250 ms), the rest grey. */
-    private fun renderDots(container: LinearLayout, animate: Boolean) {
+    private fun paintDots(container: LinearLayout, animate: Boolean) {
         val ctx = container.context
         val small = ctx.dp(6f).toInt()
         val wide = ctx.dp(22f).toInt()
@@ -495,7 +495,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
 
     // ─────────────────────────── Finish ───────────────────────────
 
-    private fun finishFlow() {
+    private fun concludeFlow() {
         onFinished?.invoke()
         onFinished = null
         runCatching { dismissAllowingStateLoss() }
@@ -503,7 +503,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
 
     override fun onDismiss(dialog: android.content.DialogInterface) {
         super.onDismiss(dialog)
-        // Dragged down / back pressed (not via finishFlow): still notify once.
+        // Dragged down / back pressed (not via concludeFlow): still notify once.
         onFinished?.invoke()
         onFinished = null
     }
@@ -525,7 +525,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
          * it: close the panel and the sheet stays in front of the launcher's app grid. Callers
          * pair this with re-arming the sheet so the user is still asked next time the panel opens.
          */
-        fun dismissIfShowing(activity: FragmentActivity) {
+        fun retireIfShowing(activity: FragmentActivity) {
             val fm = activity.supportFragmentManager
             (fm.findFragmentByTag(TAG) as? ConsentDrawerModal)
                 ?.let { runCatching { it.dismissAllowingStateLoss() } }
@@ -568,13 +568,13 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
          * driven by the `permission_sheet` entry of the `intro_display` Remote Config
          * block (`enabled` + `prompt_frequency` = always | once | every_days |
          * app_launches | never, with `prompt_interval`). The ledger is stamped by
-         * [OpeningUnveilCharter.markShown] in [show]. This gate is for the
+         * [OpeningUnveilCharter.flagShown] in [show]. This gate is for the
          * **auto-launch only** — a manual "Manage" tap calls [show] directly.
          */
         @JvmStatic
-        fun shouldAutoShow(activity: FragmentActivity): Boolean {
+        fun mustAutoShow(activity: FragmentActivity): Boolean {
             if (!hasPending(activity)) return false
-            return OpeningUnveilCharter.shouldShowPermissionSheet(activity)
+            return OpeningUnveilCharter.mustShowPermissionSheet(activity)
         }
 
         /**
@@ -595,7 +595,7 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
             if (fm.isStateSaved || fm.findFragmentByTag(TAG) != null) return
             // Stamp the shared ledger so the frequency gate (once / every_days /
             // app_launches) can measure from here.
-            OpeningUnveilCharter.markShown(activity, OpeningUnveilProfile.PERMISSION_SHEET)
+            OpeningUnveilCharter.flagShown(activity, OpeningUnveilProfile.PERMISSION_SHEET)
             ConsentDrawerModal().apply { this.onFinished = onFinished }
                 .show(fm, TAG)
         }

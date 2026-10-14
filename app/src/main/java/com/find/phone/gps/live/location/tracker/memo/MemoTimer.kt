@@ -56,7 +56,7 @@ object MemoTimer {
     }
 
     /** Done on the alert: a one-off is finished; a repeating one waits for its next time. */
-    fun markDone(context: Context, id: Long) {
+    fun flagDone(context: Context, id: Long) {
         val item = MemoShelf.get(context, id) ?: return
         val next = Repeat.nextAfter(item.repeatOrOnce, item.baseTime, System.currentTimeMillis())
         if (next == null) {

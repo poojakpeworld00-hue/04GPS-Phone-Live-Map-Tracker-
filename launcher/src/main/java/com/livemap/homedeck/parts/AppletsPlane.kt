@@ -118,7 +118,7 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
                 if (binding.huntBarUi.hasFocus()) {
                     activity?.hideKeyboard()
                 }
-                activity?.startHandlingTouches(touchDownY)
+                activity?.beginHandlingTouches(touchDownY)
                 touchDownY = -1
             }
         }
@@ -133,7 +133,7 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
      * previews are decoded straight at the bounded size; anything else (a vector, a drawable XML)
      * goes through the framework as before.
      */
-    private fun loadPreview(info: AppWidgetProviderInfo, maxSide: Int): Drawable? {
+    private fun fetchPreview(info: AppWidgetProviderInfo, maxSide: Int): Drawable? {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && info.previewImage != 0) {
             runCatching {
                 val res = context.packageManager.getResourcesForApplication(info.provider.packageName)
@@ -174,7 +174,7 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
                 val appTitle = appMetadata.appTitle
                 val appIcon = appMetadata.appIcon
                 val widgetTitleUi = info.loadLabel(packageManager)
-                val widgetPreviewImage = loadPreview(info, previewMaxPx) ?: appIcon
+                val widgetPreviewImage = fetchPreview(info, previewMaxPx) ?: appIcon
                 val cellSize = context.getInitialCellSize(info, info.minWidth, info.minHeight)
                 val widthCells = cellSize.width
                 val heightCells = cellSize.height
@@ -312,7 +312,7 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
                     binding.lvWidgetsListUi.adapter = this
                 }
             } else {
-                (currAdapter as AppletsFeed).updateItems(widgetsListItems)
+                (currAdapter as AppletsFeed).reviseItems(widgetsListItems)
             }
         }
     }
@@ -323,7 +323,7 @@ class AppletsPlane(context: Context, attributeSet: AttributeSet) :
         }
 
         binding.lvWidgetsFastscrollerUi.updateColors(context.getProperPrimaryColor())
-        (binding.lvWidgetsListUi.adapter as? AppletsFeed)?.updateTextColor(context.getProperTextColor())
+        (binding.lvWidgetsListUi.adapter as? AppletsFeed)?.reviseTextColor(context.getProperTextColor())
         setupDrawerBackground()
 
         binding.huntBarUi.requireToolbar().beGone()

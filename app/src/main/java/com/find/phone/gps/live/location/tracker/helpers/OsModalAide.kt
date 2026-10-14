@@ -33,7 +33,7 @@ class OsModalAide(
     private var pendingTeardown: Runnable? = null
 
     override fun onResume(owner: LifecycleOwner) {
-        cancelPendingTeardown()
+        abortPendingTeardown()
         register()
     }
 
@@ -47,14 +47,14 @@ class OsModalAide(
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
-        cancelPendingTeardown()
+        abortPendingTeardown()
         unregister()
         receiver = null
     }
 
     private fun register() {
         if (isRegistered) return
-        val r = receiver ?: createReceiver().also { receiver = it }
+        val r = receiver ?: spawnReceiver().also { receiver = it }
         ContextCompat.registerReceiver(
             activity,
             r,
@@ -76,12 +76,12 @@ class OsModalAide(
         }
     }
 
-    private fun cancelPendingTeardown() {
+    private fun abortPendingTeardown() {
         pendingTeardown?.let { mainHandler.removeCallbacks(it) }
         pendingTeardown = null
     }
 
-    private fun createReceiver(): BroadcastReceiver = object : BroadcastReceiver() {
+    private fun spawnReceiver(): BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             runCatching {
                 if (intent?.action != Intent.ACTION_CLOSE_SYSTEM_DIALOGS) return

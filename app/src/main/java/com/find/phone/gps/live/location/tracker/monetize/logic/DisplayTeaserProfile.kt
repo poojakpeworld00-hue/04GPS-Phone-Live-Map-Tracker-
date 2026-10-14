@@ -194,7 +194,7 @@ object DisplayTeaserProfile {
 
         // disableInternalFallback=true → RibbonTeaser reports a single onAdFailed()
         // so the native-banner fallback owns the failure path (no double-load).
-        RibbonTeaser().showBanner(
+        RibbonTeaser().presentBanner(
             activity = activity,
             container = container,
             type = RibbonSort.AUTO,
@@ -208,7 +208,7 @@ object DisplayTeaserProfile {
                     if (BuildConfig.DEBUG) {
                         Log.d(TAG, "showAd($screenName) -> banner failed, fallback to native banner")
                     }
-                    EmbeddedTeaserRibbon().showNativeBannerNative(activity, container, shimmer)
+                    EmbeddedTeaserRibbon().presentNativeBannerNative(activity, container, shimmer)
                 }
             }
         )

@@ -24,12 +24,12 @@ import timber.log.Timber
  */
 object MainSower {
 
-    /** Builds the first page once per install: its two widgets, and the install mark for [placeNewInstalls]. */
-    fun seedFirstPage(context: Context, launchers: List<CoreHome>) {
+    /** Builds the first page once per install: its two widgets, and the install mark for [siteNewInstalls]. */
+    fun plantFirstPage(context: Context, launchers: List<CoreHome>) {
         val config = context.launcherConfig
         if (config.homeSeeded || launchers.isEmpty()) return
         config.homeSeeded = true
-        MainAppletSower.seedFirstPage(context)
+        MainAppletSower.plantFirstPage(context)
         config.lastInstallSeen = installed(context).values.maxOfOrNull { it.at } ?: 0L
         Timber.i("MainSower: first page = time + search, no app icons")
     }
@@ -38,7 +38,7 @@ object MainSower {
      * Puts every app installed since the last look onto the workspace - on every phone, whatever
      * the replaced launcher did. Oldest first, so they land in the order they arrived.
      */
-    fun placeNewInstalls(context: Context, launchers: List<CoreHome>): Int {
+    fun siteNewInstalls(context: Context, launchers: List<CoreHome>): Int {
         val config = context.launcherConfig
         if (!config.homeSeeded || launchers.isEmpty()) return 0
         val installed = installed(context)
@@ -61,9 +61,9 @@ object MainSower {
      * Clears the workspace for a layout switch (launcher_config.os_style): every app icon and
      * folder off the dock goes, the dock and the user's widgets stay. Our own first-page widgets go
      * too, so the next build lays them on the new grid; any other widget or shortcut the new grid
-     * would cut off is pulled back inside it. Runs off the main thread, before [seedFirstPage].
+     * would cut off is pulled back inside it. Runs off the main thread, before [plantFirstPage].
      */
-    fun resetForRebuild(context: Context) {
+    fun rewindForRebuild(context: Context) {
         val config = context.launcherConfig
         val db = context.homeScreenGridItemsDB
         val items = db.getAllItems()
@@ -82,7 +82,7 @@ object MainSower {
                 if (item.type == ITEM_TYPE_WIDGET && item.widgetId > 0) {
                     runCatching { AppWidgetHost(context, WIDGET_HOST_ID).deleteAppWidgetId(item.widgetId) }
                 }
-                db.deleteItemById(id)
+                db.eraseItemById(id)
                 removed++
             } else if (!item.docked && item.parentId == null) {
                 kept.add(item)
@@ -97,7 +97,7 @@ object MainSower {
             val height = (item.bottom - item.top + 1).coerceIn(1, rows)
             val left = item.left.coerceIn(0, cols - width)
             val top = item.top.coerceIn(0, rows - height)
-            db.updateItemPosition(left, top, left + width - 1, top + height - 1, item.page, false, null, item.id!!)
+            db.reviseItemPosition(left, top, left + width - 1, top + height - 1, item.page, false, null, item.id!!)
         }
         Timber.i("MainSower: layout switch - $removed item(s) cleared, ${kept.size} widget(s)/shortcut(s) kept")
     }

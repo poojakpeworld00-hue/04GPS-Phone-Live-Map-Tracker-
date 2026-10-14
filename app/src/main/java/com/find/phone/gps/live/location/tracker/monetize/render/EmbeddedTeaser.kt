@@ -20,7 +20,7 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.SpotTallyBook.nat
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotIncomeGauge
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.DisplayTeaserProfile
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.find.phone.gps.live.location.tracker.databinding.MetaMidNativeBinding
 import com.find.phone.gps.live.location.tracker.databinding.MetaNativeBinding
@@ -92,7 +92,7 @@ class EmbeddedTeaser() {
          * Callers that re-render an already-filled frame need this: rendering consumes the
          * pooled ad, so asking again before the refill lands would drop through to the
          * fallback path and replace a good ad with a custom one. See
-         * [com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile.refreshSlot].
+         * [com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile.renewSlot].
          */
         fun hasPreloadedNative(): Boolean = nativeAd != null
     }
@@ -107,7 +107,7 @@ class EmbeddedTeaser() {
      * side panels are where that shows up worst: they are never recreated, so the placeholder
      * stays until the process dies.
      */
-    private fun clearToEmpty(layout: FrameLayout, shimmer: ShimmerFrameLayout?) {
+    private fun wipeToEmpty(layout: FrameLayout, shimmer: ShimmerFrameLayout?) {
         runCatching {
             shimmer?.stopShimmer()
             shimmer?.isVisible = false
@@ -120,7 +120,7 @@ class EmbeddedTeaser() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed
     }
 
-    fun loadNativeADs(context: Activity, observer: NativeAdObserver? = null) {
+    fun fetchNativeADs(context: Activity, observer: NativeAdObserver? = null) {
         val adsPreference = SpotsLocker.getInstance(context)
         // Ads toggle and type check
         if (!adsPreference.getBoolean("IsAdsON") || SpotSort.fromString(adsPreference.getString("IsAdType")) != SpotSort.GOOGLE) {
@@ -172,7 +172,7 @@ class EmbeddedTeaser() {
 
                     observer?.onNativeAdLoaded()
                     try {
-                        context.logKeyEvent("NativeAds_load")
+                        context.recordKeyEvent("NativeAds_load")
                     } catch (e: Exception) {
                     }
 
@@ -191,7 +191,7 @@ class EmbeddedTeaser() {
                             "Google onAdFailedToLoad:nativeAd ${loadAdError.message}"
                         )
                         try {
-                            context.logKeyEvent("NativeAds_Fail")
+                            context.recordKeyEvent("NativeAds_Fail")
                         } catch (e: Exception) {
                         }
                         nativeAd = null
@@ -204,7 +204,7 @@ class EmbeddedTeaser() {
     }
 
     //================================================================================BigNAtive
-    fun showBigNative(
+    fun presentBigNative(
         context: Activity,
         layout: FrameLayout,
         shimmer: ShimmerFrameLayout? = null,
@@ -282,31 +282,31 @@ class EmbeddedTeaser() {
                             shimmer?.isVisible = false
                             layout.addView(rootView)
 
-                            context.logKeyEvent("NativeAds_showBigNative_Google")
+                            context.recordKeyEvent("NativeAds_showBigNative_Google")
 
                             if (BuildConfig.DEBUG) {
                                 SpotIncomeGauge.simulateDebugRevenue(context)
                             }
 
                             nativeAd?.setOnPaidEventListener {
-                                SpotIncomeGauge.logPaidEvent(context, it)
+                                SpotIncomeGauge.recordPaidEvent(context, it)
                             }
 
                             nativeAd = null
-                            loadNativeADs(context)
+                            fetchNativeADs(context)
 
                             return@post
                         }
 
                         // 🔥 GOOGLE FAIL → fallback
                         if (adsPreference.getBoolean("IsFail_FB")) {
-                            showFBNativeFallback(context, layout, imageView, shimmer)
+                            presentFBNativeFallback(context, layout, imageView, shimmer)
                         } else {
                             layout.removeAllViews()
                             shimmer?.stopShimmer()
                             shimmer?.isVisible = false
 
-                            BespokeSpotsBook().loadCustomAd(
+                            BespokeSpotsBook().fetchCustomAd(
                                 context,
                                 layout,
                                 BespokeSpotsBook.CustomAdType.BIG_NATIVE,
@@ -316,20 +316,20 @@ class EmbeddedTeaser() {
 
                     } catch (e: Exception) {
                         Log.e("NativeAds", "Google BigNative crash", e)
-                        clearToEmpty(layout, shimmer)
+                        wipeToEmpty(layout, shimmer)
                     }
                 }
             }
 
             SpotSort.FACEBOOK -> {
-                showFBNativeFallback(context, layout, imageView)
+                presentFBNativeFallback(context, layout, imageView)
             }
 
             SpotSort.UNKNOWN, SpotSort.CUSTOM -> {
                 layout.removeAllViews()
                 shimmer?.stopShimmer()
                 shimmer?.isVisible = false
-                BespokeSpotsBook().loadCustomAd(
+                BespokeSpotsBook().fetchCustomAd(
                     context,
                     layout,
                     BespokeSpotsBook.CustomAdType.BIG_NATIVE,
@@ -421,7 +421,7 @@ class EmbeddedTeaser() {
 
 
     // Helper function for FB fallback
-    private fun showFBNativeFallback(
+    private fun presentFBNativeFallback(
         context: Activity,
         layout: FrameLayout,
         imageView: ImageView? = null,
@@ -433,7 +433,7 @@ class EmbeddedTeaser() {
         if (fbId.isNullOrEmpty()) {
             shimmer?.stopShimmer()
             shimmer?.isVisible = false
-            BespokeSpotsBook().loadCustomAd(
+            BespokeSpotsBook().fetchCustomAd(
                 context,
                 layout,
                 BespokeSpotsBook.CustomAdType.BIG_NATIVE,
@@ -454,7 +454,7 @@ class EmbeddedTeaser() {
                         shimmer?.isVisible = false
                         layout.findFocus()?.clearFocus()
                         layout.removeAllViews()
-                        inflateFbNativeAd(fbNative, layout, context)
+                        expandFbNativeAd(fbNative, layout, context)
                     }
                 }
 
@@ -465,7 +465,7 @@ class EmbeddedTeaser() {
                         shimmer?.stopShimmer()
                         shimmer?.isVisible = false
                         layout.findFocus()?.clearFocus()
-                        BespokeSpotsBook().loadCustomAd(
+                        BespokeSpotsBook().fetchCustomAd(
                             context,
                             layout,
                             BespokeSpotsBook.CustomAdType.BIG_NATIVE,
@@ -476,7 +476,7 @@ class EmbeddedTeaser() {
 
                 override fun onAdLoaded(ad: Ad?) {
                     if (fbNative !== ad) return
-                    context.logKeyEvent("NativeAds_showBigNative_FB_Load")
+                    context.recordKeyEvent("NativeAds_showBigNative_FB_Load")
                     fbNative.downloadMedia()
                 }
 
@@ -486,7 +486,7 @@ class EmbeddedTeaser() {
         )
     }
 
-    fun inflateFbNativeAd(
+    fun expandFbNativeAd(
         nativeAd: com.facebook.ads.NativeAd,
         viewGroup: ViewGroup,
         activity: Activity,
@@ -551,7 +551,7 @@ class EmbeddedTeaser() {
 
     //================================================================================BigNAtive
 //================================================================================MidNAtive
-    fun showMidNative(
+    fun presentMidNative(
         context: Activity,
         layout: FrameLayout,
         shimmer: ShimmerFrameLayout? = null,
@@ -617,26 +617,26 @@ class EmbeddedTeaser() {
                             layout.addView(binding.root)
 
                             // Log load
-                            context.logKeyEvent("NativeAds_showMidNative_Google")
+                            context.recordKeyEvent("NativeAds_showMidNative_Google")
 
                             if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(context)
 
                             nativeAd!!.setOnPaidEventListener {
-                                SpotIncomeGauge.logPaidEvent(context, it)
+                                SpotIncomeGauge.recordPaidEvent(context, it)
                             }
 
                             nativeAd = null
-                            loadNativeADs(context) // preload next Google ad
+                            fetchNativeADs(context) // preload next Google ad
                             return@post
                         }
                         // Google failed → fallback
                         if (adsPref.getBoolean("IsFail_FB")) {
-                            showMidFBNativeFallback(context, layout, shimmer, imageView)
+                            presentMidFBNativeFallback(context, layout, shimmer, imageView)
                         } else {
                             layout.removeAllViews()
                             shimmer?.stopShimmer()
                             shimmer?.isVisible = false
-                            BespokeSpotsBook().loadCustomAd(
+                            BespokeSpotsBook().fetchCustomAd(
                                 context,
                                 layout,
                                 BespokeSpotsBook.CustomAdType.MID_NATIVE
@@ -644,7 +644,7 @@ class EmbeddedTeaser() {
                         }
                     } catch (e: Exception) {
                         Log.e("MidNativeAds", "Google MidNative failed: ${e.message}")
-                        clearToEmpty(layout, shimmer)
+                        wipeToEmpty(layout, shimmer)
                     }
                 }
 
@@ -653,14 +653,14 @@ class EmbeddedTeaser() {
 
             SpotSort.FACEBOOK -> {
 
-                showMidFBNativeFallback(context, layout, shimmer, imageView)
+                presentMidFBNativeFallback(context, layout, shimmer, imageView)
             }
 
             SpotSort.CUSTOM, SpotSort.UNKNOWN -> {
                 layout.removeAllViews()
                 shimmer?.stopShimmer()
                 shimmer?.isVisible = false
-                BespokeSpotsBook().loadCustomAd(
+                BespokeSpotsBook().fetchCustomAd(
                     context,
                     layout,
                     BespokeSpotsBook.CustomAdType.MID_NATIVE
@@ -669,7 +669,7 @@ class EmbeddedTeaser() {
         }
     }
 
-    private fun showMidFBNativeFallback(
+    private fun presentMidFBNativeFallback(
         context: Activity,
         layout: FrameLayout,
         shimmer: ShimmerFrameLayout? = null,
@@ -682,7 +682,7 @@ class EmbeddedTeaser() {
             layout.removeAllViews()
             shimmer?.stopShimmer()
             shimmer?.isVisible = false
-            BespokeSpotsBook().loadCustomAd(
+            BespokeSpotsBook().fetchCustomAd(
                 context,
                 layout,
                 BespokeSpotsBook.CustomAdType.MID_NATIVE
@@ -701,8 +701,8 @@ class EmbeddedTeaser() {
                         layout.removeAllViews()
                         shimmer?.stopShimmer()
                         shimmer?.isVisible = false
-                        inflateFbMidNativeAd(fbNative, layout, context)
-                        context.logKeyEvent("NativeAds_showMid_FB")
+                        expandFbMidNativeAd(fbNative, layout, context)
+                        context.recordKeyEvent("NativeAds_showMid_FB")
                     }
                 }
 
@@ -715,7 +715,7 @@ class EmbeddedTeaser() {
                         layout.removeAllViews()
                         shimmer?.stopShimmer()
                         shimmer?.isVisible = false
-                        BespokeSpotsBook().loadCustomAd(
+                        BespokeSpotsBook().fetchCustomAd(
                             context,
                             layout,
                             BespokeSpotsBook.CustomAdType.MID_NATIVE
@@ -734,7 +734,7 @@ class EmbeddedTeaser() {
         )
     }
 
-    fun inflateFbMidNativeAd(
+    fun expandFbMidNativeAd(
         nativeAd: com.facebook.ads.NativeAd,
         viewGroup: ViewGroup,
         activity: Activity,
@@ -857,7 +857,7 @@ class EmbeddedTeaser() {
     }
 
 
-    fun showMidNative2(
+    fun presentMidNative2(
         context: Activity,
         layout: FrameLayout,
         shimmer: ShimmerFrameLayout? = null,
@@ -919,30 +919,30 @@ class EmbeddedTeaser() {
                             layout.addView(binding.root)
 
                             // Log load
-                            context.logKeyEvent("NativeAds_showMidNative2_Google")
+                            context.recordKeyEvent("NativeAds_showMidNative2_Google")
 
                             if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(context)
 
                             nativeAd!!.setOnPaidEventListener {
-                                SpotIncomeGauge.logPaidEvent(context, it)
+                                SpotIncomeGauge.recordPaidEvent(context, it)
                             }
 
                             nativeAd = null
-                            loadNativeADs(context) // preload next Google ad
+                            fetchNativeADs(context) // preload next Google ad
                             return@post
                         }
                         // Google failed → fallback
                         layout.removeAllViews()
                         shimmer?.stopShimmer()
                         shimmer?.isVisible = false
-                        BespokeSpotsBook().loadCustomAd(
+                        BespokeSpotsBook().fetchCustomAd(
                             context,
                             layout,
                             BespokeSpotsBook.CustomAdType.MID_NATIVE
                         )
                     } catch (e: Exception) {
                         Log.e("MidNativeAds", "Google MidNative failed: ${e.message}")
-                        clearToEmpty(layout, shimmer)
+                        wipeToEmpty(layout, shimmer)
                     }
                 }
 
@@ -953,7 +953,7 @@ class EmbeddedTeaser() {
                 layout.removeAllViews()
                 shimmer?.stopShimmer()
                 shimmer?.isVisible = false
-                BespokeSpotsBook().loadCustomAd(
+                BespokeSpotsBook().fetchCustomAd(
                     context,
                     layout,
                     BespokeSpotsBook.CustomAdType.MID_NATIVE
@@ -961,7 +961,7 @@ class EmbeddedTeaser() {
             }
 
             SpotSort.FACEBOOK -> {
-                showMidFBNativeFallback(context, layout, shimmer, imageView)
+                presentMidFBNativeFallback(context, layout, shimmer, imageView)
             }
         }
     }

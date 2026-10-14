@@ -6,7 +6,7 @@ import com.find.phone.gps.live.location.tracker.monetize.render.BespokeSpotsBook
 import com.find.phone.gps.live.location.tracker.monetize.render.StraightHrefOpener
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.find.phone.gps.live.location.tracker.homeshell.HomeFlip
-import com.find.phone.gps.live.location.tracker.helpers.applyNativeAdTheme
+import com.find.phone.gps.live.location.tracker.helpers.enactNativeAdTheme
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import org.json.JSONObject
 
@@ -30,7 +30,7 @@ object SpotProfileAbsorb {
      * `_1`: the placement-based ad flow reads a schema the builds already in users' hands do not
      * understand, so it lives in its own parameters and the old `GET_DATA_LIST` /
      * `DEBUG_GET_DATA_LIST` keep serving those builds untouched. Every reader of the blob goes
-     * through [readBlob].
+     * through [pullBlob].
      */
     val blobKey: String get() = if (BuildConfig.DEBUG) "DEBUG_GET_DATA_LIST_1" else "GET_DATA_LIST_1"
 
@@ -45,7 +45,7 @@ object SpotProfileAbsorb {
      * off) just because the console has not caught up. Empty when neither has anything — the
      * caller then keeps whatever an earlier run cached.
      */
-    fun readBlob(remoteConfig: FirebaseRemoteConfig): Pair<String, String> {
+    fun pullBlob(remoteConfig: FirebaseRemoteConfig): Pair<String, String> {
         val raw = runCatching { remoteConfig.getString(blobKey) }.getOrDefault("")
         if (raw.isNotBlank()) return blobKey to raw
         val legacy = runCatching { remoteConfig.getString(legacyBlobKey) }.getOrDefault("")
@@ -148,13 +148,13 @@ object SpotProfileAbsorb {
             // when absent, so dropping the key from Remote Config restores the default (on).
             putString(HomeFlip.KEY, if (root.has(HomeFlip.KEY)) root.optString(HomeFlip.KEY, "") else "")
 
-            applyNativeTheme(context, root) // DEFAULT theme
+            enactNativeTheme(context, root) // DEFAULT theme
 
             // --- Custom Ads ---
             val customAdsArray = root.optJSONArray("custom_ads")
             if (customAdsArray != null) {
                 putString("CUSTOM_ADS", customAdsArray.toString())
-                BespokeSpotsBook.clearCache()
+                BespokeSpotsBook.wipeCache()
             }
         }
 
@@ -203,12 +203,12 @@ object SpotProfileAbsorb {
      * `NativeTheme` of the audience block this user got (marketing or organic):
      * `{ "NativeLight": {…}, "NativeDark": {…} }`. The block itself already is the audience
      * choice, so there is nothing to pick here — it is stored as is and applied for the current
-     * light / dark mode by [applyNativeAdTheme], which every screen runs as it opens.
+     * light / dark mode by [enactNativeAdTheme], which every screen runs as it opens.
      *
      * Configs still carrying the old nested `{ "marketing": {…}, "default": {…} }` shape keep
      * working: marketing users read `marketing` (else `default`), everyone else `default`.
      */
-    fun applyNativeTheme(context: Context, response: JSONObject) {
+    fun enactNativeTheme(context: Context, response: JSONObject) {
         val adsPreference = SpotsLocker.getInstance(context)
         val root = response.optJSONObject("NativeTheme") ?: return
         val palette = if (root.has("NativeLight") || root.has("NativeDark")) {
@@ -219,7 +219,7 @@ object SpotProfileAbsorb {
             if (adsPreference.getBoolean("OnMaketing")) marketing ?: default else default
         } ?: return
         adsPreference.putString(NATIVE_THEME_ACTIVE, palette.toString())
-        context.applyNativeAdTheme()
+        context.enactNativeAdTheme()
     }
 
     /** The audience's native palette (NativeLight / NativeDark), as ingested. */

@@ -16,7 +16,7 @@ import androidx.core.view.isVisible
  * [compact] is the small icon that stands in for the hero while the ad is up (the reference
  * app's 58dp tile), so the screen keeps an identity at the top; it goes away with the ad.
  */
-fun View.hideWhileAdVisible(adContainer: ViewGroup, compact: View? = null) {
+fun View.concealWhileAdVisible(adContainer: ViewGroup, compact: View? = null) {
     fun sync() {
         val adShowing = adContainer.isVisible && adContainer.childCount > 0
         if (isVisible == adShowing) isVisible = !adShowing

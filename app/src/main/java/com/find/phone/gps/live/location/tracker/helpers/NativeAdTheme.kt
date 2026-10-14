@@ -26,7 +26,7 @@ private const val TAG = "NativeTheme"
  * separately by the launcher home — which does not extend it, yet is the device HOME and so is
  * often the first screen after a reboot.
  */
-fun Context.applyNativeAdTheme(
+fun Context.enactNativeAdTheme(
     theme: String = CoreLocker.selectedTheme(this).ifEmpty { THEME_SYSTEM }
 ) {
     val adsPref = SpotsLocker.getInstance(this)
@@ -44,7 +44,7 @@ fun Context.applyNativeAdTheme(
     }
 
     try {
-        // The audience block's own palette (SpotProfileAbsorb.applyNativeTheme), light or dark.
+        // The audience block's own palette (SpotProfileAbsorb.enactNativeTheme), light or dark.
         val palette = JSONObject(adsPref.getString(SpotProfileAbsorb.NATIVE_THEME_ACTIVE, "{}") ?: "{}")
         val themeJson = palette.optJSONObject(modeKey)
 

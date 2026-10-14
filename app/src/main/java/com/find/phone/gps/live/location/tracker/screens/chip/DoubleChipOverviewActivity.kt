@@ -51,18 +51,18 @@ class DoubleChipOverviewActivity : StageActivity<ScreenDualSimDashboardBinding>(
         }
         binding.actBack.setOnClickListener { goBack() }
         subs = activeSubs()
-        buildSelector()
-        renderDefaults()
-        renderSelected()
+        composeSelector()
+        paintDefaults()
+        paintSelected()
     }
 
     override fun onStart() {
         super.onStart()
-        if (subs.isNotEmpty()) registerSignal(subs[selectedIndex])
+        if (subs.isNotEmpty()) enlistSignal(subs[selectedIndex])
     }
 
     override fun onStop() {
-        stopSignal()
+        haltSignal()
         super.onStop()
     }
 
@@ -74,7 +74,7 @@ class DoubleChipOverviewActivity : StageActivity<ScreenDualSimDashboardBinding>(
             .sortedBy { it.simSlotIndex }
     }
 
-    private fun buildSelector() {
+    private fun composeSelector() {
         binding.chipcardSelector.removeAllViews()
         if (subs.size < 2) {
             binding.chipcardSelector.visibility = View.GONE
@@ -112,13 +112,13 @@ class DoubleChipOverviewActivity : StageActivity<ScreenDualSimDashboardBinding>(
         if (i == selectedIndex) return
         selectedIndex = i
         styleSelector()
-        stopSignal()
-        renderSelected()
-        registerSignal(subs[i])
+        haltSignal()
+        paintSelected()
+        enlistSignal(subs[i])
     }
 
     @SuppressLint("MissingPermission")
-    private fun renderSelected() {
+    private fun paintSelected() {
         val info = subs.getOrNull(selectedIndex)
         if (info == null) {
             binding.txtLevel.setText(R.string.dashboard_na)
@@ -137,7 +137,7 @@ class DoubleChipOverviewActivity : StageActivity<ScreenDualSimDashboardBinding>(
     }
 
     @SuppressLint("MissingPermission")
-    private fun renderDefaults() {
+    private fun paintDefaults() {
         binding.txtDefCalls.text = subLabel(SubscriptionManager.getDefaultVoiceSubscriptionId())
         binding.txtDefData.text = subLabel(SubscriptionManager.getDefaultDataSubscriptionId())
         binding.txtDefSms.text = subLabel(SubscriptionManager.getDefaultSmsSubscriptionId())
@@ -152,7 +152,7 @@ class DoubleChipOverviewActivity : StageActivity<ScreenDualSimDashboardBinding>(
 
     @SuppressLint("MissingPermission")
     @Suppress("DEPRECATION")
-    private fun registerSignal(info: SubscriptionInfo) {
+    private fun enlistSignal(info: SubscriptionInfo) {
         if (!MineChipNums.isGranted(this)) return
         val tm = telephonyFor(info)
         val l = object : PhoneStateListener() {
@@ -166,7 +166,7 @@ class DoubleChipOverviewActivity : StageActivity<ScreenDualSimDashboardBinding>(
     }
 
     @Suppress("DEPRECATION")
-    private fun stopSignal() {
+    private fun haltSignal() {
         val l = listener ?: return
         runCatching { listening?.listen(l, PhoneStateListener.LISTEN_NONE) }
         listener = null

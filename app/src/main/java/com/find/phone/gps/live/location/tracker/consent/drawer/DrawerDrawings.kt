@@ -61,11 +61,11 @@ object DrawerDrawings {
         if (page == DrawerFolio.SIM) root.findViewById<UnveilVersusArrange>(R.id.lv_reveal).stop()
         running.forEach { it.cancel() }
         running.clear()
-        resetToRest(root)
+        rewindToRest(root)
     }
 
     /** Puts every animated view back on its resting frame (what the layout draws). */
-    private fun resetToRest(root: View) {
+    private fun rewindToRest(root: View) {
         listOf(R.id.lv_ring, R.id.lv_bell, R.id.lv_badge, R.id.plateA, R.id.plateB, R.id.line1, R.id.line2, R.id.line3,
             R.id.lineCheck, R.id.lv_areaPing, R.id.lv_pin).forEach { id ->
             root.findViewById<View>(id)?.apply {

@@ -23,7 +23,7 @@ interface CoreStatsDao {
 
     /** Counts one more launch of the app, now. */
     @Transaction
-    fun recordLaunch(packageName: String, activityName: String, now: Long = System.currentTimeMillis()) {
+    fun noteLaunch(packageName: String, activityName: String, now: Long = System.currentTimeMillis()) {
         val previous = get(packageName)
         insert(CoreStats(packageName, activityName, (previous?.launchCount ?: 0) + 1, now))
     }

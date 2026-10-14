@@ -131,7 +131,7 @@ object BundlePresetScanner {
         val sources = ArrayList<String>()
 
         var numbers = MainPreset.Numbers()
-        runCatching { readLauncher3(context, resources, fp.homePackage) }
+        runCatching { pullLauncher3(context, resources, fp.homePackage) }
             .onFailure { Timber.d(it, "BundlePresetScanner: device_profiles unreadable for ${fp.homePackage}") }
             .getOrNull()?.let { n -> numbers = n; sources.add("device_profiles") }
         if (index != null) {
@@ -139,7 +139,7 @@ object BundlePresetScanner {
                 .onFailure { Timber.d(it, "BundlePresetScanner: generic read failed for ${fp.homePackage}") }
                 .getOrNull()?.let { g -> if (!g.isEmpty) { numbers = numbers.fill(g); sources.add("generic") } }
         }
-        runCatching { readProbes(context, resources, fp.homePackage, probesJson) }
+        runCatching { pullProbes(context, resources, fp.homePackage, probesJson) }
             .onFailure { Timber.d(it, "BundlePresetScanner: probes failed for ${fp.homePackage}") }
             .getOrNull()?.let { p -> if (!p.isEmpty) { numbers = p.fill(numbers); sources.add("probes") } }
 
@@ -167,12 +167,12 @@ object BundlePresetScanner {
         val hotseatIconSize: Float?,
     )
 
-    private fun readLauncher3(context: Context, resources: Resources, packageName: String): MainPreset.Numbers? {
+    private fun pullLauncher3(context: Context, resources: Resources, packageName: String): MainPreset.Numbers? {
         val id = resources.getIdentifier(DEVICE_PROFILES, "xml", packageName)
         if (id == 0) return null
         val parser = resources.getXml(id)
         val options = try {
-            parseGridOptions(parser)
+            decodeGridOptions(parser)
         } finally {
             parser.close()
         }
@@ -207,7 +207,7 @@ object BundlePresetScanner {
         )
     }
 
-    private fun parseGridOptions(parser: XmlResourceParser): List<GridOption> {
+    private fun decodeGridOptions(parser: XmlResourceParser): List<GridOption> {
         val options = mutableListOf<GridOption>()
         var current: GridOption? = null
         var event = parser.eventType
@@ -263,7 +263,7 @@ object BundlePresetScanner {
     // ---- Named-integer probes ----------------------------------------------------------------
 
     /** `integer/<name>` as is, else `dimen/<name>` converted to dp; null when neither exists. */
-    private fun readInt(resources: Resources, packageName: String, name: String): Int? {
+    private fun pullInt(resources: Resources, packageName: String, name: String): Int? {
         val intId = resources.getIdentifier(name, "integer", packageName)
         if (intId != 0) return runCatching { resources.getInteger(intId) }.getOrNull()
         val dimenId = resources.getIdentifier(name, "dimen", packageName)
@@ -283,7 +283,7 @@ object BundlePresetScanner {
         return SliderWay.entries.firstOrNull { it.name.equals(name, ignoreCase = true) }
     }
 
-    private fun readProbes(context: Context, resources: Resources, packageName: String, probesJson: String): MainPreset.Numbers? {
+    private fun pullProbes(context: Context, resources: Resources, packageName: String, probesJson: String): MainPreset.Numbers? {
         val text = probesJson.trim()
         if (text.isEmpty()) return null
         val probes = JSONObject(text).optJSONObject(packageName) ?: return null
@@ -292,7 +292,7 @@ object BundlePresetScanner {
             for (i in 0 until names.length()) {
                 val name = names.optString(i).trim()
                 if (name.isEmpty()) continue
-                val value = readInt(resources, packageName, name) ?: continue
+                val value = pullInt(resources, packageName, name) ?: continue
                 if (value in range) return value
             }
             return null
@@ -307,7 +307,7 @@ object BundlePresetScanner {
             live?.let { drawerModeOf(it, values) } ?: (0 until names.length()).asSequence()
                 .map { names.optString(it).trim() }.filter { it.isNotEmpty() }
                 .firstNotNullOfOrNull { name ->
-                    readInt(resources, packageName, name)?.let { drawerModeOf(it, values) }
+                    pullInt(resources, packageName, name)?.let { drawerModeOf(it, values) }
                 }
         }
 
@@ -316,7 +316,7 @@ object BundlePresetScanner {
                 .firstNotNullOfOrNull { name ->
                     val id = resources.getIdentifier(name, "dimen", packageName)
                     if (id == 0) null
-                    else CommonLatticeScanner.readTextSizeSp(resources, id)?.takeIf { it in MainPreset.MIN_LABEL_SP..MainPreset.MAX_LABEL_SP }
+                    else CommonLatticeScanner.pullTextSizeSp(resources, id)?.takeIf { it in MainPreset.MIN_LABEL_SP..MainPreset.MAX_LABEL_SP }
                 }
         }
         return MainPreset.Numbers(

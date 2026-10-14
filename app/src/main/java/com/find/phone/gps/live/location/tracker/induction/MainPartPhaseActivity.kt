@@ -12,12 +12,12 @@ import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverStandard
 import com.find.phone.gps.live.location.tracker.databinding.ScreenOnboardingDefaultLauncherBinding
 import com.find.phone.gps.live.location.tracker.consent.ConsentDriver
 import com.find.phone.gps.live.location.tracker.screens.craft.CraftMovement
-import com.find.phone.gps.live.location.tracker.helpers.hideWhileAdVisible
+import com.find.phone.gps.live.location.tracker.helpers.concealWhileAdVisible
 import com.livemap.homedeck.ext.isDefaultLauncher
 import com.livemap.homedeck.ext.roleManager
 import org.fossify.commons.extensions.viewBinding
@@ -86,15 +86,15 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
             return
         }
 
-        if (savedInstanceState == null) logKeyEvent("default_home_view")
+        if (savedInstanceState == null) recordKeyEvent("default_home_view")
 
         CraftMovement.pressScale(binding.inductSetDefault)
         binding.inductSetDefault.setOnClickListener {
-            if (isDefaultLauncher()) goHome() else openHomeSettings()
+            if (isDefaultLauncher()) goHome() else enterHomeSettings()
         }
         binding.inductSkip.setOnClickListener {
-            logKeyEvent("default_home_skip")
-            goToNextStep()
+            recordKeyEvent("default_home_skip")
+            headToNextStep()
         }
 
         val ui = HomeSpotsProfile.onboardingUi(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT)
@@ -104,14 +104,14 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
         // Paid users: Back gets one last ask (the role dialog). Organic users: Back is Back.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (HomeStream.backMovesForward(this@MainPartPhaseActivity)) promptForRole()
+                if (HomeStream.backMovesForward(this@MainPartPhaseActivity)) nudgeForRole()
                 else HomeStream.passBackThrough(this@MainPartPhaseActivity, this)
             }
         })
 
         // Native big ad card, `launcher_ads.onboarding.set_default.slot`; the frame is hidden
         // outright when the slot is off.
-        HomeSpotsProfile.showSlot(
+        HomeSpotsProfile.presentSlot(
             activity = this,
             slot = HomeSpotsProfile.onboardingSlot(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT),
             container = binding.spotNativeFrame,
@@ -119,9 +119,9 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
         )
 
         // Small phones: the hero card gives way to the ad while one is on screen.
-        binding.pictureHero.hideWhileAdVisible(binding.spotNativeFrame, binding.leadCompact)
+        binding.pictureHero.concealWhileAdVisible(binding.spotNativeFrame, binding.leadCompact)
 
-        HomeStream.bindStepHeader(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT, binding.root)
+        HomeStream.wireStepHeader(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT, binding.root)
 
         // First arrival: open the system default-app page straight away, not on a restore.
         // Debug builds accept `qa_no_auto_open` so the screen itself can be inspected via adb.
@@ -142,35 +142,35 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
     // ===== the two-stage request =====
 
     /** Stage 1 — the settings page listing the installed home apps. */
-    private fun openHomeSettings() {
+    private fun enterHomeSettings() {
         if (leaving || requestInFlight) return
-        launchHomeSettings()
+        fireHomeSettings()
         // The coach-mark follows the list rather than racing it — see HomeClueCue.
-        HomeClueCue.showAfterSettings(this)
+        HomeClueCue.presentAfterSettings(this)
     }
 
-    private fun launchHomeSettings() {
+    private fun fireHomeSettings() {
         if (leaving) return
-        val opened = launchForResult(Intent(Settings.ACTION_HOME_SETTINGS), REQ_HOME_SETTINGS) ||
-            launchForResult(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS), REQ_HOME_SETTINGS)
+        val opened = fireForResult(Intent(Settings.ACTION_HOME_SETTINGS), REQ_HOME_SETTINGS) ||
+            fireForResult(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS), REQ_HOME_SETTINGS)
         // A ROM with neither page would otherwise dead-end the CTA, so skip to stage 2.
-        if (!opened) promptForRole()
+        if (!opened) nudgeForRole()
     }
 
     /** Stage 2 — the one-tap role dialog, for when stage 1 came back with nothing changed. */
-    private fun promptForRole() {
+    private fun nudgeForRole() {
         if (leaving || requestInFlight) return
         if (!isQPlus()) {
-            goToNextStep()
+            headToNextStep()
             return
         }
-        if (!launchForResult(roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME), REQ_ROLE_HOME)) {
-            goToNextStep()
+        if (!fireForResult(roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME), REQ_ROLE_HOME)) {
+            headToNextStep()
         }
     }
 
     @Suppress("DEPRECATION")
-    private fun launchForResult(intent: Intent, requestCode: Int): Boolean = try {
+    private fun fireForResult(intent: Intent, requestCode: Int): Boolean = try {
         startActivityForResult(intent, requestCode)
         requestInFlight = true
         lastRequest = requestCode
@@ -187,17 +187,17 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
         // Whether we hold the role is the only honest signal (both surfaces report CANCELED on Back).
         if (isDefaultLauncher()) return
         when (requestCode) {
-            REQ_HOME_SETTINGS -> promptForRole()
+            REQ_HOME_SETTINGS -> nudgeForRole()
             REQ_ROLE_HOME -> {
                 // Still not the default home after the role popup: it was declined.
-                logKeyEvent("default_home_declined")
-                if (resultCode == RESULT_OK || !skipEnabled) goToNextStep() else askOnDecline()
+                recordKeyEvent("default_home_declined")
+                if (resultCode == RESULT_OK || !skipEnabled) headToNextStep() else queryOnDecline()
             }
         }
     }
 
     /** Declined the home role: a one-time `permission_engine` ask for this screen, if any. */
-    private fun askOnDecline() {
+    private fun queryOnDecline() {
         if (askedOnDecline) return
         askedOnDecline = true
         ConsentDriver.check(this)
@@ -216,21 +216,21 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
         super.onResume()
         HomeClueCue.dismiss()
         if (isDefaultLauncher()) {
-            logGrant()
+            recordGrant()
             if (finishingGrant) goHome() else advanceAfterGrant()
             return
         }
         if (autoOpenPending) {
             autoOpenPending = false
-            openHomeSettings()
+            enterHomeSettings()
         }
     }
 
     /** The role was just granted from this step: which surface did it, once per process. */
-    private fun logGrant() {
+    private fun recordGrant() {
         if (grantLogged || lastRequest == 0) return
         grantLogged = true
-        logKeyEvent(if (lastRequest == REQ_ROLE_HOME) "default_home_granted_dialog" else "default_home_granted_settings")
+        recordKeyEvent(if (lastRequest == REQ_ROLE_HOME) "default_home_granted_dialog" else "default_home_granted_settings")
     }
 
     /** The role is held: `auto_next` (default on) moves on after `auto_next_delay_ms`. */
@@ -259,22 +259,22 @@ class MainPartPhaseActivity : CasingDeckActivity(), InductionMainOnward.Step {
             Log.d(TAG, "grant finished, no interstitial ready → next step")
             return next()
         }
-        HomeSpotsProfile.runOnboardingInter(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT) { next() }
+        HomeSpotsProfile.execOnboardingInter(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT) { next() }
     }
 
     /** Home pressed here: on return, skip to the next step — Back would only ask for the role again. */
-    override fun onHomeForward() = goToNextStep()
+    override fun onHomeForward() = headToNextStep()
 
-    private fun goToNextStep() {
+    private fun headToNextStep() {
         if (leaving) return
         leaving = true
-        HomeSpotsProfile.runOnboardingInter(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT) {
+        HomeSpotsProfile.execOnboardingInter(this, HomeSpotsProfile.OnboardScreen.SET_DEFAULT) {
             HomeStream.advance(this)
         }
     }
 
     override fun onDestroy() {
-        CraftMovement.cancelAll(animators)
+        CraftMovement.abortAll(animators)
         HomeClueCue.dismiss()
         super.onDestroy()
     }

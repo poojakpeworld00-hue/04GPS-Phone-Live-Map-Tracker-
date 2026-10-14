@@ -12,7 +12,7 @@ import androidx.core.view.isVisible
 import androidx.viewpager2.widget.ViewPager2
 import com.find.phone.gps.live.location.tracker.R
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.foundation.StageActivity
 import com.find.phone.gps.live.location.tracker.store.LockerBook
 import com.find.phone.gps.live.location.tracker.databinding.ScreenOnboardingBinding
@@ -46,7 +46,7 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
     private var forwarding = false
 
     override fun initView() {
-        OpeningUnveilCharter.markShown(this, OpeningUnveilProfile.ONBOARDING)
+        OpeningUnveilCharter.flagShown(this, OpeningUnveilProfile.ONBOARDING)
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.inductRoot) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -55,7 +55,7 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
         }
 
         // The slot loads once; its container is only revealed on the page that carries it.
-        HomeSpotsProfile.showSlot(
+        HomeSpotsProfile.presentSlot(
             activity = this,
             slot = HomeSpotsProfile.onboardingSlot(this, HomeSpotsProfile.OnboardScreen.INTRO),
             container = binding.spotNativeFrame,
@@ -64,8 +64,8 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
 
         binding.vwPager.adapter = OpeningAdapter(pages)
         binding.vwPager.offscreenPageLimit = 1
-        buildDots()
-        updateDots(0)
+        composeDots()
+        reviseDots(0)
 
         // Swipe: the illustration moves at 0.6× the page (parallax), the copy fades out over
         // the first fifth of the swipe (≈200ms of a 1s page change).
@@ -76,20 +76,20 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
         }
 
         binding.vwPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(position: Int) = updateDots(position)
+            override fun onPageSelected(position: Int) = reviseDots(position)
         })
 
         val ui = HomeSpotsProfile.onboardingUi(this, HomeSpotsProfile.OnboardScreen.INTRO)
         binding.actSkip.isVisible = ui.skipEnabled
 
         CraftMovement.pressScale(binding.actNext)
-        binding.actSkip.setOnClickListener { finishOnboarding() }
+        binding.actSkip.setOnClickListener { concludeOnboarding() }
         binding.actNext.setOnClickListener {
             val current = binding.vwPager.currentItem
             if (current < pages.lastIndex) {
                 binding.vwPager.currentItem = current + 1
             } else {
-                finishOnboarding()
+                concludeOnboarding()
             }
         }
 
@@ -114,7 +114,7 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
                     binding.vwPager.setCurrentItem(current + 1, true)
                 } else if (!forwarding) {
                     forwarding = true
-                    finishOnboarding()
+                    concludeOnboarding()
                 }
             }
         })
@@ -122,7 +122,7 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
-    private fun buildDots() {
+    private fun composeDots() {
         val size = dp(6)
         val gap = dp(6)
         pages.indices.forEach { i ->
@@ -135,11 +135,11 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
         }
     }
 
-    private fun updateDots(active: Int) {
+    private fun reviseDots(active: Int) {
         val activeWidth = dp(24)
         val size = dp(6)
         dots.forEachIndexed { i, dot ->
-            animateDotWidth(dot, if (i == active) activeWidth else size)
+            tweenDotWidth(dot, if (i == active) activeWidth else size)
             dot.setBackgroundResource(if (i == active) R.drawable.lv_dot_active else R.drawable.lv_dot)
         }
         val last = active == pages.lastIndex
@@ -152,7 +152,7 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
     }
 
     /** Springs a dot's width to [target] (the pill-stretch effect). */
-    private fun animateDotWidth(dot: View, target: Int) {
+    private fun tweenDotWidth(dot: View, target: Int) {
         val lp = dot.layoutParams as LinearLayout.LayoutParams
         if (lp.width == target) return
         (dot.getTag(R.id.tag_dot_anim) as? ValueAnimator)?.cancel()
@@ -180,13 +180,13 @@ class BriefingActivity : StageActivity<ScreenOnboardingBinding>() {
             .start()
     }
 
-    private fun finishOnboarding() {
+    private fun concludeOnboarding() {
         prefs.isOnboardingDone = true
-        logKeyEvent("onboarding_completed")
+        recordKeyEvent("onboarding_completed")
         ConsentDriver.check(this) {
             // Permission done → this screen's interstitial (`onboarding.intro.inter_enabled`,
             // the callback fires immediately when there is nothing to show) → THEN navigate.
-            HomeSpotsProfile.runOnboardingInter(this, HomeSpotsProfile.OnboardScreen.INTRO) {
+            HomeSpotsProfile.execOnboardingInter(this, HomeSpotsProfile.OnboardScreen.INTRO) {
                 // The Premium paywall (design 9c) comes next; it continues this same
                 // navigation once it is closed or a plan is bought.
                 // Later launches: the reminders intro sits between this screen and Premium / Home

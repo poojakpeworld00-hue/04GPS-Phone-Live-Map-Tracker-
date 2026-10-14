@@ -49,7 +49,7 @@ data class BuddyNum(
 object GadgetBuddies {
 
     fun load(context: Context): List<BuddyNum> {
-        val accounts = loadAccounts(context)
+        val accounts = fetchAccounts(context)
         val projection = arrayOf(
             Phone.CONTACT_ID, Phone.DISPLAY_NAME_PRIMARY, Phone.NUMBER, Phone.TYPE, Phone.LABEL,
             Phone.STARRED, Phone.RAW_CONTACT_ID,
@@ -77,7 +77,7 @@ object GadgetBuddies {
     }
 
     /** raw contact id → the account it belongs to, as the filter names it. */
-    private fun loadAccounts(context: Context): Map<Long, String> {
+    private fun fetchAccounts(context: Context): Map<Long, String> {
         val map = HashMap<Long, String>()
         runCatching {
             context.contentResolver.query(

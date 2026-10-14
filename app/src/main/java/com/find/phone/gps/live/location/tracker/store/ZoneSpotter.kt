@@ -13,7 +13,7 @@ import kotlinx.coroutines.withContext
  *
  * The country is detected **once** — SpotBeaconActivity resolves it early via
  * [getLocationFromIP] and stores it in [LockerBook.homeCountryIso]. Every other
- * caller (Language, Home, Lookup) goes through [detectCountry], which reuses that
+ * caller (Language, Home, Lookup) goes through [senseCountry], which reuses that
  * cached value and only touches the network if nothing has resolved it yet — so
  * the geo endpoint is never hit multiple times.
  *
@@ -42,7 +42,7 @@ object ZoneSpotter {
      *
      * Returns null only when there's no cache and the IP lookup fails.
      */
-    suspend fun detectCountry(context: Context): GeoCountry? {
+    suspend fun senseCountry(context: Context): GeoCountry? {
         // Debug override wins over everything so a forced region is deterministic.
         if (BuildConfig.DEBUG) {
             validCountry(DEBUG_FORCE_ISO)?.let { forced ->
@@ -62,7 +62,7 @@ object ZoneSpotter {
             return GeoCountry(cached, Realms.dialOf(cached).orEmpty())
         }
 
-        val geo = detectCountryFromIp() ?: return null
+        val geo = senseCountryFromIp() ?: return null
         // Cache under our own key (not homeCountryIso) so it's never confused with
         // an explicit user pick — subsequent callers reuse it without a network hit.
         prefs.geoCountryIso = geo.iso
@@ -77,7 +77,7 @@ object ZoneSpotter {
     }
 
     /** One-shot IP lookup via the app's shared [getLocationFromIP] source (ip-api.com). */
-    private suspend fun detectCountryFromIp(): GeoCountry? = withContext(Dispatchers.IO) {
+    private suspend fun senseCountryFromIp(): GeoCountry? = withContext(Dispatchers.IO) {
         WardenRail.log(TAG, "no cache → getLocationFromIP()")
         val location = getLocationFromIP()
         if (location == null) {

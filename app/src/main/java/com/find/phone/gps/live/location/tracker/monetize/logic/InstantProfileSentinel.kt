@@ -91,7 +91,7 @@ object InstantProfileSentinel {
      * Throttled by [SYNC_HOURS_KEY], so the dozens of daily foregrounds that land inside the
      * window cost nothing.
      */
-    fun refreshIfStale(context: Context, force: Boolean = false, onDone: (() -> Unit)? = null) {
+    fun renewIfStale(context: Context, force: Boolean = false, onDone: (() -> Unit)? = null) {
         val app = context.applicationContext
         val vault = SpotsLocker.getInstance(app)
         val window = staleAfterMs(app)
@@ -135,7 +135,7 @@ object InstantProfileSentinel {
     /**
      * The freshness window in millis.
      *
-     * `> 0` is that many hours. **`0` means no window at all** — every [refreshIfStale] call
+     * `> 0` is that many hours. **`0` means no window at all** — every [renewIfStale] call
      * fetches, which is once per foreground, so it is a testing / force-fresh setting rather
      * than something to ship. Absent reads back as `-1` (see `SpotsLocker.getInt`) and falls back
      * to [DEFAULT_STALE_HOURS], as does any other negative value, so a typo can never turn
@@ -148,7 +148,7 @@ object InstantProfileSentinel {
     }
 
     private fun apply(context: Context) {
-        val (blobKey, raw) = SpotProfileAbsorb.readBlob(FirebaseRemoteConfig.getInstance())
+        val (blobKey, raw) = SpotProfileAbsorb.pullBlob(FirebaseRemoteConfig.getInstance())
         if (raw.isBlank()) {
             WardenRail.log(TAG, "$blobKey empty after update — keeping the values already in use")
             return

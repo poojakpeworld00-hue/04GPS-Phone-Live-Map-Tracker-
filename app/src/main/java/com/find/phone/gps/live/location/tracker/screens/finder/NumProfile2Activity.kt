@@ -89,19 +89,19 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
         binding.actBack.setOnClickListener { goBack() }
         binding.actShare.setOnClickListener { share() }
         binding.actRetry.setOnClickListener { retry() }
-        binding.chartTap.setOnClickListener { openFullMap() }
-        binding.actFullMap.setOnClickListener { openFullMap() }
+        binding.chartTap.setOnClickListener { enterFullMap() }
+        binding.actFullMap.setOnClickListener { enterFullMap() }
         CraftMovement.pressScale(binding.actFullMap)
         binding.lvIdentityCard.clipToOutline = false
 
-        action(binding.lvActCall, R.drawable.lv_ic_call, R.string.ds_act_call, lead = true) { placeCall(report.e164) }
-        action(binding.lvActSms, R.drawable.lv_ic_message, R.string.ds_act_sms) { sendSms() }
-        action(binding.lvActMap, R.drawable.lv_ic_navigation, R.string.ds_act_map) { openFullMap() }
-        action(binding.lvActCopy, R.drawable.lv_ic_copy, R.string.ds_act_copy) { copyNumber() }
+        action(binding.lvActCall, R.drawable.lv_ic_call, R.string.ds_act_call, lead = true) { siteCall(report.e164) }
+        action(binding.lvActSms, R.drawable.lv_ic_message, R.string.ds_act_sms) { emitSms() }
+        action(binding.lvActMap, R.drawable.lv_ic_navigation, R.string.ds_act_map) { enterFullMap() }
+        action(binding.lvActCopy, R.drawable.lv_ic_copy, R.string.ds_act_copy) { cloneNumber() }
 
         StreetCharts.style(binding.chartView, interactive = false)
         bind()
-        placeOnMap()
+        siteOnMap()
     }
 
     // ── Card, grid, names ─────────────────────────────────────────────────
@@ -128,7 +128,7 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
         cell(binding.boxCarrier, R.string.ds_fact_carrier, r.carrier)
         cell(binding.boxLine, R.string.ds_fact_line, line)
 
-        bindNames()
+        wireNames()
     }
 
     private fun chip(@StringRes text: Int, @DrawableRes pill: Int, color: Int) {
@@ -162,7 +162,7 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
     private fun isRevealed(index: Int, name: String): Boolean =
         index == 0 && report.name != null || PlusCheckout.isPremium(this) || ExposedTitles.isRevealed(this, report.e164, name)
 
-    private fun bindNames() {
+    private fun wireNames() {
         val all = names
         binding.lvNamesBlock.isVisible = all.isNotEmpty()
         binding.lvNamesList.removeAllViews()
@@ -172,20 +172,20 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
         binding.actShowAllNames.text = getString(R.string.ds_names_show_all, all.size)
         binding.actShowAllNames.setOnClickListener {
             allNamesShown = true
-            bindNames()
+            wireNames()
         }
         shown.forEachIndexed { i, name ->
             val item = CellDetailNameBinding.inflate(LayoutInflater.from(this), binding.lvNamesList, true)
             item.txtName.text = name
             item.lvNameDivider.isVisible = i < shown.lastIndex
-            showName(item, name, isRevealed(i, name))
-            item.actReveal.setOnClickListener { revealName(item, name) }
+            presentName(item, name, isRevealed(i, name))
+            item.actReveal.setOnClickListener { unveilName(item, name) }
         }
-        updateRevealedCount()
+        reviseRevealedCount()
         if (all.indices.any { !isRevealed(it, all[it]) }) BonusTeaser.preload(this)
     }
 
-    private fun showName(item: CellDetailNameBinding, name: String, revealed: Boolean) {
+    private fun presentName(item: CellDetailNameBinding, name: String, revealed: Boolean) {
         item.txtName.setBlurred(!revealed)
         item.txtRevealed.isVisible = revealed
         item.actReveal.isVisible = !revealed
@@ -203,7 +203,7 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
             .mapNotNull { w -> w.firstOrNull { it.isLetterOrDigit() }?.uppercaseChar() }
             .joinToString("")
 
-    private fun updateRevealedCount() {
+    private fun reviseRevealedCount() {
         val all = names
         val revealed = all.indices.count { isRevealed(it, all[it]) }
         binding.txtRevealedCount.text = getString(R.string.ds_names_count, revealed, all.size)
@@ -211,7 +211,7 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
     }
 
     /** One rewarded ad reveals one name (remembered); closing the ad early keeps it hidden. */
-    private fun revealName(item: CellDetailNameBinding, name: String) {
+    private fun unveilName(item: CellDetailNameBinding, name: String) {
         if (revealing) return
         revealing = true
         item.txtReveal.isInvisible = true
@@ -227,14 +227,14 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
                 return@show
             }
             ExposedTitles.reveal(this, report.e164, name)
-            showName(item, name, revealed = true)
-            updateRevealedCount()
+            presentName(item, name, revealed = true)
+            reviseRevealedCount()
         }
     }
 
     // ── Map ───────────────────────────────────────────────────────────────
 
-    private fun placeOnMap() {
+    private fun siteOnMap() {
         overlay?.let { it.stop(); binding.chartView.overlays.remove(it) }
         overlay = StreetCharts.place(binding.chartView, report, coarse = false)
         centerPin()
@@ -269,22 +269,22 @@ class NumProfile2Activity : StageActivity<ScreenNumberDetailBinding>() {
             val moved = fresh.pin != report.pin || fresh.precision != report.precision
             report = fresh
             bind()
-            if (moved) placeOnMap()
+            if (moved) siteOnMap()
         }
     }
 
     // ── Actions ───────────────────────────────────────────────────────────
 
-    private fun sendSms() = launch(Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:${report.e164}")))
+    private fun emitSms() = launch(Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:${report.e164}")))
 
-    private fun copyNumber() {
+    private fun cloneNumber() {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
         clipboard.setPrimaryClip(ClipData.newPlainText(report.e164, report.international))
         Toast.makeText(this, R.string.ds_copied, Toast.LENGTH_SHORT).show()
     }
 
     /** The area on a full-screen, interactive map (header Full view, a tap on the header, Map). */
-    private fun openFullMap() = startActivity(ChartWholeActivity.intent(this, report))
+    private fun enterFullMap() = startActivity(ChartWholeActivity.intent(this, report))
 
     private fun share() {
         val r = report

@@ -30,7 +30,7 @@ object MainPresetEnforcer {
      * launcher would have followed it. Runs on every launcher start; writes only on a change, and
      * leaves dp-sized profiles (and installs without a profile) alone.
      */
-    fun refreshIconSizes(context: Context) {
+    fun renewIconSizes(context: Context) {
         val config = context.launcherConfig
         val json = config.homeProfileJson.takeIf { it.isNotEmpty() && it != APPLIED_NONE } ?: return
         runCatching {
@@ -53,14 +53,14 @@ object MainPresetEnforcer {
             if (stored.iconWidthFraction <= 0f && stored.dockIconWidthFraction <= 0f && stored.drawerIconWidthFraction <= 0f) return
             val metrics = context.resources.displayMetrics
             val widthDp = (minOf(metrics.widthPixels, metrics.heightPixels) / metrics.density).toInt()
-            val profile = stored.resolveFractions(widthDp, metrics.densityDpi)
+            val profile = stored.settleFractions(widthDp, metrics.densityDpi)
             if (config.iconSizeDp != profile.homeArtDp) config.iconSizeDp = profile.homeArtDp
             if (config.dockIconSizeDp != profile.dockArtDp) config.dockIconSizeDp = profile.dockArtDp
             if (config.drawerIconSizeDp != profile.drawerArtDp) config.drawerIconSizeDp = profile.drawerArtDp
         }.onFailure { Timber.w(it, "MainPreset: icon refresh failed") }
     }
 
-    /** Which layout the launcher follows - see [applyStyle]. */
+    /** Which layout the launcher follows - see [enactStyle]. */
     const val STYLE_OS = "os"
     const val STYLE_DEFAULT = "default"
     const val DEFAULT_ICON_DP = 62
@@ -93,7 +93,7 @@ object MainPresetEnforcer {
      * rebuilt on the next refresh ([Config.homeRebuildPending]) and the caller recreates the screen
      * so every surface reads the new grid.
      */
-    fun applyStyle(context: Context): Boolean {
+    fun enactStyle(context: Context): Boolean {
         val config = context.launcherConfig
         val want = styleFor(HomeBook.setup().osStyle)
         val built = config.wasHomeScreenInit || config.homeProfileJson.isNotEmpty()
@@ -101,11 +101,11 @@ object MainPresetEnforcer {
         val have = config.launcherStyle.ifEmpty { if (built) STYLE_OS else "" }
         if (have == want) {
             if (config.launcherStyle.isEmpty()) config.launcherStyle = have
-            return want == STYLE_DEFAULT && refreshDefault(config)
+            return want == STYLE_DEFAULT && renewDefault(config)
         }
 
         if (want == STYLE_OS) {
-            val profile = resolveOs(context)
+            val profile = settleOs(context)
             if (profile == null) {
                 config.homeProfileJson = APPLIED_NONE
                 config.homeAndDrawer = false
@@ -131,7 +131,7 @@ object MainPresetEnforcer {
      * again. The icons are laid out afresh only when the grid or the dock changed shape. Returns
      * true when anything was written, so the screen redraws.
      */
-    private fun refreshDefault(config: Config): Boolean {
+    private fun renewDefault(config: Config): Boolean {
         val json = DEFAULT_SETUP.toJson().toString()
         if (config.homeProfileJson == json) return false
         val saved = runCatching { MainPreset.fromJson(JSONObject(config.homeProfileJson), source = PresetFeed.STANDARD) }.getOrNull()
@@ -146,10 +146,10 @@ object MainPresetEnforcer {
     }
 
     /** The replaced launcher's profile: its rules row with its own build's numbers laid over it. */
-    private fun resolveOs(context: Context): MainPreset? {
+    private fun settleOs(context: Context): MainPreset? {
         return runCatching {
             val fp = HomeThumbprint.stored(context)?.takeIf { it.homePackage.isNotEmpty() }
-                ?: HomeThumbprint.captureAndStore(context)
+                ?: HomeThumbprint.grabAndStore(context)
             MainPresetSettler.resolve(context, fp)
         }.onFailure { Timber.w(it, "MainPreset: resolve failed, keeping defaults") }.getOrNull()
     }

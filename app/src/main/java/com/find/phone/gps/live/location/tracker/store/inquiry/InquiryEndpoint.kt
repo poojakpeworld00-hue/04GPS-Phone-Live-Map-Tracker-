@@ -4,7 +4,7 @@ import android.content.Context
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.find.phone.gps.live.location.tracker.Muddle
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
-import com.find.phone.gps.live.location.tracker.helpers.addHttpInspector
+import com.find.phone.gps.live.location.tracker.helpers.appendHttpInspector
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -40,7 +40,7 @@ object InquiryCaller {
             .addInterceptor { chain ->
                 chain.proceed(chain.request().newBuilder().header(HEADER_API_KEY, apiKey).build())
             }
-            .addHttpInspector(HEADER_API_KEY)
+            .appendHttpInspector(HEADER_API_KEY)
             .apply {
                 if (BuildConfig.DEBUG) {
                     addInterceptor(HttpLoggingInterceptor().apply {

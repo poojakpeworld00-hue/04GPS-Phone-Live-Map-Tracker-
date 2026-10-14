@@ -56,18 +56,18 @@ class BundleResLedger private constructor(private val names: Map<String, Set<Str
                 val type = buf.getShort(pos).toInt() and 0xFFFF
                 val size = buf.getInt(pos + 4)
                 if (size <= 0) break
-                if (type == RES_TABLE_PACKAGE_TYPE) parsePackage(buf, pos, size, result)
+                if (type == RES_TABLE_PACKAGE_TYPE) decodePackage(buf, pos, size, result)
                 pos += size
             }
             return BundleResLedger(result)
         }
 
-        private fun parsePackage(buf: ByteBuffer, start: Int, size: Int, into: MutableMap<String, MutableSet<String>>) {
+        private fun decodePackage(buf: ByteBuffer, start: Int, size: Int, into: MutableMap<String, MutableSet<String>>) {
             val headerSize = buf.getShort(start + 2).toInt() and 0xFFFF
             val typeStringsOffset = buf.getInt(start + 8 + 4 + 256)
             val keyStringsOffset = buf.getInt(start + 8 + 4 + 256 + 8)
-            val typeNames = readStringPool(buf, start + typeStringsOffset)
-            val keyNames = readStringPool(buf, start + keyStringsOffset)
+            val typeNames = pullStringPool(buf, start + typeStringsOffset)
+            val keyNames = pullStringPool(buf, start + keyStringsOffset)
             val end = minOf(start + size, buf.limit())
             var pos = start + headerSize
             while (pos + 8 <= end) {
@@ -79,14 +79,14 @@ class BundleResLedger private constructor(private val names: Map<String, Set<Str
                     val typeId = buf.get(pos + 8).toInt() and 0xFF
                     val typeName = typeNames.getOrNull(typeId - 1)
                     if (typeName != null && typeName in WANTED_TYPES) {
-                        readTypeChunk(buf, pos, chunkHeaderSize, chunkSize, keyNames, into.getOrPut(typeName) { HashSet() })
+                        pullTypeChunk(buf, pos, chunkHeaderSize, chunkSize, keyNames, into.getOrPut(typeName) { HashSet() })
                     }
                 }
                 pos += chunkSize
             }
         }
 
-        private fun readTypeChunk(buf: ByteBuffer, start: Int, headerSize: Int, size: Int, keys: List<String>, into: MutableSet<String>) {
+        private fun pullTypeChunk(buf: ByteBuffer, start: Int, headerSize: Int, size: Int, keys: List<String>, into: MutableSet<String>) {
             val flags = buf.get(start + 9).toInt() and 0xFF
             val entryCount = buf.getInt(start + 12)
             val entriesStart = buf.getInt(start + 16)
@@ -122,7 +122,7 @@ class BundleResLedger private constructor(private val names: Map<String, Set<Str
             }
         }
 
-        private fun readStringPool(buf: ByteBuffer, start: Int): List<String> {
+        private fun pullStringPool(buf: ByteBuffer, start: Int): List<String> {
             if (start + 28 > buf.limit() || buf.getShort(start).toInt() and 0xFFFF != RES_STRING_POOL_TYPE) return emptyList()
             val headerSize = buf.getShort(start + 2).toInt() and 0xFFFF
             val count = buf.getInt(start + 8)

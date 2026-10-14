@@ -31,7 +31,7 @@ class HolderDeckPlane(
     private val gestureDetector = GestureDetectorCompat(context, object : SimpleOnGestureListener() {
         override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
             if (velocityX < 0 && abs(velocityX) > abs(velocityY)) {
-                activity?.hideHostPanel()
+                activity?.concealHostPanel()
                 return true
             }
             return false

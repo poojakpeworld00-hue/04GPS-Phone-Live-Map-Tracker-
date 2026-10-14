@@ -49,7 +49,7 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSeatSpots
 import com.find.phone.gps.live.location.tracker.monetize.logic.CloudProfileCharter
 import com.find.phone.gps.live.location.tracker.monetize.logic.GmsCellSpotsAssentBook
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverRear
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverStandard
 import com.find.phone.gps.live.location.tracker.BuildConfig
@@ -59,7 +59,7 @@ import com.find.phone.gps.live.location.tracker.consent.ConsentDriver
 import com.find.phone.gps.live.location.tracker.consent.ConsentFeed
 import com.find.phone.gps.live.location.tracker.consent.DisplayMatcher
 import com.find.phone.gps.live.location.tracker.helpers.CoreLocker
-import com.find.phone.gps.live.location.tracker.helpers.applyNativeAdTheme
+import com.find.phone.gps.live.location.tracker.helpers.enactNativeAdTheme
 import com.find.phone.gps.live.location.tracker.helpers.CoreLocker.THEME_DARK
 import com.find.phone.gps.live.location.tracker.helpers.CoreLocker.THEME_LIGHT
 import com.find.phone.gps.live.location.tracker.helpers.CoreLocker.THEME_SYSTEM
@@ -121,7 +121,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
          * units, the shrunk resources — but a release APK installed by adb or a direct
          * download has no Play install referrer, so LightHouse settles it organic and the
          * `marketing` half of the config can never be reached on a test device. This forces
-         * both halves of the decision ([resolveMarketingAudience] here and the SDK's own
+         * both halves of the decision ([settleMarketingAudience] here and the SDK's own
          * install source in `NavTracerCore`) onto the chosen side so they agree.
          *
          * **Must be `false` in anything that reaches Play.** Left `true`, every real install
@@ -275,7 +275,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
         // Run everything in a background thread to prevent cold-start stutters and ANR
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val (blobKey, configString) = SpotProfileAbsorb.readBlob(remoteConfig)
+                val (blobKey, configString) = SpotProfileAbsorb.pullBlob(remoteConfig)
 
                 // An empty or missing blob (a parameter not yet published, a fetch that brought
                 // nothing) must not strand the splash: nothing is ingested, and the chain carries
@@ -285,7 +285,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
                         CONFIG_TAG,
                         "$blobKey is empty → nothing ingested (using cached/default prefs)"
                     )
-                    checkInstallerRefere()
+                    verifyInstallerRefere()
                     return@launch
                 }
 
@@ -316,13 +316,13 @@ open class SpotBeaconActivity : AppCompatActivity() {
                 // run AFTER ingestConfig so funOnAdsLoad reads the freshly-persisted
                 // config (GET_DATA_RAW / __cfg_audience_split / ad gates), not stale
                 // or half-written values.
-                checkInstallerRefere()
+                verifyInstallerRefere()
 
             } catch (e: Exception) {
                 Log.e("SpotBeaconActivity", "Failed to update ad preferences: ${e.message}")
                 // Same reasoning: a malformed blob falls back to the cached config rather than
                 // leaving the splash waiting on a callback that would never come.
-                runCatching { checkInstallerRefere() }
+                runCatching { verifyInstallerRefere() }
             }
         }
     }
@@ -341,7 +341,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
 
 
 
-    private fun checkInstallerRefere() {
+    private fun verifyInstallerRefere() {
         if (activity!!.getPreferences(MODE_PRIVATE).getBoolean("isReferrerDone", false)) {
             onReferrerSettled()
             return
@@ -374,7 +374,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
      * First launch only: the referrer is cached from the second launch on, so every later
      * call resolves immediately.
      */
-    private suspend fun resolveMarketingAudience(): Boolean {
+    private suspend fun settleMarketingAudience(): Boolean {
         if (isAudienceForced) {
             // Loud, and not behind a DEBUG check, precisely because the case worth catching is
             // a release build that still has FORCE_AUDIENCE_IN_RELEASE switched on.
@@ -423,7 +423,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
                     }
                 }
 
-                val isMarketingOn = resolveMarketingAudience()
+                val isMarketingOn = settleMarketingAudience()
                 if (BuildConfig.DEBUG) {
                     Log.d(CONFIG_TAG, "audience → ${if (isMarketingOn) "MARKETING" else "ORGANIC"}")
                 }
@@ -543,7 +543,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
                     }
                 }
                 // 2️⃣ Native ad colours: the audience block's palette for the current mode.
-                activity.applyNativeAdTheme()
+                activity.enactNativeAdTheme()
 
                 launch {
 
@@ -578,10 +578,10 @@ open class SpotBeaconActivity : AppCompatActivity() {
                                 onGetData?.onSuccess()
                             } else {
                                 if (isGoogleAdsEnabled) {
-                                    EmbeddedTeaser().loadNativeADs(activity)
-                                    EmbeddedTeaserRibbon().loadNativeBannerAds(activity)
-                                    TakeoverStandard().loadInterAds(activity)
-                                    TakeoverRear().loadBackInterAds(activity)
+                                    EmbeddedTeaser().fetchNativeADs(activity)
+                                    EmbeddedTeaserRibbon().fetchNativeBannerAds(activity)
+                                    TakeoverStandard().fetchInterAds(activity)
+                                    TakeoverRear().fetchBackInterAds(activity)
                                 }
 
                                 // Splash ads gated by Firebase "is_splash_ads" flag
@@ -605,8 +605,8 @@ open class SpotBeaconActivity : AppCompatActivity() {
                                     onGetData?.onSuccess()
                                 } else {
                                     // Ads ON + splash enabled + gate passed → preload → show → continue
-                                    preloadAds(adsPreference, activity) {
-                                        showPreloadedAd(activity, adsPreference) {
+                                    prefetchAds(adsPreference, activity) {
+                                        presentPreloadedAd(activity, adsPreference) {
                                             onGetData?.onSuccess()
                                         }
                                     }
@@ -674,8 +674,8 @@ open class SpotBeaconActivity : AppCompatActivity() {
     // AppOpenAd
     // ------------------------
     // Preload all ads in sequence or parallel
-    fun preloadAds(adsPreference: SpotsLocker, activity: Activity, onComplete: () -> Unit) {
-        bindCustomTabs(activity)
+    fun prefetchAds(adsPreference: SpotsLocker, activity: Activity, onComplete: () -> Unit) {
+        wireCustomTabs(activity)
         val adType = SpotSort.fromString(adsPreference.getString("IsAdType"))
         Log.d(APPOPEN_TAG, "preload() → IsAdType=$adType, googleAdsEnabled=$isGoogleAdsEnabled")
         when (adType) {
@@ -687,24 +687,24 @@ open class SpotBeaconActivity : AppCompatActivity() {
                             APPOPEN_TAG,
                             "preload → is_splash_inter_show=true → loading splash INTERSTITIAL instead of AppOpen"
                         )
-                        loadGoogleInterstitialWithFallback(activity, adsPreference, onComplete)
+                        fetchGoogleInterstitialWithFallback(activity, adsPreference, onComplete)
                     } else {
                         Log.d(APPOPEN_TAG, "preload → is_splash_inter_show=false → loading APPOPEN")
-                        loadAppOpenAdWithFallback(activity, adsPreference, onComplete)
+                        fetchAppOpenAdWithFallback(activity, adsPreference, onComplete)
                     }
                 } else {
                     Log.w(
                         APPOPEN_TAG,
                         "preload → Google ads disabled (init failed) → Facebook fallback"
                     )
-                    loadFacebookFallback(activity, adsPreference, onComplete)
+                    fetchFacebookFallback(activity, adsPreference, onComplete)
                 }
             }
 
             SpotSort.FACEBOOK -> {
                 if (adsPreference.getBoolean("IsFail_FB")) {
                     val fbId = adsPreference.getString("faceB_InterAds")!!
-                    loadFacebookInterstitial(
+                    fetchFacebookInterstitial(
                         activity,
                         fbId,
                         onLoaded = { onComplete() },
@@ -722,7 +722,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
         }
     }
 
-    fun showPreloadedAd(activity: Activity, adsPreference: SpotsLocker, onDismissed: () -> Unit) {
+    fun presentPreloadedAd(activity: Activity, adsPreference: SpotsLocker, onDismissed: () -> Unit) {
         // `splash_ad_flow` / a `splash_` link chain: the dynamic flow instead of the preloaded
         // App Open / interstitial. Only a flow configured for `splash` by name switches it over.
         if (HomeSeatSpots.hasOwnFlow(activity, "splash")) {
@@ -739,9 +739,9 @@ open class SpotBeaconActivity : AppCompatActivity() {
                 )
                 if (isGoogleAdsEnabled && (appOpenAd != null || interstitialAd != null)) {
                     if (appOpenAd != null) {
-                        showAppOpenAd(activity) { onDismissed() }
+                        presentAppOpenAd(activity) { onDismissed() }
                     } else if (interstitialAd != null) {
-                        showGoogleInterstitial(activity) {
+                        presentGoogleInterstitial(activity) {
                             onDismissed()
                         }
                     }
@@ -749,10 +749,10 @@ open class SpotBeaconActivity : AppCompatActivity() {
                     if (adsPreference.getBoolean("IsFail_FB")) {
                         val fbId = adsPreference.getString("faceB_InterAds")
                         if (!fbId.isNullOrEmpty() && fbInterstitial != null) {
-                            showFacebookInterstitial { onDismissed() }
+                            presentFacebookInterstitial { onDismissed() }
                         } else if (adsPreference.getBoolean("IsCustomADS")) {
                             // All failed + custom ads ON → fallback to custom link
-                            launchCustomAdLink(
+                            fireCustomAdLink(
                                 activity, adsPreference.getString("DirectLink")!!
                             ) {
                                 onDismissed()
@@ -762,7 +762,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
                         }
                     } else if (adsPreference.getBoolean("IsCustomADS")) {
                         // All failed + custom ads ON → fallback to custom link
-                        launchCustomAdLink(
+                        fireCustomAdLink(
                             activity, adsPreference.getString("DirectLink")!!
                         ) {
                             onDismissed()
@@ -774,13 +774,13 @@ open class SpotBeaconActivity : AppCompatActivity() {
             }
 
             SpotSort.FACEBOOK -> {
-                if (fbInterstitial != null) showFacebookInterstitial { onDismissed() }
+                if (fbInterstitial != null) presentFacebookInterstitial { onDismissed() }
                 else onDismissed()
             }
 
             SpotSort.CUSTOM, SpotSort.UNKNOWN -> {
                 if (adsPreference.getBoolean("IsCustomADS")) {
-                    launchCustomAdLink(
+                    fireCustomAdLink(
                         activity, adsPreference.getString("DirectLink")!!
                     ) {
                         onDismissed()
@@ -793,16 +793,16 @@ open class SpotBeaconActivity : AppCompatActivity() {
     }
 
     private var appOpenAd: AppOpenAd? = null
-    private fun loadGoogleInterstitialWithFallback(
+    private fun fetchGoogleInterstitialWithFallback(
         activity: Activity, adsPreference: SpotsLocker, onComplete: () -> Unit
     ) {
         val googleId = adsPreference.getString("googleS_Inter") ?: run { onComplete(); return }
-        loadGoogleInterstitial(activity, googleId, onLoaded = { onComplete() }, onFailed = {
-            loadFacebookFallback(activity, adsPreference, onComplete)
+        fetchGoogleInterstitial(activity, googleId, onLoaded = { onComplete() }, onFailed = {
+            fetchFacebookFallback(activity, adsPreference, onComplete)
         })
     }
 
-    private fun loadAppOpenAdWithFallback(
+    private fun fetchAppOpenAdWithFallback(
         activity: Activity, adsPreference: SpotsLocker, onComplete: () -> Unit
     ) {
         val appOpenId = adsPreference.getString("googleAppopen")
@@ -813,19 +813,19 @@ open class SpotBeaconActivity : AppCompatActivity() {
             )
             onComplete(); return
         }
-        loadAppOpenAd(activity, appOpenId, onLoaded = { onComplete() }, onFailed = {
+        fetchAppOpenAd(activity, appOpenId, onLoaded = { onComplete() }, onFailed = {
             Log.w(APPOPEN_TAG, "AppOpen load failed → falling back to Google interstitial")
-            loadGoogleInterstitialWithFallback(activity, adsPreference, onComplete)
+            fetchGoogleInterstitialWithFallback(activity, adsPreference, onComplete)
         })
     }
 
-    private fun loadFacebookFallback(
+    private fun fetchFacebookFallback(
         activity: Activity, adsPreference: SpotsLocker, onComplete: () -> Unit
     ) {
         if (adsPreference.getBoolean("IsFail_FB")) {
             val fbId = adsPreference.getString("faceB_InterAds")
             if (!fbId.isNullOrEmpty()) {
-                loadFacebookInterstitial(
+                fetchFacebookInterstitial(
                     activity,
                     fbId,
                     onLoaded = { onComplete() },
@@ -835,7 +835,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
         } else onComplete()
     }
 
-    fun loadAppOpenAd(
+    fun fetchAppOpenAd(
         activity: Activity,
         adUnitId: String,
         onLoaded: (() -> Unit)? = null,
@@ -867,7 +867,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
             })
     }
 
-    fun showAppOpenAd(activity: Activity, onDismissed: (() -> Unit)? = null) {
+    fun presentAppOpenAd(activity: Activity, onDismissed: (() -> Unit)? = null) {
         appOpenAd?.let { ad ->
             Log.d(APPOPEN_TAG, "show() → displaying AppOpen ad")
             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
@@ -885,12 +885,12 @@ open class SpotBeaconActivity : AppCompatActivity() {
                 }
             }
             // Log load
-            activity.logKeyEvent("AppOpen_Loaded")
+            activity.recordKeyEvent("AppOpen_Loaded")
 
             if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(activity)
 
             appOpenAd?.setOnPaidEventListener {
-                SpotIncomeGauge.logPaidEvent(activity, it)
+                SpotIncomeGauge.recordPaidEvent(activity, it)
             }
             ad.show(activity)
         } ?: run {
@@ -905,7 +905,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
 // ------------------------
     private var interstitialAd: InterstitialAd? = null
 
-    fun loadGoogleInterstitial(
+    fun fetchGoogleInterstitial(
         activity: Activity,
         adUnitId: String,
         onLoaded: (() -> Unit)? = null,
@@ -925,7 +925,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
             })
     }
 
-    fun showGoogleInterstitial(activity: Activity, onDismissed: (() -> Unit)? = null) {
+    fun presentGoogleInterstitial(activity: Activity, onDismissed: (() -> Unit)? = null) {
         interstitialAd?.let { ad ->
             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
@@ -941,12 +941,12 @@ open class SpotBeaconActivity : AppCompatActivity() {
             }
 
             // Log load
-            activity.logKeyEvent("Interstitial_Splash_Loaded")
+            activity.recordKeyEvent("Interstitial_Splash_Loaded")
 
             if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(activity)
 
             interstitialAd?.setOnPaidEventListener {
-                SpotIncomeGauge.logPaidEvent(activity, it)
+                SpotIncomeGauge.recordPaidEvent(activity, it)
             }
             ad.show(activity)
         } ?: run { onDismissed?.invoke() }
@@ -957,7 +957,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
 // ------------------------
     private var fbInterstitial: com.facebook.ads.InterstitialAd? = null
 
-    fun loadFacebookInterstitial(
+    fun fetchFacebookInterstitial(
         activity: Activity,
         adUnitId: String,
         onLoaded: (() -> Unit)? = null,
@@ -986,7 +986,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
         )
     }
 
-    fun showFacebookInterstitial(onDismissed: (() -> Unit)? = null) {
+    fun presentFacebookInterstitial(onDismissed: (() -> Unit)? = null) {
         val ad = fbInterstitial
 
         if (ad != null && ad.isAdLoaded) {
@@ -997,7 +997,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
     }
 
     // 1️⃣ Bind Custom Tabs
-    private fun bindCustomTabs(activity: Activity) {
+    private fun wireCustomTabs(activity: Activity) {
         if (customTabsClient != null) return
 
         CustomTabsClient.bindCustomTabsService(
@@ -1009,7 +1009,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
                     customTabsSession = client.newSession(object : CustomTabsCallback() {
                         override fun onNavigationEvent(event: Int, extras: Bundle?) {
                             if ((event == CustomTabsCallback.TAB_HIDDEN || event == CustomTabsCallback.NAVIGATION_ABORTED) && isCustomTabOpened) {
-                                handleCustomTabClose()
+                                processCustomTabClose()
                             }
                         }
                     })
@@ -1023,7 +1023,7 @@ open class SpotBeaconActivity : AppCompatActivity() {
     }
 
     // 2️⃣ Handle close in one function
-    private fun handleCustomTabClose() {
+    private fun processCustomTabClose() {
         if (isFinishing || isDestroyed) return
         if (!isCloseHandled) {
             isCloseHandled = true
@@ -1045,8 +1045,8 @@ open class SpotBeaconActivity : AppCompatActivity() {
     }
 
     // 3️⃣ Launch Custom Tab
-    private fun launchCustomAdLink(activity: Activity, url: String, onClosed: () -> Unit) {
-        bindCustomTabs(activity)
+    private fun fireCustomAdLink(activity: Activity, url: String, onClosed: () -> Unit) {
+        wireCustomTabs(activity)
 
         isCustomTabOpened = true
         isCloseHandled = false
@@ -1060,13 +1060,13 @@ open class SpotBeaconActivity : AppCompatActivity() {
         } catch (e: Exception) {
             // fallback to browser
             activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-            handleCustomTabClose()
+            processCustomTabClose()
         }
     }
 
     override fun onResume() {
         super.onResume()
-        handleCustomTabClose()
+        processCustomTabClose()
     }
 
     fun getInstallReferrerFromClient(referrerClient: InstallReferrerClient) {

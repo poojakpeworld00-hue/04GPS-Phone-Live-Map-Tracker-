@@ -71,7 +71,7 @@ class ChartWholeActivity : StageActivity<ScreenMapFullBinding>() {
         binding.actZoomIn.setOnClickListener { binding.chartView.controller.zoomIn() }
         binding.actZoomOut.setOnClickListener { binding.chartView.controller.zoomOut() }
         binding.actRecenter.setOnClickListener { recenter() }
-        binding.actDirections.setOnClickListener { openInMaps() }
+        binding.actDirections.setOnClickListener { enterInMaps() }
         listOf(binding.actZoomIn, binding.actZoomOut, binding.actRecenter, binding.actDirections)
             .forEach { CraftMovement.pressScale(it) }
 
@@ -105,7 +105,7 @@ class ChartWholeActivity : StageActivity<ScreenMapFullBinding>() {
         }
     }
 
-    private fun openInMaps() {
+    private fun enterInMaps() {
         val pin = report.pin
         val label = Uri.encode(report.placeLabel.ifEmpty { report.countryName })
         val uri = if (pin != null) Uri.parse("geo:${pin.lat},${pin.lng}?q=${pin.lat},${pin.lng}($label)")

@@ -24,7 +24,7 @@ import timber.log.Timber
  * The search bar is the widget launcher_config.search_widget names - Google's (the default) or
  * Chrome's - where this phone can place it without its setup screen, else the other one, else our
  * drawn Google bar ([PSEUDO_WIDGET_GOOGLE_SEARCH]). A change of that key swaps the bar
- * ([syncFirstPage]). A real widget costs
+ * ([alignFirstPage]). A real widget costs
  * one system confirmation - `BIND_APPWIDGET` is privileged, so a launcher that ships through the
  * store can only ask. The grid asks once when it first draws the row (MainDisplayLattice.bindAttempted).
  *
@@ -56,7 +56,7 @@ object MainAppletSower {
     /**
      * The row the previous build laid the time on, to leave the top free for the "set as default
      * home" banner. The time is back on row 0 and the banner moves below it instead (HomeDeck
-     * places it from MainDisplayLattice.onTimeWidgetBottomChanged); [moveTimeWidgetToTop] brings it up.
+     * places it from MainDisplayLattice.onTimeWidgetBottomChanged); [shiftTimeWidgetToTop] brings it up.
      */
     private const val LEGACY_TIME_TOP_ROW = 2
 
@@ -65,23 +65,23 @@ object MainAppletSower {
 
     /**
      * Lays down the first-page widgets launcher_config asks for; each is skipped when the page
-     * already has it. Records what was applied, for [syncFirstPage].
+     * already has it. Records what was applied, for [alignFirstPage].
      */
-    fun seedFirstPage(context: Context) {
+    fun plantFirstPage(context: Context) {
         val config = context.launcherConfig
         val setup = HomeBook.setup()
         config.timeWidgetShown = setup.showTimeWidget
         config.searchWidgetShown = setup.showSearchWidget
         config.timeWidgetAtTop = true
-        if (setup.showTimeWidget) seedTimeWidget(context)
-        if (setup.showSearchWidget) seedSearchRow(context)
+        if (setup.showTimeWidget) plantTimeWidget(context)
+        if (setup.showSearchWidget) plantSearchRow(context)
     }
 
     /**
      * Places the search row on the first page. Returns true when a row was written. No-op when the
      * page already carries one, or its row is taken.
      */
-    fun seedSearchRow(context: Context): Boolean {
+    fun plantSearchRow(context: Context): Boolean {
         val config = context.launcherConfig
         val columns = config.homeColumnCount
         if (columns <= 0) return false
@@ -130,7 +130,7 @@ object MainAppletSower {
      * Runs off the main thread on every refresh; returns true when a widget was removed, so the
      * screen is rebuilt to drop its view.
      */
-    fun syncFirstPage(context: Context): Boolean {
+    fun alignFirstPage(context: Context): Boolean {
         val config = context.launcherConfig
         if (!config.homeSeeded) return false
         val setup = HomeBook.setup()
@@ -138,24 +138,24 @@ object MainAppletSower {
 
         if (!config.timeWidgetAtTop) {
             config.timeWidgetAtTop = true
-            moveTimeWidgetToTop(context)
+            shiftTimeWidgetToTop(context)
         }
 
         if (config.timeWidgetShown != setup.showTimeWidget) {
             config.timeWidgetShown = setup.showTimeWidget
-            if (setup.showTimeWidget) seedTimeWidget(context) else removed = removeWidgets(context) { it.className == PSEUDO_WIDGET_TIME }
+            if (setup.showTimeWidget) plantTimeWidget(context) else removed = dropWidgets(context) { it.className == PSEUDO_WIDGET_TIME }
             Timber.i("MainAppletSower: time widget ${if (setup.showTimeWidget) "on" else "off"}")
         }
 
         if (config.searchWidgetShown != setup.showSearchWidget) {
             config.searchWidgetShown = setup.showSearchWidget
-            if (setup.showSearchWidget) seedSearchRow(context) else removed = removeWidgets(context) { isSeededSearchRow(it) } || removed
+            if (setup.showSearchWidget) plantSearchRow(context) else removed = dropWidgets(context) { isSeededSearchRow(it) } || removed
             Timber.i("MainAppletSower: search widget ${if (setup.showSearchWidget) "on" else "off"}")
         } else if (setup.showSearchWidget && config.searchWidget != setup.searchWidget) {
-            removeWidgets(context) { isSeededSearchRow(it) }
+            dropWidgets(context) { isSeededSearchRow(it) }
             // Written even when the row cannot go back (its cells taken), so this is not retried forever.
             config.searchWidget = setup.searchWidget
-            seedSearchRow(context)
+            plantSearchRow(context)
             removed = true
             Timber.i("MainAppletSower: search widget switched to ${setup.searchWidget}")
         }
@@ -167,7 +167,7 @@ object MainAppletSower {
      * the default-home banner. Left where it is when those cells are taken, or when it sits
      * anywhere else - the user put it there. Runs once per install.
      */
-    private fun moveTimeWidgetToTop(context: Context) {
+    private fun shiftTimeWidgetToTop(context: Context) {
         val db = context.homeScreenGridItemsDB
         val items = db.getAllItems()
         val time = items.firstOrNull {
@@ -179,17 +179,17 @@ object MainAppletSower {
                 it.left <= time.right && it.right >= time.left && it.top <= bottom
         }
         if (taken) return
-        db.updateItemPosition(time.left, 0, time.right, bottom, time.page, false, null, time.id ?: return)
+        db.reviseItemPosition(time.left, 0, time.right, bottom, time.page, false, null, time.id ?: return)
         Timber.i("MainAppletSower: time widget moved back to row 0, above the default-home banner")
     }
 
     /** Deletes every grid widget [match] picks, releasing its bound id. Returns true when any went. */
-    private fun removeWidgets(context: Context, match: (MainDisplayLatticeElement) -> Boolean): Boolean {
+    private fun dropWidgets(context: Context, match: (MainDisplayLatticeElement) -> Boolean): Boolean {
         val db = context.homeScreenGridItemsDB
         val gone = db.getAllItems().filter { it.type == ITEM_TYPE_WIDGET && match(it) }
         gone.forEach { item ->
             if (item.widgetId > 0) runCatching { AppWidgetHost(context, WIDGET_HOST_ID).deleteAppWidgetId(item.widgetId) }
-            db.deleteItemById(item.id ?: return@forEach)
+            db.eraseItemById(item.id ?: return@forEach)
         }
         return gone.isNotEmpty()
     }
@@ -199,7 +199,7 @@ object MainAppletSower {
      * default-home banner is placed below it. Returns true when it was written; no-op when the page
      * already has one or those cells are taken.
      */
-    fun seedTimeWidget(context: Context): Boolean {
+    fun plantTimeWidget(context: Context): Boolean {
         val config = context.launcherConfig
         val columns = config.homeColumnCount
         val rows = config.homeRowCount - 1
@@ -240,13 +240,13 @@ object MainAppletSower {
         return true
     }
 
-    /** True for either first-page widget: the time, or the search row [seedSearchRow] lays down. */
+    /** True for either first-page widget: the time, or the search row [plantSearchRow] lays down. */
     fun isSeededWidget(item: MainDisplayLatticeElement): Boolean =
         isSeededSearchRow(item) ||
             (item.type == ITEM_TYPE_WIDGET && item.page == 0 && item.className == PSEUDO_WIDGET_TIME)
 
     /**
-     * True for the row [seedSearchRow] lays down: one row tall from the left edge of the first
+     * True for the row [plantSearchRow] lays down: one row tall from the left edge of the first
      * page - our drawn bar (the Google one, or the plain one older installs got) or a real
      * search widget.
      */

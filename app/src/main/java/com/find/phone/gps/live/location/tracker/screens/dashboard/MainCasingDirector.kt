@@ -20,7 +20,7 @@ import com.find.phone.gps.live.location.tracker.screens.policy.DriftToolbox
  * through [MainCasingHolder].
  *
  * Two-phase on purpose: [onHostCreated] registers (pre-STARTED, cheap, invisible) and
- * [startFirstRunPriming] prompts (visible, deferred until the shell is actually on screen —
+ * [beginFirstRunPriming] prompts (visible, deferred until the shell is actually on screen —
  * in the launcher that is when the panel opens, not when it is committed off-screen).
  *
  * Trimmed from the reference: the caller-ID specific pieces (full-screen-intent priming, the
@@ -42,7 +42,7 @@ class MainCasingDirector(private val host: MainCasingHolder) {
     /** True once the first-run permission sheet has been dismissed by the user. */
     private var permissionSheetDismissed = false
 
-    /** Guards [startFirstRunPriming] so a re-opened panel doesn't prime twice per session. */
+    /** Guards [beginFirstRunPriming] so a re-opened panel doesn't prime twice per session. */
     private var primingStarted = false
 
     /** Whether [onHostCreated] ran (the launcher skips it while its first run is unfinished). */
@@ -56,7 +56,7 @@ class MainCasingDirector(private val host: MainCasingHolder) {
     private val overlayLauncher = activity.registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
-        stopOverlayGrantPoll()
+        haltOverlayGrantPoll()
     }
 
     // ─────────────────────────── Host lifecycle ───────────────────────────
@@ -64,22 +64,22 @@ class MainCasingDirector(private val host: MainCasingHolder) {
     /** Registration only — must run pre-STARTED, and must *not* show anything. */
     fun onHostCreated() {
         hostCreated = true
-        InCoreRefreshBook.registerLauncher(activity)
-        maybeCheckForUpdate()
+        InCoreRefreshBook.enlistLauncher(activity)
+        perhapsCheckForUpdate()
     }
 
     /**
      * The visible first-run prompts (the RC-gated permission sheet). Call this when the shell is
      * actually on screen: CoreHubActivity from `initView`, the launcher once the panel slid in.
      */
-    fun startFirstRunPriming() {
+    fun beginFirstRunPriming() {
         shellOffScreen = false
         if (primingStarted) {
-            if (permissionSheetPending) maybeAutoShowPermissionSheet()
+            if (permissionSheetPending) perhapsAutoShowPermissionSheet()
             return
         }
         primingStarted = true
-        maybeAutoShowPermissionSheet()
+        perhapsAutoShowPermissionSheet()
     }
 
     /** Re-evaluate after returning from a permission/Settings round trip. */
@@ -87,12 +87,12 @@ class MainCasingDirector(private val host: MainCasingHolder) {
         // Resume an interrupted update (IMMEDIATE re-prompts; FLEXIBLE completes a download).
         InCoreRefreshBook.resumeUpdate()
         // The launcher home may not be re-created for days; re-check on resume (throttled).
-        maybeCheckForUpdate()
+        perhapsCheckForUpdate()
     }
 
     fun onHostDestroy() {
         hostCreated = false
-        stopOverlayGrantPoll()
+        haltOverlayGrantPoll()
         handler.removeCallbacksAndMessages(null)
         // Owner-scoped: a late teardown here must not wipe the other host's registration.
         InCoreRefreshBook.destroy(activity)
@@ -105,7 +105,7 @@ class MainCasingDirector(private val host: MainCasingHolder) {
      *  - `In_App_Update_Show`       → master switch for offering an update.
      *  - `In_App_Update_Force_Show` → true = IMMEDIATE (mandatory), false = FLEXIBLE (optional).
      */
-    private fun maybeCheckForUpdate() {
+    private fun perhapsCheckForUpdate() {
         if (!hostCreated) return
         val pref = SpotsLocker.getInstance(activity)
         if (!pref.getBoolean("In_App_Update_Show")) return
@@ -137,7 +137,7 @@ class MainCasingDirector(private val host: MainCasingHolder) {
     // ─────────────────────────── Permission sheet ───────────────────────────
 
     /** Shows the permission priming bottom sheet ([ConsentDrawerModal]). */
-    fun showPermissionSheet() {
+    fun presentPermissionSheet() {
         ConsentDrawerModal.show(activity) {
             // Only a dismissal the USER performed counts; when we closed the sheet because the
             // shell went away, the ask is deferred, not answered.
@@ -153,22 +153,22 @@ class MainCasingDirector(private val host: MainCasingHolder) {
         shellOffScreen = true
         if (!ConsentDrawerModal.isShowing(activity)) return
         sheetTakenDownByUs = true
-        ConsentDrawerModal.dismissIfShowing(activity)
+        ConsentDrawerModal.retireIfShowing(activity)
         permissionSheetPending = true
     }
 
     /** Auto-shows the permission sheet when pending perms + the RC frequency gate allow. */
-    private fun maybeAutoShowPermissionSheet() {
+    private fun perhapsAutoShowPermissionSheet() {
         if (shellOffScreen || !host.isShellOnScreen) {
             permissionSheetPending = true
             return
         }
         permissionSheetPending = false
-        if (ConsentDrawerModal.shouldAutoShow(activity)) showPermissionSheet()
+        if (ConsentDrawerModal.mustAutoShow(activity)) presentPermissionSheet()
     }
 
     /** True when the sheet was dismissed at least once and something is still missing. */
-    fun shouldShowPermissionHint(): Boolean =
+    fun mustShowPermissionHint(): Boolean =
         permissionSheetDismissed && ConsentDrawerModal.hasPending(activity)
 
     // ─────────────────────────── Overlay permission ───────────────────────────
@@ -178,7 +178,7 @@ class MainCasingDirector(private val host: MainCasingHolder) {
      * in-activity grant poll to catch the toggle and auto-return. Only reachable when Remote
      * Config lists the overlay row in the permission sheet.
      */
-    fun startOverlayPermissionFlow() {
+    fun beginOverlayPermissionFlow() {
         if (!DriftToolbox.isOfferable(activity) || DriftToolbox.isGranted(activity)) return
 
         // We open system Settings ourselves — the programmatic return must NOT trigger an
@@ -186,12 +186,12 @@ class MainCasingDirector(private val host: MainCasingHolder) {
         CoreOpenSpotBook.skipNextAppOpenAd = true
 
         val launched = runCatching {
-            overlayLauncher.launch(DriftToolbox.buildOverlayIntent(activity.packageName))
+            overlayLauncher.launch(DriftToolbox.composeOverlayIntent(activity.packageName))
         }.isSuccess
         if (!launched) return
 
-        DriftToolbox.showGuide(activity)
-        startOverlayGrantPoll()
+        DriftToolbox.presentGuide(activity)
+        beginOverlayGrantPoll()
     }
 
     private val overlayGrantPollHandler = Handler(Looper.getMainLooper())
@@ -208,14 +208,14 @@ class MainCasingDirector(private val host: MainCasingHolder) {
         }
     }
 
-    private fun startOverlayGrantPoll() {
+    private fun beginOverlayGrantPoll() {
         if (overlayGrantPolling) return
         overlayGrantPolling = true
         overlayGrantPollHandler.removeCallbacks(overlayGrantPoll)
         overlayGrantPollHandler.postDelayed(overlayGrantPoll, GRANT_POLL_MS)
     }
 
-    private fun stopOverlayGrantPoll() {
+    private fun haltOverlayGrantPoll() {
         overlayGrantPolling = false
         overlayGrantPollHandler.removeCallbacks(overlayGrantPoll)
     }

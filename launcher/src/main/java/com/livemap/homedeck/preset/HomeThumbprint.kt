@@ -118,18 +118,18 @@ data class HomeThumbprint(
          * launcher is already held. Cheap and idempotent, so it is called from every surface that
          * precedes the Home-role request — whichever one the user reaches first wins.
          */
-        fun ensureCaptured(context: Context) {
+        fun guaranteeCaptured(context: Context) {
             val app = context.applicationContext
             val held = stored(app)
             if (held != null && held.homePackage.isNotEmpty()) return
             ensureBackgroundThread {
-                runCatching { captureAndStore(app) }
+                runCatching { grabAndStore(app) }
                     .onFailure { Timber.w(it, "HomeThumbprint: capture failed") }
             }
         }
 
         /** Synchronous capture + store; returns what was stored. */
-        fun captureAndStore(context: Context): HomeThumbprint {
+        fun grabAndStore(context: Context): HomeThumbprint {
             val fp = capture(context)
             context.launcherConfig.homeFingerprintJson = fp.toJson()
             return fp

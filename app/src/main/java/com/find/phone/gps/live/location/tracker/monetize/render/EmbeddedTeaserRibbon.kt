@@ -17,7 +17,7 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.SpotIncomeGauge
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.DisplayTeaserProfile
 import com.find.phone.gps.live.location.tracker.monetize.logic.TAG_EVENT
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.find.phone.gps.live.location.tracker.databinding.MetaNativeBannerBinding
 import com.find.phone.gps.live.location.tracker.databinding.GmsNativebannerBinding
@@ -41,7 +41,7 @@ class EmbeddedTeaserRibbon {
         fun hasPreloadedNativeBanner(): Boolean = nativeAdBanner != null
     }
 
-    fun loadNativeBannerAds(activity: Activity) {
+    fun fetchNativeBannerAds(activity: Activity) {
         val adsPref = SpotsLocker.getInstance(activity)
         if (!adsPref.getBoolean("IsAdsON")) return
         // Firebase "NativeBanner" master switch — disable native banner loading
@@ -56,7 +56,7 @@ class EmbeddedTeaserRibbon {
                     nativeAdBanner?.destroy()
                     nativeAdBanner = ad
                     try {
-                        activity.logKeyEvent("NativeBanner_Load")
+                        activity.recordKeyEvent("NativeBanner_Load")
                     } catch (e: Exception) {
                     }
 
@@ -68,7 +68,7 @@ class EmbeddedTeaserRibbon {
                         // No retry logic
 
                         try {
-                            activity.logKeyEvent("NativeBanner_fail")
+                            activity.recordKeyEvent("NativeBanner_fail")
                         } catch (e: Exception) {
                         }
                     }
@@ -93,7 +93,7 @@ class EmbeddedTeaserRibbon {
 
     }
 
-    fun showNativeBannerNative(
+    fun presentNativeBannerNative(
         context: Activity, layout: FrameLayout, shimmer: ShimmerFrameLayout? = null
     ) {
         Log.e("NativeAds", "Google Show: nativeAd")
@@ -139,7 +139,7 @@ class EmbeddedTeaserRibbon {
                         if (context.isFinishing || context.isDestroyed) return@post
                         if (nativeAdBanner != null) {
                             val binding = GmsNativebannerBinding.inflate(context.layoutInflater)
-                            bindGoogleNativeAd(nativeAdBanner!!, binding, context)
+                            wireGoogleNativeAd(nativeAdBanner!!, binding, context)
 
                             layout.removeAllViews()
                             shimmer?.stopShimmer()
@@ -147,26 +147,26 @@ class EmbeddedTeaserRibbon {
 
                             layout.addView(binding.root)
                             nativeAdBanner = null
-                            loadNativeBannerAds(context)
+                            fetchNativeBannerAds(context)
                             return@post
                         } else {
                             // Google failed → FB fallback or Custom
                             if (adsPref.getBoolean("IsFail_FB")) {
                                 // With the shimmer: this branch renders the ad itself, so
                                 // without it nothing ever takes the placeholder down.
-                                showFBNativeBannerFallback(context, layout, shimmer)
+                                presentFBNativeBannerFallback(context, layout, shimmer)
                             } else {
                                 layout.removeAllViews()
                                 shimmer?.stopShimmer()
                                 shimmer?.isVisible = false
-                                BespokeSpotsBook().loadCustomAd(
+                                BespokeSpotsBook().fetchCustomAd(
                                     context, layout, BespokeSpotsBook.CustomAdType.BANNER
                                 )
                             }
                         }
                     } catch (e: Exception) {
                         Log.e("EmbeddedTeaserRibbon", "Google NativeBanner failed: ${e.message}")
-                        // Same reason as EmbeddedTeaser.clearToEmpty: the ad view is built
+                        // Same reason as EmbeddedTeaser.wipeToEmpty: the ad view is built
                         // before the shimmer comes down, so a throw here would otherwise
                         // leave the placeholder running over an empty frame.
                         runCatching {
@@ -179,30 +179,30 @@ class EmbeddedTeaserRibbon {
             }
 
             SpotSort.FACEBOOK -> {
-                showFBNativeBannerFallback(context, layout, shimmer)
+                presentFBNativeBannerFallback(context, layout, shimmer)
             }
 
             SpotSort.UNKNOWN, SpotSort.CUSTOM -> {
                 layout.removeAllViews()
                 shimmer?.stopShimmer()
                 shimmer?.isVisible = false
-                BespokeSpotsBook().loadCustomAd(
+                BespokeSpotsBook().fetchCustomAd(
                     context, layout, BespokeSpotsBook.CustomAdType.BANNER
                 )
             }
         }
     }
 
-    private fun bindGoogleNativeAd(
+    private fun wireGoogleNativeAd(
         nativeAd: NativeAd, binding: GmsNativebannerBinding, context: Activity
     ) {
         // Log load
-        context.logKeyEvent("NativeBanner_Show_Google")
+        context.recordKeyEvent("NativeBanner_Show_Google")
 
         if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(context)
 
         nativeAd.setOnPaidEventListener {
-            SpotIncomeGauge.logPaidEvent(context, it)
+            SpotIncomeGauge.recordPaidEvent(context, it)
         }
 
         binding.apply {
@@ -255,7 +255,7 @@ class EmbeddedTeaserRibbon {
     }
 
 
-    private fun showFBNativeBannerFallback(
+    private fun presentFBNativeBannerFallback(
         context: Activity, layout: FrameLayout, shimmer: ShimmerFrameLayout? = null
     ) {
         val adsPref = SpotsLocker.getInstance(context)
@@ -264,7 +264,7 @@ class EmbeddedTeaserRibbon {
         if (fbId.isNullOrEmpty()) {
             shimmer?.stopShimmer()
             shimmer?.isVisible = false
-            BespokeSpotsBook().loadCustomAd(
+            BespokeSpotsBook().fetchCustomAd(
                 context, layout, BespokeSpotsBook.CustomAdType.BANNER
             )
             return
@@ -277,15 +277,15 @@ class EmbeddedTeaserRibbon {
                     shimmer?.stopShimmer()
                     shimmer?.isVisible = false
                     layout.removeAllViews()
-                    inflateFbNativeBAnnerAd(fbNative, layout, context)
-                    context.logKeyEvent("NativeBAnner_FB")
+                    expandFbNativeBAnnerAd(fbNative, layout, context)
+                    context.recordKeyEvent("NativeBAnner_FB")
                 }
 
                 override fun onError(ad: Ad?, adError: AdError?) {
                     shimmer?.stopShimmer()
                     shimmer?.isVisible = false
                     Log.e("NativeAds", "FB MidNative failed: ${adError?.errorMessage}")
-                    BespokeSpotsBook().loadCustomAd(
+                    BespokeSpotsBook().fetchCustomAd(
                         context, layout, BespokeSpotsBook.CustomAdType.BANNER
                     )
                 }
@@ -301,7 +301,7 @@ class EmbeddedTeaserRibbon {
         )
     }
 
-    fun inflateFbNativeBAnnerAd(
+    fun expandFbNativeBAnnerAd(
         nativeAd: com.facebook.ads.NativeAd,
         viewGroup: ViewGroup,
         activity: Activity,

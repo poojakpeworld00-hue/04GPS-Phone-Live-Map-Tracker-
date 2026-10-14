@@ -14,7 +14,7 @@ import androidx.activity.OnBackPressedCallback
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile.OnboardScreen
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.find.phone.gps.live.location.tracker.NavTracerCore
 import com.find.phone.gps.live.location.tracker.R
@@ -109,7 +109,7 @@ object HomeStream {
      * screen. Kept separate from [goHome] because a screen can decide onboarding is finished and
      * still have a conditional step (the full-screen-intent prompt) to route through first.
      */
-    fun markOnboardingCompleted(context: Context) {
+    fun flagOnboardingCompleted(context: Context) {
         context.getSharedPrefs().edit().putBoolean(WAS_ONBOARDING_COMPLETED, true).apply()
     }
 
@@ -118,7 +118,7 @@ object HomeStream {
      * off the back stack, so Back from the home screen never walks back into them.
      */
     fun goHome(activity: Activity) {
-        markOnboardingCompleted(activity)
+        flagOnboardingCompleted(activity)
         activity.startActivity(
             Intent(activity, homeActivity()).addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -190,7 +190,7 @@ object HomeStream {
      * hides it when [screen] is not a numbered step. Done here rather than in each screen so the
      * steps cannot disagree on the count.
      */
-    fun bindStepHeader(context: Context, screen: OnboardScreen, root: View) {
+    fun wireStepHeader(context: Context, screen: OnboardScreen, root: View) {
         val header = root.findViewById<View>(R.id.induct_step_header) ?: return
         val position = stepPosition(context, screen)
         if (position == null) {
@@ -211,7 +211,7 @@ object HomeStream {
      * something to do. [homeActivity] when every screen is switched off, so Splash always has
      * somewhere to send the user.
      */
-    fun firstScreen(context: Context): Class<*> = resolveFrom(context, 0)
+    fun firstScreen(context: Context): Class<*> = settleFrom(context, 0)
 
     /** The step the first run is on (the screen on display, or the one last shown). */
     fun currentStep(context: Context): Int = context.getSharedPrefs().getInt(ONBOARDING_STEP, 0)
@@ -221,7 +221,7 @@ object HomeStream {
      * something to do, committing the step as it goes — [homeActivity] when there is none. The
      * splash uses it to come back to the screen the user left with Home ([InductionMainOnward]).
      */
-    fun resumeScreen(context: Context, step: Int): Class<*> = resolveFrom(context, step)
+    fun resumeScreen(context: Context, step: Int): Class<*> = settleFrom(context, step)
 
     /**
      * Moves off the screen at the current step and finishes [activity]. Lands on the home
@@ -254,7 +254,7 @@ object HomeStream {
      * Only call this when the caller is definitely navigating: the step moves either way.
      */
     fun nextActivity(context: Context): Class<*> =
-        resolveFrom(context, context.getSharedPrefs().getInt(ONBOARDING_STEP, 0) + 1)
+        settleFrom(context, context.getSharedPrefs().getInt(ONBOARDING_STEP, 0) + 1)
 
     /**
      * Puts an interrupted first run back on screen, and says whether it did.
@@ -294,7 +294,7 @@ object HomeStream {
             return true
         }
 
-        val next = resolveFrom(activity, step)
+        val next = settleFrom(activity, step)
         if (next == homeActivity()) {
             return false
         }
@@ -308,7 +308,7 @@ object HomeStream {
      * The first screen at or after [from] that still has something to do, committing the step
      * as it goes. [homeActivity] when there is none, having marked onboarding completed.
      */
-    private fun resolveFrom(context: Context, from: Int): Class<*> {
+    private fun settleFrom(context: Context, from: Int): Class<*> {
         val order = HomeSpotsProfile.onboardingOrder(context)
         var index = from
 
@@ -328,23 +328,23 @@ object HomeStream {
                 break
             }
 
-            if (screen == OnboardScreen.SET_DEFAULT) logAlreadyDefault(context)
+            if (screen == OnboardScreen.SET_DEFAULT) recordAlreadyDefault(context)
             log("skipping [$index] ${screen.key}")
             index++
         }
 
         log("order finished → home")
-        markOnboardingCompleted(context)
+        flagOnboardingCompleted(context)
         return homeActivity()
     }
 
     /** `default_home_already`, once per install: the set-default step met a role already held. */
-    private fun logAlreadyDefault(context: Context) {
+    private fun recordAlreadyDefault(context: Context) {
         if (!context.isDefaultLauncher()) return
         val prefs = context.getSharedPrefs()
         if (prefs.getBoolean(ALREADY_DEFAULT_LOGGED, false)) return
         prefs.edit().putBoolean(ALREADY_DEFAULT_LOGGED, true).apply()
-        context.logKeyEvent("default_home_already")
+        context.recordKeyEvent("default_home_already")
     }
 
     /**
@@ -357,7 +357,7 @@ object HomeStream {
 
         // `feature_config.is_intro_screen`, something left to allow, and the country not excluded.
         OnboardScreen.REMINDERS -> MemoProfile.get(context).isIntroScreen &&
-            MemoConsent.shouldOfferManage(context) && MemoProfile.isCountryAllowed(context)
+            MemoConsent.mustOfferManage(context) && MemoProfile.isCountryAllowed(context)
 
         OnboardScreen.SET_DEFAULT -> {
             // Launcher mode off for this audience: never ask for the Home role.

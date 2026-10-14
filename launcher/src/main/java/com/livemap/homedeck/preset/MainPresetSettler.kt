@@ -30,7 +30,7 @@ object MainPresetSettler {
         val widthDp = fp.widthDp.takeIf { it > 0 }
             ?: (context.resources.displayMetrics.let { minOf(it.widthPixels, it.heightPixels) / it.density }).toInt()
         val profile = (facts?.numbers?.let { base.overlay(it, ownIconDp = { cols -> ownIconDp(context, fp, cols) }) } ?: base)
-            .resolveFractions(widthDp, fp.densityDpi.takeIf { it > 0 } ?: context.resources.displayMetrics.densityDpi)
+            .settleFractions(widthDp, fp.densityDpi.takeIf { it > 0 } ?: context.resources.displayMetrics.densityDpi)
         Timber.i(
             "MainPreset: ${fp.homePackage.ifEmpty { "<none>" }} on ${fp.manufacturer}/${fp.model} sw${fp.swDp} " +
                 "-> ${profile.id} [apk readers: ${facts?.sources?.joinToString(",").orEmpty().ifEmpty { "none" }}] ${profile.describeSources()}"
@@ -41,7 +41,7 @@ object MainPresetSettler {
     /**
      * The icon size our grid draws at [cols] on this display: a cell is the short side of the
      * screen over the columns, less the grid's side margin, which the grid itself scales as
-     * `launcher_icon_side_margin * 5 / columns`. Mirrors MainDisplayLattice.fillCellSizes in dp.
+     * `launcher_icon_side_margin * 5 / columns`. Mirrors MainDisplayLattice.stuffCellSizes in dp.
      */
     private fun ownIconDp(context: Context, fp: HomeThumbprint, cols: Int): Float {
         if (cols <= 0) return 0f

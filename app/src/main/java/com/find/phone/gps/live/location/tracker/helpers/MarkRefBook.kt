@@ -70,7 +70,7 @@ object MarkRefBook {
      * Intent that launches the system role-request dialog for CallScreening, or
      * `null` when the role is unavailable / already held (nothing to request).
      */
-    fun buildEnableIntent(context: Context): Intent? {
+    fun composeEnableIntent(context: Context): Intent? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
         val rm = context.getSystemService(RoleManager::class.java) ?: return null
         if (!rm.isRoleAvailable(RoleManager.ROLE_CALL_SCREENING)) return null

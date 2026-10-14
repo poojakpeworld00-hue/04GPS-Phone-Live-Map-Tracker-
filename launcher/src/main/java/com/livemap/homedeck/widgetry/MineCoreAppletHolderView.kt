@@ -56,13 +56,13 @@ class MineCoreAppletHolderView(context: Context) : AppWidgetHostView(context) {
                 currentCoords.x = event.rawX
                 currentCoords.y = event.rawY
                 if (abs(actionDownCoords.x - currentCoords.x) > moveGestureThreshold) {
-                    resetTouches()
+                    rewindTouches()
                     return true
                 }
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                resetTouches()
+                rewindTouches()
             }
         }
 
@@ -77,7 +77,7 @@ class MineCoreAppletHolderView(context: Context) : AppWidgetHostView(context) {
         }
     }
 
-    fun resetTouches() {
+    fun rewindTouches() {
         longPressHandler.removeCallbacksAndMessages(null)
     }
 

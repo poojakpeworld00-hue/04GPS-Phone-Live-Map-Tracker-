@@ -50,7 +50,7 @@ object CloudProfileCharter {
             .build()
 
     /** Applies the settings once per process; later calls reuse the first task. */
-    fun applyTo(remoteConfig: FirebaseRemoteConfig): Task<Void>? {
+    fun enactTo(remoteConfig: FirebaseRemoteConfig): Task<Void>? {
         if (settingsTask == null) {
             synchronized(this) {
                 if (settingsTask == null) {
@@ -70,7 +70,7 @@ object CloudProfileCharter {
      * published while the app was closed arrives at all.
      */
     fun withSettings(remoteConfig: FirebaseRemoteConfig, block: () -> Unit) {
-        val task = applyTo(remoteConfig)
+        val task = enactTo(remoteConfig)
         if (task == null || task.isComplete) block() else task.addOnCompleteListener { block() }
     }
 }

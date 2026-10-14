@@ -30,7 +30,7 @@ class SliderLeavesFeed(
     var firstPageAdapter: HomesFeed? = null
         private set
 
-    fun submitPages(newPages: List<List<CoreHome>>, columnCount: Int, rowCount: Int) {
+    fun lodgePages(newPages: List<List<CoreHome>>, columnCount: Int, rowCount: Int) {
         pages = newPages
         columns = columnCount
         rows = rowCount.coerceAtLeast(1)
@@ -72,14 +72,14 @@ class SliderLeavesFeed(
             // The page's height is final only after layout, and moves with the search bar, the
             // insets and the nav mode, so the row height follows it instead of being fixed once.
             grid.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
-                if (bottom - top != oldBottom - oldTop) grid.post { syncCellHeight(bottom - top) }
+                if (bottom - top != oldBottom - oldTop) grid.post { alignCellHeight(bottom - top) }
             }
         }
 
         private fun cellHeightFor(pageHeight: Int) =
             if (pageHeight > 0) (pageHeight - grid.paddingTop - grid.paddingBottom) / rowCount else 0
 
-        private fun syncCellHeight(pageHeight: Int) {
+        private fun alignCellHeight(pageHeight: Int) {
             val lineup = adapter ?: return
             val cell = cellHeightFor(pageHeight)
             if (cell <= 0 || lineup.cellHeightPx == cell) return

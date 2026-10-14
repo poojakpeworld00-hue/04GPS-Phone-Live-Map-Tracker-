@@ -27,7 +27,7 @@ import com.livemap.homedeck.teaser.BackedSquares
 import com.bumptech.glide.Glide
 import com.livemap.homedeck.screens.HomeBaseDeck
 import com.livemap.homedeck.databinding.HdItemLauncherLabelBinding
-import com.livemap.homedeck.ext.animateScale
+import com.livemap.homedeck.ext.tweenScale
 import com.livemap.homedeck.ext.launcherConfig
 import com.livemap.homedeck.support.BadgePuller
 import com.livemap.homedeck.support.MarkContour
@@ -89,7 +89,7 @@ class HomesFeed(
 
     init {
         setHasStableIds(true)
-        calculateIconWidth()
+        computeIconWidth()
     }
 
     override fun getItemId(position: Int): Long {
@@ -103,7 +103,7 @@ class HomesFeed(
     fun isAdSlotPosition(position: Int) =
         position in 0 until itemCount && isAdSlot(getItem(position))
 
-    fun launchFirstApp(): Boolean {
+    fun fireFirstApp(): Boolean {
         val launcher = currentList.firstOrNull { !isAdSlot(it) } ?: return false
         itemClick(launcher)
         return true
@@ -158,7 +158,7 @@ class HomesFeed(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
-            is AdViewHolder -> holder.bindSlot()
+            is AdViewHolder -> holder.wireSlot()
             is ViewHolder -> holder.bindView(getItem(position))
         }
     }
@@ -170,7 +170,7 @@ class HomesFeed(
      * place, with nothing inserted or removed under the user.
      */
     inner class AdViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        fun bindSlot() {
+        fun wireSlot() {
             val slot = adSlot ?: return
             val host = itemView as FrameLayout
             if (slot.parent !== host) {
@@ -187,11 +187,11 @@ class HomesFeed(
     }
 
     override fun submitList(list: MutableList<CoreHome>?) {
-        calculateIconWidth()
+        computeIconWidth()
         super.submitList(list)
     }
 
-    private fun calculateIconWidth() {
+    private fun computeIconWidth() {
         labelTextSp = activity.launcherConfig.labelTextSp
         val currentColumnCount = activity.launcherConfig.drawerColumnCount
         val iconWidth = activity.realScreenSize.x / currentColumnCount
@@ -371,7 +371,7 @@ class HomesFeed(
                     when (event.action) {
                         MotionEvent.ACTION_DOWN -> {
                             binding.homexIconUi.drawable?.alpha = LAUNCHER_ALPHA_PRESSED
-                            animateScale(
+                            tweenScale(
                                 from = LAUNCHER_SCALE_NORMAL,
                                 to = LAUNCHER_SCALE_PRESSED,
                                 duration = LAUNCHER_SCALE_UP_DURATION
@@ -381,7 +381,7 @@ class HomesFeed(
                         MotionEvent.ACTION_UP,
                         MotionEvent.ACTION_CANCEL -> {
                             binding.homexIconUi.drawable?.alpha = LAUNCHER_ALPHA_NORMAL
-                            animateScale(
+                            tweenScale(
                                 from = LAUNCHER_SCALE_PRESSED,
                                 to = LAUNCHER_SCALE_NORMAL,
                                 duration = LAUNCHER_SCALE_DOWN_DURATION

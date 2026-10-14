@@ -147,8 +147,8 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         getNextPageBound = { right - sideMargins.right - cellWidth / 2 },
         getPrevPageBound = { left + sideMargins.left + cellWidth / 2 },
         pageChangeStarted = {
-            widgetViews.forEach { it.resetTouches() }
-            closeFolder()
+            widgetViews.forEach { it.rewindTouches() }
+            shutFolder()
             accessibilityHelper.invalidateRoot()
         }
     )
@@ -196,8 +196,8 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
     /**
      * Rows whose bind is waiting on the system "Create widget?" dialog (or a configure screen).
      *
-     * [bindWidget] gives the row its widget id before asking, so while the dialog is up the row
-     * looks bound to [drawInto], which placed a view for it; the dialog's answer then placed a
+     * [wireWidget] gives the row its widget id before asking, so while the dialog is up the row
+     * looks bound to [sketchInto], which placed a view for it; the dialog's answer then placed a
      * second one. Only one of two views per row is ever moved by the paging, so the other froze
      * where it was - the first page's search bar, showing on every page. Only the dialog path did
      * this: an allowed bind answers synchronously, before any frame is drawn.
@@ -299,7 +299,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             insets
         }
 
-        fetchGridItems()
+        obtainGridItems()
     }
 
     override fun dispatchHoverEvent(event: MotionEvent): Boolean {
@@ -312,7 +312,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         binding = HdHomeScreenGridBinding.bind(this)
     }
 
-    fun fetchGridItems() {
+    fun obtainGridItems() {
         ensureBackgroundThread {
             val started = android.os.SystemClock.elapsedRealtime()
             val providers = appWidgetManager.installedProviders
@@ -327,7 +327,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 val own = context.packageName
                 items.filter { AutoErasure.isOurRow(it, own) }.forEach { stray ->
                     items.remove(stray)
-                    stray.id?.let { id -> runCatching { context.homeScreenGridItemsDB.deleteById(id) } }
+                    stray.id?.let { id -> runCatching { context.homeScreenGridItemsDB.eraseById(id) } }
                 }
             }
             items.forEach { item ->
@@ -344,7 +344,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                         item.drawable = item.icon?.toDrawable(context.resources)
                     } else {
                         ensureBackgroundThread {
-                            context.homeScreenGridItemsDB.deleteById(item.id!!)
+                            context.homeScreenGridItemsDB.eraseById(item.id!!)
                         }
                     }
                 }
@@ -445,9 +445,9 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         folderBackgroundPaint.color = context.getProperBackgroundColor()
     }
 
-    fun removeAppIcon(item: MainDisplayLatticeElement) {
+    fun dropAppIcon(item: MainDisplayLatticeElement) {
         ensureBackgroundThread {
-            removeItemFromHomeScreen(item)
+            dropItemFromHomeScreen(item)
             post {
                 removeView(widgetViews.firstOrNull { it.tag == item.widgetId })
             }
@@ -474,7 +474,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
     /**
      * Takes off the grid every widget view whose row is no longer in [gridItems].
      *
-     * A row can be deleted without the grid being told - HomeDeck.refreshLaunchers drops every
+     * A row can be deleted without the grid being told - HomeDeck.renewLaunchers drops every
      * row of an app that left the app list, and a layout rebuild clears the seeded widgets. A
      * refetch then hands back the rows without it, but a widget view is a *child* of this layout and
      * stays. The per-frame positioning only walks [gridItems], so that view was never moved again:
@@ -494,7 +494,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    fun removePlacedSearchBars() {
+    fun dropPlacedSearchBars() {
         post {
             gridItems
                 .filter { it.className == PSEUDO_WIDGET_SEARCH }
@@ -508,9 +508,9 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    fun removeWidget(item: MainDisplayLatticeElement) {
+    fun dropWidget(item: MainDisplayLatticeElement) {
         ensureBackgroundThread {
-            removeItemFromHomeScreen(item)
+            dropItemFromHomeScreen(item)
             post {
                 removeView(widgetViews.firstOrNull { it.tag == item.widgetId })
                 widgetViews.removeIf { it.tag == item.widgetId }
@@ -519,10 +519,10 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    private fun removeItemFromHomeScreen(item: MainDisplayLatticeElement) {
+    private fun dropItemFromHomeScreen(item: MainDisplayLatticeElement) {
         ensureBackgroundThread {
             if (item.id != null) {
-                context.homeScreenGridItemsDB.deleteById(item.id!!)
+                context.homeScreenGridItemsDB.eraseById(item.id!!)
                 if (item.parentId != null) {
                     gridItems
                         .filter {
@@ -549,7 +549,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 item.page != 0 && gridItems
                     .none { it.page == item.page && it.id != item.id && it.parentId == null }
             ) {
-                deletePage(item.page)
+                erasePage(item.page)
             }
         }
     }
@@ -558,7 +558,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         draggedItem = draggedGridItem
 
         if (draggedGridItem.type == ITEM_TYPE_WIDGET) {
-            closeFolder()
+            shutFolder()
         }
 
         if (draggedItem!!.drawable == null) {
@@ -586,7 +586,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                     if (it == null) {
                         draggingLeftFolderAt = System.currentTimeMillis()
                     } else if (System.currentTimeMillis() - it > FOLDER_CLOSE_HOLD_THRESHOLD) {
-                        closeFolder()
+                        shutFolder()
                     }
                 }
             }
@@ -637,7 +637,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                                 performHapticFeedback()
                                 draggingEnteredNewFolderAt = null
                             } else {
-                                openFolder(coveredFolder)
+                                enterFolder(coveredFolder)
                             }
                         }
                     }
@@ -649,7 +649,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             }
         }
 
-        pager.handleItemMovement(x, y)
+        pager.processItemMovement(x, y)
         redrawGrid()
     }
 
@@ -665,9 +665,9 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
 
         pager.itemMovementStopped()
         when (draggedItem!!.type) {
-            ITEM_TYPE_FOLDER -> moveItem()
-            ITEM_TYPE_ICON, ITEM_TYPE_SHORTCUT -> addAppIconOrShortcut()
-            ITEM_TYPE_WIDGET -> addWidget()
+            ITEM_TYPE_FOLDER -> shiftItem()
+            ITEM_TYPE_ICON, ITEM_TYPE_SHORTCUT -> appendAppIconOrShortcut()
+            ITEM_TYPE_WIDGET -> appendWidget()
         }
     }
 
@@ -686,7 +686,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 .filter { !it.outOfBounds() }
                 .filter { it.widgetId != item.widgetId }
                 .toMutableList() as ArrayList<MainDisplayLatticeElement>
-            binding.lvResizeFrameUi.updateFrameCoords(
+            binding.lvResizeFrameUi.reviseFrameCoords(
                 coords = frameRect,
                 cellWidth = cellWidth,
                 cellHeight = cellHeight,
@@ -697,7 +697,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             binding.lvResizeFrameUi.beVisible()
             binding.lvResizeFrameUi.z = 1f     // make sure the frame isnt behind the widget itself
             binding.lvResizeFrameUi.onClickListener = {
-                hideResizeLines()
+                concealResizeLines()
             }
 
             binding.lvResizeFrameUi.onResizeListener = { cellsRect ->
@@ -709,7 +709,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 } else {
                     cellsRect.bottom
                 }
-                updateWidgetPositionAndSize(widgetView, item)
+                reviseWidgetPositionAndSize(widgetView, item)
 
                 val widgetTargetCells = ArrayList<Pair<Int, Int>>()
                 for (xCell in item.left..item.right) {
@@ -731,7 +731,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                                     if (
                                         gridItem.type == ITEM_TYPE_WIDGET && gridItem.outOfBounds()
                                     ) {
-                                        removeWidget(gridItem)
+                                        dropWidget(gridItem)
                                     }
                                 }
                             }
@@ -739,7 +739,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                     }
 
                 ensureBackgroundThread {
-                    context.homeScreenGridItemsDB.updateItemPosition(
+                    context.homeScreenGridItemsDB.reviseItemPosition(
                         left = item.left,
                         top = item.top,
                         right = item.right,
@@ -760,7 +760,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    fun hideResizeLines() {
+    fun concealResizeLines() {
         if (resizedWidget == null) {
             return
         }
@@ -773,7 +773,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         resizedWidget = null
     }
 
-    private fun moveItem() {
+    private fun shiftItem() {
         val draggedHomeGridItem = gridItems.firstOrNull { it.id == draggedItem?.id }
         val center = gridCenters.minBy {
             abs(it.x - draggedItemCurrentCoords.first + sideMargins.left) + abs(it.y - draggedItemCurrentCoords.second + sideMargins.top)
@@ -802,7 +802,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                             val isAnyCellOccupied = wantedCell == cell
                             if (isAnyCellOccupied) {
                                 if (item.type == ITEM_TYPE_WIDGET && item.outOfBounds()) {
-                                    removeWidget(item)
+                                    dropWidget(item)
                                 } else {
                                     isDroppingPositionValid = false
                                 }
@@ -824,7 +824,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                     docked = yIndex == rowCount - 1
 
                     ensureBackgroundThread {
-                        context.homeScreenGridItemsDB.updateItemPosition(
+                        context.homeScreenGridItemsDB.reviseItemPosition(
                             left = left,
                             top = top,
                             right = right,
@@ -837,7 +837,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
 
                         if (page != oldPage && oldPage != 0) {
                             if (gridItems.none { it.page == oldPage && it.parentId == null }) {
-                                deletePage(oldPage)
+                                erasePage(oldPage)
                             }
                         }
                     }
@@ -853,7 +853,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    private fun addAppIconOrShortcut() {
+    private fun appendAppIconOrShortcut() {
         var isDroppingPositionValid = false
         var potentialParent: MainDisplayLatticeElement? = null
         var xIndex: Int? = null
@@ -909,7 +909,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                                         potentialParent = item
                                     } else {
                                         if (item.type == ITEM_TYPE_WIDGET && item.outOfBounds()) {
-                                            removeWidget(item)
+                                            dropWidget(item)
                                         } else {
                                             isDroppingPositionValid = false
                                         }
@@ -927,7 +927,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
 
             if (potentialParent != null) {
                 if (potentialParent.type == ITEM_TYPE_FOLDER) {
-                    addAppIconOrShortcut(
+                    appendAppIconOrShortcut(
                         draggedHomeGridItem,
                         xIndex!!,
                         yIndex!!,
@@ -946,7 +946,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                         potentialParent.apply {
                             parentId = newId
                             left = 0
-                            context.homeScreenGridItemsDB.updateItemPosition(
+                            context.homeScreenGridItemsDB.reviseItemPosition(
                                 left = left,
                                 top = top,
                                 right = right,
@@ -959,13 +959,13 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                         }
                         (context as? HomeDeck)?.runOnUiThread {
                             gridItems.add(parentItem)
-                            addAppIconOrShortcut(draggedHomeGridItem, xIndex!!, yIndex!!, newId)
+                            appendAppIconOrShortcut(draggedHomeGridItem, xIndex!!, yIndex!!, newId)
                         }
                     }
                 }
                 return
             } else {
-                addAppIconOrShortcut(draggedHomeGridItem, xIndex!!, yIndex!!)
+                appendAppIconOrShortcut(draggedHomeGridItem, xIndex!!, yIndex!!)
                 return
             }
         } else {
@@ -980,7 +980,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    private fun addAppIconOrShortcut(
+    private fun appendAppIconOrShortcut(
         draggedHomeGridItem: MainDisplayLatticeElement?,
         xIndex: Int,
         yIndex: Int,
@@ -1047,7 +1047,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 }
 
                 ensureBackgroundThread {
-                    context.homeScreenGridItemsDB.updateItemPosition(
+                    context.homeScreenGridItemsDB.reviseItemPosition(
                         left = left,
                         top = top,
                         right = right,
@@ -1058,7 +1058,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                         id = id!!
                     )
                     if (deleteOldParent && oldParentId != null) {
-                        context.homeScreenGridItemsDB.deleteById(oldParentId)
+                        context.homeScreenGridItemsDB.eraseById(oldParentId)
                     } else if (
                         oldParentId != null
                         && gridItems.none { it.parentId == oldParentId && it.left == oldLeft }
@@ -1094,7 +1094,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
 
                     if (page != oldPage && oldPage != 0) {
                         if (gridItems.none { it.page == oldPage && it.parentId == null }) {
-                            deletePage(oldPage)
+                            erasePage(oldPage)
                         }
                     }
                 }
@@ -1148,17 +1148,17 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
 
             if (newHomeScreenGridItem.type == ITEM_TYPE_ICON) {
                 ensureBackgroundThread {
-                    storeAndShowGridItem(newHomeScreenGridItem)
+                    stashAndShowGridItem(newHomeScreenGridItem)
                     finalizeFolderOrder(newHomeScreenGridItem)
                 }
             } else if (newHomeScreenGridItem.type == ITEM_TYPE_SHORTCUT) {
-                (context as? HomeDeck)?.handleShorcutCreation(newHomeScreenGridItem.activityInfo!!) { shortcutId, label, icon ->
+                (context as? HomeDeck)?.processShorcutCreation(newHomeScreenGridItem.activityInfo!!) { shortcutId, label, icon ->
                     ensureBackgroundThread {
                         newHomeScreenGridItem.shortcutId = shortcutId
                         newHomeScreenGridItem.title = label
                         newHomeScreenGridItem.icon = icon.toBitmap()
                         newHomeScreenGridItem.drawable = icon
-                        storeAndShowGridItem(newHomeScreenGridItem)
+                        stashAndShowGridItem(newHomeScreenGridItem)
                         finalizeFolderOrder(newHomeScreenGridItem)
                     }
                 }
@@ -1170,14 +1170,14 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         redrawGrid()
     }
 
-    fun storeAndShowGridItem(item: MainDisplayLatticeElement) {
+    fun stashAndShowGridItem(item: MainDisplayLatticeElement) {
         val newId = context.homeScreenGridItemsDB.insert(item)
         item.id = newId
         gridItems.add(item)
         redrawGrid()
     }
 
-    private fun addWidget() {
+    private fun appendWidget() {
         val center = gridCenters.minBy {
             abs(it.x - draggedItemCurrentCoords.first + sideMargins.left) + abs(it.y - draggedItemCurrentCoords.second + sideMargins.top)
         }
@@ -1203,7 +1203,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                             val isAnyCellOccupied = widgetTargetCells.contains(cell)
                             if (isAnyCellOccupied) {
                                 if (item.type == ITEM_TYPE_WIDGET && item.outOfBounds()) {
-                                    removeWidget(item)
+                                    dropWidget(item)
                                 } else {
                                     areAllCellsEmpty = false
                                     return@forEach
@@ -1230,10 +1230,10 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                         val itemId = context.homeScreenGridItemsDB.insert(widgetItem)
                         widgetItem.id = itemId
                         post {
-                            bindWidget(widgetItem)
+                            wireWidget(widgetItem)
                         }
                     } else {
-                        context.homeScreenGridItemsDB.updateItemPosition(
+                        context.homeScreenGridItemsDB.reviseItemPosition(
                             widgetItem.left,
                             widgetItem.top,
                             widgetItem.right,
@@ -1246,7 +1246,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                         val widgetView = widgetViews.firstOrNull { it.tag == widgetItem.widgetId }
                         if (widgetView != null && !widgetItem.outOfBounds()) {
                             post {
-                                val widgetPos = calculateWidgetPos(widgetItem.getTopLeft(rowCount))
+                                val widgetPos = computeWidgetPos(widgetItem.getTopLeft(rowCount))
                                 widgetView.x = widgetPos.x.toFloat()
                                 widgetView.y = widgetPos.y.toFloat()
                                 widgetView.beVisible()
@@ -1264,7 +1264,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
 
                         if (widgetItem.page != oldPage && oldPage != 0) {
                             if (gridItems.none { it.page == oldPage && it.parentId == null }) {
-                                deletePage(oldPage)
+                                erasePage(oldPage)
                             }
                         }
                     }
@@ -1294,7 +1294,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
     }
 
     /** The phone's clock app (its alarms screen, which every clock app answers); nothing when there is none. */
-    private fun openClock() {
+    private fun enterClock() {
         val intent = Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching { context.startActivity(intent) }.onFailure { timber.log.Timber.w(it, "MainDisplayLattice: no clock app") }
     }
@@ -1303,7 +1303,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
      * Google search from our drawn bar: the Google app's search (or its voice search from the mic);
      * the phone's web search where the Google app is missing; our own apps search as a last resort.
      */
-    private fun openGoogleSearch(voice: Boolean) {
+    private fun enterGoogleSearch(voice: Boolean) {
         val google = "com.google.android.googlequicksearchbox"
         val attempts = listOf(
             Intent(if (voice) android.speech.RecognizerIntent.ACTION_WEB_SEARCH else "android.search.action.GLOBAL_SEARCH").setPackage(google),
@@ -1315,7 +1315,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         if (!opened) (context as? HomeDeck)?.onFlingLeft()
     }
 
-    private fun bindWidget(item: MainDisplayLatticeElement) {
+    private fun wireWidget(item: MainDisplayLatticeElement) {
         if (item.outOfBounds()) {
             return
         }
@@ -1324,10 +1324,10 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             // still allocate an id, it is what identifies the host view in widgetViews
             item.widgetId = appWidgetHost.allocateAppWidgetId()
             ensureBackgroundThread {
-                context.homeScreenGridItemsDB.updateWidgetId(item.widgetId, item.id!!)
+                context.homeScreenGridItemsDB.reviseWidgetId(item.widgetId, item.id!!)
             }
 
-            placeAppWidget(null, item)
+            siteAppWidget(null, item)
             return
         }
 
@@ -1338,11 +1338,11 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         if (appWidgetProviderInfo != null) {
             item.widgetId = appWidgetHost.allocateAppWidgetId()
             ensureBackgroundThread {
-                context.homeScreenGridItemsDB.updateWidgetId(item.widgetId, item.id!!)
+                context.homeScreenGridItemsDB.reviseWidgetId(item.widgetId, item.id!!)
             }
 
             item.id?.let { bindPending.add(it) }
-            activity.handleWidgetBinding(
+            activity.processWidgetBinding(
                 appWidgetManager = appWidgetManager,
                 appWidgetId = item.widgetId,
                 appWidgetInfo = appWidgetProviderInfo
@@ -1355,22 +1355,22 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                         !com.livemap.homedeck.preset.MainAppletSower.configurationOptional(appWidgetProviderInfo)
                     ) {
                         item.id?.let { bindPending.add(it) }
-                        activity.handleWidgetConfigureScreen(
+                        activity.processWidgetConfigureScreen(
                             appWidgetHost = appWidgetHost,
                             appWidgetId = item.widgetId
                         ) { success ->
                             item.id?.let { bindPending.remove(it) }
                             if (success) {
-                                placeAppWidget(appWidgetProviderInfo, item)
+                                siteAppWidget(appWidgetProviderInfo, item)
                             } else {
-                                removeItemFromHomeScreen(item)
+                                dropItemFromHomeScreen(item)
                             }
                         }
                     } else {
-                        placeAppWidget(appWidgetProviderInfo, item)
+                        siteAppWidget(appWidgetProviderInfo, item)
                     }
                 } else {
-                    removeItemFromHomeScreen(item)
+                    dropItemFromHomeScreen(item)
                 }
 
                 if (pager.isOutsideOfPageRange()) {
@@ -1380,7 +1380,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    private fun placeAppWidget(
+    private fun siteAppWidget(
         appWidgetProviderInfo: AppWidgetProviderInfo?,
         item: MainDisplayLatticeElement,
     ) {
@@ -1400,10 +1400,10 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                 when (item.className) {
                     // The reference opened its AI chat here; we open the apps search panel instead.
                     PSEUDO_WIDGET_SEARCH -> setOnClickListener { (this@MainDisplayLattice.context as HomeDeck).onFlingLeft() }
-                    PSEUDO_WIDGET_TIME -> setOnClickListener { openClock() }
+                    PSEUDO_WIDGET_TIME -> setOnClickListener { enterClock() }
                     PSEUDO_WIDGET_GOOGLE_SEARCH -> {
-                        setOnClickListener { openGoogleSearch(voice = false) }
-                        findViewById<View>(R.id.lv_google_bar_micUi)?.setOnClickListener { openGoogleSearch(voice = true) }
+                        setOnClickListener { enterGoogleSearch(voice = false) }
+                        findViewById<View>(R.id.lv_google_bar_micUi)?.setOnClickListener { enterGoogleSearch(voice = true) }
                     }
                 }
             }
@@ -1427,16 +1427,16 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         widgetView.longPressListener = { x, y ->
             val activity = context as? HomeDeck
             if (activity?.isAllAppsFragmentExpanded() == false) {
-                activity.showHomeIconMenu(x, widgetView.y, item, false)
+                activity.presentHomeIconMenu(x, widgetView.y, item, false)
                 performHapticFeedback()
             }
         }
 
         widgetView.onIgnoreInterceptedListener = {
-            hideResizeLines()
+            concealResizeLines()
         }
 
-        val widgetSizeUi = updateWidgetPositionAndSize(widgetView, item)
+        val widgetSizeUi = reviseWidgetPositionAndSize(widgetView, item)
         addView(widgetView, widgetSizeUi.width, widgetSizeUi.height)
         widgetViews.add(widgetView)
         item.id?.let { widgetViewItemIds[widgetView] = it }
@@ -1446,15 +1446,15 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         // Delete existing widget if it has already been loaded to the list
         gridItems.removeIf { it.id == item.id }
         gridItems.add(item)
-        (context as HomeDeck).clearWidgetsSearch()
+        (context as HomeDeck).wipeWidgetsSearch()
     }
 
-    private fun updateWidgetPositionAndSize(
+    private fun reviseWidgetPositionAndSize(
         widgetView: AppWidgetHostView,
         item: MainDisplayLatticeElement,
     ): Size {
         val currentViewPosition = pager.getCurrentViewPositionInFullPageSpace() * width.toFloat()
-        val widgetPos = calculateWidgetPos(item.getTopLeft(rowCount))
+        val widgetPos = computeWidgetPos(item.getTopLeft(rowCount))
         widgetView.x = widgetPos.x + width * item.page - currentViewPosition
         widgetView.y = widgetPos.y.toFloat()
         val widgetWidth = item.getWidthInCells() * cellWidth
@@ -1466,7 +1466,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
 
         // pseudo widgets are never bound to a provider, telling the AppWidgetManager about
         // their size would throw
-        if (widgetView.appWidgetInfo != null) reportWidgetSize(widgetView, widgetDpWidth, widgetDpHeight)
+        if (widgetView.appWidgetInfo != null) relayWidgetSize(widgetView, widgetDpWidth, widgetDpHeight)
 
         widgetView.layoutParams?.width = widgetWidth
         widgetView.layoutParams?.height = widgetHeight
@@ -1483,7 +1483,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
      * ("Bundle.putAll on a null object"); that is caught and not retried, instead of taking the
      * launcher down on every frame.
      */
-    private fun reportWidgetSize(widgetView: AppWidgetHostView, dpWidth: Int, dpHeight: Int) {
+    private fun relayWidgetSize(widgetView: AppWidgetHostView, dpWidth: Int, dpHeight: Int) {
         val size = dpWidth to dpHeight
         if (reportedWidgetSizes[widgetView] == size) return
         reportedWidgetSizes[widgetView] = size
@@ -1498,7 +1498,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    private fun calculateWidgetPos(topLeft: Point): Point {
+    private fun computeWidgetPos(topLeft: Point): Point {
         val cell = cells[topLeft]!!
         return Point(
             cell.left + sideMargins.left,
@@ -1546,22 +1546,22 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    fun drawInto(canvas: Canvas) {
+    fun sketchInto(canvas: Canvas) {
         if (cells.isEmpty()) {
-            fillCellSizes()
+            stuffCellSizes()
         }
 
         val currentXFactor = pager.getXFactorForCurrentPage()
         val lastXFactor = pager.getXFactorForLastPage()
 
-        fun handleMainGridItemDrawing(item: MainDisplayLatticeElement, xFactor: Float) = guardItem(canvas, item) {
+        fun processMainGridItemDrawing(item: MainDisplayLatticeElement, xFactor: Float) = guardItem(canvas, item) {
             val offsetX = sideMargins.left + (this@MainDisplayLattice.width * xFactor).toInt()
             val offsetY = sideMargins.top
             cells[item.getTopLeft(rowCount)]!!.withOffset(offsetX, offsetY) {
                 // A page does not only slide: it settles back to full size as it arrives and eases
                 // down as it leaves, which is what makes the movement read as one surface rather
                 // than a strip of icons being dragged past.
-                canvas.inPageTransit(xFactor) { canvas.drawItemInCell(item, this) }
+                canvas.inPageTransit(xFactor) { canvas.sketchItemInCell(item, this) }
             }
         }
 
@@ -1575,7 +1575,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                     return@forEach
                 }
 
-                handleMainGridItemDrawing(item, currentXFactor)
+                processMainGridItemDrawing(item, currentXFactor)
             }
 
         gridItems
@@ -1585,7 +1585,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                     return@forEach
                 }
 
-                handleMainGridItemDrawing(item, 0f)
+                processMainGridItemDrawing(item, 0f)
             }
 
         if (pager.isAnimatingPageChange()) {
@@ -1599,7 +1599,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                         return@forEach
                     }
 
-                    handleMainGridItemDrawing(item, lastXFactor)
+                    processMainGridItemDrawing(item, lastXFactor)
                 }
         }
 
@@ -1615,7 +1615,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                         return@forEach
                     }
 
-                    handleMainGridItemDrawing(item, lastXFactor)
+                    processMainGridItemDrawing(item, lastXFactor)
                 }
         }
 
@@ -1648,13 +1648,13 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                         timber.log.Timber.w("MainDisplayLattice: row %s had widget id %d, its view %d - kept the view's", item.id, item.widgetId, tag)
                         item.widgetId = tag
                     }
-                    updateWidgetPositionAndSize(placed, item)
+                    reviseWidgetPositionAndSize(placed, item)
                     return@forEach
                 }
                 // Seeded widgets carry no id yet: they have to be bound before they can be drawn,
                 // and a bind the user refuses must not be retried on every frame.
                 if (item.widgetId < 0) {
-                    if (bindAttempted.add(item.id ?: return@forEach)) bindWidget(item)
+                    if (bindAttempted.add(item.id ?: return@forEach)) wireWidget(item)
                     return@forEach
                 }
                 // Has an id but is still waiting on the bind dialog: its answer places the view.
@@ -1664,11 +1664,11 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                         .firstOrNull { it.provider.className == item.className }
 
                 if (item.pseudoWidgetLayout() != null) {
-                    placeAppWidget(null, item)
+                    siteAppWidget(null, item)
                 } else if (providerInfo != null) {
-                    placeAppWidget(providerInfo, item)
+                    siteAppWidget(providerInfo, item)
                 } else {
-                    removeWidget(item)
+                    dropWidget(item)
                 }
             } }
         if (timeWidgetBottom != reportedTimeWidgetBottom) {
@@ -1679,7 +1679,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         // The page indicator shows while a page is dragged or settling and fades out after, the
         // way HyperOS does it. Everything here is derived from the pager's position each frame -
         // no state of its own, so it can never be left mid-way.
-        if (pager.shouldDisplayPageChangeIndicator()) {
+        if (pager.mustDisplayPageChangeIndicator()) {
             val pageCount = pager.getPageCount()
             val step = pageIndicatorRadius * 2 + pageIndicatorMargin
             val rowWidth = (pageCount - 1) * step + 2 * pageIndicatorRadius
@@ -1771,7 +1771,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
 
                 items.forEach { item ->
                     val itemRect = folder.getItemRect(item)
-                    canvas.drawItemInCell(item, itemRect)
+                    canvas.sketchItemInCell(item, itemRect)
                 }
             }
         }
@@ -1846,7 +1846,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                     val gridCells = getClosestGridCells(center)
                     if (gridCells != null) {
                         val widgetRect = getWidgetOccupiedRect(gridCells)
-                        val widgetPos = calculateWidgetPos(Point(widgetRect.left, widgetRect.top))
+                        val widgetPos = computeWidgetPos(Point(widgetRect.left, widgetRect.top))
                         val leftSide = widgetPos.x.toFloat()
                         val topSide = widgetPos.y.toFloat()
                         val rightSide = leftSide + draggedItem!!.getWidthInCells() * cellWidth
@@ -1886,7 +1886,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         isFirstDraw = false
     }
 
-    private fun fillCellSizes() {
+    private fun stuffCellSizes() {
         labelLayouts.clear()
         cellWidth = getFakeWidth() / columnCount
         cellHeight = getFakeHeight() / rowCount
@@ -1982,7 +1982,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         widgetViews.forEach {
             it.ignoreTouches = true
         }
-        closeFolder(true)
+        shutFolder(true)
     }
 
     fun fragmentCollapsed() {
@@ -1998,7 +1998,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
     // get the clickable area around the icon, it includes text too
     fun getClickableRect(item: MainDisplayLatticeElement): Rect {
         if (cells.isEmpty()) {
-            fillCellSizes()
+            stuffCellSizes()
         }
 
         val folder = currentlyOpenFolder
@@ -2012,7 +2012,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             val cell = cells[item.getTopLeft(rowCount)] ?: return Rect(0, 0, 0, 0)
             clickableLeft = cell.left + sideMargins.left
             clickableTop = if (item.docked) {
-                // Same margin the dock draws with, so the target sits on the icon - see drawItemInCell.
+                // Same margin the dock draws with, so the target sits on the icon - see sketchItemInCell.
                 dockCellY + cellHeight - dockIconSize - dockBottomMargin
             } else {
                 cell.top - iconMargin
@@ -2092,7 +2092,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
                     return gridItem
                 }
             } else if (gridItem.type == ITEM_TYPE_WIDGET) {
-                val widgetPos = calculateWidgetPos(gridItem.getTopLeft(rowCount))
+                val widgetPos = computeWidgetPos(gridItem.getTopLeft(rowCount))
                 val left = widgetPos.x.toFloat()
                 val top = widgetPos.y.toFloat()
                 val right = left + gridItem.getWidthInCells() * cellWidth
@@ -2194,7 +2194,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             val viewBounds = if (item == currentlyOpenFolder?.item) {
                 currentlyOpenFolder?.getDrawingRect()?.toRect()
             } else if (item.type == ITEM_TYPE_WIDGET) {
-                val widgetPos = calculateWidgetPos(item.getTopLeft(rowCount))
+                val widgetPos = computeWidgetPos(item.getTopLeft(rowCount))
                 val left = widgetPos.x
                 val top = widgetPos.y
                 val right = left + item.getWidthInCells() * cellWidth
@@ -2224,7 +2224,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             when (action) {
                 AccessibilityNodeInfoCompat.ACTION_CLICK -> itemClickListener?.apply {
                     if (item == currentlyOpenFolder?.item) {
-                        closeFolder(true)
+                        shutFolder(true)
                     } else {
                         invoke(item)
                     }
@@ -2241,7 +2241,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    private fun deletePage(page: Int) {
+    private fun erasePage(page: Int) {
         gridItems.filter { it.page > page }.forEach {
             it.page -= 1
         }
@@ -2291,18 +2291,18 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
     /** The last page, the only one the right-edge (apps) panel opens from. */
     fun isOnLastPage() = pager.getCurrentPage() >= getMaxPage() && !pager.isPaging()
 
-    fun openFolder(folder: MainDisplayLatticeElement) {
+    fun enterFolder(folder: MainDisplayLatticeElement) {
         if (currentlyOpenFolder == null) {
             currentlyOpenFolder = folder.toFolder(animateOpening = true)
             redrawGrid()
         } else if (currentlyOpenFolder?.item?.id != folder.id) {
-            closeFolder()
+            shutFolder()
         }
         accessibilityHelper.invalidateRoot()
     }
 
-    fun closeFolder(redraw: Boolean = false) {
-        currentlyOpenFolder?.animateClosing {
+    fun shutFolder(redraw: Boolean = false) {
+        currentlyOpenFolder?.tweenClosing {
             currentlyOpenFolder = null
             if (redraw) {
                 redrawGrid()
@@ -2319,7 +2319,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
         }
     }
 
-    private fun Canvas.drawItemInCell(item: MainDisplayLatticeElement, cell: Rect) {
+    private fun Canvas.sketchItemInCell(item: MainDisplayLatticeElement, cell: Rect) {
         if (item.id != draggedItem?.id) {
             val drawableX = cell.left + (if (item.docked) dockIconMargin else iconMargin)
 
@@ -2649,7 +2649,7 @@ class MainDisplayLattice(context: Context, attrs: AttributeSet, defStyle: Int) :
             )
         }
 
-        fun animateClosing(callback: () -> Unit) {
+        fun tweenClosing(callback: () -> Unit) {
             post {
                 if (closing) {
                     return@post
@@ -2812,7 +2812,7 @@ private class AnimatingLatticeSwiper(
      * than one page, dim at rest and at full strength while a page is being dragged or settling -
      * the way MIUI / HyperOS keeps them above the dock.
      */
-    fun shouldDisplayPageChangeIndicator() =
+    fun mustDisplayPageChangeIndicator() =
         getPageCount() > 1 || isSwiped() || isAnimatingPageChange() || pageChangeIndicatorsAlpha != 0f
 
     /** 0..1: how "live" the indicator is - resting dim, full while the user is moving pages. */
@@ -2823,8 +2823,8 @@ private class AnimatingLatticeSwiper(
     fun getIndicatorsFadeIn(): Float =
         ((SystemClock.uptimeMillis() - indicatorsShownAt).toFloat() / PAGE_INDICATORS_FADE_IN).coerceIn(0f, 1f)
 
-    private fun markIndicatorsShown() {
-        if (!shouldDisplayPageChangeIndicator()) {
+    private fun flagIndicatorsShown() {
+        if (!mustDisplayPageChangeIndicator()) {
             indicatorsShownAt = SystemClock.uptimeMillis()
         }
     }
@@ -2885,7 +2885,7 @@ private class AnimatingLatticeSwiper(
         }
 
         if (currentPage < getMaxPage() && diffX > 0f || currentPage > 0 && diffX < 0f) {
-            markIndicatorsShown()
+            flagIndicatorsShown()
             pageChangeSwipedPercentage = (-diffX / getWidth().toFloat()).coerceIn(-1f, 1f)
             pageChangeStarted()
             redrawGrid()
@@ -2916,7 +2916,7 @@ private class AnimatingLatticeSwiper(
         }
         lastPage = currentPage
         currentPage += if (towardsNext) 1 else -1
-        handlePageChange(true)
+        processPageChange(true)
         return true
     }
 
@@ -2932,7 +2932,7 @@ private class AnimatingLatticeSwiper(
             } else {
                 currentPage + 1
             }
-            handlePageChange(true)
+            processPageChange(true)
         } else {
             lastPage = if (pageChangeSwipedPercentage > 0f) {
                 currentPage - 1
@@ -2941,12 +2941,12 @@ private class AnimatingLatticeSwiper(
             }
             pageChangeSwipedPercentage =
                 sign(pageChangeSwipedPercentage) * (1 - abs(pageChangeSwipedPercentage))
-            handlePageChange(true)
+            processPageChange(true)
         }
     }
 
-    fun handleItemMovement(x: Int, y: Int) {
-        showIndicators()
+    fun processItemMovement(x: Int, y: Int) {
+        presentIndicators()
         if (x > getNextPageBound()) {
             doWithPageChangeDelay(PageChangeArea.RIGHT) {
                 nextOrAdditionalPage()
@@ -2956,19 +2956,19 @@ private class AnimatingLatticeSwiper(
                 prevPage()
             }
         } else {
-            clearPageChangeFlags()
+            wipePageChangeFlags()
         }
     }
 
     fun itemMovementStopped() {
-        scheduleIndicatorsFade()
+        planIndicatorsFade()
     }
 
     fun nextPage(redraw: Boolean = false): Boolean {
         if (currentPage < getMaxPage() && pageChangeEnabled) {
             lastPage = currentPage
             currentPage++
-            handlePageChange(redraw)
+            processPageChange(redraw)
             return true
         }
 
@@ -2979,7 +2979,7 @@ private class AnimatingLatticeSwiper(
         if (currentPage > 0 && pageChangeEnabled) {
             lastPage = currentPage
             currentPage--
-            handlePageChange(redraw)
+            processPageChange(redraw)
             return true
         }
 
@@ -2990,7 +2990,7 @@ private class AnimatingLatticeSwiper(
         if (currentPage != targetPage && targetPage < getMaxPage() + 1) {
             lastPage = currentPage
             currentPage = targetPage
-            handlePageChange()
+            processPageChange()
             return true
         }
 
@@ -3002,7 +3002,7 @@ private class AnimatingLatticeSwiper(
             when (pageChangeLastArea) {
                 PageChangeArea.RIGHT -> nextOrAdditionalPage(true)
                 PageChangeArea.LEFT -> prevPage(true)
-                else -> clearPageChangeFlags()
+                else -> wipePageChangeFlags()
             }
         }
     }
@@ -3019,24 +3019,24 @@ private class AnimatingLatticeSwiper(
             }
     }
 
-    private fun showIndicators() {
-        markIndicatorsShown()
+    private fun presentIndicators() {
+        flagIndicatorsShown()
         pageChangeIndicatorsAlpha = 1f
         getHandler().removeCallbacks(startFadingIndicators)
     }
 
-    private fun clearPageChangeFlags() {
+    private fun wipePageChangeFlags() {
         pageChangeLastArea = PageChangeArea.MIDDLE
         pageChangeLastAreaEntryTime = 0
         getHandler().removeCallbacks(checkAndExecuteDelayedPageChange)
     }
 
-    private fun schedulePageChange() {
+    private fun planPageChange() {
         pageChangeLastAreaEntryTime = System.currentTimeMillis()
         getHandler().postDelayed(checkAndExecuteDelayedPageChange, PAGE_CHANGE_HOLD_THRESHOLD)
     }
 
-    private fun scheduleIndicatorsFade() {
+    private fun planIndicatorsFade() {
         pageChangeIndicatorsAlpha = 1f
         getHandler().postDelayed(startFadingIndicators, PAGE_INDICATORS_FADE_DELAY)
     }
@@ -3044,10 +3044,10 @@ private class AnimatingLatticeSwiper(
     private fun doWithPageChangeDelay(needed: PageChangeArea, pageChangeFunction: () -> Boolean) {
         if (pageChangeLastArea != needed) {
             pageChangeLastArea = needed
-            schedulePageChange()
+            planPageChange()
         } else if (System.currentTimeMillis() - pageChangeLastAreaEntryTime > PAGE_CHANGE_HOLD_THRESHOLD) {
             if (pageChangeFunction()) {
-                clearPageChangeFlags()
+                wipePageChangeFlags()
             }
         }
     }
@@ -3056,15 +3056,15 @@ private class AnimatingLatticeSwiper(
         if (currentPage < getMaxPage() + 1 && pageChangeEnabled) {
             lastPage = currentPage
             currentPage++
-            handlePageChange(redraw)
+            processPageChange(redraw)
             return true
         }
 
         return false
     }
 
-    private fun handlePageChange(redraw: Boolean = false) {
-        markIndicatorsShown()
+    private fun processPageChange(redraw: Boolean = false) {
+        flagIndicatorsShown()
         pageChangeEnabled = false
         pageChangeIndicatorsAlpha = 0f
         pageChangeStarted()
@@ -3099,18 +3099,18 @@ private class AnimatingLatticeSwiper(
                         pageChangeAnimLeftPercentage = 0f
                         pageChangeEnabled = true
                         lastPage = currentPage
-                        clearPageChangeFlags()
+                        wipePageChangeFlags()
                         // Swipes made while this page was settling, played one page at a time from
                         // rest; any that would run past the first or last page are dropped.
                         val step = pendingStep.sign
                         if (step > 0 && currentPage < getMaxPage() || step < 0 && currentPage > 0) {
                             pendingStep -= step
                             currentPage += step
-                            handlePageChange(true)
+                            processPageChange(true)
                             return
                         }
                         pendingStep = 0
-                        scheduleIndicatorsFade()
+                        planIndicatorsFade()
                         redrawGrid()
                     }
                 })

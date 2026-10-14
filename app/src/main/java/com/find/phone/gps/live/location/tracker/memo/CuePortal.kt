@@ -42,7 +42,7 @@ object CuePortal {
         p.edit().putInt(KEY_CREATED_COUNT, p.getInt(KEY_CREATED_COUNT, 0) + 1).apply()
     }
 
-    fun shouldShow(c: Context): Boolean {
+    fun mustShow(c: Context): Boolean {
         val cfg = MemoProfile.get(c)
         val x = cfg.promptInterval.coerceAtLeast(1)
         val p = prefs(c)
@@ -60,7 +60,7 @@ object CuePortal {
     }
 
     /** Stamps every counter the moment the prompt is actually on screen. */
-    fun markShown(c: Context) {
+    fun flagShown(c: Context) {
         val p = prefs(c)
         p.edit()
             .putBoolean(KEY_SHOWN_ONCE, true)

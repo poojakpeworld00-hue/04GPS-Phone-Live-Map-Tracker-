@@ -16,7 +16,7 @@ import timber.log.Timber
  * screen looks exactly like the app was removed.
  *
  * `launcherConfig.selfIconHidden` is one-way: once set, [isOurRow] rows are dropped wherever the
- * grid is loaded (MainDisplayLattice.fetchGridItems) and HomeDeck's messaging slot resolves to
+ * grid is loaded (MainDisplayLattice.obtainGridItems) and HomeDeck's messaging slot resolves to
  * [systemMessagingPackage] rather than to us, so no seed, profile copy or SMS-role sync can put the
  * icon back. The drawer stops listing our package too (HomeSurvey filters it once hidden).
  *
@@ -76,7 +76,7 @@ object AutoErasure {
             val ours = items.filter { isOurRow(it, own) }
             val dockSpot = ours.firstOrNull { it.docked && it.parentId == null }
 
-            ours.forEach { row -> row.id?.let { db.deleteById(it) } }
+            ours.forEach { row -> row.id?.let { db.eraseById(it) } }
 
             val messaging = systemMessagingPackage(app)
             if (messaging != null) {

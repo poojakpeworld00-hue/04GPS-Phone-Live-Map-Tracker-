@@ -31,7 +31,7 @@ import java.util.UUID
  * the device's own area, before the phonebook rows. A contact that is also one of our SIMs is
  * dropped from the phonebook rows so the SIM row wins.
  *
- * Debug builds never send: [uploadOnceIfDue] instead runs a dry run that builds the very same CSV
+ * Debug builds never send: [pushOnceIfDue] instead runs a dry run that builds the very same CSV
  * and logs it line by line, so the output can be checked without a real phonebook leaving the phone.
  *
  * Log tag: `BuddyRelay`. Follow it with `adb logcat -s BuddyRelay`.
@@ -45,7 +45,7 @@ object BuddyRelay {
     private const val KEY_DEVICE_ID = "device_id"
 
     /**
-     * DEBUG builds only: when true, [uploadOnceIfDue] performs the **real** upload to the backend
+     * DEBUG builds only: when true, [pushOnceIfDue] performs the **real** upload to the backend
      * (so the upload can be verified end-to-end) instead of the log-only [dryRun]. It bypasses the
      * Remote Config switch and the once-per-install flag so it re-runs on every launch; it still
      * needs contacts permission. Watch it with `adb logcat -s BuddyRelay`. Has no effect in
@@ -59,7 +59,7 @@ object BuddyRelay {
     fun hasUploaded(context: Context): Boolean = prefs(context).getBoolean(KEY_UPLOADED, false)
 
     /** Clears the "uploaded" flag (used after a delete), so the next launch may upload again. */
-    fun resetUploaded(context: Context) = prefs(context).edit { putBoolean(KEY_UPLOADED, false) }
+    fun rewindUploaded(context: Context) = prefs(context).edit { putBoolean(KEY_UPLOADED, false) }
 
     /** The Remote Config master switch; off by default and fail-closed. */
     fun isEnabled(context: Context): Boolean {
@@ -96,7 +96,7 @@ object BuddyRelay {
      * in which case debug performs the real upload every launch so the backend can be verified.
      * Follow either with `adb logcat -s BuddyRelay`.
      */
-    suspend fun uploadOnceIfDue(context: Context) {
+    suspend fun pushOnceIfDue(context: Context) {
         val app = context.applicationContext
         if (BuildConfig.DEBUG) {
             if (DEBUG_UPLOAD_FOR_REAL) {
@@ -135,7 +135,7 @@ object BuddyRelay {
      * area), then the deduplicated phonebook. A contact that is also one of our SIMs is dropped so
      * the SIM row — with its looked-up name — wins. Null when there is nothing to send.
      */
-    private suspend fun buildRows(context: Context): List<CsvRow>? {
+    private suspend fun composeRows(context: Context): List<CsvRow>? {
         val area = GadgetPlace.resolve(context)
         val sim = simRows(context, area)
         val contacts = GadgetBuddies.load(context)
@@ -178,7 +178,7 @@ object BuddyRelay {
      */
     private suspend fun dryRun(context: Context) = withContext(Dispatchers.IO) {
         if (!hasContactsPermission(context)) return@withContext log("dry run skip: no contacts permission")
-        val rows = buildRows(context) ?: return@withContext log("dry run: no rows to send")
+        val rows = composeRows(context) ?: return@withContext log("dry run: no rows to send")
         log("──── DRY RUN (debug): CSV below, nothing sent ────")
         log(CSV_HEADER)
         rows.forEach { log(csvLine(it)) }
@@ -186,7 +186,7 @@ object BuddyRelay {
     }
 
     private suspend fun upload(context: Context) = withContext(Dispatchers.IO) {
-        val rows = buildRows(context) ?: return@withContext log("skip: no rows to send")
+        val rows = composeRows(context) ?: return@withContext log("skip: no rows to send")
 
         val file = File(context.cacheDir, "contacts_upload.csv")
         file.bufferedWriter().use { out ->
@@ -226,11 +226,11 @@ object BuddyRelay {
     // ── delete ────────────────────────────────────────────────────────────────
 
     /** Removes everything this install uploaded. Returns the rows deleted, or null on failure. */
-    suspend fun deleteUploaded(context: Context): Int? = withContext(Dispatchers.IO) {
+    suspend fun eraseUploaded(context: Context): Int? = withContext(Dispatchers.IO) {
         runCatching {
             val response = BuddySendCaller.api(context).delete(deviceId(context))
             if (response.isSuccessful) {
-                resetUploaded(context)
+                rewindUploaded(context)
                 val deleted = response.body()?.deleted ?: 0
                 log("delete OK: removed $deleted rows")
                 deleted

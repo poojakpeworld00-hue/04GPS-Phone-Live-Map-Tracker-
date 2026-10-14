@@ -25,7 +25,7 @@ import java.util.concurrent.Executors
  *
  * The cache must never outlive the icon it holds. An app update installs a new APK whose icon may
  * differ, so the scan drops every entry whose `sourceDir` moved ([invalidate]); a change of the
- * legacy-icon tray re-shapes every icon, so [syncTray] empties it; and [clear] follows
+ * legacy-icon tray re-shapes every icon, so [alignTray] empties it; and [clear] follows
  * [BadgeStash.clear]. Without those, an updated app kept its old icon until the process died.
  */
 object BadgePuller {
@@ -64,7 +64,7 @@ object BadgePuller {
     }
 
     /** Empties the cache when [current] is not the tray its icons were shaped on. */
-    fun syncTray(current: BadgeMolder.Tray) {
+    fun alignTray(current: BadgeMolder.Tray) {
         if (tray != current) {
             if (tray != null) clear()
             tray = current
@@ -84,7 +84,7 @@ object BadgePuller {
     private fun decode(context: Context, packageName: String, activityName: String): Drawable? = runCatching {
         val pm = context.packageManager
         val legacyTray = context.launcherConfig.legacyIconTray
-        syncTray(legacyTray)
+        alignTray(legacyTray)
         val raw = pm.getActivityInfo(ComponentName(packageName, activityName), 0).loadIcon(pm)
             ?.let { BadgeMolder.shape(it, legacyTray) }
             ?: context.getDrawableForPackageName(packageName)

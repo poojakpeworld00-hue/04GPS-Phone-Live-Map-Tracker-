@@ -33,7 +33,7 @@ class IntroMovement(private val binding: ScreenSplashBinding) {
     fun start() {
         cancel()
         if (CraftMovement.animationsDisabled(context)) {
-            showFinalFrame()
+            presentFinalFrame()
             return
         }
         animators += st1e(binding.lvStageSignal)
@@ -46,10 +46,10 @@ class IntroMovement(private val binding: ScreenSplashBinding) {
         bar()
     }
 
-    fun cancel() = CraftMovement.cancelAll(animators)
+    fun cancel() = CraftMovement.abortAll(animators)
 
     /** "Remove animations": the final frame — the logo held, the bar full. */
-    private fun showFinalFrame() {
+    private fun presentFinalFrame() {
         listOf(binding.lvStageSignal, binding.lvStagePin, binding.condSignal, binding.condPin)
             .forEach { it.alpha = 0f }
         binding.lvStageLogo.alpha = 1f

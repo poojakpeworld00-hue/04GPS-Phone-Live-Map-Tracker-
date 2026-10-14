@@ -112,7 +112,7 @@ object HomeSpotsProfile {
     /**
      * Whether a slot that already holds an ad is asked again on the next open of its surface -
      * `screenWiseAds.<key>.reload_ad_on_open`. Defaults on, so every open is a fresh impression;
-     * see HomeSpots.bindNativeOnOpen.
+     * see HomeSpots.wireNativeOnOpen.
      */
     fun reloadAdOnOpen(key: String): Boolean = entry(key).optBoolean(FIELD_RELOAD_AD_ON_OPEN, true)
 

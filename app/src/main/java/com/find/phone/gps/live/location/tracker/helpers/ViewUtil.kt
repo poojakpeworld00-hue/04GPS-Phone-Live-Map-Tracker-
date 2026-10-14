@@ -11,7 +11,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverStandard
 
-inline fun <reified T : Activity> Context.openActivity(
+inline fun <reified T : Activity> Context.enterActivity(
     clearTop: Boolean = false,
     isShowAd: Boolean = true,
     extras: Bundle? = null
@@ -24,7 +24,7 @@ inline fun <reified T : Activity> Context.openActivity(
     val activity = this as? Activity
     if (isShowAd && activity != null) {
         try {
-            TakeoverStandard().showInterAds(activity) {
+            TakeoverStandard().presentInterAds(activity) {
                 activity.startActivity(intent)
             }
         } catch (_: Exception) {
@@ -35,11 +35,11 @@ inline fun <reified T : Activity> Context.openActivity(
     }
 }
 
-fun Context.openActivity(intent: Intent, isShowAd: Boolean = true) {
+fun Context.enterActivity(intent: Intent, isShowAd: Boolean = true) {
     val activity = this as? Activity
     if (isShowAd && activity != null) {
         try {
-            TakeoverStandard().showInterAds(activity) {
+            TakeoverStandard().presentInterAds(activity) {
                 activity.startActivity(intent)
             }
         } catch (_: Exception) {
@@ -55,7 +55,7 @@ fun Context.openActivity(intent: Intent, isShowAd: Boolean = true) {
  * helper. Build the Intent inline, then route through the standard
  * interstitial-aware launcher.
  */
-inline fun <reified T : Activity> Context.openActivity(
+inline fun <reified T : Activity> Context.enterActivity(
     clearTop: Boolean = false,
     isShowAd: Boolean = true,
     crossinline configure: Intent.() -> Unit
@@ -64,10 +64,10 @@ inline fun <reified T : Activity> Context.openActivity(
     if (clearTop) {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
     }
-    openActivity(intent, isShowAd)
+    enterActivity(intent, isShowAd)
 }
 
-fun View.triggerClick(onClick: (View?) -> Unit) {
+fun View.sparkClick(onClick: (View?) -> Unit) {
     setOnClickListener { view ->
         // Haptic feedback
         performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)

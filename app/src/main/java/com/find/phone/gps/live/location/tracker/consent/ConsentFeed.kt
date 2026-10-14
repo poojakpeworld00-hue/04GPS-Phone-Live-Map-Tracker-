@@ -71,7 +71,7 @@ object ConsentFeed {
      * call once at startup; failures fall back silently to cached/activated
      * values so the flow is never blocked.
      */
-    fun refreshFromRemote(onReady: (() -> Unit)? = null) {
+    fun renewFromRemote(onReady: (() -> Unit)? = null) {
         try {
             val rc = FirebaseRemoteConfig.getInstance()
             // See CloudProfileCharter.withSettings — a fetch started before the settings land
@@ -100,7 +100,7 @@ object ConsentFeed {
 
             // 2) Nested inside the app's existing data blob.
             // The blob this build reads (GET_DATA_LIST_1, falling back to the legacy key).
-            val (_, blob) = com.find.phone.gps.live.location.tracker.monetize.logic.SpotProfileAbsorb.readBlob(rc)
+            val (_, blob) = com.find.phone.gps.live.location.tracker.monetize.logic.SpotProfileAbsorb.pullBlob(rc)
             if (blob.isNotBlank()) {
                 val obj = JSONObject(blob)
                 // Top-level audience split: descend into marketing/organic first,

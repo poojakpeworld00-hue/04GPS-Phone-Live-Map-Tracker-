@@ -12,5 +12,5 @@ interface StashedBadgesDao {
     fun insert(hiddenIconUi: StashedBadge): Long
 
     @Delete
-    fun removeHiddenIcons(icons: List<StashedBadge>)
+    fun dropHiddenIcons(icons: List<StashedBadge>)
 }

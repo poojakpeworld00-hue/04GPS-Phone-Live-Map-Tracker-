@@ -32,7 +32,7 @@ class LingoViewModel : HolderViewModel() {
     }
 
     /** Rebuilds the Suggested / All groups for the given country (ISO-3166 alpha-2, null = unknown). */
-    fun applyCountry(iso2: String?) {
+    fun enactCountry(iso2: String?) {
         val normalized = iso2?.uppercase()
         if (normalized == appliedCountry) return
         appliedCountry = normalized

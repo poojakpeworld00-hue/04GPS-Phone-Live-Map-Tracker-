@@ -90,7 +90,7 @@ class LockerBook(context: Context) {
     fun hasRequestedPermission(permission: String): Boolean =
         prefs.getBoolean(KEY_PERM_REQUESTED_PREFIX + permission, false)
 
-    fun markPermissionRequested(permission: String) =
+    fun flagPermissionRequested(permission: String) =
         prefs.edit().putBoolean(KEY_PERM_REQUESTED_PREFIX + permission, true).apply()
 
     // ── Intro-screen display ledger (Language / Onboarding frequency gating) ──
@@ -110,7 +110,7 @@ class LockerBook(context: Context) {
     fun introLastShownSession(key: String): Int = prefs.getInt(KEY_INTRO_SESSION_PREFIX + key, -1)
 
     /** Records a show of intro screen [key] in launch [session]: bumps count + stamps time. */
-    fun recordIntroShown(key: String, session: Int) {
+    fun noteIntroShown(key: String, session: Int) {
         prefs.edit()
             .putInt(KEY_INTRO_COUNT_PREFIX + key, introShownCount(key) + 1)
             .putLong(KEY_INTRO_LAST_MS_PREFIX + key, System.currentTimeMillis())

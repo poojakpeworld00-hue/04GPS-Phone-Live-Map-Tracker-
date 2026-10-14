@@ -125,12 +125,12 @@ class PreferredMainClueDeck : AppCompatActivity() {
             }
 
         setContentView(R.layout.hd_default_home_hint_panel)
-        applyKind()
+        enactKind()
 
         findViewById<View>(R.id.stackMainUi)?.setOnClickListener { finish() }
         when (kind.control) {
-            Control.SWITCH -> startSwitchAnimation()
-            Control.RADIO -> startRadioAnimation()
+            Control.SWITCH -> beginSwitchAnimation()
+            Control.RADIO -> beginRadioAnimation()
             Control.NONE -> Unit
         }
 
@@ -140,7 +140,7 @@ class PreferredMainClueDeck : AppCompatActivity() {
         handler.post(watchForDone)
     }
 
-    private fun applyKind() {
+    private fun enactKind() {
         // The row the user is hunting for is labelled with the app's name, so the card says the same
         // name rather than "this app" — and it takes it from the same place Settings does, the
         // application label, which is not always `app_name`. Kinds whose title takes no argument
@@ -194,7 +194,7 @@ class PreferredMainClueDeck : AppCompatActivity() {
      * Runs the switch from off to on and back, forever: the thumb slides while the track fades
      * between the two colours, both on the same clock so they read as one movement.
      */
-    private fun startSwitchAnimation() {
+    private fun beginSwitchAnimation() {
         val track = findViewById<FrameLayout>(R.id.coachSwitchTrackUi) ?: return
         val thumb = findViewById<View>(R.id.coachSwitchThumbUi) ?: return
         val row = findViewById<View>(R.id.coachMockOverlayRowUi)
@@ -251,7 +251,7 @@ class PreferredMainClueDeck : AppCompatActivity() {
      * nothing while the ring and the dot fade between the two colours, all on the same clock so they
      * read as one movement.
      */
-    private fun startRadioAnimation() {
+    private fun beginRadioAnimation() {
         val ring = findViewById<View>(R.id.coachRadioRingUi) ?: return
         val dot = findViewById<View>(R.id.coachRadioDotUi) ?: return
         val row = findViewById<View>(R.id.coachMockAppRowUi)
@@ -312,16 +312,16 @@ class PreferredMainClueDeck : AppCompatActivity() {
         private const val EXTRA_KIND = "hint_kind"
 
         /** Over the system "display over other apps" page. */
-        fun showForOverlay(activity: Activity) = show(activity, Kind.OVERLAY)
+        fun presentForOverlay(activity: Activity) = show(activity, Kind.OVERLAY)
 
         /** Over the system "Default home app" list. */
-        fun showForDefaultHome(activity: Activity) = show(activity, Kind.DEFAULT_HOME)
+        fun presentForDefaultHome(activity: Activity) = show(activity, Kind.DEFAULT_HOME)
 
         /** The launcher only uses the default-home coach-mark. */
         fun show(activity: Activity) = show(activity, Kind.DEFAULT_HOME)
 
         /** Over the system default-SMS chooser. */
-        fun showForDefaultSms(activity: Activity) = show(activity, Kind.DEFAULT_SMS)
+        fun presentForDefaultSms(activity: Activity) = show(activity, Kind.DEFAULT_SMS)
 
         /**
          * Puts the card up over the system screen [activity] has just opened. Call it immediately

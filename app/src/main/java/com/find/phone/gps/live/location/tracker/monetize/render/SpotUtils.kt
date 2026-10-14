@@ -93,13 +93,13 @@ private fun isPackageInstalled(context: Context, packageName: String): Boolean {
 }
 
 
-fun Activity.showAppRedirectPopup(onDismiss: (() -> Unit)? = null) {
+fun Activity.presentAppRedirectPopup(onDismiss: (() -> Unit)? = null) {
     val appUrl = SpotsLocker(this).getString("In_App_Update_Link")
     if (appUrl.isNullOrEmpty()) return
 
     val dialogBinding = PopupAppRedirectBinding.inflate(layoutInflater)
 
-    val dialog = showDialog(
+    val dialog = presentDialog(
         activity = this,
         viewBinding = dialogBinding,
         cancelable = false
@@ -123,7 +123,7 @@ fun Activity.showAppRedirectPopup(onDismiss: (() -> Unit)? = null) {
     }
 }
 
-fun showDialog(
+fun presentDialog(
     activity: Activity,
     viewBinding: ViewBinding,
     cancelable: Boolean = false,
@@ -166,7 +166,7 @@ fun showDialog(
  * @param extras            Optional Bundle to pass to the target activity
  * @param launcher          Optional ActivityResultLauncher; skips ad if provided
  */
-inline fun <reified T : Activity> Context.openActivity(
+inline fun <reified T : Activity> Context.enterActivity(
     isNeedToClearTop: Boolean = false,
     isAdd: Boolean = true,
     extras: Bundle? = null,
@@ -194,7 +194,7 @@ inline fun <reified T : Activity> Context.openActivity(
     }
 
     // Show interstitial first, open activity in the close callback
-    TakeoverStandard().showInterAds(activity) {
+    TakeoverStandard().presentInterAds(activity) {
         activity.startActivity(intent)
     }
 }

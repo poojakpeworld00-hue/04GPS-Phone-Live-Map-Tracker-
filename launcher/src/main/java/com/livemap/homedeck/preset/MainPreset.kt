@@ -159,7 +159,7 @@ data class MainPreset(
      * width), while its `app_icon_size` dimen is only that formula at the default screen zoom - on a
      * phone zoomed out to 411 dp, 63 dp against the 67 dp One UI really draws. Idempotent.
      */
-    fun resolveFractions(widthDp: Int, densityDpi: Int = 0): MainPreset {
+    fun settleFractions(widthDp: Int, densityDpi: Int = 0): MainPreset {
         if (widthDp <= 0) return this
         fun dp(current: Int, fraction: Float) = if (fraction > 0f) Math.round(fraction * widthDp).takeIf { it in MIN_ICON_DP..MAX_ICON_DP } ?: current else current
         val iconFraction = iconFractionFor(densityDpi)

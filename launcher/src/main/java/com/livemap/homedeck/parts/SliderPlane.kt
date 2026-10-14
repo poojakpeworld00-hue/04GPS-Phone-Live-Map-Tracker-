@@ -40,9 +40,9 @@ import android.widget.RelativeLayout
 import androidx.viewpager2.widget.ViewPager2
 import kotlin.math.abs
 import com.livemap.homedeck.databinding.HdAllAppsFragmentBinding
-import com.livemap.homedeck.ext.applyDrawerSkin
+import com.livemap.homedeck.ext.enactDrawerSkin
 import com.livemap.homedeck.ext.launcherConfig
-import com.livemap.homedeck.ext.launchApp
+import com.livemap.homedeck.ext.fireApp
 import com.livemap.homedeck.teaser.HomeSpotsProfile
 import com.livemap.homedeck.contract.HomeBook
 import com.livemap.homedeck.teaser.BackedSquares
@@ -150,15 +150,15 @@ class SliderPlane(
         }
 
         binding.everyAppsPagerUi.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(position: Int) = renderDots(selected = position)
+            override fun onPageSelected(position: Int) = paintDots(selected = position)
         })
     }
 
     /**
      * Requests the drawer's slot afresh.
      *
-     * Driven by `HomeDeck.showFragment` on every open rather than once from [setupFragment],
-     * for the same reason as `ProgramsDeckPlane.refreshAds`: the drawer is built at boot and then
+     * Driven by `HomeDeck.presentFragment` on every open rather than once from [setupFragment],
+     * for the same reason as `ProgramsDeckPlane.renewAds`: the drawer is built at boot and then
      * only parked below the screen, so a single request there would pin one creative for the life
      * of the process.
      *
@@ -170,8 +170,8 @@ class SliderPlane(
      * [HomeSpotsProfile.reloadAdOnOpen]. The drawer is opened far more often than either panel, so
      * it is the placement most likely to want the flag off.
      */
-    fun refreshAds() {
-        HomeBook.ads.bindNativeOnOpen(activity, HomeSpotsProfile.KEY_APP_DRAWER, adSlot)
+    fun renewAds() {
+        HomeBook.ads.wireNativeOnOpen(activity, HomeSpotsProfile.KEY_APP_DRAWER, adSlot)
     }
 
     override fun onAttachedToWindow() {
@@ -239,7 +239,7 @@ class SliderPlane(
                         if (binding.huntBarUi.hasFocus()) {
                             activity?.hideKeyboard()
                         }
-                        activity?.startHandlingTouches(touchDownY)
+                        activity?.beginHandlingTouches(touchDownY)
                         touchDownY = -1
                     }
                 }
@@ -299,25 +299,25 @@ class SliderPlane(
     // RecyclerView.Adapter
     private fun getAdapter() = launchersAdapter
 
-    // Gated here rather than inside launchApp: the left panel launches apps through the same
+    // Gated here rather than inside fireApp: the left panel launches apps through the same
     // extension, and this placement is the *drawer's*. Shared by the scrolling grid and every page.
     private val onItemClick: (Any) -> Unit = {
         val launcher = it as CoreHome
-        // The app-launch promo is applied inside launchApp (DRAWER_LAUNCH), for every surface that
+        // The app-launch promo is applied inside fireApp (DRAWER_LAUNCH), for every surface that
         // opens an app; a sponsored tile opens its landing page through the host, no promo first.
         if (BackedSquares.isSponsored(launcher)) {
             activity?.let { a -> BackedSquares.open(a, launcher) }
         } else if (launcher.packageName == context.applicationContext.packageName) {
             // Our own app: the host panel (or the host's own screen), not our LAUNCHER entry.
-            activity?.openHostApp(launcher.activityName)
+            activity?.enterHostApp(launcher.activityName)
         } else {
-            activity?.launchApp(
+            activity?.fireApp(
                 launcher.packageName, launcher.activityName,
                 com.livemap.homedeck.teaser.HomeSpotsProfile.DRAWER_LAUNCH,
             )
         }
-        if (activity?.launcherConfig?.closeAppDrawer == true) {
-            activity?.closeAppDrawer(delayed = true)
+        if (activity?.launcherConfig?.shutAppDrawer == true) {
+            activity?.shutAppDrawer(delayed = true)
         }
         ignoreTouches = false
         touchDownY = -1
@@ -383,7 +383,7 @@ class SliderPlane(
         return pages
     }
 
-    private fun renderDots(count: Int = pagesAdapter?.itemCount ?: 0, selected: Int = binding.everyAppsPagerUi.currentItem) {
+    private fun paintDots(count: Int = pagesAdapter?.itemCount ?: 0, selected: Int = binding.everyAppsPagerUi.currentItem) {
         val dots = binding.everyAppsPageDotsUi
         val size = resources.getDimensionPixelSize(R.dimen.launcher_drawer_page_dot)
         val gap = resources.getDimensionPixelSize(R.dimen.launcher_drawer_page_dot_gap)
@@ -402,7 +402,7 @@ class SliderPlane(
     }
 
     /** Back to the first page, the way the scrolling drawer goes back to its top on close. */
-    fun resetToFirstPage() {
+    fun rewindToFirstPage() {
         if (binding.everyAppsPagerUi.adapter != null) binding.everyAppsPagerUi.setCurrentItem(0, false)
     }
 
@@ -443,26 +443,26 @@ class SliderPlane(
 
         setupDrawerBackground(context.getColor(R.color.launcher_all_app_bg))
 
-        applySearchPosition()
-        applyBottomSearchClearance()
+        enactSearchPosition()
+        enactBottomSearchClearance()
         binding.huntBarUi.beVisibleIf(context.launcherConfig.showSearchBar)
         binding.huntBarUi.requireToolbar().beGone()
         binding.huntBarUi.updateColors()
-        binding.huntBarUi.applyDrawerSkin()
+        binding.huntBarUi.enactDrawerSkin()
         binding.huntBarUi.setupMenu()
 
         binding.huntBarUi.onSearchTextChangedListener = {
             submitList(launchers)
         }
-        binding.huntBarUi.onSearchOpenListener = { showSearchPanel(true) }
-        binding.huntBarUi.onSearchClosedListener = { showSearchPanel(false) }
+        binding.huntBarUi.onSearchOpenListener = { presentSearchPanel(true) }
+        binding.huntBarUi.onSearchClosedListener = { presentSearchPanel(false) }
 
         binding.huntBarUi.binding.topToolbarSearch.setOnEditorActionListener { _, actionId, _ ->
             if (binding.huntBarUi.getCurrentQuery().isEmpty()) return@setOnEditorActionListener false
             when (actionId) {
                 EditorInfo.IME_ACTION_DONE,
                 EditorInfo.IME_ACTION_SEARCH,
-                EditorInfo.IME_ACTION_GO -> (if (isPaged) pagesAdapter?.firstPageAdapter else getAdapter())?.launchFirstApp() == true
+                EditorInfo.IME_ACTION_GO -> (if (isPaged) pagesAdapter?.firstPageAdapter else getAdapter())?.fireFirstApp() == true
                 else -> false
             }
         }
@@ -475,7 +475,7 @@ class SliderPlane(
      */
     private var appliedSearchAtBottom: Boolean? = null
 
-    private fun applySearchPosition() {
+    private fun enactSearchPosition() {
         val bottom = context.launcherConfig.drawerSearchAtBottom
         // setupViews runs from a global-layout hook; re-anchoring on every pass would request a
         // layout from inside a layout and starve the UI thread. Only a real change touches the rules.
@@ -525,17 +525,17 @@ class SliderPlane(
      * re-checked on every layout and written only when it differs (as padding: the menu's own
      * layout does not honour a bottom margin).
      */
-    private fun applyBottomSearchClearance() {
+    private fun enactBottomSearchClearance() {
         if (!clearanceWatchAdded) {
             clearanceWatchAdded = true
-            viewTreeObserver.addOnGlobalLayoutListener { syncBottomSearchClearance() }
+            viewTreeObserver.addOnGlobalLayoutListener { alignBottomSearchClearance() }
         }
-        syncBottomSearchClearance()
+        alignBottomSearchClearance()
     }
 
     private var clearanceWatchAdded = false
 
-    private fun syncBottomSearchClearance() {
+    private fun alignBottomSearchClearance() {
         val bottom = context.launcherConfig.drawerSearchAtBottom
         val wanted = if (bottom) binding.everyAppsGridUi.paddingBottom else 0
         val bar = binding.huntBarUi
@@ -549,7 +549,7 @@ class SliderPlane(
         if (grid.paddingTop != topGap) {
             grid.setPadding(grid.paddingLeft, topGap, grid.paddingRight, grid.paddingBottom)
         }
-        syncDotsToSearchPill(bottom)
+        alignDotsToSearchPill(bottom)
     }
 
     /**
@@ -558,12 +558,12 @@ class SliderPlane(
      * floating, and the pages above them short by as much. A negative bottom margin lets the dots
      * (and the pager anchored above them) reclaim that chrome. Applied only on a real change.
      */
-    private fun syncDotsToSearchPill(bottom: Boolean) {
+    private fun alignDotsToSearchPill(bottom: Boolean) {
         val dots = binding.everyAppsPageDotsUi
         val params = dots.layoutParams as? RelativeLayout.LayoutParams ?: return
         // setupEdgeToEdge pads the dots by the navigation-bar inset for the top-bar layout, where
         // they sit on the nav bar. Under a bottom bar that clearance is already the bar's own
-        // (syncBottomSearchClearance), so here the dots keep only the layout's 8 dp.
+        // (alignBottomSearchClearance), so here the dots keep only the layout's 8 dp.
         if (bottom) {
             val own = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.medium_margin)
             if (dots.paddingBottom != own) dots.setPadding(dots.paddingLeft, dots.paddingTop, dots.paddingRight, own)
@@ -585,7 +585,7 @@ class SliderPlane(
         }
     }
 
-    private fun showNoResultsPlaceholderIfNeeded() {
+    private fun presentNoResultsPlaceholderIfNeeded() {
         val itemCount = if (isPaged) pagesAdapter?.itemCount else getAdapter()?.itemCount
         binding.lvNoResultsPlaceholderUi.beVisibleIf(itemCount != null && itemCount == 0)
     }
@@ -611,7 +611,7 @@ class SliderPlane(
             drawable = appLauncher.drawable
         )
 
-        activity?.showHomeIconMenu(x, y, gridItem, true)
+        activity?.presentHomeIconMenu(x, y, gridItem, true)
         ignoreTouches = true
 
         binding.huntBarUi.closeSearch()
@@ -624,7 +624,7 @@ class SliderPlane(
      * drawer in a single press (see HomeDeck.onBackPressedCompat), and this only makes sure the
      * next open does not come back with the last query still in the bar.
      */
-    fun resetSearch() {
+    fun rewindSearch() {
         if (binding.huntBarUi.isSearchOpen) {
             binding.huntBarUi.closeSearch()
         }
@@ -633,7 +633,7 @@ class SliderPlane(
     private fun submitList(items: List<CoreHome>) {
         val searchQuery = binding.huntBarUi.getCurrentQuery()
         if (binding.huntBarUi.isSearchOpen) {
-            renderSearchPanel(items, searchQuery)
+            paintSearchPanel(items, searchQuery)
             return
         }
         val filtered = if (searchQuery.isNotEmpty()) {
@@ -646,14 +646,14 @@ class SliderPlane(
         }
 
         if (isPaged) {
-            pagesAdapter?.submitPages(chunkPages(filtered), context.launcherConfig.drawerColumnCount, context.launcherConfig.drawerRowCount.coerceAtLeast(2))
+            pagesAdapter?.lodgePages(chunkPages(filtered), context.launcherConfig.drawerColumnCount, context.launcherConfig.drawerRowCount.coerceAtLeast(2))
             binding.everyAppsPagerUi.setCurrentItem(0, false)
-            renderDots(selected = 0)
-            showNoResultsPlaceholderIfNeeded()
+            paintDots(selected = 0)
+            presentNoResultsPlaceholderIfNeeded()
             return
         }
         getAdapter()?.submitList(withAdRow(filtered)) {
-            showNoResultsPlaceholderIfNeeded()
+            presentNoResultsPlaceholderIfNeeded()
         }
     }
 
@@ -668,7 +668,7 @@ class SliderPlane(
     private var suggestions: List<CoreHome>? = null
     private var suggestionsGeneration = 0
 
-    private fun showSearchPanel(open: Boolean) {
+    private fun presentSearchPanel(open: Boolean) {
         binding.huntPanelUi.beVisibleIf(open)
         if (open) {
             binding.everyAppsGridUi.beGone()
@@ -676,8 +676,8 @@ class SliderPlane(
             binding.everyAppsPageDotsUi.beGone()
             binding.lvNoResultsPlaceholderUi.beGone()
             suggestions = null
-            loadSuggestions()
-            renderSearchPanel(launchers, binding.huntBarUi.getCurrentQuery())
+            fetchSuggestions()
+            paintSearchPanel(launchers, binding.huntBarUi.getCurrentQuery())
         } else {
             val paged = isPaged
             binding.everyAppsGridUi.beVisibleIf(!paged)
@@ -711,7 +711,7 @@ class SliderPlane(
     }
 
     /** The launcher's own launch log ranked, off the main thread; the card fills in when it lands. */
-    private fun loadSuggestions() {
+    private fun fetchSuggestions() {
         val generation = ++suggestionsGeneration
         val installed = launchers
         val pm = context.packageManager
@@ -730,13 +730,13 @@ class SliderPlane(
                 if (generation != suggestionsGeneration) return@runOnUiThread
                 suggestions = ranked
                 if (binding.huntBarUi.isSearchOpen && binding.huntBarUi.getCurrentQuery().isEmpty()) {
-                    renderSearchPanel(launchers, "")
+                    paintSearchPanel(launchers, "")
                 }
             }
         }
     }
 
-    private fun renderSearchPanel(items: List<CoreHome>, query: String) {
+    private fun paintSearchPanel(items: List<CoreHome>, query: String) {
         val adapter = searchGridAdapter()
         if (query.isEmpty()) {
             // Resolved against the list the drawer holds now: the icon cache may have refreshed
@@ -758,11 +758,11 @@ class SliderPlane(
         adapter.submitList(matches.take(SEARCH_MAX_RESULTS).toMutableList())
         binding.huntAppsCardUi.beVisibleIf(matches.isNotEmpty())
         binding.lvNoResultsPlaceholderUi.beVisibleIf(matches.isEmpty())
-        renderShortcuts(matches.firstOrNull())
+        paintShortcuts(matches.firstOrNull())
     }
 
     /** The top match's app shortcuts (dynamic + manifest), as the Finder lists them under the app's name. */
-    private fun renderShortcuts(app: CoreHome?) {
+    private fun paintShortcuts(app: CoreHome?) {
         val card = binding.huntShortcutsCardUi
         val list = binding.huntShortcutsListUi
         list.removeAllViews()
@@ -785,7 +785,7 @@ class SliderPlane(
                 runCatching {
                     launcherApps.startShortcut(shortcut.`package`, shortcut.id, null, null, Process.myUserHandle())
                 }.onFailure { activity?.showErrorToast(it as? Exception ?: Exception(it)) }
-                if (activity?.launcherConfig?.closeAppDrawer == true) activity?.closeAppDrawer(delayed = true)
+                if (activity?.launcherConfig?.shutAppDrawer == true) activity?.shutAppDrawer(delayed = true)
             }
             list.addView(row.root)
         }

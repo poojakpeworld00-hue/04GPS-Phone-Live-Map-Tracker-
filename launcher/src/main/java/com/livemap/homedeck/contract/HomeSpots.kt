@@ -42,7 +42,7 @@ interface HomeSpots {
      * Split out because "do not replace an ad the user is already looking at" is a host policy, not
      * a launcher one — and there is nothing to replace if the first request never filled.
      */
-    fun bindNativeOnOpen(activity: Activity?, key: String, container: FrameLayout?) =
+    fun wireNativeOnOpen(activity: Activity?, key: String, container: FrameLayout?) =
         bindNative(activity, key, container)
 
     /**

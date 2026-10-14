@@ -59,7 +59,7 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
 
     override fun initView() {
         // Record this intro show for the once/count frequency gate.
-        OpeningUnveilCharter.markShown(this, OpeningUnveilProfile.TERMS)
+        OpeningUnveilCharter.flagShown(this, OpeningUnveilProfile.TERMS)
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.policyRoot) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -110,7 +110,7 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
     }
 
     override fun onDestroy() {
-        stopWatch()
+        haltWatch()
         super.onDestroy()
     }
 
@@ -125,11 +125,11 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
             return
         }
         prefs.isTermsAccepted = true
-        openOverlayPermission()
+        enterOverlayPermission()
     }
 
     /** Requests the overlay permission, or skips ahead if it isn't needed. */
-    private fun openOverlayPermission() {
+    private fun enterOverlayPermission() {
         // Already granted, or a region where the permission is not offered at all
         // (CountryList_Counter_NShow / `all`) → straight on to the next screen.
         if (DriftToolbox.isGranted(this) || !DriftToolbox.isOfferable(this)) {
@@ -145,7 +145,7 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
         // handled by DriftWatchService (polls while we're behind Settings) and
         // the genuine return is handled by onResume / the launcher result.
         val launched = runCatching {
-            overlayLauncher.launch(DriftToolbox.buildOverlayIntent(packageName))
+            overlayLauncher.launch(DriftToolbox.composeOverlayIntent(packageName))
         }.isSuccess
 
         if (!launched) {
@@ -177,13 +177,13 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
     private fun proceedToNextScreen() {
         if (proceeded) return
         proceeded = true
-        stopWatch()
+        haltWatch()
 
         // Onboarding follows the same OpeningUnveilCharter frequency gate as Splash.
-        val next = if (OpeningUnveilCharter.shouldShowOnboarding(this)) BriefingActivity::class.java
+        val next = if (OpeningUnveilCharter.mustShowOnboarding(this)) BriefingActivity::class.java
         else HomeStream.homeActivity()
         if (next == HomeStream.homeActivity()) {
-            HomeStream.markOnboardingCompleted(this)
+            HomeStream.flagOnboardingCompleted(this)
         }
         val intent = Intent(this, next).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         // Later launches: the reminders intro goes right before Home when it is due.
@@ -192,7 +192,7 @@ class PolicyPortalActivity : StageActivity<ScreenTermsBinding>() {
     }
 
     /** Stops the grant watcher service and unregisters its receiver (idempotent). */
-    private fun stopWatch() {
+    private fun haltWatch() {
         if (watchRegistered) {
             runCatching { unregisterReceiver(overlayGrantedReceiver) }
             watchRegistered = false

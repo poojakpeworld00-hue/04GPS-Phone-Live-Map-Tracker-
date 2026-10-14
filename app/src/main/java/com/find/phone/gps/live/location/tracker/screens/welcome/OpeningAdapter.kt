@@ -17,7 +17,7 @@ class OpeningAdapter(
         private val anims = mutableListOf<Animator>()
 
         fun bind(page: OpeningFolio) {
-            CraftMovement.cancelAll(anims)
+            CraftMovement.abortAll(anims)
             val container = binding.lvArtContainer
             container.removeAllViews()
             LayoutInflater.from(container.context).inflate(page.sceneRes, container, true)
@@ -28,7 +28,7 @@ class OpeningAdapter(
             binding.txtDesc.setText(page.descRes)
         }
 
-        fun recycle() = CraftMovement.cancelAll(anims)
+        fun recycle() = CraftMovement.abortAll(anims)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =

@@ -76,13 +76,13 @@ import com.livemap.homedeck.anim.HomeRibbonMovement
 import com.livemap.homedeck.modals.RetitleElementBasket
 import com.livemap.homedeck.ext.launcherConfig
 import com.livemap.homedeck.ext.getLabel
-import com.livemap.homedeck.ext.handleGridItemPopupMenu
+import com.livemap.homedeck.ext.processGridItemPopupMenu
 import com.livemap.homedeck.modals.ElementMovesBasket
 import com.livemap.homedeck.ext.hiddenIconsDB
 import com.livemap.homedeck.ext.homeScreenGridItemsDB
 import com.livemap.homedeck.ext.isDefaultLauncher
-import com.livemap.homedeck.ext.launchApp
-import com.livemap.homedeck.ext.launchAppInfo
+import com.livemap.homedeck.ext.fireApp
+import com.livemap.homedeck.ext.fireAppInfo
 import com.livemap.homedeck.ext.launchersDB
 import com.livemap.homedeck.ext.supportsDarkText
 import com.livemap.homedeck.ext.uninstallApp
@@ -158,10 +158,10 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
 
     private var mSwipeHintAnimator: ObjectAnimator? = null
 
-    /** Cached answer to "is the Home role still unclaimed" — see [refreshDefaultLauncherBanner]. */
+    /** Cached answer to "is the Home role still unclaimed" — see [renewDefaultLauncherBanner]. */
     private var needsDefaultLauncherBanner = false
 
-    /** Cached prompt gate — see [refreshDefaultLauncherBanner] for why it is not read per call. */
+    /** Cached prompt gate — see [renewDefaultLauncherBanner] for why it is not read per call. */
     private var mDefaultLauncherPromptEnabled = true
 
     /**
@@ -170,7 +170,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      *
      * Tracked rather than derived from the panels' `x`, which is what [isLeftPanelExpanded] and
      * [isHostPanelExpanded] read, because a panel opens on a **fling** with no preceding drag:
-     * nothing has moved `x` when [showSidePanel] runs — `ObjectAnimator.start()` applies its first
+     * nothing has moved `x` when [presentSidePanel] runs — `ObjectAnimator.start()` applies its first
      * value on the next frame — so a position check there still reports "closed", and the alert would
      * stay up for a panel it is legible straight through. The drawer has no such problem: the drag
      * that precedes its fling has already moved `y`.
@@ -193,12 +193,12 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      * A panel that `launcher_config.panels` has just switched off must not stay on screen: the
      * gesture gates only stop it opening, so one already open would otherwise be stuck there.
      */
-    private fun closeDisabledPanels() {
+    private fun shutDisabledPanels() {
         if (isLeftPanelExpanded() && !HomeSpotsProfile.panelEnabled(HomeSpotsProfile.LEFT_SWIPE)) {
-            hideLeftPanel()
+            concealLeftPanel()
         }
         if (isHostPanelExpanded() && !HomeSpotsProfile.panelEnabled(HomeSpotsProfile.RIGHT_SWIPE)) {
-            hideHostPanel()
+            concealHostPanel()
         }
     }
 
@@ -208,8 +208,8 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
             return
         }
 
-        refreshDefaultLauncherBanner()
-        closeDisabledPanels()
+        renewDefaultLauncherBanner()
+        shutDisabledPanels()
 
         if (!isAllAppsFragmentExpanded() && BadgeStash.launchers.isNotEmpty()) {
             // Same apps, but the config may have moved rows (the ad row): resubmit regardless.
@@ -226,7 +226,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
     private val defaultLauncherRequester by lazy {
         // Granting the role is what retires the card, and the requester is the only thing that
         // notices it the moment it happens rather than on the next resume.
-        PreferredHomeSeeker(this) { refreshDefaultLauncherBanner() }
+        PreferredHomeSeeker(this) { renewDefaultLauncherBanner() }
     }
 
     private var wallpaperColorChangeListener: OnColorsChangedListener? = null
@@ -272,9 +272,9 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
 
         // The layout launcher_config.os_style asks for - the previous launcher's or our own - is
         // applied before the workspace inflates and reads the row/column counts. No-op while the
-        // style is unchanged; a switch on a built home is rebuilt by refreshLaunchers.
-        MainPresetEnforcer.applyStyle(this)
-        MainPresetEnforcer.refreshIconSizes(this)
+        // style is unchanged; a switch on a built home is rebuilt by renewLaunchers.
+        MainPresetEnforcer.enactStyle(this)
+        MainPresetEnforcer.renewIconSizes(this)
         mDrawerEnabled = launcherConfig.isDrawerEnabled
 
         setContentView(binding.root)
@@ -340,14 +340,14 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
             beVisible()
         }
 
-        handleIntentAction(intent)
+        processIntentAction(intent)
 
         binding.deskScreenGridUi.root.itemClickListener = {
-            performItemClick(it)
+            executeItemClick(it)
         }
 
         binding.deskScreenGridUi.root.itemLongClickListener = {
-            performItemLongClick(
+            executeItemLongClick(
                 x = binding.deskScreenGridUi.root.getClickableRect(it).left.toFloat(),
                 clickedGridItem = it
             )
@@ -360,14 +360,14 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         // of a first-run flow, say - starts this Activity with EXTRA_OPEN_HOST_PANEL. Only on a
         // fresh create: a recreate hands the same intent back, and the panel state it had is
         // restored on its own.
-        if (savedInstanceState == null) openHostPanelIfAsked(intent)
+        if (savedInstanceState == null) enterHostPanelIfAsked(intent)
 
         // Last, and only on the path where the workspace was actually built — the early return
         // above hands the foreground back to onboarding, and a coach mark over a screen the user is
         // about to be taken off would be pointing at nothing.
         //
         // Posted so the first step is measured against a laid-out workspace.
-        binding.coreHolderUi.post { maybeShowGuide() }
+        binding.coreHolderUi.post { perhapsShowGuide() }
 
         // After the workspace has had its first frames, not inside them: the inbox commit is the
         // single most expensive thing this Activity does, and a Home press should paint the grid
@@ -378,7 +378,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         binding.coreHolderUi.postDelayed({
             Looper.myQueue().addIdleHandler {
                 // A host panel switched off by launcher_config is never committed at all; if the
-                // config turns it on later, showHostPanel's refresh() builds it on first open.
+                // config turns it on later, presentHostPanel's refresh() builds it on first open.
                 if (!isFinishing && !isDestroyed &&
                     HomeSpotsProfile.panelEnabled(HomeSpotsProfile.RIGHT_SWIPE)
                 ) binding.lvHostPanelUi.root.warmUp()
@@ -396,7 +396,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
     private fun setupDefaultLauncherBanner(savedInstanceState: Bundle?) {
         // Before the first tap can happen: a low-memory kill while the user was in Settings must
         // resume knowing it still owes them the escalation, not start the sequence over.
-        defaultLauncherRequester.restoreState(savedInstanceState)
+        defaultLauncherRequester.recoverState(savedInstanceState)
         binding.prefLauncherBannerUi.root.setOnClickListener {
             HomeBook.bridge.onEvent("default_home_card_tap")
             defaultLauncherRequester.start()
@@ -412,9 +412,9 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         // Its height is only known once laid out (text wraps per width and language), so the grid's
         // reserve follows every layout pass rather than a guessed constant.
         binding.prefLauncherBannerUi.root.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-            syncGridTopReserve()
+            alignGridTopReserve()
         }
-        refreshDefaultLauncherBanner()
+        renewDefaultLauncherBanner()
     }
 
     /**
@@ -424,7 +424,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      * the card hides while the drawer or a side panel is open, and re-flowing the grid on every such
      * frame would redraw the whole workspace during a drag for a screen nobody can see.
      */
-    private fun syncGridTopReserve() {
+    private fun alignGridTopReserve() {
         val banner = binding.prefLauncherBannerUi.root
         val wanted = needsDefaultLauncherBanner && mDefaultLauncherPromptEnabled
         val grid = binding.deskScreenGridUi.root
@@ -442,9 +442,9 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      *
      * Answering "does the role still need asking for" is a PackageManager round trip, so the answer
      * is cached here and the per-frame question — "is anything covering the workspace right now" — is
-     * left to [updateDefaultLauncherBannerVisibility].
+     * left to [reviseDefaultLauncherBannerVisibility].
      */
-    private fun refreshDefaultLauncherBanner() {
+    private fun renewDefaultLauncherBanner() {
         val needs = !isDefaultLauncher()
         // The role arrived while this home was up without it — from the card, or from Settings.
         if (needsDefaultLauncherBanner && !needs) HomeBook.bridge.onEvent("default_home_granted_later")
@@ -453,8 +453,8 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         // touch path during a drawer drag, and resolving the gate there would put a launcherConfig read on
         // every move event for an answer that changes at most once per fetch.
         mDefaultLauncherPromptEnabled = HomeSpotsProfile.defaultLauncherPromptEnabled()
-        updateDefaultLauncherBannerVisibility()
-        syncGridTopReserve()
+        reviseDefaultLauncherBannerVisibility()
+        alignGridTopReserve()
     }
 
     /**
@@ -483,7 +483,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      * the drawer is being dragged. The expansion checks are float comparisons and `beVisibleIf`
      * no-ops when the visibility is unchanged, which it is on all but one frame of a drag.
      */
-    private fun updateDefaultLauncherBannerVisibility() {
+    private fun reviseDefaultLauncherBannerVisibility() {
         binding.prefLauncherBannerUi.root.beVisibleIf(
             needsDefaultLauncherBanner &&
                 mDefaultLauncherPromptEnabled &&
@@ -521,7 +521,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      * Called on first layout and every time the user comes back to the workspace — which is what
      * makes the guide sequential: one step, the gesture, then the next step on the way back.
      */
-    private fun maybeShowGuide() {
+    private fun perhapsShowGuide() {
         // Never over a drawer, a sheet or an open panel: the guide describes the workspace, and
         // drawn over anything else it would be pointing at anything but.
         if (isAllAppsFragmentExpanded() || isWidgetsFragmentExpanded()) return
@@ -529,15 +529,15 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
 
         val step = nextGuideStep()
         if (step == null) {
-            hideSwipeHint()
+            concealSwipeHint()
         } else if (mGuideStep != step || !binding.swpHintUi.isVisible) {
-            showGuideStep(step)
+            presentGuideStep(step)
         }
 
         // Re-decided once the guide has settled, and always after it: the scrim is one of the card's
         // visibility inputs, so a guide that just went up has to hide it and a guide that just
         // finished has to give it back.
-        updateDefaultLauncherBannerVisibility()
+        reviseDefaultLauncherBannerVisibility()
     }
 
     /**
@@ -547,8 +547,8 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      * moving finger. `alphas` is applied against the run's visual order, which is why it is reversed
      * for the two steps that travel back toward the origin.
      */
-    private fun showGuideStep(step: HomeMentorPhase) {
-        cancelGuideAnimation()
+    private fun presentGuideStep(step: HomeMentorPhase) {
+        abortGuideAnimation()
         mGuideStep = step
 
         val chevrons = listOf(
@@ -633,9 +633,9 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      */
     private fun completeGuideStep(step: HomeMentorPhase) {
         if (launcherConfig.isGuideStepDone(step)) return
-        launcherConfig.markGuideStepDone(step)
+        launcherConfig.flagGuideStepDone(step)
         if (mGuideStep == step) {
-            hideSwipeHint()
+            concealSwipeHint()
         }
     }
 
@@ -646,7 +646,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      *
      * Returns true when a tap was consumed, so the normal home-screen click handling is skipped.
      */
-    private fun performGuideStep(): Boolean {
+    private fun executeGuideStep(): Boolean {
         val step = mGuideStep ?: return false
         if (!binding.swpHintUi.isVisible) return false
 
@@ -654,17 +654,17 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         // drawer, so without this they would slide in dimmed and only brighten once finished.
         // Completion still comes from the open call, so a step whose action does not actually run
         // is left owed and offered again rather than silently retired.
-        hideSwipeHint()
+        concealSwipeHint()
 
         when (step) {
-            HomeMentorPhase.SWIPE_RIGHT_HOST -> showHostPanel()
-            HomeMentorPhase.SWIPE_LEFT_APPS -> showLeftPanel()
-            HomeMentorPhase.SWIPE_UP_DRAWER -> showFragment(binding.everyAppsFragmentUi)
+            HomeMentorPhase.SWIPE_RIGHT_HOST -> presentHostPanel()
+            HomeMentorPhase.SWIPE_LEFT_APPS -> presentLeftPanel()
+            HomeMentorPhase.SWIPE_UP_DRAWER -> presentFragment(binding.everyAppsFragmentUi)
         }
         return true
     }
 
-    private fun cancelGuideAnimation() {
+    private fun abortGuideAnimation() {
         mSwipeHintAnimator?.cancel()
         mSwipeHintAnimator = null
     }
@@ -676,12 +676,12 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      * Deliberately does *not* mark the step done: hiding happens whenever the workspace stops being
      * what the user is looking at, and only the gesture itself retires a step.
      */
-    private fun hideSwipeHint() {
+    private fun concealSwipeHint() {
         if (!binding.swpHintUi.isVisible) {
             return
         }
 
-        cancelGuideAnimation()
+        abortGuideAnimation()
         binding.swpHintUi.beGone()
     }
 
@@ -691,7 +691,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
             wallpaperColorChangeListener = OnColorsChangedListener { colors, which ->
                 if (which and WallpaperManager.FLAG_SYSTEM != 0) {
                     wallpaperSupportsDarkText = colors?.wantsDarkText() ?: run {
-                        refreshWallpaperSupportsDarkText()
+                        renewWallpaperSupportsDarkText()
                         wallpaperSupportsDarkText
                     }
                     // Only when the wallpaper is what the bar is actually reading. A panel or the
@@ -699,7 +699,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
                     // would undo the colour that surface just set.
                     if (currentSurfaceColor() == null) {
                         runOnUiThread {
-                            updateStatusBarIcons()
+                            reviseStatusBarIcons()
                         }
                     }
                 }
@@ -709,11 +709,11 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
                 Handler(Looper.getMainLooper())
             )
 
-            refreshWallpaperSupportsDarkText()
+            renewWallpaperSupportsDarkText()
         }
     }
 
-    private fun refreshWallpaperSupportsDarkText() {
+    private fun renewWallpaperSupportsDarkText() {
         if (!isOreoMr1Plus()) return
         wallpaperSupportsDarkText = WallpaperManager.getInstance(this)
             .getWallpaperColors(WallpaperManager.FLAG_SYSTEM)
@@ -736,35 +736,35 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      * the instant the user flips the toggle, specifically so the messages panel and the sheet
      * standing on it are still there to carry the chain on to its next row. It arrives here exactly
      * like a Home press does, so without this guard the unwind below would close the panel the
-     * watcher just came back to finish the flow on — and, now that [hideHostPanel] takes the
+     * watcher just came back to finish the flow on — and, now that [concealHostPanel] takes the
      * sheet down with it, dismiss the sheet mid-chain too.
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         // Home pressed: the long-press card goes with the rest. It is a window of its own, so
         // closing the drawer under it left it floating over the workspace.
-        dismissItemActions()
+        retireItemActions()
 
         val wasAnyFragmentOpen = isAllAppsFragmentExpanded() || isWidgetsFragmentExpanded()
         val wasAnyPanelOpen = isLeftPanelExpanded() || isHostPanelExpanded()
         if (wasJustPaused) {
             if (isAllAppsFragmentExpanded()) {
-                hideFragment(binding.everyAppsFragmentUi)
+                concealFragment(binding.everyAppsFragmentUi)
             }
             if (isWidgetsFragmentExpanded()) {
-                hideFragment(binding.lvWidgetsFragmentUi)
+                concealFragment(binding.lvWidgetsFragmentUi)
             }
         } else {
-            closeAppDrawer()
-            closeWidgetsFragment()
+            shutAppDrawer()
+            shutWidgetsFragment()
         }
 
         if (isLeftPanelExpanded()) {
-            hideLeftPanel()
+            concealLeftPanel()
         }
 
         if (isHostPanelExpanded()) {
-            hideHostPanel()
+            concealHostPanel()
         }
 
         binding.everyAppsFragmentUi.huntBarUi.closeSearch()
@@ -782,8 +782,8 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
             HomeTeaserDirector.run(this, HomeSpotsProfile.HOME_PRESS) {}
         }
 
-        handleIntentAction(intent)
-        openHostPanelIfAsked(intent)
+        processIntentAction(intent)
+        enterHostPanelIfAsked(intent)
     }
 
     /**
@@ -792,13 +792,13 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      * exit interstitial may just have run. Ignored when `launcher_config.panels.messages` is off;
      * OnboardingRoute then targets the standalone inbox instead and this is never set.
      */
-    private fun openHostPanelIfAsked(intent: Intent) {
+    private fun enterHostPanelIfAsked(intent: Intent) {
         if (!intent.getBooleanExtra(EXTRA_OPEN_HOST_PANEL, false)) return
         intent.removeExtra(EXTRA_OPEN_HOST_PANEL)
         if (!HomeSpotsProfile.panelEnabled(HomeSpotsProfile.RIGHT_SWIPE)) return
         binding.coreHolderUi.post {
             if (isFinishing || isDestroyed || isHostPanelExpanded()) return@post
-            revealHostPanel()
+            unveilHostPanel()
         }
     }
 
@@ -824,14 +824,14 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         // Before the banner refresh below, which reads the role this may have just been granted.
         // Idempotent, so duplicate resumes cannot escalate twice.
         defaultLauncherRequester.onResume()
-        refreshWallpaperSupportsDarkText()
+        renewWallpaperSupportsDarkText()
         // The Play update sheet is not raised here: the inbox panel (HomeShellFragment) owns it and
         // asks every time the panel opens, so a forced update blocks the inbox, not the workspace.
         Handler(Looper.getMainLooper()).postDelayed({
-            updateStatusBarIcons(currentSurfaceColor())
+            reviseStatusBarIcons(currentSurfaceColor())
             // Whatever the user came back to, the guide's next step is owed again if the workspace
-            // is what they are looking at. maybeShowGuide decides that for itself.
-            maybeShowGuide()
+            // is what they are looking at. perhapsShowGuide decides that for itself.
+            perhapsShowGuide()
         }, ANIMATION_DURATION)
 
         with(binding.coreHolderUi) {
@@ -851,7 +851,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
                     val showIcon = !hiddenIcons.contains(it.getLauncherIdentifier())
                     if (!showIcon) {
                         try {
-                            launchersDB.deleteById(it.id!!)
+                            launchersDB.eraseById(it.id!!)
                         } catch (_: Exception) {
                         }
                     }
@@ -869,11 +869,11 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
 
             binding.everyAppsFragmentUi.root.gotLaunchers(BadgeStash.launchers)
             binding.lvLeftPanelUi.root.gotLaunchers(BadgeStash.launchers)
-            refreshLaunchers()
+            renewLaunchers()
         }
 
-        refreshDefaultLauncherBanner()
-        syncHostDockItem()
+        renewDefaultLauncherBanner()
+        alignHostDockItem()
 
         binding.deskScreenGridUi.root.resizeGrid(
             newRowCount = launcherConfig.homeRowCount,
@@ -908,10 +908,10 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         wasJustPaused = true
         // Leaving the launcher (an app, Recents, the screen going off) must not leave the card up
         // for whatever comes back to it.
-        dismissItemActions()
+        retireItemActions()
     }
 
-    private fun dismissItemActions() {
+    private fun retireItemActions() {
         mOpenPopupMenu?.dismiss()
         mOpenPopupMenu = null
     }
@@ -921,8 +921,8 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      *
      * The apps panel and the app drawer used to spend a press on closing their search first, which
      * left the user two presses from home with no visible progress on the first one. Both close
-     * their search on the way out instead — [hideLeftPanel] resets the query once it is off screen,
-     * and [SliderPlane.resetSearch] does the same for the drawer — so a query is never carried
+     * their search on the way out instead — [concealLeftPanel] resets the query once it is off screen,
+     * and [SliderPlane.rewindSearch] does the same for the drawer — so a query is never carried
      * into the next open.
      *
      * The messages panel is handled by the inbox itself while it is on screen: its callback is
@@ -932,25 +932,25 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      */
     override fun onBackPressedCompat(): Boolean {
         return if (isLeftPanelExpanded()) {
-            hideLeftPanel()
+            concealLeftPanel()
             true
         } else if (isHostPanelExpanded()) {
             // the inbox gets back first (closes search / clears a selection), then the panel goes
-            if (!binding.lvHostPanelUi.root.handleBack()) hideHostPanel()
+            if (!binding.lvHostPanelUi.root.handleBack()) concealHostPanel()
             true
         } else if (isAllAppsFragmentExpanded()) {
-            binding.everyAppsFragmentUi.root.resetSearch()
-            hideFragment(binding.everyAppsFragmentUi)
+            binding.everyAppsFragmentUi.root.rewindSearch()
+            concealFragment(binding.everyAppsFragmentUi)
             true
         } else if (isWidgetsFragmentExpanded()) {
             if (binding.lvWidgetsFragmentUi.huntBarUi.isSearchOpen) {
-                clearWidgetsSearch()
+                wipeWidgetsSearch()
             } else {
-                hideFragment(binding.lvWidgetsFragmentUi)
+                concealFragment(binding.lvWidgetsFragmentUi)
             }
             true
         } else if (binding.deskScreenGridUi.lvResizeFrameUi.isVisible) {
-            binding.deskScreenGridUi.root.hideResizeLines()
+            binding.deskScreenGridUi.root.concealResizeLines()
             true
         } else {
             // this is a home launcher app, so back never leaves it; with nothing open to close it
@@ -1012,7 +1012,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         return travel < 0
     }
 
-    private fun resetGestureRange(x: Float) {
+    private fun rewindGestureRange(x: Float) {
         mGestureDownX = x
         mGestureMinX = x
         mGestureMaxX = x
@@ -1023,7 +1023,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         binding.everyAppsFragmentUi.root.onConfigurationChanged()
         binding.lvWidgetsFragmentUi.root.onConfigurationChanged()
         // a theme flip lands here without a recreate; the bar follows it
-        updateStatusBarIcons(currentSurfaceColor())
+        reviseStatusBarIcons(currentSurfaceColor())
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -1037,7 +1037,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
 
         // Before the detector, so onFling on this UP sees the gesture's full x range.
         if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-            resetGestureRange(event.x)
+            rewindGestureRange(event.x)
         } else {
             for (i in 0 until event.historySize) {
                 mGestureMinX = min(mGestureMinX, event.getHistoricalX(i))
@@ -1069,7 +1069,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
                 val hasFingerMoved = if (mTouchDownX == -1 || mTouchDownY == -1) {
                     mTouchDownX = event.x.toInt()
                     mTouchDownY = event.y.toInt()
-                    resetGestureRange(event.x)
+                    rewindGestureRange(event.x)
                     false
                 } else {
                     hasFingerMoved(event)
@@ -1079,7 +1079,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
                     mOpenPopupMenu?.dismiss()
                     mOpenPopupMenu = null
                     binding.deskScreenGridUi.root.itemDraggingStarted(mLongPressedIcon!!)
-                    hideFragment(binding.everyAppsFragmentUi)
+                    concealFragment(binding.everyAppsFragmentUi)
                 }
 
                 if (mLongPressedIcon != null && hasFingerMoved) {
@@ -1092,7 +1092,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
                     // user is dragging in. Checked on engagement rather than on fully-open so an
                     // abandoned half-drag also takes it down; the step stays owed either way and is
                     // re-offered from onResume or the next return to the workspace.
-                    hideSwipeHint()
+                    concealSwipeHint()
 
                     val diffY = mTouchDownY - event.y
                     val diffX = mTouchDownX - event.x
@@ -1111,8 +1111,8 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
                             )
                         }
                         // A drag is an open too — the sheet starts covering the workspace from the
-                        // first pixel, well before it settles and showFragment runs.
-                        updateDefaultLauncherBannerVisibility()
+                        // first pixel, well before it settles and presentFragment runs.
+                        reviseDefaultLauncherBannerVisibility()
                     } else if (abs(diffX) > abs(diffY) && !mIgnoreXMoveEvents) {
                         mIgnoreYMoveEvents = true
                         binding.deskScreenGridUi.root.setSwipeMovement(diffX)
@@ -1129,7 +1129,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
                 mIgnoreMoveEvents = false
                 mLongPressedIcon = null
                 mLastTouchCoords = Pair(-1f, -1f)
-                resetFragmentTouches()
+                rewindFragmentTouches()
                 binding.deskScreenGridUi.root.itemDraggingStopped()
 
                 if (!mIgnoreUpEvent) {
@@ -1140,18 +1140,18 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
                             // that just pulled the sheet down and let go. mAllAppsFragmentY is the
                             // sheet's y as of ACTION_DOWN, which is the only thing left that still
                             // knows — root.y has been following the finger since.
-                            showFragment(
+                            presentFragment(
                                 fragment = binding.everyAppsFragmentUi,
-                                refreshAds = mAllAppsFragmentY == mScreenHeight
+                                renewAds = mAllAppsFragmentY == mScreenHeight
                             )
                         } else if (isAllAppsFragmentExpanded()) {
-                            hideFragment(binding.everyAppsFragmentUi)
+                            concealFragment(binding.everyAppsFragmentUi)
                         }
 
                         if (binding.lvWidgetsFragmentUi.root.y < mScreenHeight * 0.5) {
-                            showFragment(binding.lvWidgetsFragmentUi)
+                            presentFragment(binding.lvWidgetsFragmentUi)
                         } else if (isWidgetsFragmentExpanded()) {
-                            hideFragment(binding.lvWidgetsFragmentUi)
+                            concealFragment(binding.lvWidgetsFragmentUi)
                         }
                     }
 
@@ -1181,17 +1181,17 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean(APP_DRAWER_STATE, isAllAppsFragmentExpanded())
-        defaultLauncherRequester.saveState(outState)
+        defaultLauncherRequester.persistState(outState)
     }
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
         if (savedInstanceState.getBoolean(APP_DRAWER_STATE)) {
-            showFragment(binding.everyAppsFragmentUi, 0L)
+            presentFragment(binding.everyAppsFragmentUi, 0L)
         }
     }
 
-    private fun handleIntentAction(intent: Intent) {
+    private fun processIntentAction(intent: Intent) {
         if (intent.action == LauncherApps.ACTION_CONFIRM_PIN_SHORTCUT) {
             val launcherApps =
                 applicationContext.getSystemService(LAUNCHER_APPS_SERVICE) as LauncherApps
@@ -1205,7 +1205,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
                     shortcutInfo,
                     resources.displayMetrics.densityDpi
                 )
-                val (page, rect) = findFirstEmptyCell()
+                val (page, rect) = locateFirstEmptyCell()
                 val gridItem = MainDisplayLatticeElement(
                     id = null,
                     left = rect.left,
@@ -1234,14 +1234,14 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
 
                 try {
                     item.accept()
-                    binding.deskScreenGridUi.root.storeAndShowGridItem(gridItem)
+                    binding.deskScreenGridUi.root.stashAndShowGridItem(gridItem)
                 } catch (_: IllegalStateException) {
                 }
             }
         }
     }
 
-    private fun findFirstEmptyCell(): Pair<Int, Rect> {
+    private fun locateFirstEmptyCell(): Pair<Int, Rect> {
         val gridItems = homeScreenGridItemsDB.getAllItems() as ArrayList<MainDisplayLatticeElement>
         val maxPage = gridItems.maxOf { it.page }
         val occupiedCells = ArrayList<Triple<Int, Int, Int>>()
@@ -1293,14 +1293,14 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      * The in-place fake uninstall (HomeGateway.removesHostIconInPlace): our rows leave the grid, the
      * dock spot is handed back to the host, and the grid is redrawn - the user never leaves Home.
      */
-    fun removeSelfFromHome() {
+    fun dropSelfFromHome() {
         HomeBook.bridge.onEvent("uninstall_flow_self_hidden", mapOf("trigger" to "shortcut_in_place"))
         // Flag first, on this thread: the grid drops our rows on any load from here on.
         launcherConfig.selfIconHidden = true
         ensureBackgroundThread {
             AutoErasure.hide(this)
             runOnUiThread {
-                if (!isFinishing && !isDestroyed) binding.deskScreenGridUi.root.fetchGridItems()
+                if (!isFinishing && !isDestroyed) binding.deskScreenGridUi.root.obtainGridItems()
             }
         }
     }
@@ -1328,7 +1328,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
     // A burst (an update is a remove and an add; a split install several changes) collapses into
     // one refresh.
     private val packageRefresh = Runnable {
-        if (!isFinishing && !isDestroyed) ensureBackgroundThread { refreshLaunchers() }
+        if (!isFinishing && !isDestroyed) ensureBackgroundThread { renewLaunchers() }
     }
 
     private val packageCallback = object : LauncherApps.Callback() {
@@ -1355,7 +1355,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
     private fun isInstalledAndEnabled(packageName: String): Boolean =
         runCatching { packageManager.getApplicationInfo(packageName, 0).enabled }.getOrDefault(false)
 
-    private fun refreshLaunchers(): Unit = synchronized(refreshLock) {
+    private fun renewLaunchers(): Unit = synchronized(refreshLock) {
         // First run: the dock is seeded from PackageManager alone, ahead of the icon decode
         // below, so the workspace shows its four apps at once instead of staying blank for as
         // long as every installed app's icon takes to render.
@@ -1367,7 +1367,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
             getDefaultAppPackages()
             launcherConfig.wasHomeScreenInit = true
             launcherConfig.wasSearchBarPurged = true
-            binding.deskScreenGridUi.root.fetchGridItems()
+            binding.deskScreenGridUi.root.obtainGridItems()
         }
 
         // First run: everything that only places apps needs their names, not their icons. Seeding
@@ -1377,11 +1377,11 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         // are idempotent, so they find this work done and only fill in what is missing.
         if (!launcherConfig.homeSeeded && !launcherConfig.homeRebuildPending) {
             val names = HomeSurvey.quick(this)
-            MainSower.seedFirstPage(this, names)
+            MainSower.plantFirstPage(this, names)
             if (!launcherConfig.isDrawerEnabled || launcherConfig.homeAndDrawer) {
-                MainProgramsStuffer.placeMissing(this, names)
+                MainProgramsStuffer.siteMissing(this, names)
             }
-            binding.deskScreenGridUi.root.fetchGridItems()
+            binding.deskScreenGridUi.root.obtainGridItems()
         }
 
         val knownSignature = BadgeStash.installedSignature
@@ -1402,8 +1402,8 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         // disabled, loses them.
         BadgeStash.launchers.map { it.packageName }.forEach { packageName ->
             if (!launchers.map { it.packageName }.contains(packageName) && !isInstalledAndEnabled(packageName)) {
-                launchersDB.deleteApp(packageName)
-                homeScreenGridItemsDB.deleteByPackageName(packageName)
+                launchersDB.eraseApp(packageName)
+                homeScreenGridItemsDB.eraseByPackageName(packageName)
             }
         }
 
@@ -1415,30 +1415,30 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         // Pixel) keeps its apps in the drawer - but every app installed from now on still lands
         // on the workspace, on every phone.
         if (launcherConfig.homeRebuildPending) {
-            MainSower.resetForRebuild(this)
+            MainSower.rewindForRebuild(this)
             launcherConfig.homeRebuildPending = false
         }
-        MainSower.seedFirstPage(this, launchers)
+        MainSower.plantFirstPage(this, launchers)
         // launcher_config switched a first-page widget off (or swapped the search bar): the old
         // view is a child of the grid, which a refetch does not take away, so the screen is rebuilt.
-        if (MainAppletSower.syncFirstPage(this)) {
+        if (MainAppletSower.alignFirstPage(this)) {
             runOnUiThread { if (!isFinishing && !isDestroyed) recreate() }
             return
         }
         if (!launcherConfig.isDrawerEnabled || launcherConfig.homeAndDrawer) {
-            MainProgramsStuffer.placeMissing(this, launchers)
+            MainProgramsStuffer.siteMissing(this, launchers)
         }
-        MainSower.placeNewInstalls(this, launchers)
+        MainSower.siteNewInstalls(this, launchers)
 
         if (!launcherConfig.wasSearchBarPurged) {
             ensureBackgroundThread {
                 purgeSeededSearchBarIfNeeded()
                 // the row is gone; this drops the view if the grid has already placed one
-                binding.deskScreenGridUi.root.removePlacedSearchBars()
-                binding.deskScreenGridUi.root.fetchGridItems()
+                binding.deskScreenGridUi.root.dropPlacedSearchBars()
+                binding.deskScreenGridUi.root.obtainGridItems()
             }
         } else {
-            binding.deskScreenGridUi.root.fetchGridItems()
+            binding.deskScreenGridUi.root.obtainGridItems()
         }
     }
 
@@ -1448,7 +1448,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      */
     fun reapplyLauncherStyle(): Boolean {
         if (isFinishing || isDestroyed) return false
-        if (!MainPresetEnforcer.applyStyle(this)) return false
+        if (!MainPresetEnforcer.enactStyle(this)) return false
         recreate()
         return true
     }
@@ -1467,7 +1467,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      * and slides in on a leftward fling, so it is `left_swipe`; the messages panel is the mirror.
      * The launcherConfig's `guide.swipe_left_apps` / `swipe_right_contacts` use the same convention.
      */
-    private fun showLeftPanel() {
+    private fun presentLeftPanel() {
         // `launcher_config.panels.apps` - off means the gesture is inert, not a hidden panel.
         if (!HomeSpotsProfile.panelEnabled(HomeSpotsProfile.LEFT_SWIPE)) {
             Timber.d("HomeDeck: apps panel disabled by launcher_config")
@@ -1476,20 +1476,20 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         HomeTeaserDirector.run(this, HomeSpotsProfile.LEFT_SWIPE) {
             // Before the slide, so the request is already in flight while the panel travels. After
             // the promo interstitial rather than before it, so the two are never in the air at once.
-            binding.lvLeftPanelUi.root.refreshAds()
+            binding.lvLeftPanelUi.root.renewAds()
             binding.lvLeftPanelUi.root.onOpened()
-            showSidePanel(binding.lvLeftPanelUi.root)
+            presentSidePanel(binding.lvLeftPanelUi.root)
             // The gesture the guide's second step teaches has now been made — by swipe or by tap,
             // both of which land here.
             completeGuideStep(HomeMentorPhase.SWIPE_LEFT_APPS)
         }
     }
 
-    fun hideLeftPanel() {
-        hideSidePanel(binding.lvLeftPanelUi.root, mScreenWidth.toFloat())
+    fun concealLeftPanel() {
+        concealSidePanel(binding.lvLeftPanelUi.root, mScreenWidth.toFloat())
         // clear the query only once it is off screen, else the sections visibly swap mid slide
         Handler(Looper.getMainLooper()).postDelayed({
-            binding.lvLeftPanelUi.root.resetSearch()
+            binding.lvLeftPanelUi.root.rewindSearch()
         }, ANIMATION_DURATION)
     }
 
@@ -1498,17 +1498,17 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      * icon - the host panel slides in, or, with that panel switched off, the host's launch
      * component opens. Never our LAUNCHER entry, which would only route back here.
      */
-    fun openHostApp(fallbackActivity: String = "") {
-        if (isAllAppsFragmentExpanded()) closeAppDrawer()
-        if (isLeftPanelExpanded()) hideLeftPanel()
+    fun enterHostApp(fallbackActivity: String = "") {
+        if (isAllAppsFragmentExpanded()) shutAppDrawer()
+        if (isLeftPanelExpanded()) concealLeftPanel()
         if (HomeSpotsProfile.panelEnabled(HomeSpotsProfile.RIGHT_SWIPE)) {
-            showHostPanel()
+            presentHostPanel()
         } else {
-            launchApp(packageName, hostActivityName().ifEmpty { fallbackActivity })
+            fireApp(packageName, hostActivityName().ifEmpty { fallbackActivity })
         }
     }
 
-    private fun showHostPanel() {
+    private fun presentHostPanel() {
         // `launcher_config.panels.messages` - off means the gesture is inert, not a hidden panel.
         if (!HomeSpotsProfile.panelEnabled(HomeSpotsProfile.RIGHT_SWIPE)) {
             Timber.d("HomeDeck: messages panel disabled by launcher_config")
@@ -1517,46 +1517,46 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         HomeTeaserDirector.run(this, HomeSpotsProfile.RIGHT_SWIPE) {
             // After the ad, not before: committing the inbox starts its own permission chain, and
             // two full-screen things arriving at once would stack a system dialog behind the ad.
-            revealHostPanel()
+            unveilHostPanel()
             completeGuideStep(HomeMentorPhase.SWIPE_RIGHT_HOST)
         }
     }
 
     /** The slide itself: commit the inbox, bring the panel in, hand it Back. */
-    private fun revealHostPanel() {
+    private fun unveilHostPanel() {
         binding.lvHostPanelUi.root.refresh()
-        showSidePanel(binding.lvHostPanelUi.root)
+        presentSidePanel(binding.lvHostPanelUi.root)
         // After the commit above, so the fragment exists to be told. Back belongs to the inbox
         // from here until the panel closes.
         binding.lvHostPanelUi.root.setPanelVisible(true)
     }
 
-    fun hideHostPanel() {
+    fun concealHostPanel() {
         // Before the slide, not after: a Back press landing during the animation has to reach the
         // launcher's own handler, not the inbox that is on its way off screen.
         binding.lvHostPanelUi.root.setPanelVisible(false)
-        hideSidePanel(binding.lvHostPanelUi.root, -mScreenWidth.toFloat())
+        concealSidePanel(binding.lvHostPanelUi.root, -mScreenWidth.toFloat())
     }
 
     /** The inbox asking to dismiss itself. In a panel that means closing the panel, not finishing. */
-    fun closeHostPanel() {
+    fun shutHostPanel() {
         if (isHostPanelExpanded()) {
-            hideHostPanel()
+            concealHostPanel()
         }
     }
 
-    private fun showSidePanel(panel: View) {
-        hideSwipeHint()
+    private fun presentSidePanel(panel: View) {
+        concealSwipeHint()
         mOpenSidePanel = panel
-        animateSidePanelTo(panel, 0f)
+        tweenSidePanelTo(panel, 0f)
         // The card belongs to the workspace the panel is about to cover, and it does not travel with
-        // it — see updateDefaultLauncherBannerVisibility. Before the slide, not after: the apps panel
+        // it — see reviseDefaultLauncherBannerVisibility. Before the slide, not after: the apps panel
         // is semi-transparent, so a card still up would be legible through it for the whole 150 ms.
-        // After hideSwipeHint above, because the guide's visibility is one of the inputs.
-        updateDefaultLauncherBannerVisibility()
+        // After concealSwipeHint above, because the guide's visibility is one of the inputs.
+        reviseDefaultLauncherBannerVisibility()
         window.navigationBarColor = resources.getColor(R.color.launcher_semitransparent_navigation)
         binding.deskScreenGridUi.root.fragmentExpanded()
-        binding.deskScreenGridUi.root.hideResizeLines()
+        binding.deskScreenGridUi.root.concealResizeLines()
         binding.deskScreenGridUi.root.animate()
             .alpha(0f)
             .setDuration(ANIMATION_DURATION)
@@ -1570,30 +1570,30 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
 
         // Immediately, not posted past the slide. The navigation bar above is repainted at once, so
         // deferring this one left the two bars disagreeing for the length of the animation.
-        updateStatusBarIcons(sidePanelBackgroundColor(panel))
+        reviseStatusBarIcons(sidePanelBackgroundColor(panel))
     }
 
-    private fun hideSidePanel(panel: View, parkedX: Float) {
+    private fun concealSidePanel(panel: View, parkedX: Float) {
         // Back on the workspace — the guide's next step, if it is owed one. Hung off the slide's
-        // own completion rather than a delay of the same length: maybeShowGuide decides whether the
+        // own completion rather than a delay of the same length: perhapsShowGuide decides whether the
         // workspace is what the user is looking at by reading the panel's current x, and a matching
         // postDelayed is a coin flip against the animator's own last frame. Losing it read as
         // "panel still open" and skipped the step in silence — which is why swipe-up, the only step
         // whose predecessor never bounces through onResume, was the one that went missing.
-        animateSidePanelTo(panel, parkedX) {
+        tweenSidePanelTo(panel, parkedX) {
             mOpenSidePanel = null
-            maybeShowGuide()
-            // Explicitly, not left to maybeShowGuide's own trailing call: that one is skipped
+            perhapsShowGuide()
+            // Explicitly, not left to perhapsShowGuide's own trailing call: that one is skipped
             // whenever the guide bails early, and the alert is owed the workspace back regardless.
-            updateDefaultLauncherBannerVisibility()
+            reviseDefaultLauncherBannerVisibility()
         }
         window.navigationBarColor = Color.TRANSPARENT
         binding.deskScreenGridUi.root.fragmentCollapsed()
-        updateStatusBarIcons()
+        reviseStatusBarIcons()
         hideKeyboard()
     }
 
-    private fun animateSidePanelTo(panel: View, x: Float, onEnd: (() -> Unit)? = null) {
+    private fun tweenSidePanelTo(panel: View, x: Float, onEnd: (() -> Unit)? = null) {
         ObjectAnimator.ofFloat(panel, "x", x).apply {
             duration = ANIMATION_DURATION
             interpolator = DecelerateInterpolator()
@@ -1610,7 +1610,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         override fun onAnimationEnd(animation: Animator) = action()
     }
 
-    fun startHandlingTouches(touchDownY: Int) {
+    fun beginHandlingTouches(touchDownY: Int) {
         mLongPressedIcon = null
         mTouchDownY = touchDownY
         mAllAppsFragmentY = binding.everyAppsFragmentUi.root.y.toInt()
@@ -1619,14 +1619,14 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
     }
 
     /**
-     * [refreshAds] is the drawer's native slot, and defaults on: every caller but one is a genuine
+     * [renewAds] is the drawer's native slot, and defaults on: every caller but one is a genuine
      * open. The exception is the drag handler, which lands here again when a half-dragged sheet
      * settles back up — see its call.
      */
-    private fun showFragment(
+    private fun presentFragment(
         fragment: ViewBinding,
         animationDuration: Long = ANIMATION_DURATION,
-        refreshAds: Boolean = true,
+        renewAds: Boolean = true,
     ) {
         ObjectAnimator.ofFloat(fragment.root, "y", 0f).apply {
             duration = animationDuration
@@ -1636,26 +1636,26 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
             // onRestoreInstanceState, which shows the sheet with duration 0 from a parked position —
             // the animator applies its first value on the next frame, so an immediate check there
             // reads "collapsed" and would leave the alert sitting on top of a restored drawer.
-            addListener(endListener { updateDefaultLauncherBannerVisibility() })
+            addListener(endListener { reviseDefaultLauncherBannerVisibility() })
             start()
         }
 
         window.navigationBarColor = resources.getColor(R.color.launcher_semitransparent_navigation)
         binding.deskScreenGridUi.root.fragmentExpanded()
-        binding.deskScreenGridUi.root.hideResizeLines()
+        binding.deskScreenGridUi.root.concealResizeLines()
         // So does the guide. The user found the drawer instead — they are clearly not stuck.
-        hideSwipeHint()
+        concealSwipeHint()
         // The alert belongs to the workspace the sheet is about to cover. After the hint, because
         // its visibility is one of the inputs.
-        updateDefaultLauncherBannerVisibility()
+        reviseDefaultLauncherBannerVisibility()
         if (fragment is HdAllAppsFragmentBinding) {
             // The drawer is up, which is the guide's third and last lesson.
             completeGuideStep(HomeMentorPhase.SWIPE_UP_DRAWER)
             // Requested per open, so the slot is never showing the creative from an hour ago — see
-            // SliderPlane.refreshAds. As the sheet starts moving rather than after it settles,
+            // SliderPlane.renewAds. As the sheet starts moving rather than after it settles,
             // so the fill has the whole slide to arrive.
-            if (refreshAds) {
-                fragment.root.refreshAds()
+            if (renewAds) {
+                fragment.root.renewAds()
             }
         }
 
@@ -1689,22 +1689,22 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
                 .start()
         }
 
-        // see showSidePanel: repainted with the navigation bar rather than after the slide
-        updateStatusBarIcons(sheetBackgroundColor(fragment))
+        // see presentSidePanel: repainted with the navigation bar rather than after the slide
+        reviseStatusBarIcons(sheetBackgroundColor(fragment))
     }
 
-    private fun hideFragment(fragment: ViewBinding, animationDuration: Long = ANIMATION_DURATION) {
+    private fun concealFragment(fragment: ViewBinding, animationDuration: Long = ANIMATION_DURATION) {
         ObjectAnimator.ofFloat(fragment.root, "y", mScreenHeight.toFloat()).apply {
             duration = animationDuration
             interpolator = DecelerateInterpolator()
-            // The guide's next step, if one is owed — see hideSidePanel for why this hangs off the
+            // The guide's next step, if one is owed — see concealSidePanel for why this hangs off the
             // animator rather than a delay of the same length. The alert comes back at the same
             // moment and for the same reason: a sheet only counts as collapsed once its animation
             // has actually parked it, so asking any earlier reads as still-expanded.
             addListener(
                 endListener {
-                    maybeShowGuide()
-                    updateDefaultLauncherBannerVisibility()
+                    perhapsShowGuide()
+                    reviseDefaultLauncherBannerVisibility()
                 }
             )
             start()
@@ -1712,18 +1712,18 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
 
         window.navigationBarColor = Color.TRANSPARENT
         binding.deskScreenGridUi.root.fragmentCollapsed()
-        updateStatusBarIcons()
-        // As hideSidePanel does: the sheet may be going away with its search field focused — the
+        reviseStatusBarIcons()
+        // As concealSidePanel does: the sheet may be going away with its search field focused — the
         // drawer even opens the keyboard for it when autoShowKeyboardInAppDrawer is on — and an IME
         // left standing over the workspace would then need a Back press of its own to dismiss.
         hideKeyboard()
         if (fragment is HdWidgetsFragmentBinding) {
-            clearWidgetsSearch()
+            wipeWidgetsSearch()
         }
         Handler(Looper.getMainLooper()).postDelayed({
             if (fragment is HdAllAppsFragmentBinding) {
                 fragment.everyAppsGridUi.scrollToPosition(0)
-                fragment.root.resetToFirstPage()
+                fragment.root.rewindToFirstPage()
                 fragment.root.touchDownY = -1
             } else if (fragment is HdWidgetsFragmentBinding) {
                 fragment.lvWidgetsListUi.scrollToPosition(0)
@@ -1739,13 +1739,13 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
 
         // A long press means the user is editing the workspace, not reading about it — and the menu
         // it opens is its own window, so it would otherwise land on top of the dimmed scrim.
-        hideSwipeHint()
+        concealSwipeHint()
 
         val (x, y) = binding.deskScreenGridUi.root.intoViewSpaceCoords(eventX, eventY)
         mIgnoreMoveEvents = true
         val clickedGridItem = binding.deskScreenGridUi.root.isClickingGridItem(x.toInt(), y.toInt())
         if (clickedGridItem != null) {
-            performItemLongClick(x, clickedGridItem)
+            executeItemLongClick(x, clickedGridItem)
         }
         // Empty space does nothing: the home offers no launcher customisation (widgets,
         // wallpapers, launcher settings) - it is part of the host app, not a launcher to tune.
@@ -1768,18 +1768,18 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         // The guide takes the tap before the workspace does. Its scrim covers the screen, so a tap
         // "on an icon" underneath is one the user could not have aimed — they were looking at the
         // coach mark. Consumed, so nothing behind it is launched by accident.
-        if (performGuideStep()) {
+        if (executeGuideStep()) {
             return
         }
 
-        binding.deskScreenGridUi.root.hideResizeLines()
+        binding.deskScreenGridUi.root.concealResizeLines()
         val (x, y) = binding.deskScreenGridUi.root.intoViewSpaceCoords(eventX, eventY)
         val clickedGridItem = binding.deskScreenGridUi.root.isClickingGridItem(x.toInt(), y.toInt())
         if (clickedGridItem != null) {
-            performItemClick(clickedGridItem)
+            executeItemClick(clickedGridItem)
         }
         if (clickedGridItem?.type != ITEM_TYPE_FOLDER) {
-            binding.deskScreenGridUi.root.closeFolder(redraw = true)
+            binding.deskScreenGridUi.root.shutFolder(redraw = true)
         }
     }
 
@@ -1805,7 +1805,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         }
     }
 
-    fun closeAppDrawer(delayed: Boolean = false) {
+    fun shutAppDrawer(delayed: Boolean = false) {
         if (isAllAppsFragmentExpanded()) {
             // The drawer's search keyboard must not outlive the drawer: opening our own app from a
             // search result slid the host panel in under a keyboard nobody asked for.
@@ -1813,14 +1813,14 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
             val close = {
                 binding.everyAppsFragmentUi.root.y = mScreenHeight.toFloat()
                 binding.everyAppsFragmentUi.everyAppsGridUi.scrollToPosition(0)
-                binding.everyAppsFragmentUi.root.resetToFirstPage()
+                binding.everyAppsFragmentUi.root.rewindToFirstPage()
                 binding.everyAppsFragmentUi.root.touchDownY = -1
                 binding.deskScreenGridUi.root.fragmentCollapsed()
-                updateStatusBarIcons()
+                reviseStatusBarIcons()
                 // Snapped rather than animated, so the state is already settled here — no listener
                 // to hang these off, and none needed.
-                maybeShowGuide()
-                updateDefaultLauncherBannerVisibility()
+                perhapsShowGuide()
+                reviseDefaultLauncherBannerVisibility()
             }
             if (delayed) {
                 Handler(Looper.getMainLooper()).postDelayed(close, APP_DRAWER_CLOSE_DELAY)
@@ -1830,18 +1830,18 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         }
     }
 
-    fun closeWidgetsFragment(delayed: Boolean = false) {
+    fun shutWidgetsFragment(delayed: Boolean = false) {
         if (isWidgetsFragmentExpanded()) {
             val close = {
                 binding.lvWidgetsFragmentUi.root.y = mScreenHeight.toFloat()
                 binding.lvWidgetsFragmentUi.lvWidgetsListUi.scrollToPosition(0)
-                clearWidgetsSearch()
+                wipeWidgetsSearch()
                 binding.lvWidgetsFragmentUi.root.touchDownY = -1
                 binding.deskScreenGridUi.root.fragmentCollapsed()
-                updateStatusBarIcons()
-                // see closeAppDrawer
-                maybeShowGuide()
-                updateDefaultLauncherBannerVisibility()
+                reviseStatusBarIcons()
+                // see shutAppDrawer
+                perhapsShowGuide()
+                reviseDefaultLauncherBannerVisibility()
             }
             if (delayed) {
                 Handler(Looper.getMainLooper()).postDelayed(close, APP_DRAWER_CLOSE_DELAY)
@@ -1851,20 +1851,20 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         }
     }
 
-    fun clearWidgetsSearch() {
+    fun wipeWidgetsSearch() {
         binding.lvWidgetsFragmentUi.huntBarUi.closeSearch()
     }
 
-    private fun performItemClick(clickedGridItem: MainDisplayLatticeElement) {
+    private fun executeItemClick(clickedGridItem: MainDisplayLatticeElement) {
         when (clickedGridItem.type) {
             ITEM_TYPE_ICON -> if (clickedGridItem.packageName == packageName) {
                 // Our own icon (dock or grid) slides the host panel in - same promo, motion and Back
                 // as the swipe - or, with the panel off, opens the host's launch component.
-                openHostApp(clickedGridItem.activityName)
+                enterHostApp(clickedGridItem.activityName)
             } else {
-                launchApp(clickedGridItem.packageName, clickedGridItem.activityName, HomeSpotsProfile.HOME_LAUNCH)
+                fireApp(clickedGridItem.packageName, clickedGridItem.activityName, HomeSpotsProfile.HOME_LAUNCH)
             }
-            ITEM_TYPE_FOLDER -> openFolder(clickedGridItem)
+            ITEM_TYPE_FOLDER -> enterFolder(clickedGridItem)
             ITEM_TYPE_SHORTCUT -> {
                 val id = clickedGridItem.shortcutId
                 val packageName = clickedGridItem.packageName
@@ -1877,27 +1877,27 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         }
     }
 
-    private fun openFolder(folder: MainDisplayLatticeElement) {
-        binding.deskScreenGridUi.root.openFolder(folder)
+    private fun enterFolder(folder: MainDisplayLatticeElement) {
+        binding.deskScreenGridUi.root.enterFolder(folder)
     }
 
-    private fun performItemLongClick(x: Float, clickedGridItem: MainDisplayLatticeElement) {
+    private fun executeItemLongClick(x: Float, clickedGridItem: MainDisplayLatticeElement) {
         if (clickedGridItem.type == ITEM_TYPE_ICON || clickedGridItem.type == ITEM_TYPE_SHORTCUT || clickedGridItem.type == ITEM_TYPE_FOLDER) {
             binding.coreHolderUi.performHapticFeedback()
         }
 
         val anchorY = binding.deskScreenGridUi.root.sideMargins.top +
                 (clickedGridItem.top * binding.deskScreenGridUi.root.cellHeight.toFloat())
-        showHomeIconMenu(x, anchorY, clickedGridItem, false)
+        presentHomeIconMenu(x, anchorY, clickedGridItem, false)
     }
 
-    fun showHomeIconMenu(
+    fun presentHomeIconMenu(
         x: Float,
         y: Float,
         gridItem: MainDisplayLatticeElement,
         isOnAllAppsFragment: Boolean,
     ) {
-        binding.deskScreenGridUi.root.hideResizeLines()
+        binding.deskScreenGridUi.root.concealResizeLines()
         mLongPressedIcon = gridItem
         // The card is placed against the item's bounds on screen, so it can sit clear of it. A
         // drawer tile reports screen coordinates already; grid rows and widgets are in the grid's.
@@ -1919,7 +1919,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         }
 
         if (mOpenPopupMenu == null) {
-            mOpenPopupMenu = handleGridItemPopupMenu(
+            mOpenPopupMenu = processGridItemPopupMenu(
                 anchorView = binding.root,
                 gridItem = gridItem,
                 isOnAllAppsFragment = isOnAllAppsFragment,
@@ -1933,11 +1933,11 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
 
     fun widgetLongPressedOnList(gridItem: MainDisplayLatticeElement) {
         mLongPressedIcon = gridItem
-        hideFragment(binding.lvWidgetsFragmentUi)
+        concealFragment(binding.lvWidgetsFragmentUi)
         binding.deskScreenGridUi.root.itemDraggingStarted(mLongPressedIcon!!)
     }
 
-    private fun resetFragmentTouches() {
+    private fun rewindFragmentTouches() {
         binding.lvWidgetsFragmentUi.root.apply {
             touchDownY = -1
             ignoreTouches = false
@@ -1949,7 +1949,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         }
     }
 
-    private fun hideIconUi(item: MainDisplayLatticeElement) {
+    private fun concealIconUi(item: MainDisplayLatticeElement) {
         ensureBackgroundThread {
             val hiddenIconUi = StashedBadge(null, item.packageName, item.activityName, item.title, null)
             hiddenIconsDB.insert(hiddenIconUi)
@@ -1962,17 +1962,17 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
 
     private fun renameItem(homeScreenGridItem: MainDisplayLatticeElement) {
         RetitleElementBasket(this, homeScreenGridItem) {
-            binding.deskScreenGridUi.root.fetchGridItems()
+            binding.deskScreenGridUi.root.obtainGridItems()
         }
     }
 
     val menuListener: ElementOptionsObserver = object : ElementOptionsObserver {
         override fun onAnyClick() {
-            resetFragmentTouches()
+            rewindFragmentTouches()
         }
 
         override fun hide(gridItem: MainDisplayLatticeElement) {
-            hideIconUi(gridItem)
+            concealIconUi(gridItem)
         }
 
         override fun rename(gridItem: MainDisplayLatticeElement) {
@@ -1984,11 +1984,11 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         }
 
         override fun appInfoUi(gridItem: MainDisplayLatticeElement) {
-            launchAppInfo(gridItem.packageName)
+            fireAppInfo(gridItem.packageName)
         }
 
         override fun remove(gridItem: MainDisplayLatticeElement) {
-            binding.deskScreenGridUi.root.removeAppIcon(gridItem)
+            binding.deskScreenGridUi.root.dropAppIcon(gridItem)
         }
 
         override fun uninstall(gridItem: MainDisplayLatticeElement) {
@@ -1997,7 +1997,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
 
         override fun onDismiss() {
             mOpenPopupMenu = null
-            resetFragmentTouches()
+            rewindFragmentTouches()
         }
     }
 
@@ -2069,7 +2069,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
 
         if (!isWidgetsFragmentExpanded()) {
             mIgnoreUpEvent = true
-            showFragment(binding.everyAppsFragmentUi)
+            presentFragment(binding.everyAppsFragmentUi)
         }
     }
 
@@ -2081,9 +2081,9 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
 
         mIgnoreUpEvent = true
         if (isAllAppsFragmentExpanded()) {
-            hideFragment(binding.everyAppsFragmentUi)
+            concealFragment(binding.everyAppsFragmentUi)
         } else if (isWidgetsFragmentExpanded()) {
-            hideFragment(binding.lvWidgetsFragmentUi)
+            concealFragment(binding.lvWidgetsFragmentUi)
         } else {
             try {
                 Class.forName("android.app.StatusBarManager")
@@ -2108,7 +2108,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
             return
         }
         if (!isAllAppsFragmentExpanded() && !isWidgetsFragmentExpanded() && grid.isOnFirstPage()) {
-            showHostPanel()
+            presentHostPanel()
         } else {
             grid.prevPage(redraw = true)
         }
@@ -2126,7 +2126,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
             return
         }
         if (!isAllAppsFragmentExpanded() && !isWidgetsFragmentExpanded() && grid.isOnLastPage()) {
-            showLeftPanel()
+            presentLeftPanel()
         } else {
             grid.nextPage(redraw = true)
         }
@@ -2162,7 +2162,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
 
         launcherConfig.wasSearchBarPurged = true
         try {
-            homeScreenGridItemsDB.deleteItemsByClassName(PSEUDO_WIDGET_SEARCH)
+            homeScreenGridItemsDB.eraseItemsByClassName(PSEUDO_WIDGET_SEARCH)
         } catch (e: Exception) {
             Log.e("HomeDeck", "Failed to remove the seeded search bar", e)
         }
@@ -2201,7 +2201,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
     /**
      * The dock row for the SMS app [packageName], or null when there is none to show. Our own
      * row is built by hand rather than from the launcher list (where our LAUNCHER entry sits) and points at the standalone inbox rather than the LAUNCHER entry, which would only
-     * splash back into this home screen; performItemClick turns it into the panel when there is one.
+     * splash back into this home screen; executeItemClick turns it into the panel when there is one.
      * After the fake uninstall (launcherConfig.selfIconHidden) our row is never built again, so
      * neither the first-run seed nor the SMS-role sync can bring the icon back.
      */
@@ -2237,7 +2237,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      * was last given (launcherConfig.dockHostPackage) is removed wherever it still sits docked; a
      * slot the user has since filled with something else is left alone.
      */
-    private fun syncHostDockItem() {
+    private fun alignHostDockItem() {
         if (!launcherConfig.wasHomeScreenInit) return
         val wanted = dockSlotPackage() ?: return
         // Installs seeded before this existed always got our own row and no record of it.
@@ -2253,13 +2253,13 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
                 val slotFilled = items.any { it.docked && it.left == DOCK_HOST_SLOT && it.parentId == null }
                 if (!slotFilled) {
                     hostDockItem(wanted)?.let { homeScreenGridItemsDB.insert(it) }
-                    binding.deskScreenGridUi.root.fetchGridItems()
+                    binding.deskScreenGridUi.root.obtainGridItems()
                 }
                 launcherConfig.dockHostPackage = placed
                 return@ensureBackgroundThread
             }
             items.filter { it.docked && it.type == ITEM_TYPE_ICON && it.packageName == placed }
-                .forEach { homeScreenGridItemsDB.deleteById(it.id!!) }
+                .forEach { homeScreenGridItemsDB.eraseById(it.id!!) }
             val slotTaken = items.any {
                 it.docked && it.left == DOCK_HOST_SLOT && it.packageName != placed && it.parentId == null
             }
@@ -2268,7 +2268,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
             }
             launcherConfig.dockHostPackage = wanted
             Timber.d("HomeDeck: dock host slot $placed -> $wanted (slotTaken=$slotTaken)")
-            binding.deskScreenGridUi.root.fetchGridItems()
+            binding.deskScreenGridUi.root.obtainGridItems()
         }
     }
 
@@ -2304,7 +2304,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         }
 
         // The messaging slot follows the SMS role: this app while it holds it, the system's
-        // default SMS app until then - see syncHostDockItem, which keeps it that way.
+        // default SMS app until then - see alignHostDockItem, which keeps it that way.
         hostDockItem(dockSlotPackage())?.let { item ->
             homeScreenGridItems.add(item)
             launcherConfig.dockHostPackage = item.packageName
@@ -2400,7 +2400,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         homeScreenGridItemsDB.insertAll(homeScreenGridItems)
     }
 
-    fun handleWidgetBinding(
+    fun processWidgetBinding(
         appWidgetManager: AppWidgetManager,
         appWidgetId: Int,
         appWidgetInfo: AppWidgetProviderInfo,
@@ -2421,7 +2421,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         }
     }
 
-    fun handleWidgetConfigureScreen(
+    fun processWidgetConfigureScreen(
         appWidgetHost: AppWidgetHost,
         appWidgetId: Int,
         callback: (canBind: Boolean) -> Unit,
@@ -2436,7 +2436,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         )
     }
 
-    fun handleShorcutCreation(
+    fun processShorcutCreation(
         activityInfo: ActivityInfo,
         callback: (shortcutId: String, label: String, icon: Drawable) -> Unit,
     ) {
@@ -2502,7 +2502,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
      * about the picture behind the bar. So the workspace keeps white icons over the scrim
      * declared at the top of lnch_activity_main.xml, which is legible on any wallpaper.
      */
-    private fun updateStatusBarIcons(backgroundColor: Int? = null) {
+    private fun reviseStatusBarIcons(backgroundColor: Int? = null) {
         val isLightBackground = when {
             backgroundColor != null -> backgroundColor.getContrastColor() == DARK_GREY
             else -> false

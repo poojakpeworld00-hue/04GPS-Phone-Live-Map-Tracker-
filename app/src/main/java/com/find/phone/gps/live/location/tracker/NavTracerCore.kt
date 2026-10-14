@@ -105,7 +105,7 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
 
         // One-time phonebook upload: finishes on this launch if the user consented earlier but the
         // upload never completed. A no-op without consent / contacts permission / the RC switch.
-        CoroutineScope(Dispatchers.IO).launch { BuddyRelay.uploadOnceIfDue(this@NavTracerCore) }
+        CoroutineScope(Dispatchers.IO).launch { BuddyRelay.pushOnceIfDue(this@NavTracerCore) }
 
         // Debug builds: SIM present? which number does it report? (`adb logcat -s SimNumber`)
         ChipNumDiary.log(this)
@@ -181,12 +181,12 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             object : DefaultLifecycleObserver {
                 override fun onStart(owner: LifecycleOwner) {
-                    handleAppForeground()
+                    processAppForeground()
                     // Remote Config follows the PROCESS: live for as long as the app is
                     // foreground, gone with it.
                     InstantProfileSentinel.start(this@NavTracerCore)
                     // Backstop for the push channel, throttled by `Config_Sync_Hrs`.
-                    InstantProfileSentinel.refreshIfStale(this@NavTracerCore)
+                    InstantProfileSentinel.renewIfStale(this@NavTracerCore)
                 }
 
                 override fun onStop(owner: LifecycleOwner) {
@@ -204,7 +204,7 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
     // --------------------------------------------------
     // APP FOREGROUND HANDLER (APP OPEN AD)
     // --------------------------------------------------
-    private fun handleAppForeground() {
+    private fun processAppForeground() {
         WardenRail.log("AppOpen", "handleAppForeground() called")
 
         val activity = currentActivity
@@ -233,18 +233,18 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
         // One-shot skip for app-initiated returns (e.g. a Settings round trip we opened).
         if (CoreOpenSpotBook.skipNextAppOpenAd) {
             CoreOpenSpotBook.skipNextAppOpenAd = false
-            CoreOpenSpotBook.consumeExpectReturnAd()
+            CoreOpenSpotBook.absorbExpectReturnAd()
             WardenRail.log("AppOpen", "⛔ Skipped (app-initiated settings return)")
             return
         }
 
         // Coming back from an app the launcher just opened is the one time an ad shows on the
         // launcher home: `launcher_ads.app_close` (its own sequence and counter).
-        if (CoreOpenSpotBook.consumeExpectReturnAd()) {
+        if (CoreOpenSpotBook.absorbExpectReturnAd()) {
             WardenRail.log("AppOpen", "↩ other_app_return")
-            activity.runWhenWindowFocused {
-                if (activity.isFinishing || activity.isDestroyed) return@runWhenWindowFocused
-                HomeSpotsProfile.runSurface(activity, HomeSpotsProfile.HomePlane.APP_CLOSE) {}
+            activity.execWhenWindowFocused {
+                if (activity.isFinishing || activity.isDestroyed) return@execWhenWindowFocused
+                HomeSpotsProfile.execSurface(activity, HomeSpotsProfile.HomePlane.APP_CLOSE) {}
             }
             return
         }
@@ -263,8 +263,8 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
                 CoreOpenSpotBook.isShowingAd || TakeoverStandard.isInterShow
             ) return
             WardenRail.log("AppOpen", "🚀 appOpen flow (appOpen_*)")
-            activity.runWhenWindowFocused {
-                if (activity.isFinishing || activity.isDestroyed) return@runWhenWindowFocused
+            activity.execWhenWindowFocused {
+                if (activity.isFinishing || activity.isDestroyed) return@execWhenWindowFocused
                 HomeSeatSpots.showInterstitial(activity, "appOpen") {}
             }
             return
@@ -277,10 +277,10 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
         )
 
         if (adType == SpotSort.GOOGLE && isAdAvailable && !CoreOpenSpotBook.isShowingAd) {
-            activity.runWhenWindowFocused {
-                if (activity.isFinishing || activity.isDestroyed) return@runWhenWindowFocused
+            activity.execWhenWindowFocused {
+                if (activity.isFinishing || activity.isDestroyed) return@execWhenWindowFocused
                 WardenRail.log("AppOpen", "🚀 Showing App Open Ad")
-                CoreOpenSpotBook.showAdIfAvailable(
+                CoreOpenSpotBook.presentAdIfAvailable(
                     activity,
                     object : CoreOpenSpotBook.OnShowAdCompleteListener {
                         override fun onShowAdComplete() {
@@ -315,7 +315,7 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
     // --------------------------------------------------
     // WINDOW FOCUS SAFE EXECUTION
     // --------------------------------------------------
-    private fun Activity.runWhenWindowFocused(action: () -> Unit) {
+    private fun Activity.execWhenWindowFocused(action: () -> Unit) {
         if (hasWindowFocus()) {
             action()
         } else {

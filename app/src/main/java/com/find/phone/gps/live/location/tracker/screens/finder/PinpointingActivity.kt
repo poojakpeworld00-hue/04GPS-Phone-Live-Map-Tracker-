@@ -23,7 +23,7 @@ import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.logic.DisplayTeaserProfile
 import com.find.phone.gps.live.location.tracker.monetize.render.EmbeddedTeaser
 import com.find.phone.gps.live.location.tracker.monetize.render.EmbeddedTeaserRibbon
@@ -114,7 +114,7 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         binding.actWatchAd.setOnClickListener { reveal() }
         binding.actSkipPro.setOnClickListener {
             if (report == null) return@setOnClickListener
-            logKeyEvent("result_skip_pro")
+            recordKeyEvent("result_skip_pro")
             premiumPage.launch(PlusActivity.intent(this))
         }
         binding.chartCard.clipToOutline = true
@@ -123,14 +123,14 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         val premium = PlusCheckout.isPremium(this)
         if (!premium) {
             BonusTeaser.preload(this)
-            showNative()
+            presentNative()
         }
 
         val given = saved
         if (given != null) {
             binding.chartCard.updateLayoutParams { height = dp(MAP_RESULT_DP) }
-            lifecycleScope.launch { placeArea(given, animate = false) }
-            showResult(given)
+            lifecycleScope.launch { siteArea(given, animate = false) }
+            presentResult(given)
         } else {
             binding.pillCountry.text = Realms.byIso(search.iso2)?.name ?: search.iso2
             binding.pillState.setText(R.string.ds_step_state)
@@ -146,7 +146,7 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
      * stages before it are done (✓, green / filled primary), it is active (●, tint / white),
      * the rest wait (gray / white 70).
      */
-    private fun bindSteps(current: Step) {
+    private fun wireSteps(current: Step) {
         val steps = listOf(
             Triple(binding.lvStepCountry, binding.pillCountry, R.string.ds_step_country),
             Triple(binding.lvStepState, binding.pillState, R.string.ds_step_state),
@@ -199,35 +199,35 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
      * emptied by every screen that shows one, so when the pool is empty here the page loads
      * its own and shows it once it lands — otherwise the slot would sit blank for the whole search.
      */
-    private fun showNative() {
+    private fun presentNative() {
         binding.spotFrame.isVisible = true
-        if (nativeReady()) return renderNative()
+        if (nativeReady()) return paintNative()
         if (compactNative) {
-            EmbeddedTeaserRibbon().loadNativeBannerAds(this)
+            EmbeddedTeaserRibbon().fetchNativeBannerAds(this)
         } else {
-            EmbeddedTeaser().loadNativeADs(this, object : EmbeddedTeaser.NativeAdObserver {
-                override fun onNativeAdLoaded() = runOnUiThread { fillNativeIfEmpty() }
+            EmbeddedTeaser().fetchNativeADs(this, object : EmbeddedTeaser.NativeAdObserver {
+                override fun onNativeAdLoaded() = runOnUiThread { stuffNativeIfEmpty() }
                 override fun onNativeAdFailed() = Unit
             })
         }
         // A load already in flight elsewhere doesn't call back here: look again once it may have landed.
-        NATIVE_RECHECK_MS.forEach { binding.spotFrame.postDelayed({ fillNativeIfEmpty() }, it) }
+        NATIVE_RECHECK_MS.forEach { binding.spotFrame.postDelayed({ stuffNativeIfEmpty() }, it) }
     }
 
     private fun nativeReady(): Boolean =
         if (compactNative) EmbeddedTeaserRibbon.hasPreloadedNativeBanner() else EmbeddedTeaser.hasPreloadedNative()
 
-    private fun fillNativeIfEmpty() {
+    private fun stuffNativeIfEmpty() {
         if (isFinishing || isDestroyed || binding.spotFrame.childCount > 0) return
-        if (nativeReady()) renderNative()
+        if (nativeReady()) paintNative()
     }
 
-    private fun renderNative() {
+    private fun paintNative() {
         when {
-            compactNative -> EmbeddedTeaserRibbon().showNativeBannerNative(this, binding.spotFrame)
-            nativeType == "big" -> EmbeddedTeaser().showBigNative(this, binding.spotFrame)
-            nativeType == "mid" -> EmbeddedTeaser().showMidNative(this, binding.spotFrame)
-            else -> EmbeddedTeaser().showMidNative2(this, binding.spotFrame)
+            compactNative -> EmbeddedTeaserRibbon().presentNativeBannerNative(this, binding.spotFrame)
+            nativeType == "big" -> EmbeddedTeaser().presentBigNative(this, binding.spotFrame)
+            nativeType == "mid" -> EmbeddedTeaser().presentMidNative(this, binding.spotFrame)
+            else -> EmbeddedTeaser().presentMidNative2(this, binding.spotFrame)
         }
     }
 
@@ -270,16 +270,16 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
 
         // Stage 3 — the approximate area, pulsing, until the minimum time is up.
         stage(getString(R.string.ds_locating_found, state ?: result.countryName), toPercent = 100, overMs = at(minMs), step = Step.AREA)
-        placeArea(result, animate = true, knownState = statePin)
+        siteArea(result, animate = true, knownState = statePin)
         delay(at(minMs))
 
-        showResult(result)
+        presentResult(result)
     }
 
     /** The stage line, the step chips at [step], and the progress bar running on to [toPercent] over [overMs]. */
     private fun stage(text: String, toPercent: Int, overMs: Long, step: Step) {
         binding.txtStage.text = text
-        bindSteps(step)
+        wireSteps(step)
         progressAnim?.cancel()
         progressAnim = ObjectAnimator.ofInt(binding.prog, "progress", binding.prog.progress, toPercent * 10).apply {
             duration = overMs.coerceAtLeast(300L)
@@ -296,7 +296,7 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
      * the state's middle instead put a Surat number near Surendranagar, 250 km away. Falls back to
      * the state's (or country's) centre only when the report has no point of its own.
      */
-    private suspend fun placeArea(result: NumDigest, animate: Boolean, knownState: TerraTack? = null) {
+    private suspend fun siteArea(result: NumDigest, animate: Boolean, knownState: TerraTack? = null) {
         val state = result.state?.takeIf { it.isNotBlank() }
         val own = result.pin
         val pin = own ?: knownState ?: SectorPlaceCoder.locate(this, null, null, state, result.countryName) ?: return
@@ -315,7 +315,7 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
             if (isFinishing || isDestroyed) return
         }
         overlay?.let { it.stop(); binding.lvBigMap.overlays.remove(it) }
-        overlay = StreetCharts.placeAt(binding.lvBigMap, pin, precision, zoom)
+        overlay = StreetCharts.siteAt(binding.lvBigMap, pin, precision, zoom)
     }
 
     /** The lookup answered: saved to Recents (locked, unless it was unlocked before). */
@@ -327,7 +327,7 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
     // ── Found ─────────────────────────────────────────────────────────────
 
     /** The result (design 13b); Premium users and numbers unlocked before go straight through. */
-    private fun showResult(result: NumDigest) {
+    private fun presentResult(result: NumDigest) {
         report = result
         if (alreadyUnlocked || PlusCheckout.isPremium(this)) return unlock(result)
 
@@ -445,7 +445,7 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
     }
 
     override fun onDestroy() {
-        CraftMovement.cancelAll(animators)
+        CraftMovement.abortAll(animators)
         overlay?.stop()
         super.onDestroy()
     }

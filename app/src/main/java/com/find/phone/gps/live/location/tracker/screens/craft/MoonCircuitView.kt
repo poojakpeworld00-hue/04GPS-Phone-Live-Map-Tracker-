@@ -75,10 +75,10 @@ class MoonCircuitView @JvmOverloads constructor(
         canvas.drawPath(path, line)
 
         // Top satellite: 28px tile, 9px radius, 10px primary chip.
-        drawTile(canvas, cx, cy - r, 28f * u, 9f * u, 10f * u, chipPrimary)
+        sketchTile(canvas, cx, cy - r, 28f * u, 9f * u, 10f * u, chipPrimary)
         // Lower satellites: 24px tiles at (4px, bottom 48px) → centre offset ≈ (±114, +70).
-        drawTile(canvas, cx - 114f * u, cy + 70f * u, 24f * u, 8f * u, 8f * u, chipCyan)
-        drawTile(canvas, cx + 114f * u, cy + 70f * u, 24f * u, 8f * u, 8f * u, chipCyan)
+        sketchTile(canvas, cx - 114f * u, cy + 70f * u, 24f * u, 8f * u, 8f * u, chipCyan)
+        sketchTile(canvas, cx + 114f * u, cy + 70f * u, 24f * u, 8f * u, 8f * u, chipCyan)
         canvas.restore()
 
         // The located phone: 18px dot with an 8px halo ring (box-shadow 0 0 0 8px).
@@ -86,7 +86,7 @@ class MoonCircuitView @JvmOverloads constructor(
         canvas.drawCircle(cx, cy, 9f * u, core)
     }
 
-    private fun drawTile(canvas: Canvas, x: Float, y: Float, size: Float, radius: Float, chip: Float, chipPaint: Paint) {
+    private fun sketchTile(canvas: Canvas, x: Float, y: Float, size: Float, radius: Float, chip: Float, chipPaint: Paint) {
         rect.set(x - size / 2f, y - size / 2f, x + size / 2f, y + size / 2f)
         canvas.drawRoundRect(rect, radius, radius, tile)
         rect.set(x - chip / 2f, y - chip / 2f, x + chip / 2f, y + chip / 2f)
@@ -96,7 +96,7 @@ class MoonCircuitView @JvmOverloads constructor(
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         if (CraftMovement.animationsDisabled(context)) return
-        CraftMovement.cancelAll(animators)
+        CraftMovement.abortAll(animators)
         animators += ValueAnimator.ofFloat(0f, 360f).apply {
             duration = 5000L
             repeatCount = ValueAnimator.INFINITE
@@ -114,7 +114,7 @@ class MoonCircuitView @JvmOverloads constructor(
     }
 
     override fun onDetachedFromWindow() {
-        CraftMovement.cancelAll(animators)
+        CraftMovement.abortAll(animators)
         super.onDetachedFromWindow()
     }
 }

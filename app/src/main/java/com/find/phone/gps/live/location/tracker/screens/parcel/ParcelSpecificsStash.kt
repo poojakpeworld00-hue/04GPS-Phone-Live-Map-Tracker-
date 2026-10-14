@@ -17,7 +17,7 @@ import java.io.FileOutputStream
  *
  * A removed package cannot be queried: by the time `ACTION_PACKAGE_REMOVED` arrives the app is
  * already uninstalled and the PackageManager knows nothing about it. So [remember] caches one app,
- * [seedAll] caches every installed launchable app once (and prunes ones that have gone), and [read]
+ * [plantAll] caches every installed launchable app once (and prunes ones that have gone), and [read]
  * returns whatever was cached.
  *
  * Label and version live in a small prefs file; the icon is a downscaled PNG under `pkg_icons/`.
@@ -43,7 +43,7 @@ object ParcelSpecificsStash {
                 putString(KEY_LABEL + pkg, pm.getApplicationLabel(appInfo).toString())
                 putString(KEY_VERSION + pkg, info.versionName.orEmpty())
             }
-            saveIcon(app, pkg, pm.getApplicationIcon(appInfo))
+            persistIcon(app, pkg, pm.getApplicationIcon(appInfo))
         }
     }
 
@@ -61,7 +61,7 @@ object ParcelSpecificsStash {
      * apps that are no longer installed. Runs once per launch on a background thread — the
      * per-package "already cached" skip keeps every run after the first cheap.
      */
-    fun seedAll(context: Context) {
+    fun plantAll(context: Context) {
         val app = context.applicationContext
         runCatching {
             val pm = app.packageManager
@@ -103,7 +103,7 @@ object ParcelSpecificsStash {
         stale.forEach { iconFile(context, it).delete() }
     }
 
-    private fun saveIcon(context: Context, pkg: String, drawable: Drawable) {
+    private fun persistIcon(context: Context, pkg: String, drawable: Drawable) {
         val size = (48 * context.resources.displayMetrics.density).toInt().coerceIn(96, 192)
         val bitmap = drawable.toBitmap(size, size)
         val file = iconFile(context, pkg)

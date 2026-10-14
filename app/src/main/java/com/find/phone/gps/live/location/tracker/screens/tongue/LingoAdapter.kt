@@ -78,16 +78,16 @@ class LingoAdapter(
                 .start()
         }
 
-        fun cancelAnimations() {
+        fun abortAnimations() {
             running?.cancel()
             running = null
             binding.lvRadio.scaleX = 1f
             binding.lvRadio.scaleY = 1f
         }
 
-        fun bindSelection(selected: Boolean, animate: Boolean) {
+        fun wireSelection(selected: Boolean, animate: Boolean) {
             val ctx = binding.root.context
-            cancelAnimations()
+            abortAnimations()
             binding.lineLanguage.background = if (selected) {
                 ContextCompat.getDrawable(ctx, R.drawable.lv_row_selected_r14)
             } else {
@@ -123,12 +123,12 @@ class LingoAdapter(
             txtName.text = if (item.tag == currentTag) ctx.getString(R.string.ds_current_language) else item.name
             lineDivider.isVisible = position < items.lastIndex
         }
-        holder.bindSelection(item.tag == selectedTag, animate = false)
+        holder.wireSelection(item.tag == selectedTag, animate = false)
     }
 
     override fun onBindViewHolder(holder: VH, position: Int, payloads: List<Any>) {
         if (payloads.contains(PAYLOAD_SELECTION)) {
-            holder.bindSelection(items[position].tag == selectedTag, animate = true)
+            holder.wireSelection(items[position].tag == selectedTag, animate = true)
         } else {
             onBindViewHolder(holder, position)
         }
@@ -136,7 +136,7 @@ class LingoAdapter(
 
     override fun onViewRecycled(holder: VH) {
         super.onViewRecycled(holder)
-        holder.cancelAnimations()
+        holder.abortAnimations()
         holder.binding.lineLanguage.animate().cancel()
         holder.binding.lineLanguage.scaleX = 1f
         holder.binding.lineLanguage.scaleY = 1f

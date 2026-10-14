@@ -22,15 +22,15 @@ import androidx.databinding.ViewDataBinding
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.find.phone.gps.live.location.tracker.monetize.logic.DisplayTeaserProfile
 import com.find.phone.gps.live.location.tracker.R
-import com.find.phone.gps.live.location.tracker.monetize.logic.logKeyEvent
-import com.find.phone.gps.live.location.tracker.monetize.logic.logPermissionResult
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordPermissionResult
 import com.find.phone.gps.live.location.tracker.monetize.render.SpotBeaconActivity
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverRear
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverStandard
 import com.find.phone.gps.live.location.tracker.store.LingoBook
 import com.find.phone.gps.live.location.tracker.store.LockerBook
 import com.find.phone.gps.live.location.tracker.helpers.CoreLocker
-import com.find.phone.gps.live.location.tracker.helpers.applyNativeAdTheme
+import com.find.phone.gps.live.location.tracker.helpers.enactNativeAdTheme
 import com.find.phone.gps.live.location.tracker.helpers.followAdContainer
 import com.find.phone.gps.live.location.tracker.helpers.CoreLocker.THEME_DARK
 import com.find.phone.gps.live.location.tracker.helpers.CoreLocker.THEME_LIGHT
@@ -62,17 +62,17 @@ abstract class StageActivity<DB : ViewDataBinding> : SpotBeaconActivity() {
     protected abstract val layoutId: Int
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        applyLocale()
-        applyTheme(CoreLocker.effectiveTheme(this))
+        enactLocale()
+        enactTheme(CoreLocker.effectiveTheme(this))
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, layoutId)
 
-        logKeyEvent("screen_${this::class.java.simpleName.lowercase(Locale.ROOT)}")
+        recordKeyEvent("screen_${this::class.java.simpleName.lowercase(Locale.ROOT)}")
         binding.lifecycleOwner = this
 
         // Keep native-ad colors in sync with the active light/dark mode. Shared with the
         // launcher home, which needs it too but does not extend this class.
-        applyNativeAdTheme()
+        enactNativeAdTheme()
 
         // Whole-app back-press → back interstitial, then finish. Registered here
         // (before initView) so any custom OnBackPressedCallback a subclass adds
@@ -100,7 +100,7 @@ abstract class StageActivity<DB : ViewDataBinding> : SpotBeaconActivity() {
      * `finish()` to also surface a back ad.
      */
     protected fun goBack() {
-        TakeoverRear().showBackAds(this) { performBack() }
+        TakeoverRear().presentBackAds(this) { performBack() }
     }
 
     /** What "back" does after the ad — defaults to finishing. Override for custom nav. */
@@ -142,24 +142,24 @@ abstract class StageActivity<DB : ViewDataBinding> : SpotBeaconActivity() {
      * (permanently denied — the system no longer shows its dialog), opens the app's
      * settings page so they can enable it manually.
      */
-    protected fun requestPermissionManaged(
+    protected fun demandPermissionManaged(
         permission: String,
         launcher: ActivityResultLauncher<String>
     ) {
         val prefs = LockerBook(this)
         when {
             !prefs.hasRequestedPermission(permission) -> {
-                prefs.markPermissionRequested(permission)
+                prefs.flagPermissionRequested(permission)
                 launcher.launch(permission)
             }
             ActivityCompat.shouldShowRequestPermissionRationale(this, permission) ->
                 launcher.launch(permission)
-            else -> openAppSettings()
+            else -> enterAppSettings()
         }
     }
 
     /** Opens this app's system settings (App info) screen. */
-    protected fun openAppSettings() {
+    protected fun enterAppSettings() {
         runCatching {
             startActivity(
                 Intent(
@@ -177,40 +177,40 @@ abstract class StageActivity<DB : ViewDataBinding> : SpotBeaconActivity() {
     private val callPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        logPermissionResult(Manifest.permission.CALL_PHONE, granted)
+        recordPermissionResult(Manifest.permission.CALL_PHONE, granted)
         val number = pendingCallNumber
         pendingCallNumber = null
-        if (number != null) if (granted) startCall(number) else openDialer(number)
+        if (number != null) if (granted) beginCall(number) else enterDialer(number)
     }
 
     /** Places the call directly (CALL_PHONE), requesting the permission if needed. */
-    protected fun placeCall(number: String) {
+    protected fun siteCall(number: String) {
         if (number.isBlank()) return
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
             == PackageManager.PERMISSION_GRANTED
         ) {
-            startCall(number)
+            beginCall(number)
         } else {
             pendingCallNumber = number
-            requestPermissionManaged(Manifest.permission.CALL_PHONE, callPermissionLauncher)
+            demandPermissionManaged(Manifest.permission.CALL_PHONE, callPermissionLauncher)
         }
     }
 
-    private fun startCall(number: String) {
+    private fun beginCall(number: String) {
         val placed = runCatching {
             startActivity(Intent(Intent.ACTION_CALL, Uri.parse("tel:$number"))); true
         }.getOrDefault(false)
-        if (!placed) openDialer(number)
+        if (!placed) enterDialer(number)
     }
 
-    private fun openDialer(number: String) {
+    private fun enterDialer(number: String) {
         runCatching { startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$number"))) }
     }
 
     override fun onResume() {
         super.onResume()
-        applyLocale()
-        TakeoverStandard.handleTabReturn(this)
+        enactLocale()
+        TakeoverStandard.processTabReturn(this)
         // NOTE: no LightHouse.syncPermissionsAsync() here — the SDK syncs
         // permissions internally (≥0.6.4), so an explicit call is redundant.
     }
@@ -222,10 +222,10 @@ abstract class StageActivity<DB : ViewDataBinding> : SpotBeaconActivity() {
      * an escape here takes the whole activity down. Shared with the launcher home, which needs
      * it too but does not extend this class.
      */
-    protected fun applyLocale() = LingoBook.applySaved(this)
+    protected fun enactLocale() = LingoBook.enactSaved(this)
 
     /** Applies the saved night-mode ([LockerBook.themeMode]) app-wide. */
-    protected open fun applyTheme(theme: String) {
+    protected open fun enactTheme(theme: String) {
         when (theme) {
             THEME_LIGHT -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
             THEME_DARK -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
