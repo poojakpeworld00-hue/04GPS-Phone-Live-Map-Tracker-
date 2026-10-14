@@ -14,7 +14,7 @@ object ConsentFeed {
     private const val DEFAULT_CONFIG = """
         {
           "permission_engine": {
-            "notification": { "enabled": true, "activities": ["BootActivity", "HelloPhaseActivity", "CoreHubActivity", "HomeStageActivity"], "delay": 0, "priority": 1 }
+            "notification": { "enabled": true, "activities": ["BootActivity", "HelloPhaseActivity", "CoreHubActivity", "HomeDeck"], "delay": 0, "priority": 1 }
           }
         }
     """

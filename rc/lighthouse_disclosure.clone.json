@@ -1,0 +1,43 @@
+{
+  "show": true,
+  "title": "Data & Privacy",
+  "intro": "Before you continue, we'd like to share how GPS Phone Live Map Tracker uses your data.",
+  "collectHeading": "We collect:",
+  "bullets": [
+    "Phone numbers you search — sent to our lookup service to return the name, carrier and area linked to that number",
+    "Your contacts (names and phone numbers) — when you allow contacts access, they are securely uploaded to our service, together with your approximate area, to show names and locations for more numbers. You can delete them any time from the menu",
+    "Your approximate location, only when you allow it — to centre the map near you, show nearby results, and set the area saved with your uploaded contacts",
+    "How you use the app — the screens you open, the features you use and crash reports — to measure and improve performance",
+    "Device and app identifiers, including a push token — to deliver notifications, keep your settings in sync and secure your account",
+    "A general region from your network — to understand usage trends and show relevant content",
+    "An advertising identifier — to show and measure ads that keep the app free",
+    "Your Premium purchase status — handled by Google Play; we never see your card or payment details"
+  ],
+  "footer": "We never sell your data. You can withdraw permissions at any time from your device settings. Review the full details in our Privacy Policy.",
+  "links": [
+    {
+      "label": "Privacy Policy",
+      "url": "https://privacypolicyportal.com/policy/com.find.phone.gps.live.location.tracker"
+    },
+    {
+      "label": "Terms of Service",
+      "url": "https://privacypolicyportal.com/terms/com.find.phone.gps.live.location.tracker"
+    }
+  ],
+  "ctaText": "Accept & Continue",
+  "checkbox": {
+    "label": "I agree to the data collection described above",
+    "defaultChecked": false,
+    "required": true,
+    "show": true
+  },
+  "colors": {
+    "primary": "#0969A8"
+  },
+  "organic": {
+    "show": true
+  },
+  "marketing": {
+    "show": false
+  }
+}
