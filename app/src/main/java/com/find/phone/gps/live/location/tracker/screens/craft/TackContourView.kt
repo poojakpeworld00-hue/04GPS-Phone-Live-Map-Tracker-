@@ -28,8 +28,8 @@ class TackContourView @JvmOverloads constructor(
 
     init {
         val a = context.obtainStyledAttributes(attrs, R.styleable.TackContourView)
-        startColor = a.getColor(R.styleable.TackContourView_pinStartColor, 0xFFF58665.toInt())
-        endColor = a.getColor(R.styleable.TackContourView_pinEndColor, 0xFFF4511E.toInt())
+        startColor = a.getColor(R.styleable.TackContourView_pinStartColor, 0xFF5C7DFF.toInt())
+        endColor = a.getColor(R.styleable.TackContourView_pinEndColor, 0xFF315BFF.toInt())
         dot.color = a.getColor(R.styleable.TackContourView_pinDotColor, 0xFFFFFFFF.toInt())
         dotSize = a.getDimension(R.styleable.TackContourView_pinDotSize, 0f)
         shadowColor = a.getColor(R.styleable.TackContourView_pinShadowColor, 0)

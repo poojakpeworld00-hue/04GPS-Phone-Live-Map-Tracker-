@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="cid_onb_ink">#FF37160B</color>
+    <color name="cid_onb_ink">#FF082939</color>
     <color name="cid_onb_on_cta">#FFFFFFFF</color>
-    <color name="cid_onb_accent">#FFF4511E</color>
+    <color name="cid_onb_accent">#FF315BFF</color>
     <color name="cid_onb_card">#FFF4FAFF</color>
-    <color name="cid_onb_card_stroke">#FFEFCFC5</color>
-    <color name="cid_onb_tile">#FFF5D6CD</color>
+    <color name="cid_onb_card_stroke">#FFC9E5F9</color>
+    <color name="cid_onb_tile">#FFD2EDFF</color>
     <color name="cid_onb_on_mock">#FFFFFFFF</color>
 </resources>

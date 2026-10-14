@@ -44,7 +44,7 @@
     app:pinDotSize="14dp"
     app:pinEndColor="@color/ds_splash_blue"
     app:pinShadowColor="@color/ds_primary40"
-    app:pinStartColor="#1FA5B2" />
+    app:pinStartColor="#00B8D0" />
   <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -169,7 +169,7 @@
       android:paddingHorizontal="9dp"
       android:paddingVertical="5dp"
       android:text="AT&amp;T"
-      android:textColor="#AC330E"
+      android:textColor="#0047B3"
       android:textSize="11sp" />
   </LinearLayout>
 </FrameLayout>

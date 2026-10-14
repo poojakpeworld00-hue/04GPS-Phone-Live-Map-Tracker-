@@ -19,7 +19,7 @@ class BlipLoopView @JvmOverloads constructor(
 
     init {
         val a = context.obtainStyledAttributes(attrs, R.styleable.BlipLoopView)
-        stroke.color = a.getColor(R.styleable.BlipLoopView_pingColor, 0x73F57149)
+        stroke.color = a.getColor(R.styleable.BlipLoopView_pingColor, 0x733D63FF)
         stroke.strokeWidth = a.getDimension(R.styleable.BlipLoopView_pingStrokeWidth, 2f * resources.displayMetrics.density)
         fill.color = a.getColor(R.styleable.BlipLoopView_pingFillColor, 0)
         durationMs = a.getInt(R.styleable.BlipLoopView_pingDuration, 2800).toLong()

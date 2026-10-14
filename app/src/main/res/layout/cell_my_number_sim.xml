@@ -56,5 +56,5 @@
     android:contentDescription="@string/my_number_copy"
     android:padding="8dp"
     android:src="@drawable/lv_ic_copy"
-    app:tint="#4C3933" />
+    app:tint="#33434F" />
 </LinearLayout>

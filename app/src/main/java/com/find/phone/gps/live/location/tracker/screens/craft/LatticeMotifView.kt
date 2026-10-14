@@ -15,7 +15,7 @@ class LatticeMotifView @JvmOverloads constructor(
 
     init {
         val a = context.obtainStyledAttributes(attrs, R.styleable.LatticeMotifView)
-        paint.color = a.getColor(R.styleable.LatticeMotifView_gridColor, 0x0FF4511E)
+        paint.color = a.getColor(R.styleable.LatticeMotifView_gridColor, 0x0F315BFF)
         cell = a.getDimension(R.styleable.LatticeMotifView_gridSize, 30f * resources.displayMetrics.density)
         a.recycle()
         paint.strokeWidth = resources.displayMetrics.density

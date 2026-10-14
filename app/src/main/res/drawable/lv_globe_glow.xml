@@ -5,7 +5,7 @@
     android:gradientRadius="50%p"
     android:centerX="0.5"
     android:centerY="0.5"
-    android:startColor="#73F57E5A"
-    android:centerColor="#33F57E5A"
-    android:endColor="#00F57E5A" />
+    android:startColor="#7350AAFF"
+    android:centerColor="#3350AAFF"
+    android:endColor="#0050AAFF" />
 </shape>

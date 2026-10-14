@@ -83,7 +83,7 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.plusRoot) { _, insets ->
             val sb = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             binding.actClose.updateLayoutParams<ViewGroup.MarginLayoutParams> { topMargin = baseCloseTop + sb.top }
-            binding.lead.updateLayoutParams { height = dpPx(300) + sb.top }
+            binding.lead.updateLayoutParams { height = bannerHeight() }
             binding.lowerBar.updatePadding(bottom = baseBottomPad + sb.bottom)
             binding.plusRoot.updatePadding(left = sb.left, right = sb.right)
             insets
@@ -130,22 +130,21 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         else -> PlusCheckout.price(plan)
     }
 
+    private fun bannerHeight(): Int {
+        val width = resources.displayMetrics.widthPixels
+        return width.coerceAtMost(dpPx(BANNER_MAX_DP))
+    }
+
     private fun renderCell(cell: CellPremiumPlanBinding, plan: PlusOffer, active: Boolean) {
-        val ink = if (active) getColor(R.color.white) else getColor(R.color.ds_ink)
-        cell.lvPlanCard.setBackgroundResource(if (active) R.drawable.lv_plan_on_r18 else R.drawable.lv_plan_off_r18)
-        cell.txtName.setTextColor(ink)
-        cell.txtPrice.setTextColor(ink)
-        cell.txtPeriod.setTextColor(
-            if (active) getColor(R.color.white) and 0xD9FFFFFF.toInt() else getColor(R.color.ds_muted)
-        )
-        cell.lvPlanCard.elevation = if (active) dpPx(10).toFloat() else 0f
+        cell.lvPlanCard.setBackgroundResource(if (active) R.drawable.plus_row_on else R.drawable.plus_row_off)
+        cell.planRadio.setImageResource(if (active) R.drawable.plus_radio_on else R.drawable.plus_radio_off)
+        cell.txtPrice.setTextColor(getColor(if (active) R.color.ds_primary else R.color.ds_ink))
+        cell.lvPlanCard.elevation = if (active) dpPx(4).toFloat() else 0f
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             val shadow = getColor(R.color.ds_primary)
             cell.lvPlanCard.outlineSpotShadowColor = shadow
             cell.lvPlanCard.outlineAmbientShadowColor = shadow
         }
-        val factor = if (active) PICKED_SCALE else 1f
-        cell.root.animate().scaleX(factor).scaleY(factor).setDuration(180L).start()
         cell.txtName.setText(titleRes(plan))
 
         cell.txtPrice.text = cardPrice(plan) ?: QUOTE_PLACEHOLDER
@@ -357,7 +356,7 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
     companion object {
         private const val EXTRA_AFTER_INTRO = "after_intro"
 
-        private const val PICKED_SCALE = 1.05f
+        private const val BANNER_MAX_DP = 420
         private const val QUOTE_PLACEHOLDER = "…"
         private const val AUTO_QUOTE_TRIES = 3
         private const val QUOTE_BACKOFF_MS = 1_500L

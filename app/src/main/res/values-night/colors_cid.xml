@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="cid_onb_ink">#FFF5D6CC</color>
-    <color name="cid_onb_on_cta">#FF180C08</color>
-    <color name="cid_onb_accent">#FFE07F61</color>
-    <color name="cid_onb_card">#FF201612</color>
-    <color name="cid_onb_card_stroke">#FF382722</color>
-    <color name="cid_onb_tile">#FF2E1F1A</color>
+    <color name="cid_onb_ink">#FFD1EEFF</color>
+    <color name="cid_onb_on_cta">#FF071219</color>
+    <color name="cid_onb_accent">#FF5AB8E9</color>
+    <color name="cid_onb_card">#FF121C21</color>
+    <color name="cid_onb_card_stroke">#FF22313A</color>
+    <color name="cid_onb_tile">#FF192830</color>
 </resources>

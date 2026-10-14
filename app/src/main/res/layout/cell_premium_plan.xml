@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
-  android:layout_width="0dp"
+  android:layout_width="match_parent"
   android:layout_height="wrap_content"
-  android:layout_weight="1"
   android:clipChildren="false"
   android:clipToPadding="false">
   <LinearLayout
@@ -11,64 +10,74 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="9dp"
-    android:background="@drawable/lv_plan_off_r18"
+    android:background="@drawable/plus_row_off"
     android:foreground="?attr/selectableItemBackground"
-    android:gravity="center_horizontal"
-    android:orientation="vertical"
-    android:paddingHorizontal="8dp"
-    android:paddingTop="18dp"
-    android:paddingBottom="12dp">
-    <TextView
-      android:id="@+id/txtName"
-      android:layout_width="wrap_content"
+    android:gravity="center_vertical"
+    android:minHeight="72dp"
+    android:orientation="horizontal"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp">
+    <ImageView
+      android:id="@+id/planRadio"
+      android:layout_width="24dp"
+      android:layout_height="24dp"
+      android:contentDescription="@null"
+      android:src="@drawable/plus_radio_off" />
+    <LinearLayout
+      android:layout_width="0dp"
       android:layout_height="wrap_content"
-      android:fontFamily="@font/figtree_bold"
-      android:maxLines="1"
-      android:textColor="@color/ds_ink"
-      android:textSize="13sp"
-      tools:text="1 Week" />
+      android:layout_marginStart="14dp"
+      android:layout_weight="1"
+      android:orientation="vertical">
+      <TextView
+        android:id="@+id/txtName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/nunito_extrabold"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:textColor="@color/ds_ink"
+        android:textSize="16sp"
+        tools:text="Weekly" />
+      <TextView
+        android:id="@+id/txtPeriod"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/figtree_medium"
+        android:maxLines="2"
+        android:textColor="@color/ds_muted"
+        android:textSize="12sp"
+        tools:text="each week" />
+    </LinearLayout>
     <TextView
       android:id="@+id/txtPrice"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_marginTop="4dp"
-      android:autoSizeMaxTextSize="22sp"
-      android:autoSizeMinTextSize="14sp"
-      android:autoSizeTextType="uniform"
+      android:layout_marginStart="12dp"
       android:fontFamily="@font/nunito_extrabold"
-      android:gravity="center"
+      android:gravity="end"
       android:maxLines="1"
       android:textColor="@color/ds_ink"
-      android:textSize="22sp"
-      tools:text="$9.99" />
-    <TextView
-      android:id="@+id/txtPeriod"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_marginTop="4dp"
-      android:ellipsize="end"
-      android:fontFamily="@font/figtree_medium"
-      android:gravity="center"
-      android:maxLines="2"
-      android:minLines="2"
-      android:textColor="@color/ds_muted"
-      android:textSize="11sp"
-      tools:text="per week" />
+      android:textSize="20sp"
+      tools:text="$4.99" />
   </LinearLayout>
   <TextView
     android:id="@+id/txtTag"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_gravity="center_horizontal|top"
+    android:layout_gravity="end|top"
+    android:layout_marginEnd="16dp"
     android:background="@drawable/lv_pill_gold"
-    android:elevation="14dp"
-    android:includeFontPadding="false"
+    android:elevation="2dp"
     android:fontFamily="@font/figtree_bold"
+    android:includeFontPadding="false"
     android:letterSpacing="0.06"
     android:paddingHorizontal="8dp"
     android:paddingVertical="3dp"
     android:textColor="@color/ds_gold_ink"
-    android:textSize="9sp"
+    android:textSize="10sp"
     android:visibility="gone"
     tools:text="SUGGESTED"
     tools:visibility="visible" />

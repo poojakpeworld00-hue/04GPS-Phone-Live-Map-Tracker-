@@ -30,9 +30,7 @@
             android:layout_height="match_parent"
             android:contentDescription="@null"
             android:scaleType="centerCrop"
-            android:scaleX="1.3"
-            android:scaleY="1.3"
-            android:src="@drawable/lv_premium_map" />
+            android:src="@mipmap/ic_launcher" />
           <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -86,21 +84,21 @@
           android:layout_height="wrap_content"
           android:clipChildren="false"
           android:clipToPadding="false"
-          android:orientation="horizontal"
+          android:orientation="vertical"
           android:paddingHorizontal="16dp"
           android:paddingTop="10dp">
           <include
             android:id="@+id/lv_plan1"
             layout="@layout/cell_premium_plan" />
           <Space
-            android:layout_width="8dp"
-            android:layout_height="0dp" />
+            android:layout_width="0dp"
+            android:layout_height="4dp" />
           <include
             android:id="@+id/lv_plan2"
             layout="@layout/cell_premium_plan" />
           <Space
-            android:layout_width="8dp"
-            android:layout_height="0dp" />
+            android:layout_width="0dp"
+            android:layout_height="4dp" />
           <include
             android:id="@+id/lv_plan3"
             layout="@layout/cell_premium_plan" />
