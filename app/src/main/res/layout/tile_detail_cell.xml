@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One cell of the Location details grid (design 11c): 11sp caption, 14sp bold value. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:orientation="vertical"
+    android:paddingHorizontal="14dp"
+    android:paddingVertical="9dp">
+
+    <TextView
+        android:id="@+id/tvLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/figtree_semibold"
+        android:textColor="@color/ds_muted"
+        android:textSize="11sp"
+        tools:text="Country" />
+
+    <TextView
+        android:id="@+id/tvValue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/figtree_bold"
+        android:maxLines="2"
+        android:textColor="@color/ds_ink"
+        android:textIsSelectable="true"
+        android:textSize="14sp"
+        tools:text="United States" />
+</LinearLayout>

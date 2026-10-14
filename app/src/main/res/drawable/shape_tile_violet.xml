@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tools tile · clay (flat, per Claude Design — no gradient). Kept the
+     "violet" filename to avoid renaming every reference; the fill is clay. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/cid_clay" />
+    <corners android:radius="@dimen/_14sdp" />
+</shape>

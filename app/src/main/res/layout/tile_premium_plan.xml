@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One plan column (design 10a): r18 card — name, price, period — with the primary tag riding
+     on its top edge. The card sits 9dp down so the tag straddles its border; the tag is drawn
+     after (and above) the card.
+     The period always takes two lines (minLines = maxLines = 2), so every column is the same
+     height whether its period wraps ("per week, billed monthly") or not, and names and prices
+     line up across the row. Equal heights cannot come from match_parent here: the plan row
+     sits in a ScrollView, where it would measure to zero. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <LinearLayout
+        android:id="@+id/planCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="9dp"
+        android:background="@drawable/ds_plan_off_r18"
+        android:foreground="?attr/selectableItemBackground"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingHorizontal="8dp"
+        android:paddingTop="18dp"
+        android:paddingBottom="12dp">
+
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/figtree_bold"
+            android:maxLines="1"
+            android:textColor="@color/ds_ink"
+            android:textSize="13sp"
+            tools:text="1 Week" />
+
+        <TextView
+            android:id="@+id/tvPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:autoSizeMaxTextSize="22sp"
+            android:autoSizeMinTextSize="14sp"
+            android:autoSizeTextType="uniform"
+            android:fontFamily="@font/nunito_extrabold"
+            android:gravity="center"
+            android:maxLines="1"
+            android:textColor="@color/ds_ink"
+            android:textSize="22sp"
+            tools:text="$9.99" />
+
+        <TextView
+            android:id="@+id/tvPeriod"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/figtree_medium"
+            android:gravity="center"
+            android:maxLines="2"
+            android:minLines="2"
+            android:textColor="@color/ds_muted"
+            android:textSize="11sp"
+            tools:text="per week" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvTag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|top"
+        android:background="@drawable/ds_pill_gold"
+        android:elevation="14dp"
+        android:includeFontPadding="false"
+        android:fontFamily="@font/figtree_bold"
+        android:letterSpacing="0.06"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="3dp"
+        android:textColor="@color/ds_gold_ink"
+        android:textSize="9sp"
+        android:visibility="gone"
+        tools:text="SUGGESTED"
+        tools:visibility="visible" />
+</FrameLayout>

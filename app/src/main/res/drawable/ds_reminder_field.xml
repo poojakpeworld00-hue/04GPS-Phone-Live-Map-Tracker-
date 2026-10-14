@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Reminder sheet input field: surface, 1.5dp border (primary while focused), 14dp corners. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ds_surface" />
+            <stroke android:width="1.5dp" android:color="@color/ds_primary" />
+            <corners android:radius="14dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ds_surface" />
+            <stroke android:width="1.5dp" android:color="@color/ds_border" />
+            <corners android:radius="14dp" />
+        </shape>
+    </item>
+</selector>

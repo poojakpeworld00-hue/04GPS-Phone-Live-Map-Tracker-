@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One SIM inside the drawer "My number" card (design 1a): a SIM{slot} badge, the resolved name,
+     the number and "carrier · region", and a copy button. Fixed colors: the card is always white
+     on the blue drawer header, in both light and dark mode. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="2dp"
+    android:paddingVertical="9dp">
+
+    <TextView
+        android:id="@+id/tvSimBadge"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:background="@drawable/ds_sim_badge_primary"
+        android:fontFamily="@font/figtree_bold"
+        android:gravity="center"
+        android:textColor="@color/white"
+        android:textSize="11sp"
+        tools:text="SIM1" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvSimNumber"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="@font/figtree_bold"
+            android:fontFeatureSettings="tnum"
+            android:maxLines="1"
+            android:textColor="@color/ds_ink_fixed"
+            android:textSize="14sp"
+            tools:text="+91 79906 56044" />
+
+        <TextView
+            android:id="@+id/tvSimRegion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/figtree_medium"
+            android:maxLines="1"
+            android:textColor="@color/ds_muted_fixed"
+            android:textSize="11sp"
+            tools:text="Jio · Gujarat, India" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/btnCopySim"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/ds_sim_copy_tile_r10"
+        android:contentDescription="@string/my_number_copy"
+        android:padding="8dp"
+        android:src="@drawable/ds_ic_copy"
+        app:tint="#33434F" />
+
+</LinearLayout>

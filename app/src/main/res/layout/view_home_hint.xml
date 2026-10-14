@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Hint dialog 5a "Default home · centred card" (Hint Dialogs design). Drawn by RoleHintActivity
+    over the system "Default home app" list: a 70% scrim, a centred r28 card that mirrors this
+    app's row and animates the one tap the user needs. Tap anywhere dismisses.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/llMain"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ds_scrim70">
+
+    <LinearLayout
+        android:id="@+id/overlayCardVw"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginHorizontal="24dp"
+        android:background="@drawable/ds_card_white_r28"
+        android:elevation="24dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="24dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="18dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/figtree_regular"
+            android:gravity="center"
+            android:lineSpacingMultiplier="1.45"
+            android:text="@string/ds_hint_find_app"
+            android:textColor="@color/ds_muted"
+            android:textSize="14sp" />
+
+        <!-- the mirrored row, with the pulsing glow ring drawn 6dp outside it -->
+        <!-- 80dp = the 68dp row + the 6dp glow ring on each side; a fixed height keeps the
+             match_parent glow from growing to the screen. -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginTop="12dp"
+            android:padding="6dp">
+
+            <View
+                android:id="@+id/hintRowGlow"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="-6dp"
+                android:alpha="0"
+                android:background="@drawable/ds_glow_ring_r24" />
+
+            <LinearLayout
+                android:id="@+id/hintRow"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/ds_hint_row_r18"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <FrameLayout
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/ds_signal_tile_r14">
+
+                    <ImageView
+                        android:id="@+id/guideRowIconIv"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@null"
+                        android:src="@mipmap/ic_launcher" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/guideRowNameTv"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:fontFamily="@font/figtree_semibold"
+                        android:maxLines="1"
+                        android:text="@string/ds_app_short_name"
+                        android:textColor="@color/ds_ink"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/guideRowHintTv"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/figtree_medium"
+                        android:text="@string/ds_hint_tap_to_select"
+                        android:textColor="@color/ds_muted"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- the tap composition: ripple, radio, hand -->
+                <FrameLayout
+                    android:layout_width="56dp"
+                    android:layout_height="60dp"
+                    android:layout_marginStart="12dp"
+                    android:clipChildren="false">
+
+                    <View
+                        android:id="@+id/hintRipple"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginTop="14dp"
+                        android:alpha="0"
+                        android:background="@drawable/ds_circle_cyan35" />
+
+                    <FrameLayout
+                        android:id="@+id/hintRadio"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginTop="16dp">
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/ds_ring_gray_2_5" />
+
+                        <View
+                            android:id="@+id/hintRadioRingOn"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:alpha="0"
+                            android:background="@drawable/ds_ring_primary_2_5" />
+
+                        <View
+                            android:id="@+id/hintRadioDot"
+                            android:layout_width="12dp"
+                            android:layout_height="12dp"
+                            android:layout_gravity="center"
+                            android:background="@drawable/ds_circle_primary"
+                            android:scaleX="0"
+                            android:scaleY="0" />
+                    </FrameLayout>
+
+                    <ImageView
+                        android:id="@+id/hintHand"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:layout_marginStart="24dp"
+                        android:layout_marginTop="24dp"
+                        android:contentDescription="@null"
+                        android:elevation="4dp"
+                        android:src="@drawable/ds_ic_hand_tap"
+                        tools:ignore="UnusedAttribute" />
+                </FrameLayout>
+            </LinearLayout>
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:fontFamily="@font/figtree_medium"
+            android:text="@string/ds_hint_tap_dismiss"
+            android:textColor="@color/ds_muted"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+</FrameLayout>

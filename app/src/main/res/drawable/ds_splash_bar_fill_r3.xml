@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Redesign progress fill: linear-gradient(90deg,#0A6CFF,#00B8D0). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="3dp" />
+    <gradient android:angle="0" android:startColor="@color/ds_splash_blue" android:endColor="@color/ds_splash_cyan" />
+</shape>

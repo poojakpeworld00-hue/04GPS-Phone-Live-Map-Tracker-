@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A1 phone-mock header: linear-gradient(165deg,#0A6CFF,#009ECE 60%,#00C8D2). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient android:angle="300" android:startColor="@color/ds_splash_blue" android:centerColor="#009ECE" android:centerX="0.6" android:endColor="#00C8D2" android:type="linear" />
+</shape>

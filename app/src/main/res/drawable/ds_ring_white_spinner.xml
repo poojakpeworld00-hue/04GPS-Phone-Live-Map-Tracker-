@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Static loading ring: white arc on a faint white track (the shimmer card fades, so no spin). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="ring"
+    android:thickness="2dp" android:useLevel="false">
+    <solid android:color="#59FFFFFF" />
+</shape>

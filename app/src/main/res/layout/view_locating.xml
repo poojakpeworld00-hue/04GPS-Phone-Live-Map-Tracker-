@@ -1,0 +1,550 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Locating a searched number, full page (design 13a / 13b, Search Result).
+    13a Searching: "Live" pill in the top bar; the 330dp map flies country → state → area while
+    the lookup runs, with the scan (guide rings, radar sweep, ping, centre dot) over its middle
+    and the three stage chips at its top-left; under it the stage card with the spinner line,
+    the progress bar and the three step chips (✓ done · ● active · pending). A mid2 native is
+    docked at the bottom.
+    13b Found: title "Location found" with "Search complete · 100%" under it; the map shrinks to
+    the 150dp approximate-area card; the result card (country tile, locked name, number, region,
+    Valid pill, the 2×2 facts) comes in under it, then Watch Ad · View full details, Not now and
+    Skip with PRO.
+-->
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data />
+
+    <LinearLayout
+        android:id="@+id/locRoot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/ds_canvas"
+        android:orientation="vertical"
+        tools:context=".ui.lookup.LocatingActivity">
+
+        <!-- top bar -->
+        <LinearLayout
+            android:id="@+id/topBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/ds_tile_white_r14_shadowless"
+                android:contentDescription="@string/ds_cd_back"
+                android:elevation="2dp"
+                android:src="@drawable/ds_ic_back"
+                app:tint="@color/ds_ink" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/nunito_extrabold"
+                    android:maxLines="1"
+                    android:text="@string/ds_searching_location"
+                    android:textColor="@color/ds_ink"
+                    android:textSize="18sp" />
+
+                <!-- the number while searching; "Search complete · 100%" in green once found -->
+                <TextView
+                    android:id="@+id/tvSearchNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/figtree_semibold"
+                    android:fontFeatureSettings="tnum"
+                    android:maxLines="1"
+                    android:textColor="@color/ds_primary"
+                    android:textSize="13sp"
+                    tools:text="+91 704 602 4874" />
+            </LinearLayout>
+
+            <!-- 13a: Live pill, hidden once found -->
+            <TextView
+                android:id="@+id/livePill"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/ds_pill_tint"
+                android:drawablePadding="6dp"
+                android:fontFamily="@font/figtree_bold"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="5dp"
+                android:text="@string/ds_live"
+                android:textColor="@color/ds_pressed"
+                android:textSize="11sp"
+                app:drawableStartCompat="@drawable/ds_dot_cyan_6" />
+        </LinearLayout>
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/scroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp">
+
+                <!-- the map: 330dp while searching, the 150dp approximate-area card once found -->
+                <FrameLayout
+                    android:id="@+id/mapCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="330dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/ds_map_bg_r24"
+                    android:elevation="6dp"
+                    android:outlineAmbientShadowColor="@color/ds_ink"
+                    android:outlineSpotShadowColor="@color/ds_ink"
+                    tools:targetApi="p">
+
+                    <org.osmdroid.views.MapView
+                        android:id="@+id/bigMap"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
+                    <!-- 13a: the scan over the map centre (240 / 150 guide rings, sweep, ping, dot) -->
+                    <FrameLayout
+                        android:id="@+id/scanGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:clipChildren="false">
+
+                        <View
+                            android:layout_width="240dp"
+                            android:layout_height="240dp"
+                            android:layout_gravity="center"
+                            android:background="@drawable/ds_scan_ring" />
+
+                        <View
+                            android:layout_width="150dp"
+                            android:layout_height="150dp"
+                            android:layout_gravity="center"
+                            android:background="@drawable/ds_scan_ring" />
+
+                        <com.find.my.phone.gps.location.tracker.ui.design.RadarSweepView
+                            android:layout_width="240dp"
+                            android:layout_height="240dp"
+                            android:layout_gravity="center"
+                            app:sweepAngle="80"
+                            app:sweepColor="@color/ds_cyan40"
+                            app:sweepDuration="3000" />
+
+                        <com.find.my.phone.gps.location.tracker.ui.design.PingRingView
+                            android:layout_width="150dp"
+                            android:layout_height="150dp"
+                            android:layout_gravity="center"
+                            app:pingColor="@color/ds_cyan"
+                            app:pingDuration="2000"
+                            app:pingStrokeWidth="2dp" />
+
+                        <View
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:layout_gravity="center"
+                            android:background="@drawable/ds_scan_halo" />
+
+                        <View
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_gravity="center"
+                            android:background="@drawable/ds_scan_dot" />
+                    </FrameLayout>
+
+                    <!-- 13a: country · state · area chips (done = primary, active = white, pending = white 70) -->
+                    <LinearLayout
+                        android:id="@+id/mapChips"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="top|start"
+                        android:layout_margin="12dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/chipCountry"
+                            style="@style/Ds.MapChip"
+                            tools:text="India" />
+
+                        <TextView
+                            android:id="@+id/chipState"
+                            style="@style/Ds.MapChip"
+                            android:layout_marginStart="6dp"
+                            tools:text="Gujarat" />
+
+                        <TextView
+                            android:id="@+id/chipArea"
+                            style="@style/Ds.MapChip"
+                            android:layout_marginStart="6dp"
+                            android:text="@string/ds_step_area" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom|end"
+                        android:layout_margin="12dp"
+                        android:fontFamily="@font/figtree_semibold"
+                        android:text="@string/ds_osm_credit"
+                        android:textColor="@color/ds_placeholder"
+                        android:textSize="10sp" />
+
+                    <!-- 13b: APPROXIMATE AREA pill -->
+                    <TextView
+                        android:id="@+id/tvAreaPill"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="10dp"
+                        android:background="@drawable/ds_pill_surface"
+                        android:fontFamily="@font/figtree_bold"
+                        android:letterSpacing="0.06"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="4dp"
+                        android:text="@string/ds_result_approx_area_long"
+                        android:textColor="@color/ds_pressed"
+                        android:textSize="10sp"
+                        android:visibility="gone" />
+                </FrameLayout>
+
+                <!-- ── 13a searching: stage line + progress + step chips ───── -->
+                <LinearLayout
+                    android:id="@+id/searchingGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/ds_card_border_r20"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ProgressBar
+                            android:id="@+id/pbStage"
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:indeterminateTint="@color/ds_cyan" />
+
+                        <TextView
+                            android:id="@+id/tvStage"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/figtree_bold"
+                            android:textColor="@color/ds_ink"
+                            android:textSize="15sp"
+                            tools:text="Searching in Gujarat…" />
+
+                        <TextView
+                            android:id="@+id/tvPercent"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/figtree_bold"
+                            android:fontFeatureSettings="tnum"
+                            android:textColor="@color/ds_primary"
+                            android:textSize="13sp"
+                            tools:text="64%" />
+                    </LinearLayout>
+
+                    <ProgressBar
+                        android:id="@+id/progress"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="6dp"
+                        android:layout_marginTop="12dp"
+                        android:max="1000"
+                        android:progressDrawable="@drawable/ds_quota_bar"
+                        tools:progress="640" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/stepCountry"
+                            style="@style/Ds.StepChip"
+                            tools:text="✓ Country" />
+
+                        <TextView
+                            android:id="@+id/stepState"
+                            style="@style/Ds.StepChip"
+                            android:layout_marginStart="6dp"
+                            tools:text="● State" />
+
+                        <TextView
+                            android:id="@+id/stepArea"
+                            style="@style/Ds.StepChip"
+                            android:layout_marginStart="6dp"
+                            android:text="@string/ds_step_area" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- ── 13b found, locked ──────────────────────────────── -->
+                <LinearLayout
+                    android:id="@+id/resultGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <!-- the result card: country tile · name (locked) · number · region · Valid · facts -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/ds_card_border_r20"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/tvCountryTile"
+                                android:layout_width="46dp"
+                                android:layout_height="46dp"
+                                android:layout_gravity="center_vertical"
+                                android:background="@drawable/ds_avatar_tile_r16"
+                                android:fontFamily="@font/figtree_bold"
+                                android:gravity="center"
+                                android:textColor="@color/white"
+                                android:textSize="14sp"
+                                tools:text="IN" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:layout_marginStart="12dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <LinearLayout
+                                    android:id="@+id/nameRow"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal">
+
+                                    <TextView
+                                        android:id="@+id/tvName"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:fontFamily="@font/figtree_bold"
+                                        android:maxLines="1"
+                                        android:textColor="@color/ds_ink"
+                                        android:textSize="14sp"
+                                        tools:text="Rahul Sharma" />
+
+                                    <ImageView
+                                        android:layout_width="12dp"
+                                        android:layout_height="12dp"
+                                        android:layout_marginStart="6dp"
+                                        android:contentDescription="@null"
+                                        android:src="@drawable/ds_ic_lock"
+                                        app:tint="@color/ds_primary" />
+                                </LinearLayout>
+
+                                <!-- one line beside the Valid pill: shrinks from 20sp for long numbers -->
+                                <TextView
+                                    android:id="@+id/tvNumber"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="@font/nunito_extrabold"
+                                    android:fontFeatureSettings="tnum"
+                                    android:letterSpacing="-0.01"
+                                    android:maxLines="1"
+                                    android:textColor="@color/ds_ink"
+                                    android:textSize="20sp"
+                                    app:autoSizeMaxTextSize="20sp"
+                                    app:autoSizeMinTextSize="14sp"
+                                    app:autoSizeStepGranularity="1sp"
+                                    app:autoSizeTextType="uniform"
+                                    tools:text="+91 704 602 4874" />
+
+                                <TextView
+                                    android:id="@+id/tvRegion"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="@font/figtree_semibold"
+                                    android:textColor="@color/ds_muted"
+                                    android:textSize="12sp"
+                                    tools:text="Gujarat, India" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/tvValidity"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="top"
+                                android:layout_marginStart="8dp"
+                                android:background="@drawable/ds_pill_success_soft"
+                                android:fontFamily="@font/figtree_bold"
+                                android:paddingHorizontal="9dp"
+                                android:paddingVertical="5dp"
+                                android:text="@string/ds_result_valid_short"
+                                android:textColor="@color/ds_success"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <!-- facts, 2×2 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:orientation="horizontal">
+
+                            <include
+                                android:id="@+id/cellCountry"
+                                layout="@layout/tile_result_cell" />
+
+                            <Space
+                                android:layout_width="6dp"
+                                android:layout_height="0dp" />
+
+                            <include
+                                android:id="@+id/cellLine"
+                                layout="@layout/tile_result_cell" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:orientation="horizontal">
+
+                            <include
+                                android:id="@+id/cellCity"
+                                layout="@layout/tile_result_cell" />
+
+                            <Space
+                                android:layout_width="6dp"
+                                android:layout_height="0dp" />
+
+                            <include
+                                android:id="@+id/cellCarrier"
+                                layout="@layout/tile_result_cell" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- actions -->
+                    <FrameLayout
+                        android:id="@+id/btnWatchAd"
+                        android:layout_width="match_parent"
+                        android:layout_height="54dp"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/ds_btn_primary_selector_r18"
+                        android:elevation="6dp">
+
+                        <TextView
+                            android:id="@+id/tvWatchAd"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:drawablePadding="8dp"
+                            android:fontFamily="@font/figtree_bold"
+                            android:gravity="center"
+                            android:text="@string/ds_result_watch_ad"
+                            android:textColor="@color/white"
+                            android:textSize="15sp"
+                            app:drawableStartCompat="@drawable/ds_ic_play"
+                            app:drawableTint="@color/white" />
+
+                        <ProgressBar
+                            android:id="@+id/pbWatchAd"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:layout_gravity="center"
+                            android:indeterminateTint="@color/white"
+                            android:visibility="gone" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/btnNotNow"
+                            android:layout_width="0dp"
+                            android:layout_height="44dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/ds_fill_gray_r14"
+                            android:fontFamily="@font/figtree_bold"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:text="@string/ds_result_not_now"
+                            android:textColor="@color/ds_ink"
+                            android:textSize="14sp" />
+
+                        <!-- crown + label centred together (a compound drawable would hug the left edge) -->
+                        <FrameLayout
+                            android:id="@+id/btnSkipPro"
+                            android:layout_width="0dp"
+                            android:layout_height="44dp"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/ds_btn_gold_soft_r14"
+                            android:foreground="?attr/selectableItemBackground">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:drawablePadding="6dp"
+                                android:fontFamily="@font/figtree_bold"
+                                android:gravity="center_vertical"
+                                android:text="@string/ds_result_skip_pro"
+                                android:textColor="@color/ds_gold_soft_ink"
+                                android:textSize="14sp"
+                                app:drawableStartCompat="@drawable/ds_ic_crown_small"
+                                app:drawableTint="@color/ds_gold_soft_ink" />
+                        </FrameLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+        <!-- the native docked at the bottom, under the scroll: it stays put while the search
+             runs and while the result scrolls above it. ScreenAds["LocatingActivity"] switches
+             it off (show) and picks its template (nativeType: small = the one-line native banner
+             of 13b; big / mid / mid2 = body natives). The templates carry their own 16dp card
+             margin, so 0dp here puts the card on the same 16dp edge as the cards above. -->
+        <FrameLayout
+            android:id="@+id/adFrame"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+    </LinearLayout>
+</layout>

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Language step (design 4c): title + info + Done pill in the header, the step progress, the
+    Suggested and All-languages cards (each row led by its flag), and the big native ad pinned
+    under a hairline.
+-->
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data />
+
+    <LinearLayout
+        android:id="@+id/languageRoot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/ds_canvas"
+        android:orientation="vertical"
+        tools:context=".ui.language.LangChooserActivity">
+
+        <!-- header 56dp -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingEnd="12dp">
+
+            <TextView
+                android:id="@+id/tvTitle"
+                style="@style/Ds.Text.Header"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/ds_language_title" />
+
+            <ImageButton
+                android:id="@+id/btnInfo"
+                style="@style/Ds.IconButton"
+                android:layout_marginStart="6dp"
+                android:contentDescription="@string/ds_cd_info"
+                android:src="@drawable/ds_ic_info"
+                app:tint="@color/ds_muted" />
+
+            <LinearLayout
+                android:id="@+id/btnContinue"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/ds_btn_primary_selector_r14"
+                android:clickable="true"
+                android:elevation="6dp"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:outlineAmbientShadowColor="@color/ds_primary"
+                android:outlineSpotShadowColor="@color/ds_primary"
+                android:paddingHorizontal="14dp"
+                tools:targetApi="p">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ds_ic_check" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:fontFamily="@font/figtree_bold"
+                    android:text="@string/ds_done"
+                    android:textColor="@color/white"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <include
+            android:id="@+id/onboarding_step_header"
+            layout="@layout/piece_onboarding_step_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="12dp" />
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/scroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvSuggested"
+                    style="@style/Ds.Text.SectionNunito"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="22dp"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/ds_suggested" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvSuggested"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:background="@drawable/ds_card_border_r18"
+                    android:nestedScrollingEnabled="false"
+                    android:overScrollMode="never"
+                    android:padding="4dp" />
+
+                <TextView
+                    android:id="@+id/tvAll"
+                    style="@style/Ds.Text.SectionNunito"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="22dp"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/ds_all_languages" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvLanguages"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:background="@drawable/ds_card_border_r18"
+                    android:nestedScrollingEnabled="false"
+                    android:overScrollMode="never"
+                    android:padding="4dp" />
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+        <View
+            android:id="@+id/adNativeDivider"
+            style="@style/AdDivider"
+            android:background="@color/ds_hairline12" />
+
+        <FrameLayout
+            android:id="@+id/adNativeFrame"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/ds_surface">
+
+            <com.facebook.shimmer.ShimmerFrameLayout
+                android:id="@+id/adShimmer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#ccc">
+
+                <include layout="@layout/googlebignative" />
+            </com.facebook.shimmer.ShimmerFrameLayout>
+        </FrameLayout>
+
+    </LinearLayout>
+</layout>

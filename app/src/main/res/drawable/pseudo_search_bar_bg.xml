@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Home screen search pill: solid light fill, corner radius at half the 52dp height so it
+    stays a true pill. No stroke — the fill carries enough contrast against a wallpaper on
+    its own, and an outline only muddies the edge against a busy photo.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <solid android:color="#F2FFFFFF" />
+
+    <corners android:radius="26dp" />
+
+</shape>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Page 3 illustration (2c): a contact picker card whose rows slide in one after another; the
+     picked row gets a popping check. The last 4 digits are filled in from code. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/ps_bg_ill_contacts">
+
+    <LinearLayout
+        android:layout_width="236dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="18dp"
+        android:background="@drawable/ps_bg_card_r18"
+        android:elevation="6dp"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:background="@drawable/ps_bg_field_r9"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="9dp">
+
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ps_ic_search"
+                app:tint="@color/ps_muted" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="@font/figtree_medium"
+                android:text="@string/ps_contacts_search"
+                android:textColor="@color/ps_muted"
+                android:textSize="10.5sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/row1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="6dp">
+
+            <TextView
+                style="@style/Ps.Avatar"
+                android:backgroundTint="@color/ps_primary"
+                android:text="@string/ps_contact1_initials" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="9dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/Ps.IllTitle"
+                    android:textSize="11.5sp"
+                    android:text="@string/ps_contact1_name" />
+
+                <TextView
+                    android:id="@+id/sub1"
+                    style="@style/Ps.IllSub"
+                    tools:text="Mobile · ••• 2104" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/row2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/ps_bg_row_hl"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="6dp">
+
+            <TextView
+                style="@style/Ps.Avatar"
+                android:backgroundTint="@color/ps_violet"
+                android:text="@string/ps_contact2_initials" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="9dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/Ps.IllTitle"
+                    android:textSize="11.5sp"
+                    android:text="@string/ps_contact2_name" />
+
+                <TextView
+                    android:id="@+id/sub2"
+                    style="@style/Ps.IllSub"
+                    tools:text="Mobile · ••• 2104" />
+            </LinearLayout>
+
+            <FrameLayout
+                android:id="@+id/rowCheck"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:background="@drawable/ps_bg_gradient_oval">
+
+                <ImageView
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ps_ic_check" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/row3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="6dp">
+
+            <TextView
+                style="@style/Ps.Avatar"
+                android:backgroundTint="@color/ps_avatar_cyan"
+                android:text="@string/ps_contact3_initials" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="9dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/Ps.IllTitle"
+                    android:textSize="11.5sp"
+                    android:text="@string/ps_contact3_name" />
+
+                <TextView
+                    android:id="@+id/sub3"
+                    style="@style/Ps.IllSub"
+                    tools:text="Mobile · ••• 2104" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

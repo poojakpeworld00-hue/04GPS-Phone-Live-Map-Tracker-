@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ps_accent_ink">#9C93FF</color>
+    <color name="ps_surface">#122031</color>
+    <color name="ps_ink">#E8F1F8</color>
+    <color name="ps_muted">#9AABB8</color>
+    <color name="ps_tonal">#1C2D42</color>
+    <color name="ps_grabber">#3A4B60</color>
+    <color name="ps_dot_past">#5A63B8</color>
+    <color name="ps_dot_future">#2E3E52</color>
+    <color name="ps_success">#4CCB8C</color>
+    <color name="ps_success_bg">#143A2A</color>
+    <color name="ps_success_ink">#A6EBC8</color>
+    <color name="ps_warning">#F0A63A</color>
+    <color name="ps_warning_bg">#3A2A10</color>
+    <color name="ps_warning_ink">#FFD9A0</color>
+    <color name="ps_info_bg">#232650</color>
+    <color name="ps_info_ink">#C3BDFF</color>
+    <color name="ps_ill_notif_bg">#211D3F</color>
+    <color name="ps_ill_notif_ring">#5A4CB0</color>
+    <color name="ps_ill_sim_bg">#152A47</color>
+    <color name="ps_ill_contacts_bg">#1D2145</color>
+    <color name="ps_ill_card">#1C2D42</color>
+    <color name="ps_ill_row_hl">#2A2F5C</color>
+    <color name="ps_ill_field">#25384F</color>
+    <color name="ps_ill_placeholder">#33475E</color>
+    <color name="ps_ill_hidden_num">#6F8294</color>
+    <color name="ps_map_bg">#16283A</color>
+    <color name="ps_map_road">#33FFFFFF</color>
+    <color name="ps_map_block">#1E3A33</color>
+</resources>

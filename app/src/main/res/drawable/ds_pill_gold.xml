@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Gold pill for the plan tag, so it stands out on the blue selected card as well as a plain one. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="999dp" />
+    <gradient android:angle="0" android:startColor="@color/ds_gold_start" android:endColor="@color/ds_gold_end" />
+</shape>

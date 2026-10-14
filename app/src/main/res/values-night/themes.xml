@@ -1,0 +1,43 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!--
+        Dark counterpart of values/themes.xml. Every colour comes from the design tokens, which
+        values-night/colors_design.xml flips, so the only things restated here are the theme items
+        that cannot follow a token: the light-icon flags on the system bars.
+    -->
+    <style name="Base.Theme.GpsTracker" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:fontFamily">@font/figtree_regular</item>
+        <item name="fontFamily">@font/figtree_regular</item>
+
+        <item name="colorPrimary">@color/ds_primary</item>
+        <item name="colorPrimaryDark">@color/ds_pressed</item>
+        <item name="colorPrimaryVariant">@color/ds_pressed</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/ds_tint</item>
+        <item name="colorOnPrimaryContainer">@color/ds_ink</item>
+        <item name="colorSecondary">@color/ds_cyan</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorAccent">@color/ds_cyan</item>
+        <item name="colorSurface">@color/ds_surface</item>
+        <item name="colorOnSurface">@color/ds_ink</item>
+        <item name="colorSurfaceVariant">@color/ds_tint</item>
+        <item name="colorOnSurfaceVariant">@color/ds_muted</item>
+        <item name="colorOutline">@color/ds_border</item>
+        <item name="colorOutlineVariant">@color/ds_divider</item>
+        <item name="colorError">@color/ds_danger</item>
+        <item name="android:colorBackground">@color/ds_canvas</item>
+
+        <item name="android:textColorPrimary">@color/ds_ink</item>
+        <item name="android:textColorSecondary">@color/ds_muted</item>
+        <item name="android:textColorTertiary">@color/ds_placeholder</item>
+        <item name="android:textColorHint">@color/ds_placeholder</item>
+        <item name="android:textColorLink">@color/ds_primary</item>
+        <item name="android:textViewStyle">@style/Ds.Widget.TextView</item>
+        <item name="android:editTextStyle">@style/Ds.Widget.EditText</item>
+
+        <item name="android:windowBackground">@color/ds_canvas</item>
+        <item name="android:statusBarColor">@color/ds_canvas</item>
+        <item name="android:navigationBarColor">@color/ds_canvas</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="23">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
+    </style>
+</resources>

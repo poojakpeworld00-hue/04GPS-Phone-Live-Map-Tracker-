@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+    Welcome step (design 4a): step header + Skip, a 196dp hero card (radar rings, the location
+    tile with its verified badge, two floating chips), title + lead, the four gesture tiles, the
+    Continue CTA, and the native banner pinned under a hairline at the bottom.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/onboardingRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ds_canvas"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+
+    <!-- step header row: 48dp, progress + pill, Skip -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="24dp"
+        android:paddingEnd="12dp">
+
+        <include
+            android:id="@+id/onboarding_step_header"
+            layout="@layout/piece_onboarding_step_header"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/onboarding_skip"
+            style="@style/Ds.Text.Skip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ds_skip" />
+    </LinearLayout>
+
+    <!-- Everything above the ad scrolls; the native slot and the CTA stay pinned at the bottom. -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:overScrollMode="never">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="12dp">
+
+            <!-- hero card 196dp -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/onboarding_hero"
+                android:layout_width="match_parent"
+                android:layout_height="196dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/ds_hero_card_r28"
+                android:clipChildren="true"
+                android:clipToOutline="true">
+
+                <View
+                    android:layout_width="170dp"
+                    android:layout_height="170dp"
+                    android:background="@drawable/ds_ring_primary16"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <com.find.my.phone.gps.location.tracker.ui.design.PingRingView
+                    android:layout_width="240dp"
+                    android:layout_height="240dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:pingColor="@color/ds_cyan45"
+                    app:pingDuration="2800"
+                    app:pingStrokeWidth="2dp" />
+
+                <com.find.my.phone.gps.location.tracker.ui.design.PingRingView
+                    android:layout_width="240dp"
+                    android:layout_height="240dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:pingColor="@color/ds_cyan45"
+                    app:pingDelay="1400"
+                    app:pingDuration="2800"
+                    app:pingStrokeWidth="2dp" />
+
+                <FrameLayout
+                    android:id="@+id/onboarding_shield"
+                    android:layout_width="88dp"
+                    android:layout_height="88dp"
+                    android:background="@drawable/ds_signal_tile_r28"
+                    android:elevation="12dp"
+                    android:outlineAmbientShadowColor="@color/ds_blue2"
+                    android:outlineSpotShadowColor="@color/ds_blue2"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:targetApi="p">
+
+                    <ImageView
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ds_ic_pin" />
+                </FrameLayout>
+
+                <!-- verified badge: 28dp, +34/+22 from the composition centre -->
+                <FrameLayout
+                    android:id="@+id/onboarding_badge"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_marginStart="78dp"
+                    android:layout_marginTop="66dp"
+                    android:background="@drawable/ds_circle_success_badge"
+                    android:elevation="13dp"
+                    app:layout_constraintStart_toStartOf="@id/onboarding_shield"
+                    app:layout_constraintTop_toTopOf="@id/onboarding_shield">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ds_ic_check" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/chipDial"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="22dp"
+                    android:layout_marginTop="28dp"
+                    android:background="@drawable/ds_card_white_r12"
+                    android:elevation="8dp"
+                    android:fontFamily="@font/figtree_bold"
+                    android:outlineAmbientShadowColor="@color/ds_primary"
+                    android:outlineSpotShadowColor="@color/ds_primary"
+                    android:paddingHorizontal="11dp"
+                    android:paddingVertical="7dp"
+                    android:text="@string/ds_chip_flag_dial"
+                    android:textColor="@color/ds_ink"
+                    android:textSize="12sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:targetApi="p" />
+
+                <LinearLayout
+                    android:id="@+id/chipGps"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="28dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="@drawable/ds_card_white_r12"
+                    android:elevation="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:outlineAmbientShadowColor="@color/ds_primary"
+                    android:outlineSpotShadowColor="@color/ds_primary"
+                    android:paddingHorizontal="11dp"
+                    android:paddingVertical="7dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:targetApi="p">
+
+                    <View
+                        android:layout_width="7dp"
+                        android:layout_height="7dp"
+                        android:background="@drawable/ds_circle_success" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:fontFamily="@font/figtree_bold"
+                        android:text="@string/ds_chip_gps_ready"
+                        android:textColor="@color/ds_success"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- compact stand-in for the hero while a native ad is up (the reference app's 58dp tile) -->
+    <FrameLayout
+        android:id="@+id/heroCompact"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/ds_signal_tile_r18"
+        android:elevation="8dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:src="@drawable/ds_ic_pin" />
+    </FrameLayout>
+
+
+            <TextView
+                android:id="@+id/onboarding_title"
+                style="@style/Ds.Text.Display"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:gravity="center"
+                android:paddingHorizontal="28dp"
+                android:text="@string/ds_welcome_title" />
+
+            <TextView
+                android:id="@+id/onboarding_lead"
+                style="@style/Ds.Text.BodySmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:paddingHorizontal="28dp"
+                android:text="@string/ds_welcome_body" />
+
+            <LinearLayout
+                android:id="@+id/onboarding_gestures"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="16dp">
+
+                <include
+                    android:id="@+id/tileSwipeUp"
+                    layout="@layout/tile_gesture_tile"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <include
+                    android:id="@+id/tileSwipeRight"
+                    layout="@layout/tile_gesture_tile"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1" />
+
+                <include
+                    android:id="@+id/tileSwipeDown"
+                    layout="@layout/tile_gesture_tile"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1" />
+
+                <include
+                    android:id="@+id/tileSwipeLeft"
+                    layout="@layout/tile_gesture_tile"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1" />
+            </LinearLayout>
+
+            <!-- CTA pinned to the bottom, under the ad -->
+            <LinearLayout
+                android:id="@+id/onboarding_continue"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/ds_btn_primary_selector_r18"
+                android:clickable="true"
+                android:elevation="6dp"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:outlineAmbientShadowColor="@color/ds_primary"
+                android:outlineSpotShadowColor="@color/ds_primary"
+                tools:targetApi="p">
+
+                <TextView
+                    style="@style/Ds.Text.Button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ds_continue" />
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginStart="10dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ds_ic_arrow_right" />
+            </LinearLayout>
+
+            <!-- native slot (RC-chosen type) directly above the pinned CTA -->
+            <View
+                android:id="@+id/ad_native_divider"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+
+            <FrameLayout
+                android:id="@+id/ad_native_frame"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/ds_surface">
+
+                <com.facebook.shimmer.ShimmerFrameLayout
+                    android:id="@+id/ad_shimmer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#ccc">
+
+                    <include layout="@layout/googlemidnative" />
+                </com.facebook.shimmer.ShimmerFrameLayout>
+            </FrameLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+
+</LinearLayout>

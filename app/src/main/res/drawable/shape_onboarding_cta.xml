@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Primary CTA · the reference screens' ink pill with a white label. The press
+    state is a lighter green ripple rather than a second shape.
+-->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/cid_onb_accent">
+
+    <item>
+        <shape android:shape="rectangle">
+
+            <solid android:color="@color/cid_onb_cta" />
+
+            <corners android:radius="45dp" />
+
+        </shape>
+    </item>
+
+</ripple>

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Search history: 56dp header (back, title, Clear all), the count line, then the searches
+    grouped under Today / Yesterday / Earlier in the Home's recent-row style; empty state when
+    there is nothing; the bottom banner slot.
+-->
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data />
+
+    <LinearLayout
+        android:id="@+id/historyRoot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/ds_canvas"
+        android:orientation="vertical"
+        tools:context=".ui.home.HistoryActivity">
+
+        <!-- header 56dp -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="12dp">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                style="@style/Ds.IconButton"
+                android:contentDescription="@string/ds_cd_back"
+                android:rotation="180"
+                android:src="@drawable/ds_ic_arrow_right"
+                app:tint="@color/ds_ink" />
+
+            <TextView
+                android:id="@+id/tvTitle"
+                style="@style/Ds.Text.Header"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_weight="1"
+                android:text="@string/ds_history_title" />
+
+            <TextView
+                android:id="@+id/btnClearAll"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:fontFamily="@font/figtree_semibold"
+                android:gravity="center"
+                android:paddingHorizontal="8dp"
+                android:text="@string/ds_clear_all"
+                android:textColor="@color/ds_primary"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvCount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="@font/figtree_medium"
+            android:paddingHorizontal="20dp"
+            android:textColor="@color/ds_muted"
+            android:textSize="13sp"
+            tools:text="3 searches" />
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:fillViewport="true"
+            android:paddingBottom="16dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <!-- Today / Yesterday / Earlier sections, filled in code -->
+                <LinearLayout
+                    android:id="@+id/sections"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="6dp" />
+
+                <!-- empty -->
+                <LinearLayout
+                    android:id="@+id/emptyState"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="32dp"
+                    android:paddingTop="96dp"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <FrameLayout
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:background="@drawable/ds_circle_tint">
+
+                        <ImageView
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ds_ic_history"
+                            app:tint="@color/ds_primary" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:fontFamily="@font/figtree_bold"
+                        android:text="@string/ds_no_searches"
+                        android:textColor="@color/ds_ink"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:fontFamily="@font/figtree_regular"
+                        android:gravity="center"
+                        android:lineSpacingMultiplier="1.4"
+                        android:text="@string/ds_no_searches_sub"
+                        android:textColor="@color/ds_muted"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </FrameLayout>
+        </androidx.core.widget.NestedScrollView>
+
+        <View
+            android:id="@+id/adBannerDivider"
+            style="@style/AdDivider"
+            android:background="@color/ds_hairline12" />
+
+        <include layout="@layout/piece_bottom_banner" />
+
+    </LinearLayout>
+</layout>

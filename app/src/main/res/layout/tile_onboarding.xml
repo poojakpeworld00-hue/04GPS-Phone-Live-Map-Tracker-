@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    One onboarding page (design 2a): the hero illustration card (392dp at 780dp tall, ~66% of the
+    page, shrinking on short screens) and the copy under it. The scene layout for the page is
+    inflated into artContainer and brings its own rounded background.
+
+    The copy always gets its full height: the two sit in a packed chain where the card takes what
+    is left, up to its 66% / 392dp size. With the native ad on screen the page is much shorter, and
+    a card at a fixed 66% pushed the description under the page dots.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/artContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginHorizontal="16dp"
+        app:layout_constraintBottom_toTopOf="@id/copy"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_max="392dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <LinearLayout
+        android:id="@+id/copy"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="28dp"
+        android:paddingTop="28dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/artContainer">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            style="@style/Ds.Text.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingMultiplier="1.12"
+            tools:text="Find Any Phone" />
+
+        <TextView
+            android:id="@+id/tvDesc"
+            style="@style/Ds.Text.Body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            tools:text="Discover location information with a simple search." />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

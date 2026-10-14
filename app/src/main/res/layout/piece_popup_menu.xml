@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DsPopup card: r16 surface, hairline border, 6dp inset around the rows. Min width 224dp. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rows"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/ds_popup_card_r16"
+    android:minWidth="224dp"
+    android:orientation="vertical"
+    android:padding="6dp" />

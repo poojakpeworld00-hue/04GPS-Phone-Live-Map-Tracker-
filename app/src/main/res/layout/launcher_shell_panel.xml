@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+    The launcher module swipe-in panel (the home screen left drawer). It hosts the app's home
+    content (HomeCoreFragment, committed into panelContent by LauncherShellFragment) inside the
+    same DrawerLayout + 3e menu the standalone AppCoreActivity uses, so the panel behaves like
+    the main page. The holder is clickable so touches never fall through to the home grid.
+-->
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data />
+
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/panelDrawer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/ds_canvas">
+
+        <FrameLayout
+            android:id="@+id/panelHolder"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="true"
+            android:focusable="true">
+
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/panelContent"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:layout="@layout/fragment_home_core" />
+        </FrameLayout>
+
+        <!-- 3e: the same left drawer menu as the main page -->
+        <include
+            android:id="@+id/drawerMenu"
+            layout="@layout/piece_home_drawer"
+            android:layout_width="296dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="start" />
+
+    </androidx.drawerlayout.widget.DrawerLayout>
+</layout>

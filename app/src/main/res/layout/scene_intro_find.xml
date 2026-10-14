@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Onboarding A1 "Find Any Phone" (redesign): radar rings + pings, a floating phone mock showing
+     the real app search UI (gradient header, input, Search Location, recent list), plus the
+     dial chip, GPS-ready pill and search FAB. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/ds_hero_card_r32"
+    android:clipChildren="true"
+    android:clipToOutline="true"
+    tools:ignore="HardcodedText,ContentDescription,SpUsage">
+
+    <View
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_gravity="center"
+        android:background="@drawable/ds_ring_primary14" />
+
+    <View
+        android:layout_width="210dp"
+        android:layout_height="210dp"
+        android:layout_gravity="center"
+        android:background="@drawable/ds_ring_primary18" />
+
+    <com.find.my.phone.gps.location.tracker.ui.design.PingRingView
+        android:layout_width="340dp"
+        android:layout_height="340dp"
+        android:layout_gravity="center"
+        app:pingColor="@color/ds_cyan50"
+        app:pingDuration="2800"
+        app:pingStrokeWidth="2dp" />
+
+    <com.find.my.phone.gps.location.tracker.ui.design.PingRingView
+        android:layout_width="340dp"
+        android:layout_height="340dp"
+        android:layout_gravity="center"
+        app:pingColor="@color/ds_cyan50"
+        app:pingDelay="1400"
+        app:pingDuration="2800"
+        app:pingStrokeWidth="2dp" />
+
+    <!-- phone mock 158×300, floats; inner shows the app's search screen -->
+    <FrameLayout
+        android:id="@+id/obPhoneMock"
+        android:layout_width="158dp"
+        android:layout_height="300dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="30dp"
+        android:background="@drawable/ds_mock_frame_r30"
+        android:elevation="14dp"
+        android:outlineAmbientShadowColor="@color/ds_primary"
+        android:outlineSpotShadowColor="@color/ds_primary"
+        android:padding="6dp"
+        tools:targetApi="p">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/ds_mock_inner_r22"
+            android:clipChildren="true"
+            android:clipToOutline="true"
+            android:orientation="vertical">
+
+            <!-- gradient header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="114dp"
+                android:background="@drawable/ds_mock_header_grad"
+                android:orientation="vertical"
+                android:paddingHorizontal="10dp"
+                android:paddingTop="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="15dp"
+                        android:layout_height="15dp"
+                        android:background="@drawable/ds_tile_white20_r12"
+                        android:padding="3dp"
+                        android:src="@drawable/ds_ic_menu"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/nunito_extrabold"
+                        android:text="GPS Phone Tracker"
+                        android:textColor="@color/white"
+                        android:textSize="9sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/ds_pill_gold"
+                        android:fontFamily="@font/figtree_bold"
+                        android:paddingHorizontal="4dp"
+                        android:paddingVertical="1dp"
+                        android:text="PRO"
+                        android:textColor="#5A3A00"
+                        android:textSize="6sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="9dp"
+                    android:background="@drawable/ds_pill_white20"
+                    android:drawableStart="@drawable/ds_dot_success_mini"
+                    android:drawablePadding="3dp"
+                    android:fontFamily="@font/figtree_bold"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:text="GPS ready"
+                    android:textColor="@color/white"
+                    android:textSize="6sp" />
+
+                <TextView
+                    android:layout_width="90dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:fontFamily="@font/nunito_extrabold"
+                    android:lineSpacingMultiplier="1.05"
+                    android:text="Locate a phone number"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- input card overlapping the header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="8dp"
+                android:layout_marginTop="-16dp"
+                android:background="@drawable/ds_card_white_r12"
+                android:elevation="4dp"
+                android:orientation="vertical"
+                android:padding="7dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="26dp"
+                    android:background="@drawable/ds_input_outline_r8"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="6dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/ds_tile_gray2_r8"
+                        android:fontFamily="@font/figtree_bold"
+                        android:paddingHorizontal="3dp"
+                        android:text="US"
+                        android:textColor="@color/ds_ink2"
+                        android:textSize="6sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:fontFamily="@font/figtree_bold"
+                        android:text="+1"
+                        android:textColor="@color/ds_ink"
+                        android:textSize="8sp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/figtree_semibold"
+                        android:text="415 555 0134"
+                        android:textColor="@color/ds_ink"
+                        android:textSize="7.5sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="26dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/ds_btn_search_mini_r8"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="9dp"
+                        android:layout_height="9dp"
+                        android:src="@drawable/ds_ic_search_bold"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:fontFamily="@font/figtree_bold"
+                        android:text="Search Location"
+                        android:textColor="@color/white"
+                        android:textSize="7.5sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="8dp"
+                android:fontFamily="@font/figtree_bold"
+                android:text="Recent searches"
+                android:textColor="@color/ds_ink"
+                android:textSize="7.5sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="8dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/ds_recent_list_r10"
+                android:orientation="vertical"
+                android:padding="5dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingBottom="5dp">
+
+                    <ImageView
+                        android:layout_width="17dp"
+                        android:layout_height="17dp"
+                        android:background="@drawable/ds_tile_tint_r8"
+                        android:padding="4dp"
+                        android:src="@drawable/ds_ic_pin"
+                        app:tint="@color/ds_splash_blue" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/figtree_bold"
+                            android:text="+1 212 555 0198"
+                            android:textColor="@color/ds_ink"
+                            android:textSize="6.5sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/figtree_medium"
+                            android:text="United States · 2h ago"
+                            android:textColor="@color/ds_muted"
+                            android:textSize="5.5sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/ds_divider" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingTop="5dp">
+
+                    <ImageView
+                        android:layout_width="17dp"
+                        android:layout_height="17dp"
+                        android:background="@drawable/ds_tile_tint_r8"
+                        android:padding="4dp"
+                        android:src="@drawable/ds_ic_pin"
+                        app:tint="@color/ds_splash_blue" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/figtree_bold"
+                            android:text="+44 20 7946 0321"
+                            android:textColor="@color/ds_ink"
+                            android:textSize="6.5sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/figtree_medium"
+                            android:text="United Kingdom · Yesterday"
+                            android:textColor="@color/ds_muted"
+                            android:textSize="5.5sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- dial chip, left 12 top 84 -->
+    <LinearLayout
+        android:id="@+id/obChipDial"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="84dp"
+        android:background="@drawable/ds_card_white_r14"
+        android:elevation="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:outlineAmbientShadowColor="@color/ds_primary"
+        android:outlineSpotShadowColor="@color/ds_primary"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="8dp"
+        tools:targetApi="p">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ds_tile_gray2_r8"
+            android:fontFamily="@font/figtree_bold"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="1dp"
+            android:text="US"
+            android:textColor="@color/ds_ink2"
+            android:textSize="9sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:fontFamily="@font/figtree_bold"
+            android:text="+1"
+            android:textColor="@color/ds_splash_blue"
+            android:textSize="13sp" />
+
+        <ImageView
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_marginStart="4dp"
+            android:src="@drawable/ds_ic_chevron_down"
+            app:tint="@color/ds_muted" />
+    </LinearLayout>
+
+    <!-- GPS ready pill, right 16 bottom 18 -->
+    <LinearLayout
+        android:id="@+id/obChipGps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="18dp"
+        android:background="@drawable/ds_card_white_r14"
+        android:elevation="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:outlineAmbientShadowColor="@color/ds_primary"
+        android:outlineSpotShadowColor="@color/ds_primary"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        tools:targetApi="p">
+
+        <FrameLayout
+            android:layout_width="8dp"
+            android:layout_height="8dp">
+
+            <View
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:background="@drawable/ds_circle_success_glow" />
+
+            <View
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:background="@drawable/ds_circle_success" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:fontFamily="@font/figtree_bold"
+            android:text="GPS ready"
+            android:textColor="@color/ds_success"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- search FAB, left 40 bottom 46 -->
+    <FrameLayout
+        android:id="@+id/obSearchTile"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:layout_gravity="bottom|start"
+        android:layout_marginStart="40dp"
+        android:layout_marginBottom="46dp"
+        android:background="@drawable/ds_signal_tile_r18"
+        android:elevation="10dp"
+        android:outlineAmbientShadowColor="@color/ds_blue2"
+        android:outlineSpotShadowColor="@color/ds_blue2"
+        tools:targetApi="p">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:src="@drawable/ds_ic_search_bold" />
+    </FrameLayout>
+
+</FrameLayout>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Home (design 3a/3b/3e): the shared home content (fragment_home_core.xml, HomeCoreFragment)
+    inside a DrawerLayout whose left drawer is the 3e menu (piece_home_drawer.xml).
+-->
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data />
+
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/ds_canvas"
+        tools:context=".ui.AppCoreActivity">
+
+        <!-- the home content, shared with the launcher panel (see HomeCoreFragment) -->
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/homeContainer"
+            android:name="com.find.my.phone.gps.location.tracker.ui.home.HomeCoreFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:layout="@layout/fragment_home_core" />
+
+        <!-- 3e: the left drawer menu (Language, Theme, Rate us, Share, Privacy, Terms) -->
+        <include
+            android:id="@+id/drawerMenu"
+            layout="@layout/piece_home_drawer"
+            android:layout_width="296dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="start" />
+
+    </androidx.drawerlayout.widget.DrawerLayout>
+</layout>

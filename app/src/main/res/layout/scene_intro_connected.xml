@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Onboarding A4 "Stay Connected": four tool tiles orbiting the logo (spin 18s, tiles counter-spin). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/ds_radial_card_r32"
+    android:clipChildren="false"
+    android:clipToOutline="true">
+
+    <View
+        android:layout_width="320dp"
+        android:layout_height="320dp"
+        android:layout_gravity="center"
+        android:background="@drawable/ds_ring_primary10" />
+
+    <View
+        android:layout_width="236dp"
+        android:layout_height="236dp"
+        android:layout_gravity="center"
+        android:background="@drawable/ds_ring_dashed_primary30" />
+
+    <!-- the orbit: 236dp box, tiles centred on its four edges, so half of each tile sits outside
+         the box. The card above must keep clipChildren="false" or the tiles are cut at the box;
+         clipToOutline still keeps everything inside the card's rounded corners. -->
+    <FrameLayout
+        android:id="@+id/obOrbit"
+        android:layout_width="236dp"
+        android:layout_height="236dp"
+        android:layout_gravity="center"
+        android:clipChildren="false">
+
+        <FrameLayout
+            android:id="@+id/obTile1"
+            style="@style/Ds.OrbitTile"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginTop="-24dp">
+
+            <ImageView
+                style="@style/Ds.OrbitTileIcon"
+                android:src="@drawable/ds_ic_navigation"
+                app:tint="@color/ds_primary" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/obTile2"
+            style="@style/Ds.OrbitTile"
+            android:layout_gravity="end|center_vertical"
+            android:layout_marginEnd="-24dp">
+
+            <ImageView
+                style="@style/Ds.OrbitTileIcon"
+                android:src="@drawable/ds_ic_shield_check"
+                app:tint="@color/ds_success" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/obTile3"
+            style="@style/Ds.OrbitTile"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="-24dp">
+
+            <ImageView
+                style="@style/Ds.OrbitTileIcon"
+                android:src="@drawable/ds_ic_history"
+                app:tint="@color/ds_purple" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/obTile4"
+            style="@style/Ds.OrbitTile"
+            android:layout_gravity="start|center_vertical"
+            android:layout_marginStart="-24dp">
+
+            <ImageView
+                style="@style/Ds.OrbitTileIcon"
+                android:src="@drawable/ds_ic_wifi"
+                app:tint="@color/ds_cyan" />
+        </FrameLayout>
+    </FrameLayout>
+
+    <com.find.my.phone.gps.location.tracker.ui.design.PingRingView
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center"
+        app:pingColor="@color/ds_cyan45"
+        app:pingDuration="2600"
+        app:pingStrokeWidth="2dp" />
+
+    <FrameLayout
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_gravity="center"
+        android:background="@drawable/ds_signal_tile_r30"
+        android:elevation="14dp"
+        android:outlineAmbientShadowColor="@color/ds_blue2"
+        android:outlineSpotShadowColor="@color/ds_blue2"
+        tools:targetApi="p">
+
+        <ImageView
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:src="@drawable/ds_ic_pin" />
+    </FrameLayout>
+
+</FrameLayout>

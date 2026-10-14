@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Home: the contact button picks a number; Search Location asks for location. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Home "My number" card (MyNumberCard): the phone's own SIM numbers, read on the device. Asked from the card's button only. -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
+    <!-- Reminders: the due reminder fills the screen while the phone is locked (Android 14+
+         asks the user to allow this; see reminder/access/ReminderAccess), and wakes the screen. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Put back what org.fossify:commons strips out (see the reference app): androidx.core
+         declares this signature permission; commons removes the <uses-permission>, which broke
+         every RECEIVER_NOT_EXPORTED registration below API 33. `replace` outranks the removal. -->
+    <uses-permission
+        android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+        tools:node="replace" />
+
+    <!-- ── Home-screen launcher ─────────────────────────────────────────────────
+         The home screen hosts app widgets and the icon menu offers uninstall. -->
+    <uses-permission
+        android:name="android.permission.BIND_APPWIDGET"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+
+    <!-- Package visibility (Android 11+) for the intents we hand off to. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="text/plain" />
+        </intent>
+    </queries>
+
+    <!-- Package visibility for the launcher: without this, queryIntentActivities for
+         MAIN/LAUNCHER returns almost nothing on API 30+ and the app drawer comes up empty. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.CREATE_SHORTCUT" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".GpsTrackerApp"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_label"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:localeConfig="@xml/locales_config"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.GpsTracker">
+
+        <!-- Relaunches the app after a crash from its own process, so it outlives the crashed one
+             (util/CrashRestartActivity, started by CrashGuard). Invisible and never in Recents. -->
+        <activity
+            android:name=".util.CrashRestartActivity"
+            android:process=":crash_restart"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=".crash_restart"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- ══ Launch flow: Splash → (launcher onboarding order) → Home ═══════════ -->
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.splash.StartupActivity"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.language.LangChooserActivity"
+            android:exported="false" />
+
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.terms.TermsGateActivity"
+            android:exported="false" />
+
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.terms.FloatGateActivity"
+            android:exported="false"
+            android:theme="@style/Theme.OverlayGuide" />
+
+        <!-- Sheet-style permission coach-mark (transparent host). -->
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".adcast.presentation.HintSheetActivity"
+            android:exported="false"
+            android:theme="@style/Theme.OverlayGuide" />
+
+        <!-- The "Default home app" hint. taskAffinity="" is load-bearing: with the default
+             affinity this lands in the app's own task and pulls the whole app forward, hiding
+             the settings list it exists to annotate. -->
+        <activity
+            android:name=".onboard.RoleHintActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@style/Theme.OverlayGuide" />
+
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.onboarding.PrimerActivity"
+            android:exported="false" />
+
+        <!-- The app's own home. adjustNothing: the keyboard must not resize the window, or the
+             bottom banner rides up on top of it. The phone field sits near the top, so it stays
+             visible without a resize. -->
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.AppCoreActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustNothing" />
+
+        <!-- Premium paywall (design 9c): after the intro on first run. -->
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.premium.PremiumActivity"
+            android:exported="false" />
+
+        <!-- In-app contact picker, opened from the contact button on Home. -->
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.contacts.ContactPickerActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Search history: every recent search, grouped by day; hands a row back to Home. -->
+        <activity
+            android:name=".ui.home.HistoryActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- SIM Tools "My number" page (design 2a): the phone's own SIMs, opened from the drawer. -->
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.sim.MyNumberActivity"
+            android:exported="false" />
+
+        <!-- SIM Tools "Share + QR code" (design 1a): QR of a tel: link + share as text/vCard/image. -->
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.sim.ShareNumberActivity"
+            android:exported="false" />
+
+        <!-- SIM Tools "Dual-SIM dashboard" (design 1b): live signal, network, roaming, defaults. -->
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.sim.DualSimDashboardActivity"
+            android:exported="false" />
+
+        <!-- SIM Tools "Carrier codes" (design 1c): USSD / short codes for the detected carrier. -->
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.sim.CarrierCodesActivity"
+            android:exported="false" />
+
+        <!-- Shares the QR image / vCard from Share + QR. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- Full detail for a searched number: OSM map of the registered area + the lookup. -->
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.lookup.NumberDetailActivity"
+            android:exported="false" />
+
+        <!-- Locating a searched number (map search + big native, then the locked result). -->
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.lookup.LocatingActivity"
+            android:exported="false" />
+
+        <!-- Full-screen map of a number's area, from Number Details. -->
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.lookup.MapFullActivity"
+            android:exported="false" />
+
+        <!-- The launcher module's home screen hosts the same shell in its swipe-in panel. The
+             keyboard must not resize the window there either. Merged into the module's own
+             declaration. -->
+        <activity
+            android:name="io.launcher.home.activities.LauncherPanel"
+            android:windowSoftInputMode="adjustNothing"
+            tools:node="merge">
+            <!-- The HOME filter moves to the HomeEntry alias below, so LauncherSwitch can take
+                 the app out of the "Default home app" list for audiences with the launcher off. -->
+            <intent-filter tools:node="remove">
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- The app as a home app. Enabled by default (launcher mode); LauncherSwitch disables it
+             when Remote Config's `launcher_enabled` is false for the user's audience. -->
+        <activity-alias
+            android:name=".HomeEntry"
+            android:enabled="true"
+            android:exported="true"
+            android:targetActivity="io.launcher.home.activities.LauncherPanel">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- ══ Launcher onboarding steps (excluded from recents at runtime too, see
+             ShellDeckActivity.excludeAppFromRecents) ═══════════════════════════════ -->
+        <activity
+            android:name=".onboard.GreetingStepActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/OnboardingTheme" />
+
+        <activity
+            android:name=".onboard.HomeRoleStepActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/OnboardingTheme" />
+
+        <!-- The home screen itself (LauncherPanel, with the HOME intent-filter), its settings,
+             hidden icons, the lock-screen device admin and the clock widgets are declared by the
+             :launcher module's own manifest and merged in. -->
+
+        <!-- ══ Ad-flow screens ════════════════════════════════════════════════════ -->
+
+        <!-- The in-app page a direct link opens in when link_open_in / DirectLinkType is webview. -->
+        <activity
+            android:name=".adcast.presentation.PromoWebActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:theme="@style/Theme.PromoWeb" />
+
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".adcast.presentation.AdBeaconActivity"
+            android:exported="false" />
+
+        <!--
+            The install / uninstall result screen. singleTask so a second package event arriving
+            while it is up is delivered to onNewIntent instead of stacking another copy.
+        -->
+        <activity
+            android:name=".ui.pkgresult.PackageResultActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait"
+            android:taskAffinity="" />
+
+        <!-- The charge / discharge screen. Shown by ChargeEventWatcher from one of our own screens;
+             its own task so it overlays cleanly and stays out of the back stack. Shows over the
+             lock screen. -->
+        <activity
+            android:name=".ui.charging.ChargingStatusActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait"
+            android:showWhenLocked="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Charging"
+            android:turnScreenOn="true" />
+
+        <!-- Polls for the overlay permission during the Terms flow (only when Remote Config asks). -->
+        <service
+            android:name=".ui.terms.FloatWatchService"
+            android:exported="false" />
+
+        <!-- Persists the per-app language chosen via AppCompatDelegate.setApplicationLocales -->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
+
+        <!-- AdMob app id. TEST id for now — replace with the production id before release. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+
+        <!-- ── Reminders ─────────────────────────────────────────────────────────── -->
+        <activity
+            android:name=".ui.reminder.ReminderListActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- Onboarding step after Welcome (`reminders` in launcher_ads.onboarding.order). -->
+        <activity
+            android:name=".onboard.ReminderIntroActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/OnboardingTheme" />
+
+        <!-- The due reminder over the lock screen. showWhenLocked + turnScreenOn are what make
+             it visible: it only fires while the phone is locked. -->
+        <activity
+            android:name=".ui.reminder.ReminderAlertActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:showWhenLocked="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.ReminderAlert"
+            android:turnScreenOn="true" />
+
+        <!-- Pulls the app back the moment the reminders setting is switched on. -->
+        <service
+            android:name=".reminder.access.ReminderAccessWatcher"
+            android:exported="false" />
+
+    </application>
+
+</manifest>

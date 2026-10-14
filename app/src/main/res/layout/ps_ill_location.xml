@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Page 4 illustration (2d): a light street map with a dashed "approximate area" circle, a ping
+     and a gradient pin that drops in on a loop. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/ps_bg_ill_location">
+
+    <com.find.my.phone.gps.location.tracker.permission.sheet.MapStreetsView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <View
+        android:layout_width="46dp"
+        android:layout_height="34dp"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/ps_bg_map_block" />
+
+    <View
+        android:layout_width="58dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="128dp"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/ps_bg_map_block" />
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="44dp"
+        android:layout_marginStart="230dp"
+        android:layout_marginTop="18dp"
+        android:background="@drawable/ps_bg_map_block" />
+
+    <View
+        android:layout_width="52dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="130dp"
+        android:background="@drawable/ps_bg_map_block" />
+
+    <View
+        android:layout_width="62dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="220dp"
+        android:layout_marginTop="128dp"
+        android:background="@drawable/ps_bg_map_block" />
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="120dp"
+        android:layout_marginTop="140dp"
+        android:background="@drawable/ps_bg_map_block" />
+
+    <View
+        android:id="@+id/areaPing"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="27dp"
+        android:background="@drawable/ps_bg_area_ping" />
+
+    <View
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="27dp"
+        android:background="@drawable/ps_bg_area" />
+
+    <com.find.my.phone.gps.location.tracker.ui.design.PinShapeView
+        android:id="@+id/pin"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="40dp"
+        app:pinBorderColor="@android:color/white"
+        app:pinBorderWidth="3dp"
+        app:pinDotColor="@android:color/white"
+        app:pinDotSize="12dp"
+        app:pinEndColor="@color/ps_violet"
+        app:pinStartColor="@color/ps_primary" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="150dp"
+        android:background="@drawable/ps_bg_chip_card"
+        android:elevation="3dp"
+        android:fontFamily="@font/figtree_bold"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="4dp"
+        android:text="@string/ps_location_chip"
+        android:textColor="@color/ps_primary"
+        android:textSize="10.5sp" />
+</FrameLayout>

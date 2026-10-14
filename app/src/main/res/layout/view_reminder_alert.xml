@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A due reminder (reminders design 6, bottom-sheet version): a sheet rising over the dimmed lock
+     screen with the pulsing bell, title, note and number, then Call now / Open, Snooze and Done.
+     The mid native ad frame under the actions stays hidden while the phone is locked and loads
+     once it is unlocked (Play: no ads on the locked display). The snooze panel (design 7) slides
+     over it. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/alertRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#73000000">
+
+    <LinearLayout
+        android:id="@+id/alertSheet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@drawable/ds_reminder_sheet_bg"
+        android:clickable="true"
+        android:focusable="true"
+        android:orientation="vertical"
+        android:paddingHorizontal="18dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="22dp">
+
+        <View
+            android:layout_width="32dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/ps_bg_grabber" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <FrameLayout
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:clipChildren="false">
+
+                <View
+                    android:id="@+id/alertRing"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/ps_bg_ring_notif" />
+
+                <FrameLayout
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/ps_bg_gradient_oval">
+
+                    <ImageView
+                        android:id="@+id/alertBell"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ps_ic_bell" />
+                </FrameLayout>
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/alertTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:accessibilityLiveRegion="assertive"
+                    android:fontFamily="@font/nunito_extrabold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:textColor="@color/ds_ink"
+                    android:textSize="20sp"
+                    tools:text="Call back Rahul" />
+
+                <TextView
+                    android:id="@+id/alertNote"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="@font/figtree_regular"
+                    android:maxLines="3"
+                    android:ellipsize="end"
+                    android:textColor="@color/ds_muted"
+                    android:textSize="13sp"
+                    tools:text="Ask about the delivery address" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/alertNumber"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/ds_reminder_chip_gray"
+            android:drawablePadding="6dp"
+            android:fontFamily="@font/figtree_bold"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp"
+            android:textColor="@color/ds_ink"
+            android:textDirection="ltr"
+            android:textSize="14sp"
+            app:drawableStartCompat="@drawable/ds_ic_call"
+            app:drawableTint="@color/ds_ink"
+            tools:text="+91 98765 43210" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPrimary"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="14dp"
+            android:fontFamily="@font/figtree_bold"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textSize="15sp"
+            app:backgroundTint="@color/ds_success"
+            app:cornerRadius="16dp"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconTint="@android:color/white"
+            tools:icon="@drawable/ds_ic_call"
+            tools:text="Call now" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSecondary"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="5dp"
+                android:layout_weight="1"
+                android:fontFamily="@font/figtree_bold"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/rem_snooze"
+                android:textAllCaps="false"
+                android:textColor="@color/ds_ink"
+                android:textSize="15sp"
+                app:backgroundTint="@color/ds_gray_tile"
+                app:cornerRadius="16dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDone"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="5dp"
+                android:layout_weight="1"
+                android:fontFamily="@font/figtree_bold"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/rem_done"
+                android:textAllCaps="false"
+                android:textColor="@color/ds_ink"
+                android:textSize="15sp"
+                app:backgroundTint="@color/ds_gray_tile"
+                app:cornerRadius="16dp" />
+        </LinearLayout>
+
+        <!-- Mid native ad: only after unlock (see ReminderAlertActivity.loadAdIfUnlocked). -->
+        <FrameLayout
+            android:id="@+id/alertAdFrame"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+    </LinearLayout>
+
+    <!-- Snooze panel (design 7): scrim + card with the Remote Config choices. -->
+    <FrameLayout
+        android:id="@+id/snoozeOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#59000000"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        tools:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_margin="14dp"
+            android:background="@drawable/ds_reminder_dialog_bg"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/nunito_extrabold"
+                android:text="@string/rem_snooze_for"
+                android:textColor="@color/ds_ink"
+                android:textSize="19sp" />
+
+            <!-- Rows of two option tiles are added here by the activity. -->
+            <LinearLayout
+                android:id="@+id/snoozeOptions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:orientation="vertical" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSnoozeConfirm"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="6dp"
+                android:fontFamily="@font/figtree_bold"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/rem_snooze"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="15sp"
+                app:backgroundTint="@color/ds_primary"
+                app:cornerRadius="16dp" />
+        </LinearLayout>
+    </FrameLayout>
+</FrameLayout>

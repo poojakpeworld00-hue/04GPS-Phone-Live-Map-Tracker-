@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- ===== Brand / Material 3 tokens — Visual System v2 =====
+         Claude Design (CID03) green, imported from the design system's own
+         g-ramp (see colors_cid.xml). Verdict colors are fixed and never take
+         a "brand" role, so they are NOT part of this rebrand. Light values
+         here; dark overrides in values-night. -->
+    <color name="primary">@color/ds_primary</color>            <!-- Claude Design g-700 · seed -->
+    <color name="primary_dark">@color/ds_pressed</color>       <!-- Claude Design g-800 · pressed / status scrim -->
+    <color name="on_primary">#FFFFFFFF</color>
+    <color name="primary_container">@color/ds_tint</color>
+    <color name="on_primary_container">@color/ds_pressed</color>
+    <color name="accent">@color/ds_cyan</color>             <!-- verdict · identified -->
+    <color name="danger">@color/ds_danger</color>             <!-- verdict · spam -->
+    <color name="warn">@color/ds_warn</color>               <!-- verdict · suspicious -->
+
+    <color name="background">@color/ds_canvas</color>
+    <!-- Callback-screen aliases — point at semantic tokens so they flip light/dark automatically -->
+    <color name="bg">@color/background</color>
+    <color name="text_secondary">@color/on_surface_variant</color>
+    <color name="surface">@color/white</color>
+    <color name="surface_2">@color/ds_tint</color>          <!-- surfaceContainer -->
+    <color name="on_surface">@color/ds_ink</color>
+    <color name="on_surface_variant">@color/ds_muted</color>
+    <color name="outline">@color/ds_border</color>            <!-- outlineVariant -->
+    <color name="ad_divider">@color/ds_hairline12</color>       <!-- hairline between app content and ads -->
+
+    <!-- Overlay-permission guide card -->
+    <color name="card_bg_light">#FFFFFFFF</color>
+
+    <!-- Soft, surface-tinted elevation shadow (never pure black) — API 28+ -->
+    <color name="card_shadow">#330F1317</color>
+
+    <!-- Language screen: unselected radio ring (muted, distinct from body text) -->
+    <color name="radio_unselected">@color/ds_dot</color>
+
+    <!-- Verdict containers (Visual System) — fixed roles; dark variants in values-night -->
+    <color name="identified_container">#DDF2E7</color>
+    <color name="identified_on">#14663F</color>
+    <color name="spam_container">#FCEEEE</color>
+    <color name="spam_on">#A32626</color>
+    <color name="spam_avatar_bg">#F6D2D2</color>
+
+    <!-- Lookup -->
+    <color name="success">@color/ds_success</color>
+
+    <!-- Soft status-pill backgrounds (≈12% tint of their status color) -->
+    <color name="success_soft">#1F1E8E5A</color>
+    <color name="danger_soft">#1FD93B3B</color>
+    <color name="neutral_soft">#1F677381</color>
+    <color name="accent_purple">#5647DB</color>
+    <color name="accent_purple_soft">#1F5647DB</color>
+
+    <!-- Dark stat card (Call Details total duration) -->
+    <color name="online_green">#22C55E</color>
+    <color name="whatsapp_green">#25D366</color>
+
+    <!-- ===== Splash redesign (2026) — scoped to the splash so the app-wide
+         palette is untouched. Night overrides live in values-night/colors.xml,
+         so the hero gradient + card flip light/dark automatically.
+
+         The greens are sampled straight out of mipmap/ic_launcher.png so the splash
+         and the app icon are the same brand colour: #047439 (icon's darkest, bottom
+         right) → #15A73D (mid) → #37C747 (lightest, top right). ===== -->
+    <color name="splash_grad_start">#1F4BFF</color>
+    <color name="splash_grad_center">#3D63FF</color>
+    <color name="splash_grad_end">#4D70FF</color>
+    <color name="splash_accent">#0087CB</color>
+    <color name="splash_accent_2">#4D70FF</color>
+    <color name="splash_ring">#47FFFFFF</color>
+    <color name="splash_field_bg">#EDF4F7</color>
+    <color name="splash_field_text">#0D1718</color>
+    <color name="splash_card_bg">#FFFFFF</color>
+    <color name="splash_card_name">#0D1718</color>
+    <color name="splash_card_sub">#5B6971</color>
+    <color name="splash_chip_bg">#E6EEF2</color>
+    <color name="splash_chip_fg">#425D5D</color>
+    <color name="splash_verdict_container">#DDF2E7</color>
+    <color name="splash_verdict_on">#14663F</color>
+    <color name="splash_verified">#1E8E5A</color>
+    <!-- Phone illustration -->
+    <color name="splash_phone_bg">#FFFFFF</color>
+    <color name="splash_phone_stroke">#D7E5ED</color>
+    <color name="splash_content_line">#CCDFE9</color>
+    <color name="splash_notch">#BDD1DB</color>
+
+    <!-- ===== Splash "Caller Information" redesign (2026) — white-on-gradient
+         tokens shared by light & dark (both hero gradients are deep blue/purple,
+         so white content reads on both; only the gradient itself flips). ===== -->
+    <color name="splash_orbit">#73FFFFFF</color>          <!-- dashed orbit ring -->
+    <color name="splash_orb">#33FFFFFF</color>            <!-- ambient blurred orb core -->
+    <color name="splash_orb_edge">#00FFFFFF</color>       <!-- orb fade-out edge -->
+    <color name="splash_star">#E6FFFFFF</color>          <!-- twinkling star -->
+    <color name="splash_scan">#F2FFFFFF</color>          <!-- bright AI-scan arc -->
+    <color name="splash_scan_faint">#40FFFFFF</color>    <!-- faint scan ring track -->
+    <color name="splash_icon_tile_top">#FFFFFF</color>   <!-- app-icon tile gradient -->
+    <color name="splash_icon_tile_bottom">#DFEDF5</color>
+    <color name="splash_pill_bg">#F7FFFFFF</color>       <!-- white verdict pills -->
+    <color name="splash_pill_fg">#0D1718</color>
+    <color name="splash_incoming_dot">#D6EFDA</color>    <!-- dot behind incoming glyph -->
+    <color name="splash_incoming_icon">#046B32</color>
+    <color name="splash_fraud_fg">#A32626</color>        <!-- "Fraud blocked" text -->
+    <color name="splash_fraud_icon">#D93B3B</color>      <!-- circle-slash icon -->
+    <color name="splash_bar_bg">#40FFFFFF</color>        <!-- progress track -->
+    <color name="splash_bar_fill">#FFFFFF</color>
+    <color name="splash_footer">#B8FFFFFF</color>        <!-- ad + secure footer text -->
+    <color name="splash_tagline_on">#D9FFFFFF</color>
+
+    <!-- ===== FSI intro Activity (design: All Screen Light+Dark). Own palette
+         (#00897B / #0F172A / greens); theme-aware via values-night. The floating
+         caller-ID card itself stays white in both themes. ===== -->
+    <color name="fsi_bg_center">#DFF3F3</color>          <!-- radial bg, top-center -->
+    <color name="fsi_bg_edge">#F3F7F7</color>            <!-- radial bg, edge -->
+    <color name="fsi_blue">#0087CB</color>              <!-- FSI accent (both themes) -->
+    <color name="fsi_blue_2">#13AEE0</color>            <!-- avatar gradient end -->
+    <color name="fsi_title">#0D1718</color>
+    <color name="fsi_subtitle">#425D5D</color>
+    <color name="fsi_benefit_card">#FFFFFF</color>
+    <color name="fsi_benefit_border">#E6F1F1</color>
+    <color name="fsi_benefit_text">#0D1718</color>
+    <color name="fsi_benefit_divider">#E6F1F1</color>
+    <color name="fsi_not_now">#5C7171</color>
+    <color name="fsi_orbit_ring">#38007171</color>      <!-- expanding orbit rings -->
+    <color name="fsi_glow">#29007171</color>            <!-- ambient glow behind card -->
+    <color name="fsi_tile_blue">#C7EDED</color>
+    <color name="fsi_tile_red">#FCEEEE</color>
+    <color name="fsi_tile_green">#DDF2E7</color>
+    <color name="fsi_icon_blue">#007171</color>
+    <color name="fsi_icon_red">#D93B3B</color>
+    <color name="fsi_icon_green">#1E8E5A</color>
+
+    <!-- ===== Enable-Caller-ID bottom-sheet dialog (design: Enable Caller ID
+         Dialog). Reuses the FSI blue; only these extras are dialog-specific.
+         Dark overrides in values-night. ===== -->
+    <color name="cid_hint_bg">#E4F4F4</color>            <!-- "next step" hint strip -->
+    <color name="cid_shield_check">#FFFFFF</color>       <!-- checkmark stroke on the shield -->
+    <color name="cid_toggle_off">#BDD3D3</color>        <!-- demo toggle track, off state -->
+
+    <!-- ===== Home-screen launcher ===== -->
+
+
+    <color name="semitransparent_navigation">#33000000</color>
+
+    <color name="all_app_bg">#80000000</color>
+    <color name="all_app_search_bg">#33ffffff</color>
+    <color name="panel_search_fill">#19ffffff</color>
+    <color name="panel_search_stroke">#33ffffff</color>
+    <color name="panel_divider">#dabababa</color>
+
+    <!-- Onboarding palette, converted from the design's OKLCH values (Message Launcher design
+         project). A fixed light look, regardless of the user's chosen theme. -->
+    <!-- text drawn on top of the accent, e.g. the CTA label -->
+
+
+
+
+    <!-- Icon and hint on the white home screen search pill: Material's on-surface grey, dark
+         enough to read on white without the hard contrast of pure black. -->
+    <color name="pseudo_search_bar_foreground">#5F6368</color>
+</resources>

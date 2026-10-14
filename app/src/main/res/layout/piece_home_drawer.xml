@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Home left drawer (design 3e): a 296dp white sheet with 28dp right corners. Gradient header
+    with two faint rings, the app tile, name and version; then the menu: Language (with the
+    current value), Theme with a Light / Dark / System segment, Rate us, Share app, a hairline,
+    Privacy policy and Terms. Rows are 52dp with a 38dp r12 icon tile.
+-->
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data />
+
+    <FrameLayout
+        android:id="@+id/drawer"
+        android:layout_width="296dp"
+        android:layout_height="match_parent"
+        android:background="@drawable/ds_drawer_right_r28"
+        android:clickable="true"
+        android:clipToOutline="true"
+        android:elevation="16dp"
+        android:focusable="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <!-- header: padding 58 20 22 (the 58 = status bar + 22, set from insets) -->
+            <FrameLayout
+                android:id="@+id/drawerHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/ds_drawer_header_gradient"
+                android:clipChildren="true"
+                android:paddingStart="20dp"
+                android:paddingTop="58dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="22dp">
+
+                <View
+                    android:layout_width="180dp"
+                    android:layout_height="180dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="-40dp"
+                    android:layout_marginEnd="-50dp"
+                    android:background="@drawable/ds_ring_white22" />
+
+                <View
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginEnd="-10dp"
+                    android:background="@drawable/ds_ring_white22" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- The app's launcher icon, as an 18dp-rounded tile with a soft white ring. -->
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:contentDescription="@null"
+                        android:padding="1dp"
+                        android:scaleType="centerCrop"
+                        android:src="@mipmap/ic_launcher"
+                        app:shapeAppearanceOverlay="@style/DrawerAppIcon"
+                        app:strokeColor="@color/ds_white40"
+                        app:strokeWidth="2dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:fontFamily="@font/nunito_extrabold"
+                        android:letterSpacing="-0.02"
+                        android:text="@string/ds_app_short_name"
+                        android:textColor="@color/white"
+                        android:textSize="20sp" />
+
+                    <TextView
+                        android:id="@+id/tvVersion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/figtree_medium"
+                        android:textColor="@color/ds_white85"
+                        android:textSize="13sp"
+                        tools:text="Version 1.0.0" />
+
+                    <!-- "My number" card (design 1a): the phone's own SIMs, wired by MyNumberCard
+                         from HomeDrawerMenu. Hidden on a phone with no ready SIM. -->
+                    <include
+                        android:id="@+id/myNumber"
+                        layout="@layout/piece_my_number_card"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <!-- menu: padding 12 10, rows 52dp -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="12dp">
+
+                <LinearLayout
+                    android:id="@+id/rowLanguage"
+                    style="@style/Ds.DrawerRow">
+
+                    <FrameLayout
+                        style="@style/Ds.DrawerTile"
+                        android:background="@drawable/ds_tile_tint_r12">
+
+                        <ImageView
+                            style="@style/Ds.DrawerTileIcon"
+                            android:src="@drawable/ds_ic_globe"
+                            app:tint="@color/ds_primary" />
+                    </FrameLayout>
+
+                    <TextView
+                        style="@style/Ds.DrawerLabel"
+                        android:text="@string/ds_menu_language" />
+
+                    <TextView
+                        android:id="@+id/tvLanguageValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/figtree_medium"
+                        android:textColor="@color/ds_muted"
+                        android:textSize="13sp"
+                        tools:text="English" />
+                </LinearLayout>
+
+                <!-- Reminders (reminders design 1): shown when feature_config allows it here;
+                     the badge counts reminders still to fire. -->
+                <LinearLayout
+                    android:id="@+id/rowReminders"
+                    style="@style/Ds.DrawerRow"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <FrameLayout
+                        style="@style/Ds.DrawerTile"
+                        android:background="@drawable/ds_tile_purple_r12">
+
+                        <ImageView
+                            style="@style/Ds.DrawerTileIcon"
+                            android:src="@drawable/ps_ic_bell"
+                            app:tint="@color/ds_purple" />
+                    </FrameLayout>
+
+                    <TextView
+                        style="@style/Ds.DrawerLabel"
+                        android:text="@string/rem_menu" />
+
+                    <TextView
+                        android:id="@+id/tvRemindersCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/ds_reminder_chip_selected"
+                        android:fontFamily="@font/figtree_bold"
+                        android:minWidth="22dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp"
+                        android:textColor="@color/white"
+                        android:textSize="11sp"
+                        android:visibility="gone"
+                        tools:text="2"
+                        tools:visibility="visible" />
+                </LinearLayout>
+
+                <!-- theme block: label row, then the segmented control -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="10dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="10dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="38dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <FrameLayout
+                            style="@style/Ds.DrawerTile"
+                            android:background="@drawable/ds_tile_gray2_r12">
+
+                            <ImageView
+                                style="@style/Ds.DrawerTileIcon"
+                                android:src="@drawable/ds_ic_theme"
+                                app:tint="@color/ds_ink" />
+                        </FrameLayout>
+
+                        <TextView
+                            style="@style/Ds.DrawerLabel"
+                            android:text="@string/ds_menu_theme" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/themeSegment"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/ds_seg_track_r14"
+                        android:orientation="horizontal"
+                        android:padding="4dp">
+
+                        <TextView
+                            android:id="@+id/segLight"
+                            style="@style/Ds.DrawerSegment"
+                            android:layout_marginEnd="2dp"
+                            android:drawableStart="@drawable/ds_ic_sun"
+                            android:text="@string/ds_theme_light" />
+
+                        <TextView
+                            android:id="@+id/segDark"
+                            style="@style/Ds.DrawerSegment"
+                            android:layout_marginHorizontal="2dp"
+                            android:drawableStart="@drawable/ds_ic_moon"
+                            android:text="@string/ds_theme_dark" />
+
+                        <TextView
+                            android:id="@+id/segSystem"
+                            style="@style/Ds.DrawerSegment"
+                            android:layout_marginStart="2dp"
+                            android:drawableStart="@drawable/ds_ic_monitor"
+                            android:text="@string/ds_theme_system" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/rowRate"
+                    style="@style/Ds.DrawerRow">
+
+                    <FrameLayout
+                        style="@style/Ds.DrawerTile"
+                        android:background="@drawable/ds_tile_amber_r12">
+
+                        <ImageView
+                            style="@style/Ds.DrawerTileIcon"
+                            android:src="@drawable/ds_ic_star"
+                            app:tint="@color/ds_warn" />
+                    </FrameLayout>
+
+                    <TextView
+                        style="@style/Ds.DrawerLabel"
+                        android:text="@string/ds_menu_rate" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/rowShare"
+                    style="@style/Ds.DrawerRow">
+
+                    <FrameLayout
+                        style="@style/Ds.DrawerTile"
+                        android:background="@drawable/ds_tile_green_r12">
+
+                        <ImageView
+                            style="@style/Ds.DrawerTileIcon"
+                            android:src="@drawable/ds_ic_share"
+                            app:tint="@color/ds_success" />
+                    </FrameLayout>
+
+                    <TextView
+                        style="@style/Ds.DrawerLabel"
+                        android:text="@string/ds_menu_share" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginHorizontal="10dp"
+                    android:layout_marginVertical="8dp"
+                    android:background="@color/ds_divider" />
+
+                <LinearLayout
+                    android:id="@+id/rowPrivacy"
+                    style="@style/Ds.DrawerRow">
+
+                    <FrameLayout
+                        style="@style/Ds.DrawerTile"
+                        android:background="@drawable/ds_tile_purple_r12">
+
+                        <ImageView
+                            style="@style/Ds.DrawerTileIcon"
+                            android:src="@drawable/ds_ic_privacy"
+                            app:tint="@color/ds_purple" />
+                    </FrameLayout>
+
+                    <TextView
+                        style="@style/Ds.DrawerLabel"
+                        android:text="@string/ds_menu_privacy" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/rowTerms"
+                    style="@style/Ds.DrawerRow">
+
+                    <FrameLayout
+                        style="@style/Ds.DrawerTile"
+                        android:background="@drawable/ds_tile_gray_r12">
+
+                        <ImageView
+                            style="@style/Ds.DrawerTileIcon"
+                            android:src="@drawable/ds_ic_terms"
+                            app:tint="@color/ds_ink2" />
+                    </FrameLayout>
+
+                    <TextView
+                        style="@style/Ds.DrawerLabel"
+                        android:text="@string/ds_menu_terms" />
+                </LinearLayout>
+
+                <!-- Delete the phonebook this install uploaded. Hidden until the user has consented
+                     to the upload (HomeDrawerMenu). -->
+                <LinearLayout
+                    android:id="@+id/rowDeleteContacts"
+                    style="@style/Ds.DrawerRow"
+                    android:visibility="gone">
+
+                    <FrameLayout
+                        style="@style/Ds.DrawerTile"
+                        android:background="@drawable/ds_tile_gray_r12">
+
+                        <ImageView
+                            style="@style/Ds.DrawerTileIcon"
+                            android:src="@drawable/ds_ic_contacts"
+                            app:tint="@color/ds_ink2" />
+                    </FrameLayout>
+
+                    <TextView
+                        style="@style/Ds.DrawerLabel"
+                        android:text="@string/ds_menu_delete_contacts" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+</layout>

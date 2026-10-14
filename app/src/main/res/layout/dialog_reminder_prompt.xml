@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Get your reminders on time" (reminders design 4): pulsing bell, copy from Remote Config,
+     gradient button, "Maybe later". -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/ds_reminder_dialog_bg"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingHorizontal="22dp"
+    android:paddingTop="26dp"
+    android:paddingBottom="12dp">
+
+    <FrameLayout
+        android:layout_width="124dp"
+        android:layout_height="124dp"
+        android:clipChildren="false">
+
+        <View
+            android:id="@+id/promptRing2"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_gravity="center"
+            android:background="@drawable/ps_bg_ring_notif" />
+
+        <View
+            android:id="@+id/promptRing1"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_gravity="center"
+            android:background="@drawable/ps_bg_ring_notif" />
+
+        <FrameLayout
+            android:layout_width="78dp"
+            android:layout_height="78dp"
+            android:layout_gravity="center"
+            android:background="@drawable/ps_bg_gradient_oval"
+            android:elevation="6dp">
+
+            <ImageView
+                android:id="@+id/promptIcon"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_gravity="center"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ps_ic_bell" />
+        </FrameLayout>
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/promptTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:accessibilityHeading="true"
+        android:fontFamily="@font/nunito_extrabold"
+        android:gravity="center"
+        android:textColor="@color/ds_ink"
+        android:textSize="21sp"
+        tools:text="Get your reminders on time" />
+
+    <TextView
+        android:id="@+id/promptDesc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/figtree_regular"
+        android:gravity="center"
+        android:lineSpacingExtra="4dp"
+        android:textColor="@color/ds_muted"
+        android:textSize="14sp"
+        tools:text="Allow reminders so &quot;Call back Rahul&quot; reaches you at 6:30 PM, even when your phone is asleep." />
+
+    <FrameLayout
+        android:id="@+id/promptButton"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/ps_bg_btn_gradient"
+        android:foreground="?attr/selectableItemBackground">
+
+        <TextView
+            android:id="@+id/promptButtonLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/figtree_bold"
+            android:textColor="@android:color/white"
+            android:textSize="15sp"
+            tools:text="Turn on reminders" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/promptLater"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="?attr/selectableItemBackground"
+        android:fontFamily="@font/figtree_bold"
+        android:gravity="center"
+        android:text="@string/rem_prompt_later"
+        android:textColor="@color/ds_muted"
+        android:textSize="14sp" />
+</LinearLayout>

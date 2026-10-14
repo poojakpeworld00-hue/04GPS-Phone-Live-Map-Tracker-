@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Contact list (design 8a) and its permission state (8b). Top: the account filter chip with the
+    contact count, the tools and add buttons; the search field; the small native card; the
+    Favorites row; then the A–Z cards with the letter rail down the right edge.
+-->
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data />
+
+    <FrameLayout
+        android:id="@+id/contactsRoot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/ds_canvas"
+        tools:context=".ui.contacts.ContactPickerActivity">
+
+        <!-- ===== 8a ===== -->
+        <LinearLayout
+            android:id="@+id/listGroup"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <!-- account filter · tools · add -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="8dp">
+
+                <LinearLayout
+                    android:id="@+id/accountChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:background="@drawable/ds_chip_surface_r14"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp">
+
+                    <ImageView
+                        android:layout_width="17dp"
+                        android:layout_height="17dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ds_ic_contact_card"
+                        app:tint="@color/ds_primary" />
+
+                    <TextView
+                        android:id="@+id/tvAccount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:fontFamily="@font/figtree_bold"
+                        android:maxWidth="150dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@string/ds_contacts_all_accounts"
+                        android:textColor="@color/ds_ink"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/tvAccountCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/ds_pill_tint"
+                        android:fontFamily="@font/figtree_bold"
+                        android:paddingHorizontal="7dp"
+                        android:paddingVertical="2dp"
+                        android:textColor="@color/ds_pressed"
+                        android:textSize="11.5sp"
+                        tools:text="12" />
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_marginStart="8dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ds_ic_chevron_down"
+                        app:tint="@color/ds_muted" />
+                </LinearLayout>
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <FrameLayout
+                    android:id="@+id/btnTools"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/ds_tile_tint_r14"
+                    android:clickable="true"
+                    android:contentDescription="@string/ds_contacts_tools"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="19dp"
+                        android:layout_height="19dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ds_ic_grid"
+                        app:tint="@color/ds_pressed" />
+                </FrameLayout>
+
+            </LinearLayout>
+
+            <!-- search -->
+            <LinearLayout
+                android:id="@+id/searchBox"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/ds_search_field_r14"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ds_ic_search"
+                    app:tint="@color/ds_placeholder" />
+
+                <EditText
+                    android:id="@+id/searchInput"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="9dp"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:fontFamily="@font/figtree_semibold"
+                    android:hint="@string/ds_contacts_search_hint"
+                    android:imeOptions="actionSearch"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textColor="@color/ds_ink"
+                    android:textColorHint="@color/ds_placeholder"
+                    android:textSize="14sp" />
+
+                <ImageView
+                    android:id="@+id/btnClearSearch"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/ds_clear"
+                    android:padding="5dp"
+                    android:src="@drawable/ds_ic_close"
+                    android:visibility="gone"
+                    app:tint="@color/ds_placeholder"
+                    tools:visibility="visible" />
+            </LinearLayout>
+
+            <!-- small native ad card -->
+            <FrameLayout
+                android:id="@+id/adCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="10dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <FrameLayout
+                    android:id="@+id/adNativeFrame"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <com.facebook.shimmer.ShimmerFrameLayout
+                        android:id="@+id/adShimmer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="#ccc">
+
+                        <include layout="@layout/googlenativebanner" />
+                    </com.facebook.shimmer.ShimmerFrameLayout>
+                </FrameLayout>
+            </FrameLayout>
+
+            <!-- favorites -->
+            <LinearLayout
+                android:id="@+id/favoritesGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="20dp"
+                    android:paddingTop="14dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/figtree_bold"
+                        android:text="@string/ds_contacts_favorites"
+                        android:textColor="@color/ds_ink"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/tvFavoritesCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="7dp"
+                        android:background="@drawable/ds_pill_tint"
+                        android:fontFamily="@font/figtree_bold"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp"
+                        android:textColor="@color/ds_pressed"
+                        android:textSize="11.5sp"
+                        tools:text="4" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvFavorites"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipToPadding="false"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    tools:itemCount="4"
+                    tools:listitem="@layout/tile_contact_fav" />
+            </LinearLayout>
+
+            <!-- A–Z list, with the rail's 30dp gutter on the right -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvContacts"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:paddingStart="16dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="30dp"
+                    android:paddingBottom="24dp"
+                    android:scrollbars="none"
+                    tools:listitem="@layout/tile_contact_row" />
+
+                <ProgressBar
+                    android:id="@+id/pbLoading"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"
+                    android:indeterminateTint="@color/ds_primary"
+                    android:visibility="gone" />
+
+                <!-- no results -->
+                <LinearLayout
+                    android:id="@+id/emptyState"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="40dp"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <FrameLayout
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:background="@drawable/ds_circle_tint">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ds_ic_search"
+                            app:tint="@color/ds_primary" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tvEmpty"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="@font/figtree_bold"
+                        android:gravity="center"
+                        android:text="@string/ds_contacts_no_match"
+                        android:textColor="@color/ds_ink"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/tvEmptyBody"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="@font/figtree_medium"
+                        android:gravity="center"
+                        android:lineSpacingMultiplier="1.4"
+                        android:text="@string/ds_contacts_no_match_body"
+                        android:textColor="@color/ds_muted"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- letter rail: right 6dp, vertically centred over the list -->
+        <FrameLayout
+            android:id="@+id/railBox"
+            android:layout_width="24dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="end"
+            android:layout_marginEnd="6dp">
+
+            <LinearLayout
+                android:id="@+id/rail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center_horizontal"
+                android:orientation="vertical" />
+        </FrameLayout>
+
+        <!-- ===== 8b: permission state ===== -->
+        <LinearLayout
+            android:id="@+id/permissionState"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="14dp"
+                android:fontFamily="@font/nunito_extrabold"
+                android:letterSpacing="-0.02"
+                android:text="@string/ds_contacts_title"
+                android:textColor="@color/ds_ink"
+                android:textSize="24sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingHorizontal="32dp">
+
+                <FrameLayout
+                    android:layout_width="150dp"
+                    android:layout_height="150dp">
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/ds_ring_primary18" />
+
+                    <View
+                        android:layout_width="98dp"
+                        android:layout_height="98dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/ds_ring_primary22" />
+
+                    <FrameLayout
+                        android:layout_width="76dp"
+                        android:layout_height="76dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/ds_hero_tile_r24"
+                        android:elevation="12dp"
+                        android:outlineAmbientShadowColor="@color/ds_blue2"
+                        android:outlineSpotShadowColor="@color/ds_blue2"
+                        tools:targetApi="p">
+
+                        <ImageView
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ds_ic_person" />
+                    </FrameLayout>
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:fontFamily="@font/nunito_extrabold"
+                    android:gravity="center"
+                    android:letterSpacing="-0.02"
+                    android:lineSpacingMultiplier="1.2"
+                    android:text="@string/ds_contacts_perm_title"
+                    android:textColor="@color/ds_ink"
+                    android:textSize="22sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:fontFamily="@font/figtree_regular"
+                    android:gravity="center"
+                    android:lineSpacingMultiplier="1.45"
+                    android:text="@string/ds_contacts_perm_body"
+                    android:textColor="@color/ds_muted"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/btnAllow"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/ds_btn_primary_selector_r16"
+                    android:clickable="true"
+                    android:elevation="6dp"
+                    android:focusable="true"
+                    android:fontFamily="@font/figtree_bold"
+                    android:gravity="center"
+                    android:outlineAmbientShadowColor="@color/ds_primary"
+                    android:outlineSpotShadowColor="@color/ds_primary"
+                    android:text="@string/ds_contacts_allow"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    tools:targetApi="p" />
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+</layout>

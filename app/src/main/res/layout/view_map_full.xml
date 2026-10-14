@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Full view of a number's registered area (from Number Details: the header's Full view or the
+    Map action). An interactive OpenStreetMap edge to edge with back / place title on top, zoom
+    and recenter on the right, and a card at the bottom with the number, place, the "area, not
+    live position" note and Directions. The bottom banner docks under it.
+-->
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data />
+
+    <LinearLayout
+        android:id="@+id/mapRoot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/ds_canvas"
+        android:orientation="vertical"
+        tools:context=".ui.lookup.MapFullActivity">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@color/ds_map_bg">
+
+            <org.osmdroid.views.MapView
+                android:id="@+id/mapView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <!-- top bar -->
+            <LinearLayout
+                android:id="@+id/mapTopBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp"
+                android:paddingTop="6dp">
+
+                <ImageButton
+                    android:id="@+id/btnBack"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/ds_tile_white_r14_shadowless"
+                    android:contentDescription="@string/ds_cd_back"
+                    android:elevation="4dp"
+                    android:src="@drawable/ds_ic_back"
+                    app:tint="@color/ds_ink" />
+
+                <TextView
+                    android:id="@+id/tvTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/ds_title_pill_r14"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/nunito_extrabold"
+                    android:gravity="center_vertical"
+                    android:maxLines="1"
+                    android:paddingHorizontal="12dp"
+                    android:textColor="@color/ds_ink"
+                    android:textSize="17sp"
+                    tools:text="Surat, Gujarat" />
+            </LinearLayout>
+
+            <!-- zoom + recenter -->
+            <LinearLayout
+                android:id="@+id/mapControls"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginEnd="12dp"
+                android:orientation="vertical">
+
+                <ImageButton
+                    android:id="@+id/btnZoomIn"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/ds_tile_white_r14_shadowless"
+                    android:contentDescription="@string/ds_map_zoom_in"
+                    android:elevation="4dp"
+                    android:src="@drawable/ds_ic_plus"
+                    app:tint="@color/ds_ink" />
+
+                <ImageButton
+                    android:id="@+id/btnZoomOut"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/ds_tile_white_r14_shadowless"
+                    android:contentDescription="@string/ds_map_zoom_out"
+                    android:elevation="4dp"
+                    android:src="@drawable/ds_ic_minus"
+                    app:tint="@color/ds_ink" />
+
+                <ImageButton
+                    android:id="@+id/btnRecenter"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/ds_tile_white_r14_shadowless"
+                    android:contentDescription="@string/ds_map_recenter"
+                    android:elevation="4dp"
+                    android:src="@drawable/ds_ic_my_location"
+                    app:tint="@color/ds_primary" />
+            </LinearLayout>
+
+            <!-- place card -->
+            <LinearLayout
+                android:id="@+id/placeCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_margin="16dp"
+                android:background="@drawable/ds_card_white_r24"
+                android:elevation="8dp"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvIso"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/ds_btn_primary_r14"
+                        android:fontFamily="@font/figtree_bold"
+                        android:gravity="center"
+                        android:textColor="@color/white"
+                        android:textSize="15sp"
+                        tools:text="IN" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvNumber"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/figtree_bold"
+                            android:maxLines="1"
+                            android:textColor="@color/ds_ink"
+                            android:textSize="18sp"
+                            tools:text="+91 70460 24874" />
+
+                        <TextView
+                            android:id="@+id/tvPlace"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/figtree_medium"
+                            android:maxLines="2"
+                            android:textColor="@color/ds_muted"
+                            android:textSize="13sp"
+                            tools:text="Surat, Gujarat, India" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:fontFamily="@font/figtree_medium"
+                    android:text="@string/ds_area_note"
+                    android:textColor="@color/ds_muted"
+                    android:textSize="11sp" />
+
+                <FrameLayout
+                    android:id="@+id/btnDirections"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/ds_btn_primary_r14"
+                    android:foreground="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:drawablePadding="8dp"
+                        android:fontFamily="@font/figtree_bold"
+                        android:text="@string/ds_map_directions"
+                        android:textColor="@color/white"
+                        android:textSize="15sp"
+                        app:drawableStartCompat="@drawable/ds_ic_navigation"
+                        app:drawableTint="@color/white" />
+                </FrameLayout>
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- adaptive banner docked at the bottom, hairline above -->
+        <View
+            android:id="@+id/adBannerDivider"
+            style="@style/AdDivider"
+            android:layout_width="match_parent"
+            android:background="@color/ds_hairline12" />
+
+        <include layout="@layout/piece_bottom_banner" />
+    </LinearLayout>
+</layout>

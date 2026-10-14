@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Dark-theme overrides. Only the SEMANTIC tokens are redefined here; every
+    layout/drawable references these names, so the whole app flips light<->dark
+    automatically. Brand/literal colors (primary, on_primary, accent, danger,
+    warn, white, black) are intentionally NOT overridden — they stay defined
+    once in values/colors.xml and apply to both themes.
+
+    Surface/text tokens below delegate to colors_cid.xml's own night variants
+    (values-night/colors_cid.xml) via @color reference, so they track the
+    Claude Design's dark-mode g-ramp inversion automatically.
+-->
+<resources>
+    <!-- Surfaces & background — Claude Design (CID03) dark ramp -->
+    <color name="card_bg_light">#111B1B</color>
+
+    <!-- Soft elevation shadow on dark surfaces (brand-agnostic, unchanged) -->
+    <color name="card_shadow">#59000000</color>
+
+    <!-- Text / icons on surfaces -->
+
+    <!-- Lines & containers -->
+
+    <!-- Language screen: unselected radio ring (dark) -->
+
+    <!-- Verdict containers (dark) -->
+    <color name="identified_container">#143126</color>
+    <color name="identified_on">#7BD8A8</color>
+    <color name="spam_container">#2A1518</color>
+    <color name="spam_on">#F09A9A</color>
+    <color name="spam_avatar_bg">#47232A</color>
+
+    <!-- Lookup -->
+
+    <!-- Splash redesign dark overrides. Per Visual System, the hero gradient stays
+         a rich Sapphire→Violet even in dark (just deepened) — not near-black. -->
+    <color name="splash_grad_start">#022B42</color>
+    <color name="splash_grad_center">#064262</color>
+    <color name="splash_grad_end">#165D83</color>
+    <color name="splash_card_bg">#11181B</color>
+    <color name="splash_card_name">#EFF2F4</color>
+    <color name="splash_card_sub">#80919B</color>
+    <color name="splash_chip_bg">#192125</color>
+    <color name="splash_chip_fg">#80919B</color>
+    <color name="splash_verdict_container">#143126</color>
+    <color name="splash_verdict_on">#7BD8A8</color>
+    <!-- Phone illustration (dark) -->
+    <color name="splash_phone_bg">#141C20</color>
+    <color name="splash_phone_stroke">#29353C</color>
+    <color name="splash_content_line">#1F2B31</color>
+    <color name="splash_notch">#253035</color>
+
+    <!-- FSI intro Activity — dark (navy) variant of the design. -->
+    <color name="fsi_bg_center">#102F2F</color>
+    <color name="fsi_bg_edge">#0C1819</color>
+    <color name="fsi_title">#FFFFFF</color>
+    <color name="fsi_subtitle">#99FFFFFF</color>
+    <color name="fsi_benefit_card">#14FFFFFF</color>
+    <color name="fsi_benefit_border">#1AFFFFFF</color>
+    <color name="fsi_benefit_text">#D9FFFFFF</color>
+    <color name="fsi_benefit_divider">#12FFFFFF</color>
+    <color name="fsi_not_now">#80FFFFFF</color>
+    <color name="fsi_orbit_ring">#5A34B1B1</color>
+    <color name="fsi_glow">#47007171</color>
+    <color name="fsi_tile_blue">#2E007171</color>
+    <color name="fsi_tile_red">#29EF4444</color>
+    <color name="fsi_tile_green">#2922C55E</color>
+    <color name="fsi_icon_blue">#34B1B1</color>
+    <color name="fsi_icon_red">#F87171</color>
+    <color name="fsi_icon_green">#4ADE80</color>
+
+    <!-- Enable-Caller-ID dialog — dark variants. -->
+    <color name="cid_hint_bg">#24007171</color>         <!-- ~0.14 blue tint on dark -->
+    <color name="cid_shield_check">#090E0E</color>      <!-- dark checkmark on light-blue shield -->
+    <color name="cid_toggle_off">#374351</color>
+
+    <!-- ===== Semantic colours that need a dark-ground counterpart =====
+         Everything else in values/colors.xml is deliberately theme-independent:
+           · black / white and the *_soft alpha tints are literals;
+           · bg and text_secondary are aliases onto background / on_surface_variant,
+             which already flip here, so they inherit correctly;
+           · splash_* is fixed brand artwork — the splash looks the same in both themes;
+           · all_app_*, panel_* and semitransparent_navigation belong to the launcher,
+             which runs Theme.Material3.Dark over the wallpaper and is always dark;
+           · fsi_*, online_green and whatsapp_green are brand marks.
+         The ones below are the surface/semantic colours that genuinely lose contrast
+         when the ground inverts, so they are lightened here. -->
+    <color name="accent_purple">#9891FF</color>
+
+    <!-- 12%% tints: on a dark ground the light versions vanish, so they are mixed
+         against dark rather than against white -->
+    <color name="success_soft">#334FC08A</color>
+    <color name="danger_soft">#33FF6B6B</color>
+    <color name="neutral_soft">#338799A7</color>
+    <color name="accent_purple_soft">#339891FF</color>
+</resources>

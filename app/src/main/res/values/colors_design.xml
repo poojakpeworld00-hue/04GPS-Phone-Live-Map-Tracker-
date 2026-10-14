@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Design tokens from "GPS Tracker Design" (Claude Design). Generated: keep in step with the design. -->
+<resources>
+    <color name="ds_primary">#002EFE</color>
+    <color name="ds_pressed">#0024C8</color>
+    <color name="ds_signal">#4D70FF</color>
+    <color name="ds_tint">#E6EAFF</color>
+    <color name="ds_ink">#0B1B2B</color>
+    <color name="ds_ink2">#33434F</color>
+    <color name="ds_muted">#5B6971</color>
+    <color name="ds_canvas">#F4F8FB</color>
+    <color name="ds_night">#07182A</color>
+    <color name="ds_success">#1E8E5A</color>
+    <color name="ds_warn">#E5920A</color>
+    <color name="ds_danger">#D93B3B</color>
+    <color name="ds_ad_cta">#12B76A</color>
+    <color name="ds_blue2">#1F4BFF</color>
+    <color name="ds_cyan">#3D63FF</color>
+    <color name="ds_cyan2">#5C7DFF</color>
+    <color name="ds_cyan3">#7C97FF</color>
+    <color name="ds_border">#E3EAF0</color>
+    <color name="ds_border2">#E1EAF0</color>
+    <color name="ds_track">#DCE7EE</color>
+    <color name="ds_dot">#C9D6E0</color>
+    <color name="ds_gray_tile">#F1F6F9</color>
+    <color name="ds_gray_tile2">#EEF1F6</color>
+    <color name="ds_placeholder">#7B8A95</color>
+    <color name="ds_divider">#EEF2F5</color>
+    <color name="ds_field_divider">#D5E0E8</color>
+    <color name="ds_field_divider2">#DCE5EC</color>
+    <color name="ds_arrow_muted">#9AABB8</color>
+    <color name="ds_ad_tag_bg">#FEF3E2</color>
+    <color name="ds_ad_tag_fg">#8A4B00</color>
+    <color name="ds_ad_tag_border">#F5DDB0</color>
+    <color name="ds_phone_frame">#0B1320</color>
+    <color name="ds_dashed_ring">#9CC4DC</color>
+    <color name="ds_road">#E1ECF3</color>
+    <color name="ds_road2">#E7F0F5</color>
+    <color name="ds_map_bg">#E6F0F6</color>
+    <color name="ds_map_block">#D8E9DF</color>
+    <color name="ds_mock_bg">#EDF4F7</color>
+    <color name="ds_mock_bar">#BDD1DB</color>
+    <color name="ds_mock_line">#CCDFE9</color>
+    <color name="ds_mock_border">#D7E5ED</color>
+    <color name="ds_purple">#5647DB</color>
+    <color name="ds_purple_soft">#EEEBFD</color>
+    <color name="ds_green_soft">#E3F6EC</color>
+    <color name="ds_success_glow">#7EF0B5</color>
+    <color name="ds_hero_top">#E3F1FA</color>
+    <color name="ds_hero_bottom">#F7FBFD</color>
+    <color name="ds_radial_in">#E0F5F7</color>
+    <color name="ds_radial_out">#F4FAFD</color>
+    <color name="ds_page_bg">#E8EEF3</color>
+    <color name="ds_scrim50">#80061221</color>
+    <color name="ds_scrim70">#B3000000</color>
+    <color name="ds_scrim45">#73061221</color>
+    <color name="ds_hairline12">#1F000000</color>
+    <color name="ds_white14">#24FFFFFF</color>
+    <color name="ds_white16">#29FFFFFF</color>
+    <color name="ds_white20">#33FFFFFF</color>
+    <color name="ds_white22">#38FFFFFF</color>
+    <color name="ds_white25">#40FFFFFF</color>
+    <color name="ds_white30">#4DFFFFFF</color>
+    <color name="ds_white35">#59FFFFFF</color>
+    <color name="ds_white40">#66FFFFFF</color>
+    <color name="ds_white60">#99FFFFFF</color>
+    <color name="ds_white70">#B3FFFFFF</color>
+    <color name="ds_white90">#E6FFFFFF</color>
+    <color name="ds_white92">#EBFFFFFF</color>
+    <color name="ds_white07">#12FFFFFF</color>
+    <color name="ds_white10">#1AFFFFFF</color>
+    <color name="ds_primary06">#0F002EFE</color>
+    <color name="ds_primary07">#12002EFE</color>
+    <color name="ds_primary10">#1A002EFE</color>
+    <color name="ds_primary12">#1F002EFE</color>
+    <color name="ds_primary14">#24002EFE</color>
+    <color name="ds_primary15">#26002EFE</color>
+    <color name="ds_primary16">#29002EFE</color>
+    <color name="ds_primary18">#2E002EFE</color>
+    <color name="ds_primary20">#33002EFE</color>
+    <color name="ds_primary30">#4D002EFE</color>
+    <color name="ds_primary40">#66002EFE</color>
+    <color name="ds_cyan14">#243D63FF</color>
+    <color name="ds_cyan25">#403D63FF</color>
+    <color name="ds_cyan40">#663D63FF</color>
+    <color name="ds_cyan45">#733D63FF</color>
+    <color name="ds_cyan50">#803D63FF</color>
+    <color name="ds_cyan2_45">#735C7DFF</color>
+    <color name="ds_success12">#1F1E8E5A</color>
+    <!-- number detail: spam / unverified pills -->
+    <color name="ds_danger12">#1FD93B3B</color>
+    <color name="ds_warn12">#1FE5920A</color>
+    <!-- premium paywall (design 10a) -->
+    <color name="ds_gold_start">#FFD466</color>
+    <color name="ds_gold_end">#F5A524</color>
+    <color name="ds_gold_ink">#5A3A00</color>
+    <color name="ds_plan_selected">#F1F8FC</color>
+    <color name="ds_success18">#2E1E8E5A</color>
+    <!-- surfaces (cards, fields, sheets, the drawer): white in light, a step above the canvas in dark -->
+    <color name="ds_surface">#FFFFFF</color>
+    <color name="ds_card_glass">#EBFFFFFF</color>
+    <color name="ds_hint_row_bg">#F1F8FC</color>
+    <color name="ds_hint_row_border">#BFE0F0</color>
+    <!-- contact list (8a) avatar gradient ends -->
+    <color name="ds_green_light">#34C38F</color>
+    <color name="ds_purple_light">#8B7CF6</color>
+    <color name="ds_amber_light">#F5B942</color>
+    <color name="ds_red_light">#F06767</color>
+    <!-- Splash redesign (Map Light redesign): red map pin, blue→cyan progress, globe glow. -->
+    <color name="ds_pin_red_light">#FF6B6B</color>
+    <color name="ds_pin_red">#E5303A</color>
+    <color name="ds_pin_red_shadow">#73961E1E</color>
+    <color name="ds_ping_red_fill">#38E5303A</color>
+    <color name="ds_splash_blue">#0A6CFF</color>
+    <color name="ds_splash_cyan">#00B8D0</color>
+    <color name="ds_globe_glow">#7350AAFF</color>
+    <!-- Fixed (non-adapting) ink/muted for the white "My number" card that sits on the always-blue
+         drawer header — the theme ds_ink/ds_muted flip light in dark mode and would vanish there. -->
+    <color name="ds_ink_fixed">#0B1B2B</color>
+    <color name="ds_muted_fixed">#5B6971</color>
+    <!-- snackbar: ink bar in light, a raised dark surface at night -->
+    <color name="ds_snackbar_bg">#0B1B2B</color>
+    <!-- drawer menu (3e) -->
+    <color name="ds_amber_soft">#FEF3E2</color>
+    <color name="ds_white85">#D9FFFFFF</color>
+    <!-- search result (design 11a–11d) -->
+    <color name="ds_gold_soft">#FFF4DC</color>
+    <color name="ds_gold_soft_ink">#8A5A00</color>
+    <color name="ds_white90_surface">#E6FFFFFF</color>
+    <!-- search limit (design 9a / 9b) -->
+    <color name="ds_amber_ink">#B77400</color>
+    <!-- Onboarding step header ("STEP n OF m" pill + progress track): readable in both modes. -->
+    <color name="ds_step_pill_text">#0024C8</color>
+    <color name="ds_step_pill_bg">#E6EAFF</color>
+    <color name="ds_step_track">#DCE7EE</color>
+</resources>

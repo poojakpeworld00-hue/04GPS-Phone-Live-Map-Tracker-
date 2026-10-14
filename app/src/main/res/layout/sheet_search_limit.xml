@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Search limit reached (design 9b): the used ring ("3/3 used"), title and explanation, Watch Ad
+    · +1 search (rewarded), Go Premium · Unlimited (gold, shining), and the reset note with the
+    Rewarded ad tag.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/ds_sheet_top_r30"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingHorizontal="20dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="24dp">
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="5dp"
+        android:background="@drawable/ds_handle_r3" />
+
+    <FrameLayout
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_marginTop="18dp">
+
+        <com.find.my.phone.gps.location.tracker.ui.home.QuotaRingView
+            android:id="@+id/ring"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvUsed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/nunito_extrabold"
+                android:includeFontPadding="false"
+                android:textColor="@color/ds_ink"
+                android:textSize="24sp"
+                tools:text="3/3" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="@font/figtree_semibold"
+                android:text="@string/ds_limit_used"
+                android:textColor="@color/ds_muted"
+                android:textSize="10sp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:fontFamily="@font/nunito_extrabold"
+        android:gravity="center"
+        android:letterSpacing="-0.02"
+        android:text="@string/ds_limit_title"
+        android:textColor="@color/ds_ink"
+        android:textSize="22sp" />
+
+    <TextView
+        android:id="@+id/tvBody"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:fontFamily="@font/figtree_regular"
+        android:gravity="center"
+        android:lineSpacingMultiplier="1.2"
+        android:textColor="@color/ds_muted"
+        android:textSize="14sp"
+        tools:text="You've used today's 3 free searches. Watch a short ad for one more, or go Premium for unlimited searches." />
+
+    <FrameLayout
+        android:id="@+id/btnWatch"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/ds_btn_primary_selector_r18"
+        android:elevation="6dp">
+
+        <TextView
+            android:id="@+id/tvWatch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:drawablePadding="10dp"
+            android:fontFamily="@font/figtree_bold"
+            android:text="@string/ds_limit_watch"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            app:drawableStartCompat="@drawable/ds_ic_play"
+            app:drawableTint="@color/white" />
+
+        <ProgressBar
+            android:id="@+id/pbWatch"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/white"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/btnPremium"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/ds_btn_gold_r18"
+        android:elevation="6dp"
+        android:foreground="?attr/selectableItemBackground"
+        android:outlineSpotShadowColor="@color/ds_gold_end"
+        tools:targetApi="p">
+
+        <View
+            android:id="@+id/shine"
+            android:layout_width="26dp"
+            android:layout_height="match_parent"
+            android:alpha="0.9"
+            android:background="@drawable/ds_shine"
+            android:rotation="20"
+            android:scaleY="1.6" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:drawablePadding="8dp"
+            android:fontFamily="@font/figtree_bold"
+            android:text="@string/ds_limit_premium"
+            android:textColor="@color/ds_gold_ink"
+            android:textSize="16sp"
+            app:drawableStartCompat="@drawable/ds_ic_crown"
+            app:drawableTint="@color/ds_gold_ink" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:fontFamily="@font/figtree_medium"
+            android:text="@string/ds_limit_reset"
+            android:textColor="@color/ds_muted"
+            android:textSize="12sp" />
+    </LinearLayout>
+</LinearLayout>

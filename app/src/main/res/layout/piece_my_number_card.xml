@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Drawer "My number" card (design 1a, "SIMs visible"): a white card on the blue drawer header
+     with a "MY NUMBER" label; one row per SIM (tile_my_number_sim) once phone access is granted,
+     or a "Show" button that asks for it. Fixed white / dark colors so it reads on the blue header
+     in both light and dark mode. Wired by MyNumberCard. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/myNumberCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/ds_my_number_card_r16"
+    android:elevation="6dp"
+    android:orientation="vertical"
+    android:paddingHorizontal="12dp"
+    android:paddingVertical="10dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="@font/nunito_extrabold"
+            android:letterSpacing="0.12"
+            android:text="@string/my_number_title"
+            android:textAllCaps="true"
+            android:textColor="@color/ds_muted_fixed"
+            android:textSize="11sp" />
+
+        <!-- "Manage" opens the My number page (SIM Tools 2a); shown once the SIMs are visible. -->
+        <TextView
+            android:id="@+id/btnManage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:fontFamily="@font/figtree_bold"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="4dp"
+            android:text="@string/my_number_manage"
+            android:textColor="#0A6CFF"
+            android:textSize="11sp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/btnMyNumber"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/ds_btn_primary_selector_r12"
+            android:fontFamily="@font/figtree_bold"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="7dp"
+            android:text="@string/my_number_show"
+            android:textColor="@color/white"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- No-permission subtitle; hidden once the SIM rows show (set in MyNumberCard). -->
+    <TextView
+        android:id="@+id/tvMyNumberSub"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:fontFamily="@font/figtree_medium"
+        android:text="@string/my_number_sub"
+        android:textColor="@color/ds_muted_fixed"
+        android:textSize="12sp" />
+
+    <!-- One row per SIM (tile_my_number_sim), shown once phone access is granted. -->
+    <LinearLayout
+        android:id="@+id/simRows"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:divider="@drawable/ds_sim_row_divider"
+        android:orientation="vertical"
+        android:showDividers="middle"
+        android:visibility="gone"
+        tools:visibility="visible" />
+</LinearLayout>

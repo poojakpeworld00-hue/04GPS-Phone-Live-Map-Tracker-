@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    DEBUG ONLY. Exports the individual screens so QA can open any of them directly:
+
+        adb shell am start -n com.find.my.phone.gps.location.tracker/.ui.language.LangChooserActivity
+        adb shell am start -n com.find.my.phone.gps.location.tracker/.ui.onboarding.PrimerActivity
+        adb shell am start -n com.find.my.phone.gps.location.tracker/.onboard.GreetingStepActivity
+        adb shell am start -n com.find.my.phone.gps.location.tracker/.onboard.HomeRoleStepActivity
+        adb shell am start -n com.find.my.phone.gps.location.tracker/.ui.AppCoreActivity
+
+    Release builds keep every one of them exported="false" (see src/main/AndroidManifest.xml).
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <activity
+            android:name=".ui.language.LangChooserActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+        <activity
+            android:name=".ui.onboarding.PrimerActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+        <activity
+            android:name=".onboard.GreetingStepActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+        <activity
+            android:name=".onboard.HomeRoleStepActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+        <activity
+            android:name=".onboard.RoleHintActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+        <activity
+            android:name=".ui.premium.PremiumActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+        <activity
+            android:name=".ui.AppCoreActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+        <activity
+            android:name=".ui.contacts.ContactPickerActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+        <activity
+            android:name=".ui.home.HistoryActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+        <activity
+            android:name=".ui.lookup.MapFullActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+    </application>
+</manifest>

@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SIM Tools "Share + QR code" (design 1a): a QR of a tel: link for the SIM's number, a Send-as
+     selector (text / contact card / QR image) and Copy / Save QR / Share actions. -->
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/shareRoot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/ds_canvas"
+        tools:context=".ui.sim.ShareNumberActivity">
+
+        <LinearLayout
+            android:id="@+id/topBar"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/btnBack"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/ds_back"
+                android:padding="11dp"
+                android:src="@drawable/ds_ic_back"
+                app:tint="@color/ds_ink" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:fontFamily="@font/nunito_extrabold"
+                android:letterSpacing="-0.02"
+                android:text="@string/share_number_title"
+                android:textColor="@color/ds_ink"
+                android:textSize="22sp" />
+        </LinearLayout>
+
+        <ScrollView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:clipToPadding="false"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="24dp"
+            android:scrollbars="none"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/topBar">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- QR card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ds_card_border_r20"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <FrameLayout
+                        android:layout_width="220dp"
+                        android:layout_height="220dp"
+                        android:background="@drawable/ds_qr_frame_r16"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:id="@+id/imgQr"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:contentDescription="@string/share_number_qr_desc" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tvNumber"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="18dp"
+                        android:fontFamily="@font/nunito_extrabold"
+                        android:fontFeatureSettings="tnum"
+                        android:letterSpacing="-0.01"
+                        android:textColor="@color/ds_ink"
+                        android:textSize="22sp"
+                        tools:text="+91 79906 56044" />
+
+                    <TextView
+                        android:id="@+id/tvSubtitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="@font/figtree_medium"
+                        android:gravity="center"
+                        android:textColor="@color/ds_muted"
+                        android:textSize="13sp"
+                        tools:text="Scan to call or save · SIM 1 · Jio" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginTop="18dp"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="@font/nunito_extrabold"
+                    android:letterSpacing="0.12"
+                    android:text="@string/share_number_send_as"
+                    android:textAllCaps="true"
+                    android:textColor="@color/ds_muted"
+                    android:textSize="11sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ds_seg_track_r14"
+                    android:orientation="horizontal"
+                    android:padding="4dp">
+
+                    <TextView
+                        android:id="@+id/segText"
+                        style="@style/Ds.DrawerSegment"
+                        android:layout_marginEnd="2dp"
+                        android:text="@string/share_number_as_text" />
+
+                    <TextView
+                        android:id="@+id/segContact"
+                        style="@style/Ds.DrawerSegment"
+                        android:layout_marginHorizontal="2dp"
+                        android:text="@string/share_number_as_contact" />
+
+                    <TextView
+                        android:id="@+id/segQr"
+                        style="@style/Ds.DrawerSegment"
+                        android:layout_marginStart="2dp"
+                        android:text="@string/share_number_as_qr" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCopy"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="0dp"
+                        android:layout_height="52dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/figtree_bold"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minHeight="0dp"
+                        android:text="@string/my_number_copy_label"
+                        android:textAllCaps="false"
+                        android:textColor="@color/ds_ink"
+                        android:textSize="14sp"
+                        app:backgroundTint="@color/ds_gray_tile"
+                        app:cornerRadius="14dp"
+                        app:icon="@drawable/ds_ic_copy"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconSize="18dp"
+                        app:iconTint="@color/ds_ink" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSaveQr"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="0dp"
+                        android:layout_height="52dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/figtree_bold"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minHeight="0dp"
+                        android:text="@string/share_number_save_qr"
+                        android:textAllCaps="false"
+                        android:textColor="@color/ds_ink"
+                        android:textSize="14sp"
+                        app:backgroundTint="@color/ds_gray_tile"
+                        app:cornerRadius="14dp"
+                        app:icon="@drawable/ds_ic_download"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconSize="18dp"
+                        app:iconTint="@color/ds_ink" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnShare"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="@font/figtree_bold"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minHeight="0dp"
+                    android:text="@string/share_number_share"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    app:backgroundTint="@color/ds_primary"
+                    app:cornerRadius="18dp"
+                    app:icon="@drawable/ds_ic_share"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    app:iconSize="18dp"
+                    app:iconTint="@color/white" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:drawablePadding="8dp"
+                    android:fontFamily="@font/figtree_medium"
+                    android:lineSpacingMultiplier="1.35"
+                    android:paddingHorizontal="6dp"
+                    android:text="@string/share_number_note"
+                    android:textColor="@color/ds_muted"
+                    android:textSize="12sp"
+                    app:drawableStartCompat="@drawable/ds_ic_lock"
+                    app:drawableTint="@color/ds_primary" />
+            </LinearLayout>
+        </ScrollView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

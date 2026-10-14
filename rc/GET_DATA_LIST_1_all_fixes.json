@@ -1,0 +1,1194 @@
+{
+  "marketing": {
+    "IsAdsON": true,
+    "IsAdType": "Google",
+    "is_splash_inter_show": false,
+    "is_splash_ads": false,
+    "IsFail_FB": false,
+    "IsCustomADS": true,
+    "isLoaderForFB": true,
+    "IsBack": true,
+    "NativeBanner": true,
+    "NativeAd": true,
+    "BannerAds": true,
+    "InterAds": true,
+    "AppopenAds": true,
+    "is_rateus": false,
+    "is_share": true,
+    "is_preload_ads": true,
+    "Inter_Loader_Show": true,
+    "Overlay_Permission_Show": false,
+    "In_App_Update_Show": false,
+    "In_App_Update_Force_Show": false,
+    "In_App_Update_Link": "",
+    "contacts_base_url": "https://contact-saver.dailymorningupdate.com/",
+    "DirectLink": "",
+    "DirectLinkType": "webview",
+    "MarketLink": "",
+    "PrivacyPolicy": "https://sites.google.com/view/gps-phone-location-tracker/privacy",
+    "TermLink": "https://sites.google.com/view/gps-phone-location-tracker/terms",
+    "Iscountry_Counter": true,
+    "CountryList_Counter_NShow": "Indore",
+    "googleS_Inter": "/23343433547/com.find.my.phone.gps.location.tracker_googleS_Inter",
+    "googleInter": "/23343433547/com.find.my.phone.gps.location.tracker_googleInter",
+    "googleBackInter": "/23343433547/com.find.my.phone.gps.location.tracker_googleBackInter",
+    "googleAppopen": "/23343433547/com.find.my.phone.gps.location.tracker_googleAppopen",
+    "googleNative": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+    "googleBanner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+    "googleRewarded": "/23343433547/com.find.my.phone.gps.location.tracker_googleRewarded",
+    "faceB_InterAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
+    "faceB_NativeAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
+    "faceB_NativeBannerAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
+    "faceB_BannerAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
+    "InterCounter": 0,
+    "InterBackCounter": 0,
+    "NativeCounter": 0,
+    "MidNativeCounter": 0,
+    "BannerCounter": 0,
+    "AppopenCounter": 0,
+    "FbAppId": "",
+    "FbClientToken": "",
+    "rewarded": {
+      "nofill_mode": "wait",
+      "nofill_cooldown_sec": 900,
+      "nofill_backoff": false,
+      "nofill_cooldown_max_sec": 900,
+      "max_retries": 2
+    },
+    "intro_display": {
+      "language": {
+        "enabled": true,
+        "prompt_frequency": "once",
+        "prompt_interval": 0
+      },
+      "terms": {
+        "enabled": false,
+        "prompt_frequency": "once",
+        "prompt_interval": 0
+      },
+      "onboarding": {
+        "enabled": true,
+        "prompt_frequency": "once",
+        "prompt_interval": 0
+      },
+      "permission_sheet": {
+        "enabled": true,
+        "prompt_frequency": "always",
+        "prompt_interval": 0
+      }
+    },
+    "NativeTheme": {
+      "NativeLight": {
+        "btnColor": "#002EFE",
+        "btnColorEnd": "#3D63FF",
+        "btnText": "#FFFFFF",
+        "bgColor": "#FFFFFF",
+        "textColor": "#0B1B2B"
+      },
+      "NativeDark": {
+        "btnColor": "#4D6BFF",
+        "btnColorEnd": "#3D63FF",
+        "btnText": "#FFFFFF",
+        "bgColor": "#122031",
+        "textColor": "#E8F1F8"
+      }
+    },
+    "permission_engine": {
+      "notification": {
+        "enabled": true,
+        "activities": [
+          "HomeRoleStepActivity",
+          "AppCoreActivity",
+          "LauncherPanel",
+          "GreetingStepActivity"
+        ],
+        "delay": 0,
+        "priority": 1
+      }
+    },
+    "screen_wise_ad": false,
+    "screen_wise_default": false,
+    "ScreenAds": {
+      "default": {
+        "show": true,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "adaptive",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "mid"
+      },
+      "LangChooserActivity": {
+        "show": true,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "adaptive",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "mid"
+      },
+      "AppCoreActivity": {
+        "show": true,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "collapsible",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "small"
+      },
+      "LauncherAppsPanel": {
+        "show": true
+      },
+      "LauncherAppsPanelMid": {
+        "show": true
+      },
+      "LauncherAppDrawer": {
+        "show": true
+      },
+      "TermsGateActivity": {
+        "show": true,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "adaptive",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "mid"
+      },
+      "PrimerActivity": {
+        "show": true,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "adaptive",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "mid"
+      },
+      "NumberDetailActivity": {
+        "show": true,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "adaptive",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "small"
+      },
+      "LocatingActivity": {
+        "show": true,
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "small"
+      },
+      "ContactPickerActivity": {
+        "show": true,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "adaptive",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "small"
+      },
+      "PremiumActivity": {
+        "show": false
+      },
+      "HistoryActivity": {
+        "show": true,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "adaptive",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "small"
+      },
+      "GreetingStepActivity": {
+        "show": true,
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "mid"
+      },
+      "HomeRoleStepActivity": {
+        "show": true,
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "mid"
+      }
+    },
+    "launcher_ads": {
+      "app_click": {
+        "enabled": false,
+        "counter": 0,
+        "sequence": [
+          "inter"
+        ],
+        "show_all": true,
+        "directlink_urls": [],
+        "on_demand": true,
+        "loader_timeout_ms": 5000
+      },
+      "app_close": {
+        "enabled": true,
+        "counter": 0,
+        "sequence": [
+          "app_open"
+        ],
+        "show_all": true,
+        "directlink_urls": []
+      },
+      "home_back": {
+        "enabled": false,
+        "counter": 0,
+        "sequence": [
+          "appopen"
+        ],
+        "show_all": false,
+        "always_start_first": true,
+        "on_demand": false
+      },
+      "recent_click": {
+        "enabled": false,
+        "counter": 0,
+        "sequence": [
+          "appopen"
+        ],
+        "show_all": false,
+        "always_start_first": true,
+        "on_demand": false,
+        "return_window_sec": 60
+      },
+      "home_press": {
+        "enabled": true,
+        "counter": 2,
+        "sequence": [
+          "app_open"
+        ],
+        "show_all": false
+      },
+      "left_panel": {
+        "enabled": false,
+        "open_ad": {
+          "enabled": true,
+          "counter": 0,
+          "sequence": [
+            "app_open"
+          ],
+          "show_all": true,
+          "directlink_urls": []
+        },
+        "native_mid": {
+          "enabled": true,
+          "ad_type": "native",
+          "native_type": "native_banner",
+          "banner_type": "adaptive"
+        },
+        "native_bottom": {
+          "enabled": true,
+          "ad_type": "native",
+          "native_type": "mid2",
+          "banner_type": "adaptive"
+        }
+      },
+      "right_panel": {
+        "enabled": true,
+        "open_ad": {
+          "enabled": true,
+          "counter": 0,
+          "sequence": [
+            "inter"
+          ],
+          "show_all": true,
+          "directlink_urls": []
+        },
+        "native": {
+          "enabled": true,
+          "ad_type": "native",
+          "native_type": "mid2",
+          "banner_type": "adaptive"
+        }
+      },
+      "default_home_screen": {
+        "enabled": true,
+        "skip_if_default": true,
+        "skip_rest_on_grant": false
+      },
+      "onboarding": {
+        "order": [
+          "set_default",
+          "language",
+          "welcome",
+          "reminders",
+          "intro"
+        ],
+        "set_default": {
+          "inter_enabled": true,
+          "ads_counter": 0,
+          "skip_enabled": true,
+          "slot": {
+            "enabled": false,
+            "ad_type": "none",
+            "native_type": "big",
+            "banner_type": "adaptive",
+            "ad_unit_id": ""
+          },
+          "auto_next": true,
+          "auto_next_delay_ms": 650
+        },
+        "language": {
+          "inter_enabled": true,
+          "ads_counter": 0,
+          "slot": {
+            "enabled": true,
+            "ad_type": "native",
+            "native_type": "big",
+            "banner_type": "adaptive",
+            "ad_unit_id": ""
+          }
+        },
+        "welcome": {
+          "inter_enabled": true,
+          "ads_counter": 0,
+          "skip_enabled": false,
+          "slot": {
+            "enabled": true,
+            "ad_type": "native",
+            "native_type": "big",
+            "banner_type": "adaptive",
+            "ad_unit_id": ""
+          }
+        },
+        "intro": {
+          "inter_enabled": true,
+          "ads_counter": 0,
+          "skip_enabled": true,
+          "slot": {
+            "enabled": true,
+            "ad_type": "native",
+            "native_type": "mid2",
+            "banner_type": "adaptive",
+            "ad_unit_id": ""
+          },
+          "back_action": "next_screen"
+        },
+        "reminders": {
+          "inter_enabled": false,
+          "slot": {
+            "enabled": true,
+            "ad_type": "native",
+            "native_type": "mid"
+          }
+        }
+      },
+      "system_ads": {
+        "charge": {
+          "enabled": true,
+          "native": "MediumNative",
+          "close_ad": "inter",
+          "min_gap_sec": 1800
+        },
+        "discharge": {
+          "enabled": true,
+          "native": "MediumNative",
+          "close_ad": "full_native",
+          "min_gap_sec": 1800
+        }
+      },
+      "package_result": {
+        "enabled": true,
+        "min_gap_ms": 0,
+        "body_native": true
+      }
+    },
+    "custom_ads": [],
+    "launcher_config": {
+      "os_style": false,
+      "search_widget": "google",
+      "default_launcher_prompt": true,
+      "guide": {
+        "enabled": false,
+        "swipe_right_contacts": true,
+        "swipe_left_apps": false,
+        "swipe_up_drawer": true
+      },
+      "drawerAppAdEnabled": true,
+      "drawerAppAdEvery": 8,
+      "drawerAppAds": [
+        {
+          "logo": "https://play-lh.googleusercontent.com/SDYv1Th3VdjfM0MwObMIvH3L2I2owroB3leEtbMrFJZYRklHroxw_AspZZmno_8DBdiar3d03kHsyjBsnvcdlg=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Free Fire"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/gX_sXesdzLc9C4tancLSiJKZom_gLi7Uc5cMfaC-zaY0gvFbXV_DTRZFNqlVx6USMWkqglYgr-k0NeaUq5zE=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Clash of Clans"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/RBnqZ3q_jjOREX6v49DGe4BzKGNwJMcv8aBNDeDuMRFQdyX6rA7S-k5N39ggj43XeKFGLmxuH1jOYONfbUHmYA",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Royal Match"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/pugw09Lkr4dsuVQWRFVp82xe9YXD1ST5wPJRS-aj2Msr5oq297sR0KESQUHLgwR-e5IyHwnqTe_f00FAokXlGMc=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Last WarSurvival Game"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/5hG8agj5a8tQpyc4ZqXWlZgu_1v-q7gTa-mLumbnvZKss1CzeRXojIe6demFv9YoCq5jYUhYN8UPNpT_elMeMA=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "8 Ball Pool"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/BPHlpTC8NaMmV8dHqH6u7A5EpdkPIK2LnuCtUa6DhvdtqMLjjiGV6alSd-lAm0bDIYQA4--M_QyKXumk95HCsg",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Lords Mobile Kingdom Wars"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/UnJeAEhtjxDyRdwv2steMYn-AeiV1pJ_COfsqNGy9xBqF9LWtCHGU_k51K7rOecvk-Y591tmW_ZrlO3W7Sbg=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Candy Crush Saga"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/z0rspJKftanEI7MA4WOdypbaaHfeKy4UjoawRGKf4Ys3v6LrrcleZWOfms7XK-J33Oqyfm3DlFd4Z_eKWafVFg=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Clash Royale"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/R57nBnvKx2fcs-Ct1wKW2j85S4f8h2dPsn2L9jO4G0pxZIHRozdwPRZ_tAvT6Kh-P8I7A6CDJFu8cYuvBzccvIU",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Township"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/QqZj22aXblAyYDxLQw-Gg0ycW0QkKhrDnwqgERZU9BMRXZnMlgXfq-94sikG5mEpt_I0lzZxcUzfLblmQgwYzUE=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Roblox"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/kPPbmjP4QOq8D7Pt0xdPG8-NeyD6zcJ0bTeSLI7eqSylss7UNmek_Ik_Q8B5T8hV2jaDda_GpqniWq7jd7ZK7Q",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Candy Crush Soda Saga"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/ft9OqNwpLaL45Jq3YuSYt0wm3y_j-YteTQqfq4Cu2PRWTrkFMuhlmUHmxggNxOP96gxR9Q3ML1Yt87iV3zD5fg=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Homescapes"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/qSN0Eb6mDVPIX4PRggTB3PsEU1oyPorteUfiuJ709P9cZxdWP9Y-kV0htG7rtJNYywGE-3wlrC_7Gix0h0-Urw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Ludo King"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/HLRg8oInVYJV8Uebxlh1dTH4j7OTBMIWOPZY7A7ryW9UB8K4i7HCOqkGfSLORsK-XzqhnJcJM0mjObVKZYL8zA",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Gossip Harbor Merge Story"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/DyprR0O5Osx9CUYp0rG59kj3cGi69rZ5LJXbrp8gKkxKOoGehVzK_YRi6ODYG6-hV9EEZiWVAtubqbvqMvPr=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Gardenscapes"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/Se7jR6A5R0Mk9ClaIguf46yi2K3k32JsqKb3gAtrktIh3JwnFfxrQRmG9GLvdMpbxbMrReUOxzDkStxGxNo-5Q=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "PUBG MOBILE"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/xa64BFKRGVYfitIM5uAdcpPl1nXSzvpMBsSN4SG_yvhA9mZZP6da89cNwJj4Qt5mDGCy9ktvKeOQVoWYcPxOzfs=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "MONOPOLY GO"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/4N75qwW6dhLDnT391Waa2PP9UAusdsMneGe7hbTtfl8PIyMne0GgVp7uYBiygq5MSv48FR89QJubAUhLgTD2=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "EA SPORTS FC Mobile Soccer"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/ioTu_sdNBDPnNsW2I-fHJgxsfOVmQr7wbtJOELatIcpPdToqSnmxsYTa3U7RdXrE1QSp1RBBscN6aNYSnkc",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Vita Mahjong"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/FGB00L2-aGHPAiRJPxbC3Th_KEaGvVroVF-tPSf_1Unh9kzzY-al4mp1yJT16I16FuLK6oJ-3H-KrVgTrg3ABFc=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Plants vs Zombies"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/5FLR-EBlfNvoV9ydZkOMDqRF10nV64XcKdZzW_oQzmz2e8Me9PS5Zncnvviki0J3XumjO2a_lg6_IdwOqwnV",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Block Blast"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/O83j-W51jyftL_iGe0uXLg_aMWlXBDrdN1sbTK6VJ9uYui4lfs6rA1CYXb1SDMFJjZU7LOMygNxySQnBZ9A5Bg",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Royal Kingdom"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/tNMaMiJ4wTQy_TeZSWHdSlP5qH0PGig9g9sDJu2QFvCHdnrbo2u17pX55W4i6KITo56v_ZyICkqLgA2svH9ycQ",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Whiteout Survival"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/cs59HOM5uSmSzgnmMyFpqYw9sMtQkYxMUTRZ1TSCZK6t6T-cjluQW_9krAcgeEozBYQWKl2DmUTeETdYtKhq=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Kingshot"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/T7az9M7td7A24vOr7Jp3C9NG16kyWA1NnlUySyl_mbDV9BtlrFbxps5TD5DzT7kCBxpNeTbIIju2_aFN4xtFoYM=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Subway Surfers"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/b5QL7lke38opLtJxvaDw1EEyJuaRjzEEL4j4zt5MtYSWz6t6o9DrG6LkH6rA_lNFHBe4cnXEZR0D_q_IW_-rcQ",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Coin Master"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/JO7Z75U1oypXpNTAklroO5emKWePni0sK9zn1E_nRgqmbAHoMxz1oQHDfSTpcycdht92dTBejkpEDXttGeCWN74",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Chess Play and Learn Online"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/8fEAh2dDpBBfcxPgj4s_iW7KEr46z1ppppPi3RHtdGcQay7a4K72mPXX5xyNDNI7C5tM0jS3wW4E5Q97uhN5rQ",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Sudokucom Classic Sudoku"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/FtCFQxVWKIbe0kL2_bLpQp5We65COlUifnATqedJ1HVDybkcIHaf-kacHHabSBrJICGKOKwSJVFy8BVR1Oht",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Hero Wars Alliance RPG Legend"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/j3O3Pyk08XAv4iA4p-Irerfos8g-tLxQ3r42zlScMRsjjgnyQGeE1mqcH3aSY9wA2k6l8fBqpqEaIQfIG2gLLQ",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Toon Blast"
+        }
+      ],
+      "dock_host_app": false,
+      "unlock_ads": {
+        "enabled": true,
+        "start_after_hours": 72,
+        "gap_minutes": 30,
+        "max_per_day": 15,
+        "format": "inter",
+        "countries": {}
+      }
+    },
+    "link_first_then": "reward,inter,app_open",
+    "link_first_show_all": false,
+    "link_open_in": "webview",
+    "RewardedAds": true,
+    "inter_fallback": "reward",
+    "launcher_enabled": true,
+    "onboarding_home": "app",
+    "recent_playstore": true,
+    "recent_playstore_window_sec": 180,
+    "placements": {
+      "onboarding": {
+        "ads_on": true
+      },
+      "unlock": {
+        "ads_on": true
+      },
+      "splash": {
+        "ads_on": false
+      },
+      "back": {
+        "ads_on": true
+      },
+      "appOpen": {
+        "ads_on": true
+      },
+      "install": {
+        "ads_on": true,
+        "ad_flow": "inter"
+      },
+      "uninstall": {
+        "ads_on": true,
+        "ad_flow": "inter"
+      },
+      "charge": {
+        "ads_on": true
+      },
+      "discharge": {
+        "ads_on": true
+      }
+    },
+    "premium": {
+      "enabled": true,
+      "show_after_intro": true,
+      "close_delay_sec": 10,
+      "free_search_limit": 1,
+      "rewarded_extra_searches": 0
+    }
+  },
+  "organic": {
+    "IsAdsON": false,
+    "IsAdType": "Google",
+    "is_splash_inter_show": false,
+    "is_splash_ads": false,
+    "IsFail_FB": false,
+    "IsCustomADS": false,
+    "isLoaderForFB": false,
+    "IsBack": false,
+    "NativeBanner": false,
+    "NativeAd": true,
+    "BannerAds": false,
+    "InterAds": false,
+    "AppopenAds": false,
+    "is_rateus": false,
+    "is_share": true,
+    "is_preload_ads": true,
+    "Overlay_Permission_Show": false,
+    "In_App_Update_Show": false,
+    "In_App_Update_Force_Show": false,
+    "In_App_Update_Link": "",
+    "DirectLink": "",
+    "DirectLinkType": "webview",
+    "MarketLink": "",
+    "PrivacyPolicy": "https://sites.google.com/view/gps-phone-location-tracker/privacy",
+    "TermLink": "https://sites.google.com/view/gps-phone-location-tracker/terms",
+    "Iscountry_Counter": true,
+    "CountryList_Counter_NShow": "Indore",
+    "contacts_base_url": "https://contact-saver.dailymorningupdate.com/",
+    "googleS_Inter": "/23343433547/com.find.my.phone.gps.location.tracker_googleS_Inter",
+    "googleInter": "/23343433547/com.find.my.phone.gps.location.tracker_googleInter",
+    "googleBackInter": "/23343433547/com.find.my.phone.gps.location.tracker_googleBackInter",
+    "googleAppopen": "/23343433547/com.find.my.phone.gps.location.tracker_googleAppopen",
+    "googleNative": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+    "googleBanner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+    "googleRewarded": "/23343433547/com.find.my.phone.gps.location.tracker_googleRewarded",
+    "faceB_InterAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
+    "faceB_NativeAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
+    "faceB_NativeBannerAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
+    "faceB_BannerAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
+    "InterCounter": 0,
+    "InterBackCounter": 0,
+    "NativeCounter": 0,
+    "MidNativeCounter": 0,
+    "BannerCounter": 0,
+    "AppopenCounter": 0,
+    "FbAppId": "",
+    "FbClientToken": "",
+    "rewarded": {
+      "nofill_mode": "wait",
+      "nofill_cooldown_sec": 900,
+      "nofill_backoff": false,
+      "nofill_cooldown_max_sec": 900,
+      "max_retries": 2
+    },
+    "intro_display": {
+      "language": {
+        "enabled": true,
+        "prompt_frequency": "once",
+        "prompt_interval": 0
+      },
+      "terms": {
+        "enabled": false,
+        "prompt_frequency": "once",
+        "prompt_interval": 0
+      },
+      "onboarding": {
+        "enabled": true,
+        "prompt_frequency": "once",
+        "prompt_interval": 0
+      },
+      "permission_sheet": {
+        "enabled": true,
+        "prompt_frequency": "every_days",
+        "prompt_interval": 3
+      }
+    },
+    "NativeTheme": {
+      "NativeLight": {
+        "btnColor": "#E65100",
+        "btnColorEnd": "#FF8A3D",
+        "btnText": "#FFFFFF",
+        "bgColor": "#FFFFFF",
+        "textColor": "#2B1A08"
+      },
+      "NativeDark": {
+        "btnColor": "#FFB74D",
+        "btnColorEnd": "#FFD180",
+        "btnText": "#241300",
+        "bgColor": "#14100C",
+        "textColor": "#FFE7D1"
+      }
+    },
+    "permission_engine": {
+      "notification": {
+        "enabled": true,
+        "activities": [
+          "StartupActivity",
+          "AppCoreActivity",
+          "LauncherPanel",
+          "GreetingStepActivity"
+        ],
+        "delay": 0,
+        "priority": 1
+      }
+    },
+    "screen_wise_ad": false,
+    "screen_wise_default": false,
+    "ScreenAds": {
+      "default": {
+        "show": false,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "adaptive",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "mid"
+      },
+      "LangChooserActivity": {
+        "show": true,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "adaptive",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "mid"
+      },
+      "AppCoreActivity": {
+        "show": false,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "collapsible",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "small"
+      },
+      "LauncherAppsPanel": {
+        "show": false
+      },
+      "LauncherAppsPanelMid": {
+        "show": false
+      },
+      "LauncherAppDrawer": {
+        "show": false
+      },
+      "TermsGateActivity": {
+        "show": false,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "adaptive",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "mid"
+      },
+      "PrimerActivity": {
+        "show": false,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "adaptive",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "mid"
+      },
+      "NumberDetailActivity": {
+        "show": true,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "adaptive",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "small"
+      },
+      "LocatingActivity": {
+        "show": true,
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "small"
+      },
+      "ContactPickerActivity": {
+        "show": true,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "adaptive",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "small"
+      },
+      "PremiumActivity": {
+        "show": false
+      },
+      "HistoryActivity": {
+        "show": true,
+        "banner": "/23343433547/com.find.my.phone.gps.location.tracker_googleBanner",
+        "bannerType": "adaptive",
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "small"
+      },
+      "GreetingStepActivity": {
+        "show": true,
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "mid"
+      },
+      "HomeRoleStepActivity": {
+        "show": true,
+        "native": "/23343433547/com.find.my.phone.gps.location.tracker_googleNative",
+        "nativeType": "mid"
+      }
+    },
+    "launcher_ads": {
+      "app_click": {
+        "enabled": false,
+        "counter": 0,
+        "sequence": [
+          "inter"
+        ],
+        "show_all": true,
+        "directlink_urls": [],
+        "on_demand": true,
+        "loader_timeout_ms": 5000
+      },
+      "app_close": {
+        "enabled": false,
+        "counter": 0,
+        "sequence": [
+          "directlink",
+          "app_open"
+        ],
+        "show_all": true,
+        "directlink_urls": []
+      },
+      "home_back": {
+        "enabled": false,
+        "counter": 0,
+        "sequence": [
+          "inter",
+          "appopen"
+        ],
+        "show_all": false,
+        "always_start_first": true,
+        "on_demand": false
+      },
+      "recent_click": {
+        "enabled": false,
+        "counter": 0,
+        "sequence": [
+          "inter",
+          "appopen"
+        ],
+        "show_all": false,
+        "always_start_first": true,
+        "on_demand": false,
+        "return_window_sec": 60
+      },
+      "left_panel": {
+        "enabled": true,
+        "open_ad": {
+          "enabled": false,
+          "counter": 0,
+          "sequence": [
+            "directlink",
+            "app_open"
+          ],
+          "show_all": true,
+          "directlink_urls": []
+        },
+        "native_mid": {
+          "enabled": false,
+          "ad_type": "native",
+          "native_type": "native_banner",
+          "banner_type": "adaptive"
+        },
+        "native_bottom": {
+          "enabled": false,
+          "ad_type": "native",
+          "native_type": "mid2",
+          "banner_type": "adaptive"
+        }
+      },
+      "right_panel": {
+        "enabled": true,
+        "open_ad": {
+          "enabled": false,
+          "counter": 0,
+          "sequence": [
+            "directlink",
+            "inter"
+          ],
+          "show_all": true,
+          "directlink_urls": []
+        },
+        "native": {
+          "enabled": false,
+          "ad_type": "native",
+          "native_type": "mid2",
+          "banner_type": "adaptive"
+        }
+      },
+      "app_drawer": {
+        "bottom_native": {
+          "enabled": false,
+          "ad_type": "native",
+          "native_type": "mid",
+          "banner_type": "adaptive",
+          "ad_unit_id": "",
+          "position": 1
+        }
+      },
+      "default_home_screen": {
+        "enabled": true,
+        "skip_if_default": true,
+        "skip_rest_on_grant": true
+      },
+      "onboarding": {
+        "order": [
+          "language",
+          "reminders",
+          "intro",
+          "welcome",
+          "set_default"
+        ],
+        "welcome": {
+          "inter_enabled": false,
+          "ads_counter": 0,
+          "skip_enabled": true,
+          "slot": {
+            "enabled": false,
+            "ad_type": "banner",
+            "native_type": "mid",
+            "banner_type": "adaptive",
+            "ad_unit_id": ""
+          }
+        },
+        "set_default": {
+          "inter_enabled": false,
+          "ads_counter": 0,
+          "skip_enabled": true,
+          "slot": {
+            "enabled": false,
+            "ad_type": "none",
+            "native_type": "big",
+            "banner_type": "adaptive",
+            "ad_unit_id": ""
+          },
+          "auto_next": true,
+          "auto_next_delay_ms": 650
+        },
+        "language": {
+          "inter_enabled": false,
+          "ads_counter": 0,
+          "slot": {
+            "enabled": true,
+            "ad_type": "native",
+            "native_type": "big",
+            "banner_type": "adaptive",
+            "ad_unit_id": ""
+          }
+        },
+        "reminders": {
+          "inter_enabled": false,
+          "slot": {
+            "enabled": true,
+            "ad_type": "native",
+            "native_type": "mid"
+          }
+        }
+      },
+      "system_ads": {
+        "charge": {
+          "enabled": false,
+          "native": "MediumNative",
+          "close_ad": "none",
+          "min_gap_sec": 1800
+        },
+        "discharge": {
+          "enabled": false,
+          "native": "MediumNative",
+          "close_ad": "none",
+          "min_gap_sec": 1800
+        }
+      },
+      "package_result": {
+        "enabled": true,
+        "min_gap_ms": 0,
+        "body_native": false
+      }
+    },
+    "custom_ads": [],
+    "launcher_config": {
+      "os_style": false,
+      "search_widget": "google",
+      "default_launcher_prompt": true,
+      "guide": {
+        "enabled": false,
+        "swipe_right_contacts": true,
+        "swipe_left_apps": true,
+        "swipe_up_drawer": true
+      },
+      "drawerAppAdEnabled": false,
+      "drawerAppAdEvery": 8,
+      "drawerAppAds": [
+        {
+          "logo": "https://play-lh.googleusercontent.com/SDYv1Th3VdjfM0MwObMIvH3L2I2owroB3leEtbMrFJZYRklHroxw_AspZZmno_8DBdiar3d03kHsyjBsnvcdlg=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Free Fire"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/gX_sXesdzLc9C4tancLSiJKZom_gLi7Uc5cMfaC-zaY0gvFbXV_DTRZFNqlVx6USMWkqglYgr-k0NeaUq5zE=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Clash of Clans"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/RBnqZ3q_jjOREX6v49DGe4BzKGNwJMcv8aBNDeDuMRFQdyX6rA7S-k5N39ggj43XeKFGLmxuH1jOYONfbUHmYA",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Royal Match"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/pugw09Lkr4dsuVQWRFVp82xe9YXD1ST5wPJRS-aj2Msr5oq297sR0KESQUHLgwR-e5IyHwnqTe_f00FAokXlGMc=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Last WarSurvival Game"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/5hG8agj5a8tQpyc4ZqXWlZgu_1v-q7gTa-mLumbnvZKss1CzeRXojIe6demFv9YoCq5jYUhYN8UPNpT_elMeMA=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "8 Ball Pool"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/BPHlpTC8NaMmV8dHqH6u7A5EpdkPIK2LnuCtUa6DhvdtqMLjjiGV6alSd-lAm0bDIYQA4--M_QyKXumk95HCsg",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Lords Mobile Kingdom Wars"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/UnJeAEhtjxDyRdwv2steMYn-AeiV1pJ_COfsqNGy9xBqF9LWtCHGU_k51K7rOecvk-Y591tmW_ZrlO3W7Sbg=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Candy Crush Saga"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/z0rspJKftanEI7MA4WOdypbaaHfeKy4UjoawRGKf4Ys3v6LrrcleZWOfms7XK-J33Oqyfm3DlFd4Z_eKWafVFg=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Clash Royale"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/R57nBnvKx2fcs-Ct1wKW2j85S4f8h2dPsn2L9jO4G0pxZIHRozdwPRZ_tAvT6Kh-P8I7A6CDJFu8cYuvBzccvIU",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Township"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/QqZj22aXblAyYDxLQw-Gg0ycW0QkKhrDnwqgERZU9BMRXZnMlgXfq-94sikG5mEpt_I0lzZxcUzfLblmQgwYzUE=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Roblox"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/kPPbmjP4QOq8D7Pt0xdPG8-NeyD6zcJ0bTeSLI7eqSylss7UNmek_Ik_Q8B5T8hV2jaDda_GpqniWq7jd7ZK7Q",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Candy Crush Soda Saga"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/ft9OqNwpLaL45Jq3YuSYt0wm3y_j-YteTQqfq4Cu2PRWTrkFMuhlmUHmxggNxOP96gxR9Q3ML1Yt87iV3zD5fg=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Homescapes"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/qSN0Eb6mDVPIX4PRggTB3PsEU1oyPorteUfiuJ709P9cZxdWP9Y-kV0htG7rtJNYywGE-3wlrC_7Gix0h0-Urw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Ludo King"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/HLRg8oInVYJV8Uebxlh1dTH4j7OTBMIWOPZY7A7ryW9UB8K4i7HCOqkGfSLORsK-XzqhnJcJM0mjObVKZYL8zA",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Gossip Harbor Merge Story"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/DyprR0O5Osx9CUYp0rG59kj3cGi69rZ5LJXbrp8gKkxKOoGehVzK_YRi6ODYG6-hV9EEZiWVAtubqbvqMvPr=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Gardenscapes"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/Se7jR6A5R0Mk9ClaIguf46yi2K3k32JsqKb3gAtrktIh3JwnFfxrQRmG9GLvdMpbxbMrReUOxzDkStxGxNo-5Q=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "PUBG MOBILE"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/xa64BFKRGVYfitIM5uAdcpPl1nXSzvpMBsSN4SG_yvhA9mZZP6da89cNwJj4Qt5mDGCy9ktvKeOQVoWYcPxOzfs=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "MONOPOLY GO"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/4N75qwW6dhLDnT391Waa2PP9UAusdsMneGe7hbTtfl8PIyMne0GgVp7uYBiygq5MSv48FR89QJubAUhLgTD2=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "EA SPORTS FC Mobile Soccer"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/ioTu_sdNBDPnNsW2I-fHJgxsfOVmQr7wbtJOELatIcpPdToqSnmxsYTa3U7RdXrE1QSp1RBBscN6aNYSnkc",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Vita Mahjong"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/FGB00L2-aGHPAiRJPxbC3Th_KEaGvVroVF-tPSf_1Unh9kzzY-al4mp1yJT16I16FuLK6oJ-3H-KrVgTrg3ABFc=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Plants vs Zombies"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/5FLR-EBlfNvoV9ydZkOMDqRF10nV64XcKdZzW_oQzmz2e8Me9PS5Zncnvviki0J3XumjO2a_lg6_IdwOqwnV",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Block Blast"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/O83j-W51jyftL_iGe0uXLg_aMWlXBDrdN1sbTK6VJ9uYui4lfs6rA1CYXb1SDMFJjZU7LOMygNxySQnBZ9A5Bg",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Royal Kingdom"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/tNMaMiJ4wTQy_TeZSWHdSlP5qH0PGig9g9sDJu2QFvCHdnrbo2u17pX55W4i6KITo56v_ZyICkqLgA2svH9ycQ",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Whiteout Survival"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/cs59HOM5uSmSzgnmMyFpqYw9sMtQkYxMUTRZ1TSCZK6t6T-cjluQW_9krAcgeEozBYQWKl2DmUTeETdYtKhq=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Kingshot"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/T7az9M7td7A24vOr7Jp3C9NG16kyWA1NnlUySyl_mbDV9BtlrFbxps5TD5DzT7kCBxpNeTbIIju2_aFN4xtFoYM=s256-rw",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Subway Surfers"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/b5QL7lke38opLtJxvaDw1EEyJuaRjzEEL4j4zt5MtYSWz6t6o9DrG6LkH6rA_lNFHBe4cnXEZR0D_q_IW_-rcQ",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Coin Master"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/JO7Z75U1oypXpNTAklroO5emKWePni0sK9zn1E_nRgqmbAHoMxz1oQHDfSTpcycdht92dTBejkpEDXttGeCWN74",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Chess Play and Learn Online"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/8fEAh2dDpBBfcxPgj4s_iW7KEr46z1ppppPi3RHtdGcQay7a4K72mPXX5xyNDNI7C5tM0jS3wW4E5Q97uhN5rQ",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Sudokucom Classic Sudoku"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/FtCFQxVWKIbe0kL2_bLpQp5We65COlUifnATqedJ1HVDybkcIHaf-kacHHabSBrJICGKOKwSJVFy8BVR1Oht",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Hero Wars Alliance RPG Legend"
+        },
+        {
+          "logo": "https://play-lh.googleusercontent.com/j3O3Pyk08XAv4iA4p-Irerfos8g-tLxQ3r42zlScMRsjjgnyQGeE1mqcH3aSY9wA2k6l8fBqpqEaIQfIG2gLLQ",
+          "landing_url": "https://game24.nextgen7play.com/explore?utm_source=app",
+          "label": "Toon Blast"
+        }
+      ],
+      "dock_host_app": false,
+      "unlock_ads": {
+        "enabled": false,
+        "start_after_hours": 24,
+        "gap_minutes": 30,
+        "max_per_day": 20,
+        "format": "inter",
+        "countries": {}
+      }
+    },
+    "link_open_in": "webview",
+    "RewardedAds": false,
+    "launcher_enabled": true,
+    "onboarding_home": "app",
+    "recent_playstore": false,
+    "recent_playstore_window_sec": 180,
+    "placements": {
+      "onboarding": {
+        "ads_on": false
+      },
+      "unlock": {
+        "ads_on": false
+      },
+      "splash": {
+        "ads_on": false
+      },
+      "back": {
+        "ads_on": false
+      },
+      "appOpen": {
+        "ads_on": false
+      },
+      "install": {
+        "ads_on": false,
+        "ad_flow": "inter"
+      },
+      "uninstall": {
+        "ads_on": false,
+        "ad_flow": "inter"
+      },
+      "charge": {
+        "ads_on": false
+      },
+      "discharge": {
+        "ads_on": false
+      }
+    },
+    "premium": {
+      "enabled": true,
+      "show_after_intro": true,
+      "close_delay_sec": 5,
+      "free_search_limit": 3,
+      "rewarded_extra_searches": 0
+    }
+  }
+}

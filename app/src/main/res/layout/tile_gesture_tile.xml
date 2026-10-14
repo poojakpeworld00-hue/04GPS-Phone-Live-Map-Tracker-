@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    One gesture tile of the Welcome step (design 4a): r16 white card with a 34dp icon tile, the
+    gesture name and what it opens. Four sit in a row with an 8dp gap; the "Swipe right" tile is
+    the active one (gradient, white text), styled in GreetingStepActivity.bindTile.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/tileRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/ds_card_border_r16"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingHorizontal="4dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="10dp">
+
+    <FrameLayout
+        android:id="@+id/tileIconBox"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:background="@drawable/ds_tile_tint_r12">
+
+        <ImageView
+            android:id="@+id/tileIcon"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:src="@drawable/ds_ic_arrow_right"
+            app:tint="@color/ds_primary"
+            tools:rotation="-90" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tileTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/figtree_bold"
+        android:gravity="center"
+        android:maxLines="1"
+        android:textColor="@color/ds_ink"
+        android:textSize="12sp"
+        tools:text="Swipe up" />
+
+    <TextView
+        android:id="@+id/tileBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/figtree_medium"
+        android:gravity="center"
+        android:lineSpacingMultiplier="1.25"
+        android:maxLines="1"
+        android:textColor="@color/ds_muted"
+        android:textSize="11sp"
+        tools:text="All apps" />
+
+</LinearLayout>

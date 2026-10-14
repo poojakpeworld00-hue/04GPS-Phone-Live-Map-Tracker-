@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One quick action on the Number Details card (design 11c): 48dp r16 tile (tint, or primary
+     for the lead action) with the icon, 12sp bold label under it. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/actionRoot"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:id="@+id/iconBox"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/ds_tile_tint_r16">
+
+        <ImageView
+            android:id="@+id/ivIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            app:tint="@color/ds_primary"
+            tools:src="@drawable/ds_ic_call" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tvLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:fontFamily="@font/figtree_bold"
+        android:maxLines="1"
+        android:textColor="@color/ds_ink"
+        android:textSize="12sp"
+        tools:text="Call" />
+</LinearLayout>

@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Reminders list (reminders design 2): Upcoming / Done sections built in code, an empty state,
+     the floating "New reminder" button, and the bottom mid native ad. -->
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data />
+
+    <FrameLayout
+        android:id="@+id/remindersRoot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/ds_canvas"
+        tools:context=".ui.reminder.ReminderListActivity">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp">
+
+                <ImageView
+                    android:id="@+id/btnBack"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/ds_back"
+                    android:padding="11dp"
+                    android:src="@drawable/ds_ic_back"
+                    app:tint="@color/ds_ink" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:accessibilityHeading="true"
+                    android:fontFamily="@font/nunito_extrabold"
+                    android:letterSpacing="-0.02"
+                    android:text="@string/rem_title"
+                    android:textColor="@color/ds_ink"
+                    android:textSize="22sp" />
+            </LinearLayout>
+
+            <!-- The list area: cards, the empty state and the floating button (kept above the ad). -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <androidx.core.widget.NestedScrollView
+                    android:id="@+id/scroll"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:paddingBottom="96dp">
+
+                    <!-- Section labels and reminder cards are added here by the activity. -->
+                    <LinearLayout
+                        android:id="@+id/rvReminders"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="16dp" />
+                </androidx.core.widget.NestedScrollView>
+
+                <!-- Empty state: bell, title, body. -->
+                <LinearLayout
+                    android:id="@+id/emptyState"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="40dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="36dp"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <FrameLayout
+                        android:layout_width="88dp"
+                        android:layout_height="88dp"
+                        android:background="@drawable/ps_bg_gradient_oval">
+
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_gravity="center"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ps_ic_bell" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="18dp"
+                        android:fontFamily="@font/nunito_extrabold"
+                        android:text="@string/rem_empty_title"
+                        android:textColor="@color/ds_ink"
+                        android:textSize="20sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:fontFamily="@font/figtree_regular"
+                        android:gravity="center"
+                        android:lineSpacingExtra="3dp"
+                        android:text="@string/rem_empty_body"
+                        android:textColor="@color/ds_muted"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnNewReminder"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="56dp"
+                    android:layout_gravity="bottom|end"
+                    android:layout_marginHorizontal="18dp"
+                    android:layout_marginBottom="18dp"
+                    android:elevation="6dp"
+                    android:fontFamily="@font/figtree_bold"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingHorizontal="20dp"
+                    android:text="@string/rem_new"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="15sp"
+                    app:backgroundTint="@color/ds_primary"
+                    app:cornerRadius="18dp"
+                    app:icon="@drawable/ds_ic_plus"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    app:iconSize="20dp"
+                    app:iconTint="@color/white" />
+            </FrameLayout>
+
+            <!-- Bottom mid native ad (shimmer placeholder until it loads). -->
+            <View
+                android:id="@+id/ad_native_divider"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+
+            <FrameLayout
+                android:id="@+id/ad_native_frame"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/ds_surface">
+
+                <com.facebook.shimmer.ShimmerFrameLayout
+                    android:id="@+id/ad_shimmer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#ccc">
+
+                    <include layout="@layout/googlemidnative" />
+                </com.facebook.shimmer.ShimmerFrameLayout>
+            </FrameLayout>
+
+        </LinearLayout>
+
+    </FrameLayout>
+</layout>

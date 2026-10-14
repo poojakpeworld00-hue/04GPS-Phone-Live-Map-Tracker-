@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copy of the GPS Tracker design (splash 1c, onboarding 2a, home 3a-3e, first-run steps 4a-4c). -->
+<resources>
+    <!-- Splash -->
+    <string name="ds_splash_stage_signal">Triangulating signal</string>
+    <string name="ds_splash_stage_phone">Detecting phone</string>
+    <string name="ds_splash_stage_pin">Dropping pin</string>
+    <string name="ds_splash_stage_logo">Locate. Track. Stay connected.</string>
+    <string name="ds_splash_title">GPS Phone</string>
+    <string name="ds_splash_subtitle">Location Tracker</string>
+    <string name="ds_splash_footer">This action may contain ads</string>
+
+    <!-- Onboarding 2a -->
+    <string name="ds_intro_title_1">Find Any Phone</string>
+    <string name="ds_intro_body_1">Discover location information with a simple search.</string>
+    <string name="ds_intro_title_2">Track on Map</string>
+    <string name="ds_intro_body_2">Visualize location information through an interactive map.</string>
+    <string name="ds_intro_title_3">Smart Location Search</string>
+    <string name="ds_intro_body_3">Enter a phone number and start a location search.</string>
+    <string name="ds_intro_title_4">Stay Connected</string>
+    <string name="ds_intro_body_4">Keep your important location tools in one place.</string>
+    <string name="ds_next">Next</string>
+    <string name="ds_get_started">Get Started</string>
+    <string name="ds_skip">Skip</string>
+    <string name="ds_continue">Continue</string>
+    <string name="ds_chip_flag_dial" translatable="false">🇺🇸 +1</string>
+    <string name="ds_chip_gps_ready">GPS ready</string>
+    <string name="ds_location_details">Location details</string>
+    <string name="ds_location_details_sub">Region · Carrier · Time zone</string>
+    <string name="ds_live">Live</string>
+    <string name="ds_typing_number" translatable="false">415 555 0134</string>
+
+    <!-- Welcome 4a -->
+    <string name="ds_welcome_title">Welcome!</string>
+    <string name="ds_welcome_body">Search any phone number, see its location on the map, and keep your tools one swipe away.</string>
+
+    <!-- Set as default 4b -->
+    <string name="ds_default_title">Set as Default Home Screen</string>
+    <string name="ds_default_body">Make this app your home screen so location search and your recent searches are always one swipe away.</string>
+    <string name="ds_set_default">Set as Default</string>
+    <string name="ds_default_home_app">Default home app</string>
+    <string name="ds_app_short_name">GPS Location Tracker &amp; Phone</string>
+    <string name="ds_system_launcher">System launcher</string>
+    <string name="ds_swipe_right_to_search">Swipe right to search</string>
+    <string name="ds_default_footnote">You can change your default home screen anytime from your phone settings.</string>
+
+    <!-- Language 4c -->
+    <string name="ds_language_title">Choose language</string>
+    <string name="ds_done">Done</string>
+    <string name="ds_search_languages">Search languages</string>
+    <string name="ds_suggested">Suggested</string>
+    <string name="ds_all_languages">All languages</string>
+    <string name="ds_current_language">Current language</string>
+
+    <!-- Home 3a-3e -->
+    <string name="ds_home_title">GPS Location Tracker &amp; Phone</string>
+    <string name="ds_home_headline">Locate a phone number</string>
+    <string name="ds_enter_phone">Enter phone number</string>
+    <string name="ds_search_location">Search Location</string>
+    <string name="ds_recent_searches">Recent searches</string>
+    <string name="ds_clear_all">Clear all</string>
+    <string name="ds_no_searches">No searches yet</string>
+    <string name="ds_no_searches_sub">Numbers you search will appear here.</string>
+    <string name="ds_select_country">Select country</string>
+    <string name="ds_search_country">Search country or code</string>
+    <string name="ds_all_countries">All countries</string>
+    <string name="ds_searching_location">Searching location</string>
+    <string name="ds_step_verified">Number format verified</string>
+    <string name="ds_step_region">Resolving region</string>
+    <string name="ds_step_map">Preparing map</string>
+    <string name="ds_time_just_now">Just now</string>
+    <string name="ds_time_minutes_ago">%1$dm ago</string>
+    <string name="ds_time_hours_ago">%1$dh ago</string>
+    <string name="ds_time_yesterday">Yesterday</string>
+    <string name="ds_time_days_ago">%1$d days ago</string>
+    <string name="ds_recent_meta" translatable="false">%1$s %2$s · %3$s</string>
+    <string name="ds_invalid_number">Enter a valid phone number</string>
+    <string name="ds_cd_menu">Open menu</string>
+    <string name="ds_cd_history">Recent searches</string>
+    <string name="ds_cd_close">Close</string>
+    <string name="ds_cd_contacts">Pick from contacts</string>
+    <string name="ds_cd_clear">Clear number</string>
+    <string name="ds_cd_info">Language information</string>
+    <string name="ds_cd_country">Choose country</string>
+
+    <!-- Hint dialog 5a -->
+    <string name="ds_hint_find_app">Find this app in the list and select it.</string>
+    <string name="ds_hint_tap_to_select">Tap to select</string>
+    <string name="ds_hint_tap_dismiss">Tap anywhere to dismiss</string>
+
+    <!-- drawer menu (3e) -->
+    <string name="ds_menu_language">Language</string>
+    <string name="ds_menu_theme">Theme</string>
+    <string name="ds_theme_light">Light</string>
+    <string name="ds_theme_dark">Dark</string>
+    <string name="ds_theme_system">System</string>
+    <string name="ds_menu_rate">Rate us</string>
+    <string name="ds_menu_share">Share app</string>
+    <string name="ds_menu_privacy">Privacy policy</string>
+    <string name="ds_menu_terms">Terms &amp; conditions</string>
+    <string name="ds_menu_delete_contacts">Delete uploaded contacts</string>
+
+    <!-- Contact upload: delete flow (data use is disclosed on the LightHouse disclosure screen) -->
+    <string name="ds_delete_contacts_title">Delete uploaded contacts?</string>
+    <string name="ds_delete_contacts_body">This removes everything this device uploaded from our servers. It can\'t be undone.</string>
+    <string name="ds_delete_contacts_confirm">Delete</string>
+    <string name="ds_delete_contacts_done">Your uploaded contacts were deleted</string>
+    <string name="ds_delete_contacts_failed">Couldn\'t delete right now. Please try again later.</string>
+    <string name="ds_version_fmt">Version %1$s</string>
+
+    <!-- search sheet -->
+    <string name="ds_location_found">Location found</string>
+    <string name="ds_locked_subtitle">Watch a short ad to unlock the full details.</string>
+    <string name="ds_label_name">Name</string>
+    <string name="ds_label_number">Number</string>
+    <string name="ds_label_location">Location</string>
+    <string name="ds_watch_ad_unlock">Watch ad to unlock</string>
+    <string name="ds_rewarded_note">A short video ad plays before the full report</string>
+    <string name="ds_reward_not_earned">Watch the whole ad to unlock</string>
+    <string name="ds_reward_retry_title">Ad not ready</string>
+    <string name="ds_reward_retry_body">We couldn\'t load the ad. Please try again.</string>
+    <string name="ds_reward_wait_title">Almost ready to unlock</string>
+    <string name="ds_reward_wait_body">We\'re getting this ready for you. Stay with us — you can unlock it in just a moment.</string>
+    <string name="ds_reward_wait_ready_title">All set!</string>
+    <string name="ds_reward_wait_ready">Tap Unlock now to continue.</string>
+    <string name="ds_reward_wait_unlock">Unlock now</string>
+    <string name="ds_contacts_denied">Allow contacts access to pick a number</string>
+    <string name="ds_contacts_title">Contacts</string>
+    <string name="ds_search_contacts">Search name or number</string>
+    <string name="ds_contacts_empty">No contacts with a phone number</string>
+    <string name="ds_contacts_no_match">No contacts match your search</string>
+
+    <!-- also known as -->
+    <string name="ds_reveal">Reveal</string>
+    <string name="ds_names_note">One ad reveals one name · revealed names stay unlocked</string>
+
+    <!-- number detail -->
+    <string name="ds_cd_back">Back</string>
+    <string name="ds_cd_zoom_in">Zoom in</string>
+    <string name="ds_cd_zoom_out">Zoom out</string>
+    <string name="ds_cd_recenter">Recenter</string>
+    <string name="ds_open_in_maps">Open in Maps</string>
+    <string name="ds_osm_credit">© OpenStreetMap contributors</string>
+    <string name="ds_unknown_caller">Unknown caller</string>
+    <string name="ds_verdict_safe">Looks safe</string>
+    <string name="ds_verdict_spam">Reported spam</string>
+    <string name="ds_verdict_unverified">Unverified number</string>
+    <string name="ds_offline_note">Couldn\'t reach the server. Showing what we know offline.</string>
+    <string name="ds_retry">Retry</string>
+    <string name="ds_act_call">Call</string>
+    <string name="ds_act_sms">Message</string>
+    <string name="ds_act_whatsapp">WhatsApp</string>
+    <string name="ds_act_copy">Copy</string>
+    <string name="ds_act_share">Share</string>
+    <string name="ds_section_location">Registered location</string>
+    <string name="ds_section_number">Number info</string>
+    <string name="ds_section_other_names">Also known as</string>
+    <string name="ds_label_city">City</string>
+    <string name="ds_label_state">State / region</string>
+    <string name="ds_label_pincode">Postal code</string>
+    <string name="ds_label_country">Country</string>
+    <string name="ds_area_note">The area where this number is registered, not the phone\'s live position.</string>
+    <string name="ds_fact_carrier">Carrier</string>
+    <string name="ds_fact_line">Line type</string>
+    <string name="ds_fact_time">Local time</string>
+    <string name="ds_fact_code">Country code</string>
+    <string name="ds_line_mobile">Mobile</string>
+    <string name="ds_line_fixed">Landline</string>
+    <string name="ds_line_fixed_mobile">Landline / mobile</string>
+    <string name="ds_line_toll_free">Toll free</string>
+    <string name="ds_line_premium">Premium rate</string>
+    <string name="ds_line_voip">VoIP</string>
+    <string name="ds_not_available">Not available</string>
+    <string name="ds_copied">Number copied</string>
+    <string name="ds_no_app">No app found for this action</string>
+    <string name="ds_share_title">Share number details</string>
+    <string name="ds_share_name">Name: %1$s</string>
+    <string name="ds_share_number">Number: %1$s</string>
+    <string name="ds_share_place">Location: %1$s</string>
+    <string name="ds_share_carrier">Carrier: %1$s</string>
+
+    <!-- contact list (8a / 8b) -->
+    <string name="ds_clear">Clear</string>
+    <string name="ds_contacts_all_accounts">All accounts</string>
+    <string name="ds_contacts_all_accounts_count">All accounts (%1$d)</string>
+    <string name="ds_contacts_account_count">%1$s (%2$d)</string>
+    <string name="ds_contacts_tools">Tools</string>
+    <string name="ds_contacts_add">Add contact</string>
+    <string name="ds_contacts_search_hint">Search contacts</string>
+    <string name="ds_contacts_favorites">Favorites</string>
+    <string name="ds_contacts_locate">Locate</string>
+    <string name="ds_contacts_call">Call</string>
+    <string name="ds_contacts_no_match_body">Try another name or number.</string>
+    <string name="ds_contacts_empty_body">Contacts with a phone number show up here.</string>
+    <string name="ds_contacts_perm_title">See your contacts here</string>
+    <string name="ds_contacts_perm_body">Allow contact access to call or locate saved numbers in one tap.</string>
+    <string name="ds_contacts_allow">Allow access</string>
+    <string name="ds_contacts_sort_az">Sort A to Z</string>
+    <string name="ds_contacts_sort_za">Sort Z to A</string>
+    <string name="ds_contacts_refresh">Refresh</string>
+    <string name="ds_contacts_no_app">No contacts app found</string>
+
+    <!-- premium paywall (design 10a) -->
+    <string name="ds_pro">PRO</string>
+    <string name="ds_cd_pro">Go Premium</string>
+    <string name="ds_premium_badge">PREMIUM</string>
+    <string name="ds_premium_title">Unlimited location searches</string>
+    <string name="ds_premium_subtitle">No daily limit. No waiting for an ad to search again.</string>
+    <string name="ds_premium_feature_1">Unlimited searches every day</string>
+    <string name="ds_premium_feature_2">Full search history</string>
+    <string name="ds_premium_restore">Restore</string>
+    <string name="ds_premium_continue_free">Continue without Premium</string>
+    <string name="ds_premium_week">1 Week</string>
+    <string name="ds_premium_month">1 Month</string>
+    <string name="ds_premium_lifetime">Lifetime</string>
+    <string name="ds_premium_per_week">per week</string>
+    <string name="ds_premium_per_month">per month</string>
+    <string name="ds_premium_per_week_billed_monthly">per week, billed monthly</string>
+    <string name="ds_premium_one_time">one time</string>
+    <string name="ds_premium_cta_week">Continue · %1$s / week</string>
+    <string name="ds_premium_cta_month">Continue · %1$s / month</string>
+    <string name="ds_premium_cta_lifetime">Buy Lifetime · %1$s</string>
+    <string name="ds_premium_cta_trial">Start free %1$d-day trial</string>
+    <string name="ds_premium_price_trial_week">%1$s/week after FREE %2$d-day trial</string>
+    <string name="ds_premium_price_trial_month">%1$s/month after FREE %2$d-day trial</string>
+    <string name="ds_premium_price_week">%1$s/week, renews automatically</string>
+    <string name="ds_premium_price_month">%1$s/month, renews automatically</string>
+    <string name="ds_premium_price_lifetime">%1$s once, lifetime access</string>
+    <string name="ds_premium_consent">By continuing you agree to our %1$s &amp; %2$s.</string>
+    <string name="ds_premium_consent_trial">Auto-renews after trial; cancel anytime.</string>
+    <string name="ds_premium_consent_subs">Auto-renews; cancel anytime.</string>
+    <string name="ds_premium_consent_lifetime">One-time purchase, no renewal.</string>
+    <string name="ds_premium_terms">Terms</string>
+    <string name="ds_premium_privacy">Privacy</string>
+    <string name="ds_premium_unavailable">Premium isn\'t available right now. Please try again later.</string>
+    <string name="ds_premium_welcome">Welcome to Premium!</string>
+    <string name="ds_premium_pending">Your purchase is pending. Premium turns on once it completes.</string>
+    <string name="ds_premium_failed">The purchase didn\'t go through. Please try again.</string>
+    <string name="ds_premium_restored">Premium restored</string>
+    <string name="ds_premium_nothing_to_restore">No Premium purchase found on this account</string>
+
+    <!-- search result (design 11a–11d) -->
+    <string name="ds_result_approx_area">APPROX. AREA</string>
+    <string name="ds_result_valid">● Valid number</string>
+    <string name="ds_result_valid_short">Valid number</string>
+    <string name="ds_result_watch_ad">Watch Ad · View full details</string>
+    <string name="ds_result_not_now">Not now</string>
+    <string name="ds_result_skip_pro">Skip with PRO</string>
+    <string name="ds_reveal_title">Reveal full details</string>
+    <string name="ds_reveal_body">Watch a short ad to unlock the name, city, carrier and the map location.</string>
+    <string name="ds_reveal_watch">Watch Ad</string>
+    <string name="ds_reveal_tag">Rewarded ad</string>
+    <string name="ds_detail_title">Number Details</string>
+    <string name="ds_detail_unlocked">Unlocked</string>
+    <string name="ds_detail_location_details">Location details</string>
+    <string name="ds_detail_city_region">City · Region</string>
+    <string name="ds_act_map">Map</string>
+    <string name="ds_names_revealed">✓ Revealed</string>
+    <string name="ds_names_count">%1$d of %2$d revealed</string>
+    <string name="ds_names_show_all">Show all %1$d names</string>
+    <string name="ds_invalid_title">Invalid number</string>
+    <string name="ds_invalid_body">%1$s doesn\u2019t match the %2$s number format. Check the digits or the country code.</string>
+    <string name="ds_invalid_edit">Edit number</string>
+    <string name="ds_invalid_country">Change country</string>
+
+    <!-- search limit (design 9a / 9b) -->
+    <string name="ds_quota_label">Free searches today</string>
+    <string name="ds_quota_left">%1$d of %2$d left</string>
+    <string name="ds_quota_unlimited">Unlimited</string>
+    <string name="ds_limit_used">used</string>
+    <string name="ds_limit_title">Daily search limit reached</string>
+    <string name="ds_limit_body">You\u2019ve used today\u2019s %1$d free searches. Watch a short ad for one more, or go Premium for unlimited searches.</string>
+    <string name="ds_limit_body_premium">You’ve used today’s %1$d free searches. Go Premium for unlimited searches, or come back tomorrow.</string>
+    <string name="ds_limit_watch">Watch Ad · +1 search</string>
+    <string name="ds_limit_premium">Go Premium · Unlimited</string>
+    <string name="ds_limit_reset">Free searches reset at midnight</string>
+
+    <!-- search history -->
+    <string name="ds_history_title">Search history</string>
+    <string name="ds_history_today">Today</string>
+    <string name="ds_history_yesterday">Yesterday</string>
+    <string name="ds_history_earlier">Earlier</string>
+    <string name="ds_history_removed">Search removed</string>
+    <string name="ds_undo">Undo</string>
+    <plurals name="ds_history_count">
+        <item quantity="one">%1$d search</item>
+        <item quantity="other">%1$d searches</item>
+    </plurals>
+    <string name="ds_map_full_view">Full view</string>
+    <string name="ds_map_directions">Directions</string>
+    <string name="ds_map_zoom_in">Zoom in</string>
+    <string name="ds_map_zoom_out">Zoom out</string>
+    <string name="ds_map_recenter">Recenter map</string>
+    <string name="ds_locating_country">Searching in %1$s…</string>
+    <string name="ds_locating_state">Narrowing down to %1$s…</string>
+    <string name="ds_locating_found">Area found in %1$s</string>
+    <string name="ds_locating_percent" translatable="false">%1$d%%</string>
+    <!-- locating page redesign (13a / 13b) -->
+    <string name="ds_locating_complete">Search complete · 100%</string>
+    <string name="ds_step_country">Country</string>
+    <string name="ds_step_state">State</string>
+    <string name="ds_step_area">Area</string>
+    <string name="ds_step_done">✓ %1$s</string>
+    <string name="ds_step_active">● %1$s</string>
+    <string name="ds_result_approx_area_long">APPROXIMATE AREA</string>
+</resources>

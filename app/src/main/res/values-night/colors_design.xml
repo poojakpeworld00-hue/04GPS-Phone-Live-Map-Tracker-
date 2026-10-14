@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Dark counterparts of the design tokens (values/colors_design.xml). The design ships a light
+    palette plus one "Night" colour (#07182A); everything here is derived from it: the canvas sits
+    just above Night, surfaces one step lighter, ink and muted invert, lines and tiles become
+    translucent-white-on-dark mixes. Brand blues stay recognisable but are lifted a step so text
+    and icons in primary keep contrast on the dark ground. Gradients, scrims and the white-alpha
+    ramp are unchanged (they sit on gradients, not on surfaces).
+-->
+<resources>
+    <!-- brand, lifted for contrast on dark -->
+    <color name="ds_primary">#4D6BFF</color>
+    <color name="ds_pressed">#0026D9</color>
+    <color name="ds_tint">#143247</color>
+
+    <!-- text -->
+    <color name="ds_ink">#E8F1F8</color>
+    <color name="ds_ink2">#C9D6E0</color>
+    <color name="ds_muted">#9AABB8</color>
+    <color name="ds_placeholder">#6E8194</color>
+    <color name="ds_arrow_muted">#6E8497</color>
+
+    <!-- grounds & surfaces -->
+    <color name="ds_canvas">#0B1620</color>
+    <color name="ds_surface">#122031</color>
+    <color name="ds_card_glass">#EB122031</color>
+    <color name="ds_snackbar_bg">#1F3548</color>
+    <color name="ds_page_bg">#0A141D</color>
+    <color name="ds_gray_tile">#182A3B</color>
+    <color name="ds_gray_tile2">#1B2D3E</color>
+
+    <!-- lines -->
+    <color name="ds_border">#22384C</color>
+    <color name="ds_border2">#22384C</color>
+    <color name="ds_track">#1F3548</color>
+    <color name="ds_dot">#34495C</color>
+    <color name="ds_divider">#1C2E40</color>
+    <color name="ds_field_divider">#2A4157</color>
+    <color name="ds_field_divider2">#2A4157</color>
+    <color name="ds_hairline12">#1FFFFFFF</color>
+
+    <!-- hero cards & illustrations -->
+    <color name="ds_hero_top">#0F2A40</color>
+    <color name="ds_hero_bottom">#0D1B29</color>
+    <color name="ds_radial_in">#103240</color>
+    <color name="ds_radial_out">#0D1B29</color>
+    <color name="ds_dashed_ring">#2E5A78</color>
+    <color name="ds_road">#1A3044</color>
+    <color name="ds_road2">#1B3448</color>
+    <color name="ds_map_bg">#10202E</color>
+    <color name="ds_map_block">#163326</color>
+    <color name="ds_mock_bg">#142434</color>
+    <color name="ds_mock_bar">#2A4256</color>
+    <color name="ds_mock_line">#24384B</color>
+    <color name="ds_mock_border">#2A4256</color>
+    <color name="ds_phone_frame">#050A12</color>
+
+    <!-- soft containers -->
+    <color name="ds_purple_soft">#2A2650</color>
+    <color name="ds_green_soft">#123526</color>
+    <color name="ds_amber_soft">#3A2A10</color>
+    <color name="ds_ad_tag_bg">#3A2A10</color>
+    <color name="ds_ad_tag_fg">#F5C980</color>
+    <color name="ds_ad_tag_border">#5A4320</color>
+    <color name="ds_hint_row_bg">#143247</color>
+    <color name="ds_hint_row_border">#2A5C7A</color>
+
+    <!-- faint primary washes read as nothing on dark; use white washes instead -->
+    <color name="ds_primary06">#12FFFFFF</color>
+    <color name="ds_primary07">#14FFFFFF</color>
+    <color name="ds_primary10">#1AFFFFFF</color>
+    <color name="ds_primary12">#1FFFFFFF</color>
+    <!-- premium paywall (design 10a) -->
+    <color name="ds_plan_selected">#12304A</color>
+    <!-- search result (design 11a–11d) -->
+    <color name="ds_gold_soft">#3A2A10</color>
+    <color name="ds_gold_soft_ink">#FFD466</color>
+    <color name="ds_white90_surface">#E6122031</color>
+    <color name="ds_success12">#2E1E8E5A</color>
+    <color name="ds_danger12">#2ED93B3B</color>
+    <!-- search limit (design 9a / 9b) -->
+    <color name="ds_amber_ink">#FFD466</color>
+    <!-- Onboarding step header: light text on a raised pill; a track that shows on the canvas. -->
+    <color name="ds_step_pill_text">#C3CDFF</color>
+    <color name="ds_step_pill_bg">#22355E</color>
+    <color name="ds_step_track">#2C4560</color>
+</resources>

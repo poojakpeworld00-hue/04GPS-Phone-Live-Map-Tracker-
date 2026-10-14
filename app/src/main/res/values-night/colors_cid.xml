@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Claude Design "CID03" tokens, dark theme (.theme-dark in the design).
+
+    The design inverts the green ramp in dark mode: g-900 becomes the LIGHTEST
+    step and g-050 the darkest, so every "g-900 text on g-050 ground" pairing in
+    the layouts flips automatically without a single layout change.
+-->
+<resources>
+    <color name="cid_g_900">#FFD1EEFF</color>
+    <color name="cid_g_800">#FFA4DDFF</color>
+    <color name="cid_g_700">#FF6FC6F8</color>
+    <color name="cid_g_600">#FF5AB8E9</color>
+    <color name="cid_g_500">#FF4697C5</color>
+    <color name="cid_g_200">#FF293B45</color>
+    <color name="cid_g_100">#FF1C292F</color>
+    <color name="cid_g_050">#FF071219</color>
+
+    <color name="cid_clay">#FFEB9A7A</color>
+    <color name="cid_clay_100">#FF432519</color>
+    <color name="cid_clay_ink">#FFFFB699</color>
+    <color name="cid_teal">#FF39C9C9</color>
+    <color name="cid_teal_100">#FF103333</color>
+    <color name="cid_teal_ink">#FF6CDBDA</color>
+    <color name="cid_amber">#FFE9BC74</color>
+    <color name="cid_amber_100">#FF3D2D15</color>
+    <color name="cid_amber_ink">#FFF7D197</color>
+    <color name="cid_on_accent">#FF071219</color>
+
+    <color name="cid_bg">#FF0F171B</color>
+    <color name="cid_text">#FFE3EAED</color>
+    <color name="cid_neutral_100">#FF192023</color>
+    <color name="cid_neutral_200">#FF282F32</color>
+    <color name="cid_neutral_300">#FF3A4144</color>
+    <color name="cid_neutral_400">#FF5D6660</color>
+    <color name="cid_neutral_600">#FFA1A9AD</color>
+    <color name="cid_neutral_700">#FFBBC3C7</color>
+
+    <!-- Onboarding, dark. Page ink and CTA invert; the shield stays a green mark and
+         the mock call screen keeps its light-on-dark call UI unchanged. -->
+    <color name="cid_onb_paper">#FF0F1417</color>
+    <color name="cid_onb_ink">#FFD1EEFF</color>
+    <color name="cid_onb_muted">#FF97A3A9</color>
+
+    <color name="cid_onb_cta">#FF5AB8E9</color>
+    <color name="cid_onb_on_cta">#FF071219</color>
+
+    <color name="cid_onb_accent">#FF5AB8E9</color>
+    <color name="cid_onb_on_accent">#FFFFFFFF</color>
+    <color name="cid_onb_badge_disc">#FFE5EDF2</color>
+
+    <color name="cid_onb_mark">#FF002EFE</color>
+    <color name="cid_onb_on_mark">#FFFFFFFF</color>
+
+    <color name="cid_onb_blob">#FF132129</color>
+    <color name="cid_onb_card">#FF121C21</color>
+    <color name="cid_onb_card_stroke">#FF22313A</color>
+    <color name="cid_onb_tile">#FF192830</color>
+</resources>

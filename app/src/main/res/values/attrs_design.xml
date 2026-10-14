@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Attributes of the GPS Tracker design's custom views (ui/design). -->
+<resources>
+    <declare-styleable name="GridPatternView">
+        <attr name="gridColor" format="color" />
+        <attr name="gridSize" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="PingRingView">
+        <attr name="pingColor" format="color" />
+        <attr name="pingStrokeWidth" format="dimension" />
+        <attr name="pingFillColor" format="color" />
+        <attr name="pingDuration" format="integer" />
+        <attr name="pingDelay" format="integer" />
+    </declare-styleable>
+
+    <declare-styleable name="RadarSweepView">
+        <attr name="sweepColor" format="color" />
+        <attr name="sweepAngle" format="float" />
+        <attr name="sweepDuration" format="integer" />
+    </declare-styleable>
+
+    <declare-styleable name="PinShapeView">
+        <attr name="pinStartColor" format="color" />
+        <attr name="pinEndColor" format="color" />
+        <attr name="pinDotColor" format="color" />
+        <attr name="pinDotSize" format="dimension" />
+        <attr name="pinShadowColor" format="color" />
+        <attr name="pinBorderColor" format="color" />
+        <attr name="pinBorderWidth" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="RoadsView">
+        <attr name="roadsVariant" format="enum">
+            <enum name="splash" value="0" />
+            <enum name="homeHero" value="1" />
+            <enum name="map" value="2" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="TypingTextView">
+        <attr name="typingText" format="string" />
+        <attr name="typingDuration" format="integer" />
+    </declare-styleable>
+</resources>

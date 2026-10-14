@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Search button's pulsing glow (design: box-shadow 0 14 34 -6 signal/95). Sits behind the
+     button and breathes via DesignMotion.glow. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="24dp" />
+    <gradient
+        android:type="radial"
+        android:gradientRadius="60%p"
+        android:centerX="0.5"
+        android:centerY="0.55"
+        android:startColor="#B34D70FF"
+        android:centerColor="#595C7DFF"
+        android:endColor="#005C7DFF" />
+</shape>

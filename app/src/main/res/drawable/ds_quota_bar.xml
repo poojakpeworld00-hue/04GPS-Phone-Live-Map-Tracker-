@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Free-searches bar (design 9a): 6dp track, primary → cyan fill, r3. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background">
+        <shape android:shape="rectangle">
+            <corners android:radius="3dp" />
+            <solid android:color="@color/ds_border" />
+        </shape>
+    </item>
+    <item android:id="@android:id/progress">
+        <scale android:scaleWidth="100%">
+            <shape android:shape="rectangle">
+                <corners android:radius="3dp" />
+                <gradient android:angle="0" android:startColor="@color/ds_primary" android:endColor="@color/ds_cyan2" />
+            </shape>
+        </scale>
+    </item>
+</layer-list>

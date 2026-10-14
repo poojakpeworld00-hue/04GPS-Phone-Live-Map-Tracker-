@@ -1,0 +1,40 @@
+{
+  "marketing": {
+    "feature_title": "Get your reminders on time",
+    "feature_desc": "Allow reminders so \"{title}\" reaches you at {time}, even when your phone is asleep.",
+    "feature_action": "Turn on reminders",
+    "action_delay_options": "5,10,30,60",
+    "is_default_config": false,
+    "default_config_list": [],
+    "is_feature_prompt": true,
+    "is_enhanced_mode": true,
+    "is_intro_screen": true,
+    "intro_title": "Never forget a call back",
+    "intro_desc": "Set a reminder for any number and we'll remind you right on time, even when your phone is asleep.",
+    "is_country_filter": false,
+    "excluded_countries": "",
+    "is_settings_row": true,
+    "settings_row_excluded_countries": "",
+    "prompt_frequency": "always",
+    "prompt_interval": 3
+  },
+  "organic": {
+    "feature_title": "Get your reminders on time",
+    "feature_desc": "Allow reminders so \"{title}\" reaches you at {time}, even when your phone is asleep.",
+    "feature_action": "Turn on reminders",
+    "action_delay_options": "5,10,30,60",
+    "is_default_config": false,
+    "default_config_list": [],
+    "is_feature_prompt": true,
+    "is_enhanced_mode": true,
+    "is_intro_screen": true,
+    "intro_title": "Never forget a call back",
+    "intro_desc": "Set a reminder for any number and we'll remind you right on time, even when your phone is asleep.",
+    "is_country_filter": false,
+    "excluded_countries": "",
+    "is_settings_row": true,
+    "settings_row_excluded_countries": "",
+    "prompt_frequency": "always",
+    "prompt_interval": 3
+  }
+}

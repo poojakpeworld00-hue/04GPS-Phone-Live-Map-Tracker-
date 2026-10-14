@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Premium paywall (design 10a · light map, plan columns): the 300dp map hero fading into the
+    page with the countdown close at its top-right, the PREMIUM pill, title and subtitle
+    overlapping its lower edge, three plan columns, two benefit lines, then — pinned at the
+    bottom — the price/trial line, the CTA, the consent line and Restore / Terms / Privacy.
+-->
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data />
+
+    <LinearLayout
+        android:id="@+id/premiumRoot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/ds_surface"
+        android:orientation="vertical"
+        tools:context=".ui.premium.PremiumActivity">
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/scroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:overScrollMode="never">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- map hero -->
+                <FrameLayout
+                    android:id="@+id/hero"
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"
+                    android:clipChildren="true">
+
+                    <!-- 1.3× so the artwork's transparent rounded corners fall outside the hero -->
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="@null"
+                        android:scaleType="centerCrop"
+                        android:scaleX="1.3"
+                        android:scaleY="1.3"
+                        android:src="@drawable/ds_premium_map" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/ds_premium_fade" />
+
+                    <com.find.my.phone.gps.location.tracker.ui.premium.CloseCountdownView
+                        android:id="@+id/btnClose"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_gravity="end|top"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="14dp" />
+                </FrameLayout>
+
+                <!-- pill, title, subtitle -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="-40dp"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="22dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/ds_gold_pill"
+                        android:fontFamily="@font/figtree_bold"
+                        android:letterSpacing="0.08"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="5dp"
+                        android:text="@string/ds_premium_badge"
+                        android:textColor="@color/ds_gold_ink"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:fontFamily="@font/nunito_extrabold"
+                        android:letterSpacing="-0.02"
+                        android:lineSpacingMultiplier="0.95"
+                        android:text="@string/ds_premium_title"
+                        android:textColor="@color/ds_ink"
+                        android:textSize="28sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:fontFamily="@font/figtree_medium"
+                        android:text="@string/ds_premium_subtitle"
+                        android:textColor="@color/ds_muted"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <!-- plan columns: no clipping, so the selected card can scale up and cast its shadow -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="10dp">
+
+                    <include
+                        android:id="@+id/plan1"
+                        layout="@layout/tile_premium_plan" />
+
+                    <Space
+                        android:layout_width="8dp"
+                        android:layout_height="0dp" />
+
+                    <include
+                        android:id="@+id/plan2"
+                        layout="@layout/tile_premium_plan" />
+
+                    <Space
+                        android:layout_width="8dp"
+                        android:layout_height="0dp" />
+
+                    <include
+                        android:id="@+id/plan3"
+                        layout="@layout/tile_premium_plan" />
+                </LinearLayout>
+
+                <!-- benefits -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="22dp"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="16dp">
+
+                    <TextView
+                        android:id="@+id/tvFeature1"
+                        style="@style/Ds.Text.PremiumCheck"
+                        android:text="@string/ds_premium_feature_1" />
+
+                    <TextView
+                        android:id="@+id/tvFeature2"
+                        style="@style/Ds.Text.PremiumCheck"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/ds_premium_feature_2" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+        <!-- bottom: CTA, note, links -->
+        <LinearLayout
+            android:id="@+id/bottomBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="18dp">
+
+            <TextView
+                android:id="@+id/tvPriceLine"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:fontFamily="@font/figtree_semibold"
+                android:gravity="center"
+                android:textColor="@color/ds_ink2"
+                android:textSize="12sp"
+                tools:text="$9.99/week after FREE 3-day trial" />
+
+            <FrameLayout
+                android:id="@+id/btnContinue"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="@drawable/ds_btn_primary_selector_r18"
+                android:elevation="6dp">
+
+                <View
+                    android:id="@+id/shine"
+                    android:layout_width="26dp"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/ds_shine"
+                    android:rotation="20"
+                    android:scaleY="1.6" />
+
+                <TextView
+                    android:id="@+id/tvCta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:fontFamily="@font/figtree_bold"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    tools:text="Continue · $9.99 / week" />
+
+                <ProgressBar
+                    android:id="@+id/pbCta"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_gravity="center"
+                    android:indeterminateTint="@color/white"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <!-- "Continue without Premium": leaves like the X, shown from the start (not tied to
+                 close_delay_sec, which only paces the X). -->
+            <TextView
+                android:id="@+id/btnContinueFree"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="4dp"
+                android:fontFamily="@font/figtree_semibold"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:text="@string/ds_premium_continue_free"
+                android:textColor="@color/ds_ink2"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvNote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:fontFamily="@font/figtree_medium"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.3"
+                android:textColor="@color/ds_muted"
+                android:textColorLink="@color/ds_primary"
+                android:textSize="10.5sp"
+                tools:text="By continuing you agree to our Terms &amp; Privacy. Auto-renews after trial; cancel anytime." />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/btnRestore"
+                    style="@style/Ds.Text.PremiumLink"
+                    android:text="@string/ds_premium_restore" />
+
+                <TextView
+                    android:id="@+id/btnTerms"
+                    style="@style/Ds.Text.PremiumLink"
+                    android:layout_marginStart="6dp"
+                    android:text="@string/ds_premium_terms" />
+
+                <TextView
+                    android:id="@+id/btnPrivacy"
+                    style="@style/Ds.Text.PremiumLink"
+                    android:layout_marginStart="6dp"
+                    android:text="@string/ds_premium_privacy" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</layout>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Letter heading of an A–Z group (design 8a): Nunito 800 13, primary, padding 12 4 6. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/tvLetter"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fontFamily="@font/nunito_extrabold"
+    android:paddingStart="4dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="4dp"
+    android:paddingBottom="6dp"
+    android:textColor="@color/ds_primary"
+    android:textSize="13sp"
+    tools:text="A" />

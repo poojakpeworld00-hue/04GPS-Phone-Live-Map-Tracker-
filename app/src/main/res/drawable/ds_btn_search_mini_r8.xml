@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A1 mock "Search Location" button: linear-gradient(135deg,#0A6CFF,#009ECE). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="8dp" />
+    <gradient android:angle="315" android:startColor="@color/ds_splash_blue" android:endColor="#009ECE" />
+</shape>

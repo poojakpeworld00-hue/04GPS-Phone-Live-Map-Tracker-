@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Angle rounded to a multiple of 45: API < 29 rejects any other <gradient> angle at inflate.
+     The exact design angle lives in drawable-v29/. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners
+        android:radius="34dp" />
+    <gradient android:angle="315" android:startColor="@color/ds_blue2" android:centerColor="@color/ds_cyan" android:endColor="@color/ds_signal" />
+</shape>

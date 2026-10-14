@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The "allowed" check badge that pops on the illustration: gradient disc with a white ring. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFFFF" />
+        </shape>
+    </item>
+    <item android:bottom="2.5dp" android:left="2.5dp" android:right="2.5dp" android:top="2.5dp" android:drawable="@drawable/ps_bg_gradient_oval" />
+</layer-list>

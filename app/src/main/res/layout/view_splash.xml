@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Splash "Map Light redesign" (GPS Tracker Design).
+    Three stages cross-fade on a 6.4s cycle driven by SplashMotion: rotating Earth globe
+    (triangulation) → red pin drop → logo. Designed at 360×780: composition box top 180/780,
+    status line top 548/780, progress bar 72dp in from both edges and 80dp up, footer 40dp up.
+-->
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/splashRoot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/ds_canvas"
+        tools:context=".ui.splash.StartupActivity">
+
+        <com.find.my.phone.gps.location.tracker.ui.design.GridPatternView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:gridColor="@color/ds_primary06"
+            app:gridSize="30dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.find.my.phone.gps.location.tracker.ui.design.RoadsView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:roadsVariant="splash" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideStageTop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.2308" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideStatusTop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.7026" />
+
+        <!-- The 320dp composition box; each stage is a full-size layer inside it. -->
+        <FrameLayout
+            android:id="@+id/stageBox"
+            android:layout_width="0dp"
+            android:layout_height="320dp"
+            android:clipChildren="false"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/guideStageTop">
+
+            <!-- st1e: rotating Earth globe + orbit triangulation -->
+            <FrameLayout
+                android:id="@+id/stageSignal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:alpha="0"
+                android:clipChildren="false">
+
+                <FrameLayout
+                    android:layout_width="260dp"
+                    android:layout_height="260dp"
+                    android:layout_gravity="center"
+                    android:clipChildren="false">
+
+                    <!-- soft blue halo behind the globe -->
+                    <View
+                        android:layout_width="236dp"
+                        android:layout_height="236dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/ds_globe_glow" />
+
+                    <!-- the rotating earth -->
+                    <com.find.my.phone.gps.location.tracker.ui.design.EarthGlobeView
+                        android:layout_width="196dp"
+                        android:layout_height="196dp"
+                        android:layout_gravity="center" />
+
+                    <!-- dashed orbit, spinning satellites and triangulation lines -->
+                    <com.find.my.phone.gps.location.tracker.ui.design.SatelliteOrbitView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+                </FrameLayout>
+            </FrameLayout>
+
+            <!-- st3: dropping pin (red) -->
+            <FrameLayout
+                android:id="@+id/stagePin"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:alpha="0"
+                android:clipChildren="false">
+
+                <!-- ground shadow: dark radial under the pin -->
+                <View
+                    android:layout_width="120dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="196dp"
+                    android:background="@drawable/ds_pin_ground_shadow_dark" />
+
+                <!-- ground ring: pings every 1.8s, white rim over a red fill -->
+                <com.find.my.phone.gps.location.tracker.ui.design.PingRingView
+                    android:layout_width="150dp"
+                    android:layout_height="150dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="150dp"
+                    app:pingColor="@color/ds_white90"
+                    app:pingDuration="1800"
+                    app:pingFillColor="@color/ds_ping_red_fill"
+                    app:pingStrokeWidth="2dp" />
+
+                <com.find.my.phone.gps.location.tracker.ui.design.PinShapeView
+                    android:id="@+id/splashPin"
+                    android:layout_width="78dp"
+                    android:layout_height="78dp"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="10dp"
+                    app:pinBorderColor="@color/white"
+                    app:pinBorderWidth="3dp"
+                    app:pinDotColor="@color/white"
+                    app:pinDotSize="22dp"
+                    app:pinEndColor="@color/ds_pin_red"
+                    app:pinShadowColor="@color/ds_pin_red_shadow"
+                    app:pinStartColor="@color/ds_pin_red_light" />
+            </FrameLayout>
+
+            <!-- st4: logo -->
+            <LinearLayout
+                android:id="@+id/stageLogo"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:alpha="0"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/splashLogo"
+                    android:layout_width="136dp"
+                    android:layout_height="136dp"
+                    android:contentDescription="@null"
+                    android:elevation="16dp"
+                    android:outlineAmbientShadowColor="@color/ds_splash_blue"
+                    android:outlineSpotShadowColor="@color/ds_splash_blue"
+                    android:scaleType="fitCenter"
+                    android:src="@mipmap/ic_launcher"
+                    tools:targetApi="p" />
+
+                <TextView
+                    android:id="@+id/tvAppName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="22dp"
+                    android:fontFamily="@font/nunito_extrabold"
+                    android:letterSpacing="-0.02"
+                    android:text="@string/ds_splash_title"
+                    android:textColor="@color/ds_ink"
+                    android:textSize="32sp" />
+
+                <TextView
+                    android:id="@+id/tvTagline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:fontFamily="@font/figtree_bold"
+                    android:letterSpacing="0.28"
+                    android:text="@string/ds_splash_subtitle"
+                    android:textAllCaps="true"
+                    android:textColor="@color/ds_splash_blue"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- The three status lines, stacked; SplashMotion cross-fades them with the stages. -->
+        <FrameLayout
+            android:id="@+id/statusBox"
+            android:layout_width="0dp"
+            android:layout_height="24dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/guideStatusTop">
+
+            <TextView
+                android:id="@+id/statusSignal"
+                style="@style/Ds.SplashStatus"
+                android:text="@string/ds_splash_stage_signal" />
+
+            <TextView
+                android:id="@+id/statusPin"
+                style="@style/Ds.SplashStatus"
+                android:text="@string/ds_splash_stage_pin" />
+
+            <TextView
+                android:id="@+id/statusLogo"
+                style="@style/Ds.SplashStatus"
+                android:text="@string/ds_splash_stage_logo"
+                android:textColor="@color/ds_ink" />
+        </FrameLayout>
+
+        <!-- Progress: 6dp track, blue→cyan fill grows 0 → 100% over the cycle. -->
+        <FrameLayout
+            android:id="@+id/progressTrack"
+            android:layout_width="0dp"
+            android:layout_height="6dp"
+            android:layout_marginHorizontal="72dp"
+            android:layout_marginBottom="80dp"
+            android:background="@drawable/ds_bar_track_r3"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <View
+                android:id="@+id/progressFill"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:background="@drawable/ds_splash_bar_fill_r3" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/footer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="40dp"
+            android:fontFamily="@font/figtree_medium"
+            android:text="@string/ds_splash_footer"
+            android:textColor="@color/ds_muted"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

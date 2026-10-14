@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Page 2 illustration (2b, the before/after reveal): a grey "without access" SIM card under a
+     gradient "with access" one. RevealCompareLayout wipes the top card in and out on an 8s loop and
+     lets the user drag the ‹› handle to compare. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/ps_bg_ill_sim"
+    android:clipChildren="false">
+
+    <TextView
+        android:id="@+id/tvWithout"
+        style="@style/Ps.RevealLabel"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="18dp"
+        android:text="@string/ps_sim_without"
+        android:textColor="@color/ps_muted" />
+
+    <TextView
+        android:id="@+id/tvWith"
+        style="@style/Ps.RevealLabel"
+        android:layout_gravity="top|end"
+        android:layout_marginEnd="18dp"
+        android:text="@string/ps_sim_with"
+        android:textColor="@color/ps_primary" />
+
+    <com.find.my.phone.gps.location.tracker.permission.sheet.RevealCompareLayout
+        android:id="@+id/reveal"
+        android:layout_width="match_parent"
+        android:layout_height="156dp"
+        android:layout_marginHorizontal="18dp"
+        android:layout_marginTop="34dp"
+        android:clipChildren="false">
+
+        <!-- Without access -->
+        <LinearLayout
+            android:id="@+id/cardBase"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginVertical="8dp"
+            android:background="@drawable/ps_bg_card_r20"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/Ps.SimTag"
+                    android:background="@drawable/ps_bg_tag_grey"
+                    android:text="@string/ps_sim_tag"
+                    android:textColor="@color/ps_muted" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <ImageView
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ps_ic_lock"
+                    app:tint="@color/ps_muted" />
+
+                <TextView
+                    style="@style/Ps.SimState"
+                    android:text="@string/ps_sim_hidden"
+                    android:textColor="@color/ps_muted" />
+            </LinearLayout>
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <TextView
+                style="@style/Ps.SimNumber"
+                android:letterSpacing="0.06"
+                android:text="@string/ps_sim_hidden_number"
+                android:textColor="@color/ps_ill_hidden_num" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="10dp"
+                android:orientation="horizontal">
+
+                <View
+                    android:layout_width="70dp"
+                    android:layout_height="10dp"
+                    android:background="@drawable/ps_bg_bar_placeholder" />
+
+                <View
+                    android:layout_width="40dp"
+                    android:layout_height="10dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/ps_bg_bar_placeholder" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- With access: clipped from the start edge to the handle -->
+        <FrameLayout
+            android:id="@+id/cardTop"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginVertical="8dp"
+            android:background="@drawable/ps_bg_gradient_r20">
+
+            <View
+                android:layout_width="140dp"
+                android:layout_height="140dp"
+                android:layout_gravity="top|end"
+                android:background="@drawable/ps_bg_ring_white25"
+                android:translationX="40dp"
+                android:translationY="-40dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        style="@style/Ps.SimTag"
+                        android:background="@drawable/ps_bg_tag_white"
+                        android:text="@string/ps_sim_tag"
+                        android:textColor="@android:color/white" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1" />
+
+                    <ImageView
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ps_ic_check" />
+
+                    <TextView
+                        style="@style/Ps.SimState"
+                        android:text="@string/ps_sim_visible"
+                        android:textColor="@android:color/white" />
+                </LinearLayout>
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    style="@style/Ps.SimNumber"
+                    android:text="@string/ps_sim_number"
+                    android:textColor="@android:color/white" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        style="@style/Ps.SimChip"
+                        android:text="@string/ps_sim_carrier" />
+
+                    <TextView
+                        style="@style/Ps.SimChip"
+                        android:layout_marginStart="6dp"
+                        android:text="@string/ps_sim_region" />
+                </LinearLayout>
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- The draggable divider: a 3dp line through a 34dp knob -->
+        <FrameLayout
+            android:id="@+id/handle"
+            android:layout_width="34dp"
+            android:layout_height="match_parent"
+            android:elevation="6dp">
+
+            <View
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_horizontal"
+                android:background="@drawable/ps_bg_handle_line" />
+
+            <TextView
+                android:id="@+id/knob"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_gravity="center"
+                android:background="@drawable/ps_bg_knob"
+                android:elevation="4dp"
+                android:fontFamily="@font/figtree_bold"
+                android:gravity="center"
+                android:importantForAccessibility="no"
+                android:text="@string/ps_sim_knob"
+                android:textColor="@color/ps_primary"
+                android:textSize="13sp" />
+        </FrameLayout>
+    </com.find.my.phone.gps.location.tracker.permission.sheet.RevealCompareLayout>
+</FrameLayout>
