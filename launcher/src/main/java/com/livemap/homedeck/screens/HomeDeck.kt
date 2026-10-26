@@ -205,6 +205,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         private const val ANIMATION_DURATION = 150L
         private const val APP_DRAWER_CLOSE_DELAY = 300L
         private const val APP_DRAWER_STATE = "app_drawer_state"
+        private const val HOST_PANEL_STATE = "host_panel_state"
         private const val SWIPE_HINT_ANIMATION_DURATION = 900L
 
         private const val PERMISSION_SHEET_DELAY = 500L
@@ -297,7 +298,11 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         setupDefaultLauncherBanner(savedInstanceState)
         setupWallpaperColorListener()
 
-        if (savedInstanceState == null) enterHostPanelIfAsked(intent)
+        if (savedInstanceState == null) {
+            enterHostPanelIfAsked(intent)
+        } else if (savedInstanceState.getBoolean(HOST_PANEL_STATE)) {
+            restoreHostPanelInstantly()
+        }
 
         binding.coreHolderUi.post { perhapsShowGuide() }
 
@@ -909,6 +914,7 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean(APP_DRAWER_STATE, isAllAppsFragmentExpanded())
+        outState.putBoolean(HOST_PANEL_STATE, isHostPanelExpanded())
         defaultLauncherRequester.persistState(outState)
     }
 
@@ -1187,6 +1193,26 @@ class HomeDeck : HomeBaseDeck(), TossObserver {
         HomeTeaserDirector.run(this, HomeSpotsProfile.RIGHT_SWIPE) {
             unveilHostPanel()
             completeGuideStep(HomeMentorPhase.SWIPE_RIGHT_HOST)
+        }
+    }
+
+    // After a recreate (e.g. a day/night toggle from the host drawer) put the host panel back
+    // before the first frame, so the launcher home never flashes underneath it.
+    private fun restoreHostPanelInstantly() {
+        if (!HomeSpotsProfile.panelEnabled(HomeSpotsProfile.RIGHT_SWIPE)) return
+        val panel = binding.lvHostPanelUi.root
+        panel.x = 0f
+        mOpenSidePanel = panel
+        binding.deskScreenGridUi.root.fragmentExpanded()
+        binding.deskScreenGridUi.root.animate().cancel()
+        binding.deskScreenGridUi.root.alpha = 0f
+        window.navigationBarColor = resources.getColor(R.color.launcher_semitransparent_navigation)
+        reviseDefaultLauncherBannerVisibility()
+        binding.coreHolderUi.post {
+            if (isFinishing || isDestroyed) return@post
+            panel.refresh()
+            panel.setPanelVisible(true)
+            reviseStatusBarIcons(sidePanelBackgroundColor(panel))
         }
     }
 

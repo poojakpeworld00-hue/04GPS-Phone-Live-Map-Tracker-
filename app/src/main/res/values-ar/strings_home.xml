@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_title_short">متتبع الخريطة المباشرة</string>
-    <string name="home_go_pro">احصل على PRO</string>
     <string name="home_quota_fmt">تبقى %1$d من %2$d عمليات بحث مجانية</string>
     <string name="home_chip_my_number">رقمي</string>
     <string name="home_chip_carrier">أكواد المشغل</string>
     <string name="home_chip_dual_sim">شريحتان</string>
     <string name="home_cd_search">ابحث عن الموقع</string>
+    <string name="home_go_pro">احصل على PRO</string>
 </resources>

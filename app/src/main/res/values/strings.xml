@@ -34,7 +34,6 @@
     <string name="my_number_sub">View your SIM number, operator and region</string>
     <string name="my_number_sub_ready">SIM cards in this phone</string>
     <string name="my_number_show">View</string>
-    <string name="my_number_settings">Settings</string>
     <string name="my_number_denied">Enable phone access in Settings to view your number</string>
     <string name="my_number_sim_label">SIM %1$d · %2$s</string>
     <string name="my_number_sim_badge">SIM%1$d</string>
@@ -93,13 +92,10 @@
     <string name="app_launcher_name" translatable="false">@string/app_name</string>
     <string name="share_app_text">Take a look at this app: %1$s</string>
     <string name="ps_skip">Skip</string>
-    <string name="ps_allow">Allow</string>
-    <string name="ps_counter_total">/ %1$d</string>
+    <string name="ps_allow_fmt">Allow %1$s</string>
+    <string name="ps_allowed">Allowed</string>
+    <string name="ps_trust">You can change this anytime in Settings</string>
     <string name="ps_requesting">Asking…</string>
-    <string name="ps_already_allowed">Already granted on this device</string>
-    <string name="ps_allowed_moving_on">%1$s granted. Continuing…</string>
-    <string name="ps_allowed_done">%1$s granted.</string>
-    <string name="ps_not_allowed">%1$s was denied. You can enable it any time in Settings › Permissions.</string>
     <string name="ps_notif_name">Alerts</string>
     <string name="ps_notif_title">Enable notifications</string>
     <string name="ps_notif_body">Be alerted when a lookup completes and when saved numbers update. No marketing messages.</string>

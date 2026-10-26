@@ -50,13 +50,10 @@
     <string name="carrier_codes_detected_fmt">Compañía detectada: %1$s · SIM %2$d</string>
     <string name="carrier_codes_note">Tocar un código abre el teclado de llamadas. La compañía fija estos códigos y podrían variar.</string>
     <string name="ps_skip">Saltar</string>
-    <string name="ps_allow">Conceder</string>
-    <string name="ps_counter_total">/ %1$d</string>
+    <string name="ps_allow_fmt">Permitir %1$s</string>
+    <string name="ps_allowed">Permitido</string>
+    <string name="ps_trust">Puedes cambiarlo cuando quieras en Ajustes</string>
     <string name="ps_requesting">Pidiendo permiso…</string>
-    <string name="ps_already_allowed">Este teléfono ya lo tiene concedido</string>
-    <string name="ps_allowed_moving_on">%1$s concedido. Seguimos…</string>
-    <string name="ps_allowed_done">%1$s concedido.</string>
-    <string name="ps_not_allowed">%1$s denegado. Puedes activarlo en cualquier momento en Ajustes › Permisos.</string>
     <string name="ps_notif_name">Avisos</string>
     <string name="ps_notif_title">Permite las notificaciones</string>
     <string name="ps_notif_body">Te avisamos al acabar una búsqueda y si cambian tus números guardados. Nada de publicidad molesta.</string>

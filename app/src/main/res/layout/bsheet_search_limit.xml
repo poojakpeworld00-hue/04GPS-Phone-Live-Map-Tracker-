@@ -67,34 +67,38 @@
     android:lineSpacingMultiplier="1.2"
     android:textColor="@color/ds_muted"
     android:textSize="14sp"
-    tools:text="You've used today's 3 free searches. Watch a short ad for one more, or go Premium for unlimited searches." />
-  <FrameLayout
-    android:id="@+id/actWatch"
+    tools:text="You've used today's 3 free searches. New ones open up when the timer runs out." />
+  <LinearLayout
+    android:id="@+id/countdownBox"
     android:layout_width="match_parent"
-    android:layout_height="56dp"
-    android:layout_marginTop="16dp"
-    android:background="@drawable/lv_btn_primary_selector_r18"
-    android:elevation="6dp">
+    android:layout_height="wrap_content"
+    android:layout_marginTop="18dp"
+    android:background="@drawable/lv_sheet_top_r30"
+    android:backgroundTint="@color/ds_tint"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:paddingVertical="16dp">
     <TextView
-      android:id="@+id/txtWatch"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_gravity="center"
-      android:drawablePadding="10dp"
-      android:fontFamily="@font/figtree_bold"
-      android:text="@string/ds_limit_watch"
-      android:textColor="@color/white"
-      android:textSize="16sp"
-      app:drawableStartCompat="@drawable/lv_ic_play"
-      app:drawableTint="@color/white" />
-    <ProgressBar
-      android:id="@+id/spinWatch"
-      android:layout_width="26dp"
-      android:layout_height="26dp"
-      android:layout_gravity="center"
-      android:indeterminateTint="@color/white"
-      android:visibility="gone" />
-  </FrameLayout>
+      android:fontFamily="@font/figtree_semibold"
+      android:letterSpacing="0.04"
+      android:text="@string/ds_limit_timer_label"
+      android:textAllCaps="true"
+      android:textColor="@color/ds_muted"
+      android:textSize="11sp" />
+    <TextView
+      android:id="@+id/txtCountdown"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="4dp"
+      android:fontFamily="@font/nunito_extrabold"
+      android:includeFontPadding="false"
+      android:letterSpacing="0.02"
+      android:textColor="@color/ds_primary"
+      android:textSize="34sp"
+      tools:text="59:59" />
+  </LinearLayout>
   <FrameLayout
     android:id="@+id/actPremium"
     android:layout_width="match_parent"
@@ -125,19 +129,14 @@
       app:drawableStartCompat="@drawable/lv_ic_crown"
       app:drawableTint="@color/ds_gold_ink" />
   </FrameLayout>
-  <LinearLayout
+  <TextView
+    android:id="@+id/txtReset"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_marginTop="14dp"
-    android:gravity="center_vertical"
-    android:orientation="horizontal">
-    <TextView
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_marginStart="6dp"
-      android:fontFamily="@font/figtree_medium"
-      android:text="@string/ds_limit_reset"
-      android:textColor="@color/ds_muted"
-      android:textSize="12sp" />
-  </LinearLayout>
+    android:fontFamily="@font/figtree_medium"
+    android:gravity="center"
+    android:text="@string/ds_limit_reset"
+    android:textColor="@color/ds_muted"
+    android:textSize="12sp" />
 </LinearLayout>

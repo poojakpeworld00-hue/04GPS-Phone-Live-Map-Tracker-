@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_title_short">Rastreador de mapa ao vivo</string>
-    <string name="home_go_pro">Seja PRO</string>
     <string name="home_quota_fmt">Restam %1$d de %2$d pesquisas grátis</string>
     <string name="home_chip_my_number">Meu número</string>
     <string name="home_chip_carrier">Códigos da operadora</string>
     <string name="home_chip_dual_sim">Dual SIM</string>
     <string name="home_cd_search">Buscar localização</string>
+    <string name="home_go_pro">Seja PRO</string>
 </resources>

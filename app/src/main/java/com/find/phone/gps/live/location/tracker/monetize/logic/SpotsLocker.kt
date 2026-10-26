@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 
 class SpotsLocker constructor(context: Context) {
+    private val appContext = context.applicationContext
+
     private val preferences = context.getSharedPreferences(PREFERENCE_NAME, Context.MODE_PRIVATE)
 
     companion object {
@@ -117,6 +119,8 @@ class SpotsLocker constructor(context: Context) {
     }
 
     fun getBoolean(key: String?): Boolean {
+        // every ad path reads IsAdsON here, so the paywall's "no ads until Home" hold lives in one place
+        if (key == "IsAdsON" && HomeSpotsProfile.adsHeldUntilHome(appContext)) return false
         return getBoolean(key, false)
     }
 

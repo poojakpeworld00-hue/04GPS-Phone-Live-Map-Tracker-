@@ -50,13 +50,10 @@
     <string name="carrier_codes_detected_fmt">Fournisseur identifié : %1$s · SIM %2$d</string>
     <string name="carrier_codes_note">Touchez un code pour lancer le clavier d\'appel. Ces codes relèvent de l\'opérateur et peuvent évoluer.</string>
     <string name="ps_skip">Ignorer</string>
-    <string name="ps_allow">Accepter</string>
-    <string name="ps_counter_total">sur %1$d</string>
+    <string name="ps_allow_fmt">Autoriser : %1$s</string>
+    <string name="ps_allowed">Autorisé</string>
+    <string name="ps_trust">Modifiable à tout moment dans les Réglages</string>
     <string name="ps_requesting">Demande en cours d\'envoi…</string>
-    <string name="ps_already_allowed">Accès déjà accordé sur cet appareil</string>
-    <string name="ps_allowed_moving_on">%1$s accordé. Étape suivante…</string>
-    <string name="ps_allowed_done">Accès %1$s accordé.</string>
-    <string name="ps_not_allowed">%1$s refusé. Vous pouvez l\'activer quand vous voulez via Paramètres › Autorisations.</string>
     <string name="ps_notif_name">Alertes</string>
     <string name="ps_notif_title">Autorisez les alertes</string>
     <string name="ps_notif_body">Soyez prévenu à la fin d\'une recherche et lorsque vos numéros sauvegardés évoluent. Zéro pub indésirable.</string>

@@ -68,7 +68,7 @@ class CoreHubActivity : StageActivity<ScreenMainBinding>(), MainCasingHolder, Ma
             requestPhonePermission = { phonePermission.launch(it) },
         ) {
             binding.core.closeDrawer(GravityCompat.START)
-        }.also { it.bind() }
+        }.also { it.bind(); it.watch(binding.core) }
 
         onBackPressedDispatcher.addCallback(this) {
             if (binding.core.isDrawerOpen(GravityCompat.START)) binding.core.closeDrawer(GravityCompat.START)

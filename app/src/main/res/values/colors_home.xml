@@ -10,7 +10,6 @@
   <color name="home_ring_18">#2EFFFFFF</color>
   <color name="home_live">#7CF0B0</color>
   <color name="home_gold">#FFD66B</color>
-  <color name="home_gold_ink">#0E1B3D</color>
   <color name="home_ink">#0E1B3D</color>
   <color name="home_muted">#5A6782</color>
   <color name="home_canvas">#F2F5FC</color>
@@ -20,4 +19,5 @@
   <color name="home_timeline">#DCE3F2</color>
   <color name="home_search_btn">#0E1B3D</color>
   <color name="home_card_shadow">#140E1B3D</color>
+  <color name="home_gold_ink">#0E1B3D</color>
 </resources>

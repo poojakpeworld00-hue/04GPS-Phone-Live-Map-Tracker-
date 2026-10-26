@@ -78,7 +78,6 @@ class MemoListActivity : StageActivity<ScreenReminderListBinding>() {
             CraftMovement.pressScale(addBtn)
             addBtn.setOnClickListener { openEditor(null) }
         }
-        recordKeyEvent("Reminders_Open")
 
         EmbeddedTeaser().presentMidNative(this, binding.spotNativeFrame, binding.spotShimmer)
         binding.spotNativeDivider.followAdContainer(binding.spotNativeFrame)

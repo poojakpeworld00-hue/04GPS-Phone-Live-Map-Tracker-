@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_title_short">Canlı Harita Takipçisi</string>
-    <string name="home_go_pro">PRO ol</string>
     <string name="home_quota_fmt">%2$d ücretsiz aramadan %1$d kaldı</string>
     <string name="home_chip_my_number">Numaram</string>
     <string name="home_chip_carrier">Operatör kodları</string>
     <string name="home_chip_dual_sim">Çift SIM</string>
     <string name="home_cd_search">Konumu ara</string>
+    <string name="home_go_pro">PRO ol</string>
 </resources>

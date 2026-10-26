@@ -101,7 +101,7 @@ class MineNumActivity : StageActivity<ScreenMyNumberBinding>() {
         binding.chipcardCards.isVisible = anyLine
         binding.chipcardToolsSection.isVisible = anyLine
         binding.blankState.isVisible = !anyLine
-        binding.actShow.setText(if (phoneAccessBlocked()) R.string.my_number_settings else R.string.my_number_show)
+        binding.actShow.setText(R.string.my_number_show)
 
         val strip = binding.chipcardCards
         strip.removeAllViews()
@@ -262,19 +262,8 @@ class MineNumActivity : StageActivity<ScreenMyNumberBinding>() {
         }
     }
 
-    private fun phoneAccessBlocked(): Boolean {
-        if (MineChipNums.isGranted(this)) return false
-        val perm = MineChipNums.PERMISSIONS.first()
-        if (!lockerStore.hasRequestedPermission(perm)) return false
-        return !ActivityCompat.shouldShowRequestPermissionRationale(this, perm)
-    }
-
     private fun openAppDetails() {
         Toast.makeText(this, R.string.my_number_denied, Toast.LENGTH_LONG).show()
-        CoreOpenSpotBook.skipNextAppOpenAd = true
-        runCatching {
-            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
-        }
     }
 
     private fun copyToClipboard(value: String) {

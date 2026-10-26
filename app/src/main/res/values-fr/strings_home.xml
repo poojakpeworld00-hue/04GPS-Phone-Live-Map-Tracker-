@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_title_short">Suivi de carte en direct</string>
-    <string name="home_go_pro">Passer PRO</string>
     <string name="home_quota_fmt">%1$d recherches gratuites sur %2$d restantes</string>
     <string name="home_chip_my_number">Mon numéro</string>
     <string name="home_chip_carrier">Codes opérateur</string>
     <string name="home_chip_dual_sim">Double SIM</string>
     <string name="home_cd_search">Chercher la position</string>
+    <string name="home_go_pro">Passer PRO</string>
 </resources>

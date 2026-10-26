@@ -19,64 +19,47 @@ class IntroMovement(private val binding: ScreenSplashBinding) {
             presentFinalFrame()
             return
         }
-        animators += st1e(binding.lvStageSignal)
-        animators += st1c(binding.condSignal)
-        animators += st3(binding.lvStagePin)
-        animators += st3(binding.condPin)
-        animators += st4(binding.lvStageLogo)
-        animators += st4(binding.condLogo)
-        drop(binding.bootPin)
+        popIn(binding.bootLogo, 150L)
+        popIn(binding.orbitAtoms, 500L)
+        rise(binding.txtAppName, 600L)
+        rise(binding.txtTagline, 750L)
+        animators += status(binding.condSignal, 0f, .33f)
+        animators += status(binding.condPin, .33f, .66f)
+        animators += status(binding.condLogo, .66f, 1f)
         bar()
     }
 
     fun cancel() = CraftMovement.abortAll(animators)
 
     private fun presentFinalFrame() {
-        listOf(binding.lvStageSignal, binding.lvStagePin, binding.condSignal, binding.condPin)
-            .forEach { it.alpha = 0f }
-        binding.lvStageLogo.alpha = 1f
+        listOf(binding.condSignal, binding.condPin).forEach { it.alpha = 0f }
         binding.condLogo.alpha = 1f
         binding.progTrack.post { setFillFraction(1f) }
     }
 
-    private fun st1e(v: View) = loop(
-        v, CYCLE_MS, 0L,
-        pvh(View.ALPHA, CraftMovement.EASE, 0f to 0f, .04f to 1f, .68f to 1f, .74f to 0f, 1f to 0f),
-        pvh(View.SCALE_X, CraftMovement.EASE, 0f to .9f, .04f to 1f, .68f to 1f, .74f to 1.12f, 1f to 1.12f),
-        pvh(View.SCALE_Y, CraftMovement.EASE, 0f to .9f, .04f to 1f, .68f to 1f, .74f to 1.12f, 1f to 1.12f),
-    )
-
-    private fun st1c(v: View) = loop(
-        v, CYCLE_MS, 0L,
-        pvh(View.ALPHA, CraftMovement.EASE, 0f to 0f, .04f to 1f, .41f to 1f, .46f to 0f, 1f to 0f),
-        pvh(View.SCALE_X, CraftMovement.EASE, 0f to .9f, .04f to 1f, .41f to 1f, .46f to 1.12f, 1f to 1.12f),
-        pvh(View.SCALE_Y, CraftMovement.EASE, 0f to .9f, .04f to 1f, .41f to 1f, .46f to 1.12f, 1f to 1.12f),
-    )
-
-    private fun st3(v: View) = loop(
-        v, CYCLE_MS, 0L,
-        pvh(View.ALPHA, CraftMovement.EASE, 0f to 0f, .46f to 0f, .53f to 1f, .70f to 1f, .75f to 0f, 1f to 0f),
-        pvh(View.SCALE_X, CraftMovement.EASE, 0f to .8f, .46f to .8f, .53f to 1f, .70f to 1f, .75f to 1.15f, 1f to 1.15f),
-        pvh(View.SCALE_Y, CraftMovement.EASE, 0f to .8f, .46f to .8f, .53f to 1f, .70f to 1f, .75f to 1.15f, 1f to 1.15f),
-    )
-
-    private fun st4(v: View) = loop(
-        v, CYCLE_MS, 0L,
-        pvh(View.ALPHA, CraftMovement.EASE, 0f to 0f, .71f to 0f, .79f to 1f, .97f to 1f, 1f to 0f),
-        pvh(View.SCALE_X, CraftMovement.EASE, 0f to .82f, .71f to .82f, .79f to 1f, 1f to 1f),
-        pvh(View.SCALE_Y, CraftMovement.EASE, 0f to .82f, .71f to .82f, .79f to 1f, 1f to 1f),
-    )
-
-    private fun drop(pin: View) {
-        val from = context.dp(-80f)
-        val bounce = context.dp(6f)
-        val settle = context.dp(-5f)
-        animators += loop(
-            pin, CYCLE_MS, 0L,
-            pvh(View.ALPHA, CraftMovement.DROP, 0f to 0f, .50f to 0f, .57f to 1f, 1f to 1f),
-            pvh(View.TRANSLATION_Y, CraftMovement.DROP, 0f to from, .50f to from, .57f to bounce, .61f to settle, .65f to 0f, 1f to 0f),
-        )
+    private fun popIn(v: View, delayMs: Long) {
+        v.alpha = 0f
+        v.scaleX = .4f
+        v.scaleY = .4f
+        v.animate().alpha(1f).scaleX(1f).scaleY(1f).setStartDelay(delayMs).setDuration(700L)
+            .setInterpolator(CraftMovement.DROP).start()
     }
+
+    private fun rise(v: View, delayMs: Long) {
+        v.alpha = 0f
+        v.translationY = context.dp(14f)
+        v.animate().alpha(1f).translationY(0f).setStartDelay(delayMs).setDuration(500L)
+            .setInterpolator(CraftMovement.EASE_OUT).start()
+    }
+
+    // one status line visible per third of the cycle
+    private fun status(v: View, from: Float, to: Float) = loop(
+        v, CYCLE_MS, 0L,
+        pvh(
+            View.ALPHA, CraftMovement.EASE,
+            0f to 0f, from to 0f, (from + .04f) to 1f, (to - .04f).coerceAtLeast(from + .05f) to 1f, to to 0f, 1f to 0f,
+        ),
+    )
 
     private fun bar() {
         animators += ValueAnimator.ofFloat(0f, 1f).apply {

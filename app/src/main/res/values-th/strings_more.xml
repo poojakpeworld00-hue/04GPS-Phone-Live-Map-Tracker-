@@ -50,13 +50,10 @@
     <string name="carrier_codes_detected_fmt">เครือข่ายที่พบ: %1$s · SIM %2$d</string>
     <string name="carrier_codes_note">แตะที่รหัสเพื่อเปิดหน้าโทรออก รหัสเหล่านี้กำหนดโดยเครือข่ายและอาจมีการเปลี่ยน</string>
     <string name="ps_skip">ข้ามไป</string>
-    <string name="ps_allow">ให้สิทธิ์</string>
-    <string name="ps_counter_total">/ %1$d</string>
+    <string name="ps_allow_fmt">อนุญาต %1$s</string>
+    <string name="ps_allowed">อนุญาตแล้ว</string>
+    <string name="ps_trust">คุณเปลี่ยนได้ทุกเมื่อในการตั้งค่า</string>
     <string name="ps_requesting">กำลังร้องขอ…</string>
-    <string name="ps_already_allowed">เครื่องนี้ให้สิทธิ์ไว้เรียบร้อยแล้ว</string>
-    <string name="ps_allowed_moving_on">ให้สิทธิ์%1$sแล้ว กำลังไปขั้นถัดไป…</string>
-    <string name="ps_allowed_done">ให้สิทธิ์%1$sเรียบร้อย</string>
-    <string name="ps_not_allowed">ยังไม่ได้ให้สิทธิ์%1$s เปิดภายหลังได้ที่ การตั้งค่า › การอนุญาต</string>
     <string name="ps_notif_name">ข้อความแจ้งเตือน</string>
     <string name="ps_notif_title">อนุญาตการแจ้งเตือน</string>
     <string name="ps_notif_body">รับข่าวเมื่อการค้นหาเสร็จสิ้นและเมื่อเบอร์ที่เก็บไว้มีการเปลี่ยนแปลง ไม่มีโฆษณากวนใจ</string>

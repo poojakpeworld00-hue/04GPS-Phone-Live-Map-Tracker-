@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="pw_brand">#FF4F46E5</color>
+    <color name="pw_tint">#FFECEBFD</color>
+    <color name="pw_cross">#FFB6BAC6</color>
+</resources>

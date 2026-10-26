@@ -50,13 +50,10 @@
     <string name="carrier_codes_detected_fmt">पता चला ऑपरेटर: %1$s · SIM %2$d</string>
     <string name="carrier_codes_note">किसी कोड पर टैप करते ही डायलर खुल जाएगा। ये कोड ऑपरेटर तय करता है और बदले जा सकते हैं।</string>
     <string name="ps_skip">रहने दें</string>
-    <string name="ps_allow">इजाज़त दें</string>
-    <string name="ps_counter_total">/ %1$d</string>
+    <string name="ps_allow_fmt">%1$s की अनुमति दें</string>
+    <string name="ps_allowed">अनुमति दी गई</string>
+    <string name="ps_trust">आप इसे कभी भी सेटिंग्स में बदल सकते हैं</string>
     <string name="ps_requesting">अनुमति माँगी जा रही है…</string>
-    <string name="ps_already_allowed">इस फ़ोन पर यह अनुमति पहले से है</string>
-    <string name="ps_allowed_moving_on">%1$s की इजाज़त मिली। अगले चरण पर जा रहे हैं…</string>
-    <string name="ps_allowed_done">%1$s की इजाज़त मिल गई है।</string>
-    <string name="ps_not_allowed">%1$s की इजाज़त नहीं दी गई। आप इसे सेटिंग › अनुमतियाँ में कभी भी चालू कर सकते हैं।</string>
     <string name="ps_notif_name">नोटिफ़िकेशन</string>
     <string name="ps_notif_title">नोटिफ़िकेशन चालू करें</string>
     <string name="ps_notif_body">खोज पूरी होने या सेव किए नंबर में बदलाव होने पर सूचना पाएँ। कोई विज्ञापनी स्पैम नहीं।</string>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:background="@drawable/lv_sheet_top_r30"
+  android:gravity="center_horizontal"
+  android:orientation="vertical"
+  android:paddingHorizontal="20dp"
+  android:paddingTop="10dp"
+  android:paddingBottom="24dp">
+  <View
+    android:layout_width="40dp"
+    android:layout_height="5dp"
+    android:background="@drawable/lv_handle_r3" />
+  <FrameLayout
+    android:layout_width="64dp"
+    android:layout_height="64dp"
+    android:layout_marginTop="20dp"
+    android:background="@drawable/lv_circle_danger_soft">
+    <ImageView
+      android:layout_width="28dp"
+      android:layout_height="28dp"
+      android:layout_gravity="center"
+      android:importantForAccessibility="no"
+      android:src="@drawable/lv_ic_alert_circle"
+      app:tint="@color/ds_danger" />
+  </FrameLayout>
+  <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="12dp"
+    android:accessibilityHeading="true"
+    android:fontFamily="@font/nunito_extrabold"
+    android:gravity="center"
+    android:letterSpacing="-0.02"
+    android:text="@string/ds_search_failed_title"
+    android:textColor="@color/ds_ink"
+    android:textSize="22sp" />
+  <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="10dp"
+    android:fontFamily="@font/figtree_regular"
+    android:gravity="center"
+    android:lineSpacingMultiplier="1.2"
+    android:text="@string/ds_search_failed_body"
+    android:textColor="@color/ds_muted"
+    android:textSize="14sp" />
+  <TextView
+    android:id="@+id/actRetry"
+    android:layout_width="match_parent"
+    android:layout_height="56dp"
+    android:layout_marginTop="18dp"
+    android:background="@drawable/lv_btn_primary_selector_r18"
+    android:fontFamily="@font/figtree_bold"
+    android:gravity="center"
+    android:text="@string/ds_search_failed_retry"
+    android:textColor="@color/white"
+    android:textSize="16sp" />
+  <TextView
+    android:id="@+id/actCancel"
+    android:layout_width="wrap_content"
+    android:layout_height="48dp"
+    android:layout_marginTop="6dp"
+    android:background="?attr/selectableItemBackground"
+    android:fontFamily="@font/figtree_semibold"
+    android:gravity="center"
+    android:paddingHorizontal="12dp"
+    android:text="@string/ds_search_failed_cancel"
+    android:textColor="@color/ds_primary"
+    android:textSize="14sp" />
+</LinearLayout>

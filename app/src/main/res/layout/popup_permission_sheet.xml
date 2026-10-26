@@ -15,129 +15,127 @@
     android:layout_height="4dp"
     android:layout_gravity="center_horizontal"
     android:background="@drawable/pmt_bg_grabber" />
-  <FrameLayout
-    android:layout_width="match_parent"
-    android:layout_height="28dp"
-    android:layout_marginTop="14dp">
-    <LinearLayout
-      android:id="@+id/lv_counterPill"
-      android:layout_width="wrap_content"
-      android:layout_height="26dp"
-      android:layout_gravity="start|center_vertical"
-      android:background="@drawable/pmt_bg_pill_tonal"
-      android:gravity="center_vertical"
-      android:orientation="horizontal"
-      android:paddingHorizontal="10dp">
-      <TextView
-        android:id="@+id/txtCounterCurrent"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/figtree_bold"
-        android:textColor="@color/ps_accent_ink"
-        android:textSize="12sp"
-        tools:text="1" />
-      <TextView
-        android:id="@+id/txtCounterTotal"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
-        android:fontFamily="@font/figtree_bold"
-        android:textColor="@color/ps_muted"
-        android:textSize="12sp"
-        tools:text="/ 4" />
-    </LinearLayout>
-    <TextView
-      android:id="@+id/actSkip"
-      android:layout_width="wrap_content"
-      android:layout_height="match_parent"
-      android:layout_gravity="end|center_vertical"
-      android:background="?attr/selectableItemBackgroundBorderless"
-      android:fontFamily="@font/figtree_bold"
-      android:gravity="center"
-      android:paddingHorizontal="6dp"
-      android:text="@string/ps_skip"
-      android:textColor="@color/ps_muted"
-      android:textSize="14sp" />
-  </FrameLayout>
-  <androidx.viewpager2.widget.ViewPager2
-    android:id="@+id/swiper"
-    android:layout_width="match_parent"
-    android:layout_height="320dp"
-    android:layout_marginTop="14dp" />
   <LinearLayout
-    android:id="@+id/condChip"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="14dp"
-    android:background="@drawable/pmt_bg_status_success"
     android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:paddingHorizontal="12dp"
-    android:paddingVertical="10dp"
-    android:visibility="gone"
-    tools:visibility="visible">
-    <ImageView
-      android:id="@+id/imgStatus"
-      android:layout_width="16dp"
-      android:layout_height="16dp"
-      android:importantForAccessibility="no"
-      android:src="@drawable/pmt_ic_check"
-      app:tint="@color/ps_success" />
-    <TextView
-      android:id="@+id/txtStatus"
-      android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:layout_marginStart="8dp"
-      android:layout_weight="1"
-      android:accessibilityLiveRegion="polite"
-      android:fontFamily="@font/figtree_semibold"
-      android:lineSpacingExtra="2dp"
-      android:textColor="@color/ps_success_ink"
-      android:textSize="13sp"
-      tools:text="Contacts allowed. Moving on…" />
-  </LinearLayout>
-  <LinearLayout
-    android:id="@+id/marks"
-    android:layout_width="wrap_content"
-    android:layout_height="6dp"
-    android:layout_gravity="center_horizontal"
-    android:layout_marginTop="14dp"
-    android:orientation="horizontal" />
-  <LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="52dp"
-    android:layout_marginTop="14dp"
     android:orientation="horizontal">
-    <FrameLayout
-      android:id="@+id/actPrimary"
+    <LinearLayout
+      android:id="@+id/progressBars"
       android:layout_width="0dp"
-      android:layout_height="52dp"
+      android:layout_height="5dp"
       android:layout_weight="1"
-      android:background="@drawable/pmt_bg_btn_gradient"
-      android:foreground="?attr/selectableItemBackground">
-      <LinearLayout
-        android:id="@+id/lv_primaryContent"
+      android:orientation="horizontal" />
+    <TextView
+      android:id="@+id/actSkip"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="12dp"
+      android:background="?attr/selectableItemBackgroundBorderless"
+      android:fontFamily="@font/figtree_bold"
+      android:paddingHorizontal="6dp"
+      android:paddingVertical="4dp"
+      android:text="@string/ps_skip"
+      android:textColor="@color/ps_muted"
+      android:textSize="14sp" />
+  </LinearLayout>
+  <androidx.viewpager2.widget.ViewPager2
+    android:id="@+id/swiper"
+    android:layout_width="match_parent"
+    android:layout_height="200dp"
+    android:layout_marginTop="14dp" />
+  <LinearLayout
+    android:id="@+id/stepRow"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal"
+    android:layout_marginTop="16dp"
+    android:orientation="horizontal" />
+  <TextView
+    android:id="@+id/txtTitle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="16dp"
+    android:accessibilityHeading="true"
+    android:fontFamily="@font/nunito_extrabold"
+    android:letterSpacing="-0.01"
+    android:paddingHorizontal="4dp"
+    android:textColor="@color/ps_ink"
+    android:textSize="22sp"
+    tools:text="Turn on notifications" />
+  <TextView
+    android:id="@+id/txtBody"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="6dp"
+    android:fontFamily="@font/figtree_regular"
+    android:lineSpacingExtra="4dp"
+    android:paddingHorizontal="4dp"
+    android:textColor="@color/ps_muted"
+    android:textSize="14sp"
+    tools:text="Get an alert when a lookup finishes and when saved numbers change. No promotional spam." />
+  <FrameLayout
+    android:id="@+id/actPrimary"
+    android:layout_width="match_parent"
+    android:layout_height="54dp"
+    android:layout_marginTop="20dp"
+    android:background="@drawable/pmt_bg_btn_gradient"
+    android:foreground="?attr/selectableItemBackground">
+    <LinearLayout
+      android:id="@+id/lv_primaryContent"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center"
+      android:gravity="center_vertical"
+      android:orientation="horizontal">
+      <ProgressBar
+        android:id="@+id/spinPrimary"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_marginEnd="8dp"
+        android:indeterminateTint="@android:color/white"
+        android:visibility="gone" />
+      <ImageView
+        android:id="@+id/imgPrimary"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_marginEnd="8dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/pmt_ic_check"
+        android:visibility="gone"
+        app:tint="@android:color/white" />
+      <TextView
+        android:id="@+id/txtPrimary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-        <ProgressBar
-          android:id="@+id/spinPrimary"
-          android:layout_width="16dp"
-          android:layout_height="16dp"
-          android:layout_marginEnd="8dp"
-          android:indeterminateTint="@android:color/white"
-          android:visibility="gone" />
-        <TextView
-          android:id="@+id/txtPrimary"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:fontFamily="@font/figtree_bold"
-          android:textColor="@android:color/white"
-          android:textSize="15sp"
-          tools:text="Allow Notifications" />
-      </LinearLayout>
-    </FrameLayout>
+        android:accessibilityLiveRegion="polite"
+        android:fontFamily="@font/figtree_bold"
+        android:textColor="@android:color/white"
+        android:textSize="15sp"
+        tools:text="Allow Alerts" />
+    </LinearLayout>
+  </FrameLayout>
+  <LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal"
+    android:layout_marginTop="14dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+    <ImageView
+      android:layout_width="13dp"
+      android:layout_height="13dp"
+      android:layout_marginEnd="6dp"
+      android:importantForAccessibility="no"
+      android:src="@drawable/pmt_ic_lock"
+      app:tint="@color/ps_dot_past" />
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:fontFamily="@font/figtree_medium"
+      android:text="@string/ps_trust"
+      android:textColor="@color/ps_dot_past"
+      android:textSize="11.5sp" />
   </LinearLayout>
 </LinearLayout>

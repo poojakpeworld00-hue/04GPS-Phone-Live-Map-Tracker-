@@ -11,9 +11,7 @@ data class PlusOffer(
     val preselected: Boolean,
     val fallbackTrialDays: Int = 0,
 ) {
-    enum class Kind { WEEKLY, MONTHLY, LIFETIME }
-
-    val isSubscription: Boolean get() = kind != Kind.LIFETIME
+    enum class Kind { WEEKLY, MONTHLY, YEARLY }
 }
 
 data class PlusProfile(
@@ -35,7 +33,7 @@ data class PlusProfile(
         private val DEFAULT_PLANS = listOf(
             PlusOffer("gps_premium_weekly", PlusOffer.Kind.WEEKLY, "SUGGESTED", preselected = true, fallbackTrialDays = 3),
             PlusOffer("gps_premium_monthly", PlusOffer.Kind.MONTHLY, "", preselected = false),
-            PlusOffer("gps_premium_lifetime", PlusOffer.Kind.LIFETIME, "", preselected = false),
+            PlusOffer("gps_premium_yearly", PlusOffer.Kind.YEARLY, "", preselected = false),
         )
 
         fun read(context: Context): PlusProfile {
@@ -47,13 +45,13 @@ data class PlusProfile(
                     val p = arr.optJSONObject(i) ?: return@mapNotNull null
                     val id = p.optString("id").takeIf { it.isNotBlank() } ?: return@mapNotNull null
                     val kind = when {
-                        p.optString("type") == "inapp" -> PlusOffer.Kind.LIFETIME
+                        p.optString("period").equals("P1Y", ignoreCase = true) -> PlusOffer.Kind.YEARLY
                         p.optString("period").equals("P1M", ignoreCase = true) -> PlusOffer.Kind.MONTHLY
                         else -> PlusOffer.Kind.WEEKLY
                     }
                     PlusOffer(
                         id, kind, p.optString("tag"), p.optBoolean("default"),
-                        fallbackTrialDays = if (kind == PlusOffer.Kind.LIFETIME) 0 else p.optInt("trial_days", 0),
+                        fallbackTrialDays = p.optInt("trial_days", 0),
                     )
                 }
             }?.takeIf { it.isNotEmpty() } ?: DEFAULT_PLANS

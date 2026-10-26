@@ -1,5 +1,9 @@
 package com.find.phone.gps.live.location.tracker.screens.plus
 
+import com.find.phone.gps.live.location.tracker.helpers.isNightMode
+import android.text.style.ForegroundColorSpan
+import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile
+import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import android.graphics.Paint
 import android.os.Build
 import android.animation.ObjectAnimator
@@ -46,17 +50,30 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
     private var offers: List<PlusOffer> = emptyList()
     private var pickedIdx = 0
     private var checkoutBusy = false
+    private var leaving = false
     private var quoteStatus = QuoteStatus.PENDING
     private var quoteTries = 0
     private var ctaSweep: ValueAnimator? = null
 
     private val fromIntro: Boolean get() = intent.getBooleanExtra(EXTRA_AFTER_INTRO, false)
 
+    private val closeView get() = if (fromIntro) binding.actCloseSingle else binding.actClose
+
     override fun initView() {
         offerCfg = PlusProfile.read(this)
-        offers = offerCfg.plans.take(3)
+        // onboarding shows one plan (weekly + trial); the in-app page keeps all three
+        offers = if (fromIntro) offerCfg.plans.filter { it.kind == PlusOffer.Kind.WEEKLY }.take(1).ifEmpty { offerCfg.plans.take(1) }
+        else offerCfg.plans.take(3)
         pickedIdx = maxOf(0, offers.indexOfFirst { it.preselected })
         recordKeyEvent(if (fromIntro) "premium_view_after_intro" else "premium_view")
+        if (fromIntro) SpotsLocker.getInstance(this).putBoolean(HomeSpotsProfile.PREMIUM_GATE_SEEN, true)
+
+        binding.scrl.isVisible = !fromIntro
+        binding.singleVw.isVisible = fromIntro
+        binding.actContinueFree.isVisible = !fromIntro
+        // single-plan design keeps the legal links in the consent line only
+        binding.actTerms.isVisible = !fromIntro
+        binding.actPrivacy.isVisible = !fromIntro
 
         goEdgeToEdge()
 
@@ -77,13 +94,15 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
     private fun goEdgeToEdge() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
-        WindowCompat.getInsetsController(window, binding.root).isAppearanceLightStatusBars = true
+        WindowCompat.getInsetsController(window, binding.root).isAppearanceLightStatusBars = !isNightMode(this)
         val baseCloseTop = (binding.actClose.layoutParams as ViewGroup.MarginLayoutParams).topMargin
+        val singleTop = binding.singleVw.paddingTop
         val baseBottomPad = binding.lowerBar.paddingBottom
         ViewCompat.setOnApplyWindowInsetsListener(binding.plusRoot) { _, insets ->
             val sb = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             binding.actClose.updateLayoutParams<ViewGroup.MarginLayoutParams> { topMargin = baseCloseTop + sb.top }
             binding.lead.updateLayoutParams { height = bannerHeight() }
+            binding.singleVw.updatePadding(top = singleTop + sb.top)
             binding.lowerBar.updatePadding(bottom = baseBottomPad + sb.bottom)
             binding.plusRoot.updatePadding(left = sb.left, right = sb.right)
             insets
@@ -92,26 +111,30 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
 
     private fun bindControls() {
         CraftMovement.pressScale(binding.actContinue)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            binding.actContinue.outlineSpotShadowColor = getColor(R.color.pw_brand)
+            binding.actContinue.outlineAmbientShadowColor = getColor(R.color.pw_brand)
+        }
         with(binding) {
             actContinue.clipToOutline = true
             actContinue.setOnClickListener { startCheckout() }
             actRestore.setOnClickListener { restorePurchases() }
             actTerms.setOnClickListener { enterTermLink() }
             actPrivacy.setOnClickListener { enterPolicyLink() }
-            actClose.setOnClickListener { if (actClose.closable) exitPaywall() }
-            actClose.start(offerCfg.closeDelaySec, offerCfg.closeButtonOpacity) {}
+            closeView.setOnClickListener { if (closeView.closable) exitPaywall(withInter = true) }
+            closeView.start(offerCfg.closeDelaySec, offerCfg.closeButtonOpacity) {}
             actContinueFree.paintFlags = actContinueFree.paintFlags or Paint.UNDERLINE_TEXT_FLAG
 
             actContinueFree.setOnClickListener {
                 recordKeyEvent("premium_continue_free")
-                exitPaywall()
+                exitPaywall(withInter = true)
             }
         }
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (!binding.actClose.closable) return
-                exitPaywall()
+                if (!closeView.closable) return
+                exitPaywall(withInter = true)
             }
         })
     }
@@ -155,16 +178,15 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
 
     private fun consentTail(plan: PlusOffer, trial: Int): Int = when {
         trial > 0 -> R.string.ds_premium_consent_trial
-        plan.isSubscription -> R.string.ds_premium_consent_subs
-        else -> R.string.ds_premium_consent_lifetime
+        else -> R.string.ds_premium_consent_subs
     }
 
     private fun ctaText(plan: PlusOffer, trial: Int, price: String): String {
-        if (trial > 0) return getString(R.string.ds_premium_cta_trial, trial)
+        if (trial > 0) return getString(R.string.ds_premium_cta_start)
         return when (plan.kind) {
             PlusOffer.Kind.WEEKLY -> getString(R.string.ds_premium_cta_week, price)
             PlusOffer.Kind.MONTHLY -> getString(R.string.ds_premium_cta_month, price)
-            else -> getString(R.string.ds_premium_cta_lifetime, price)
+            else -> getString(R.string.ds_premium_cta_year, price)
         }
     }
 
@@ -175,7 +197,9 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         PlusOffer.Kind.MONTHLY ->
             if (trial > 0) getString(R.string.ds_premium_price_trial_month, price, trial)
             else getString(R.string.ds_premium_price_month, price)
-        PlusOffer.Kind.LIFETIME -> getString(R.string.ds_premium_price_lifetime, price)
+        PlusOffer.Kind.YEARLY ->
+            if (trial > 0) getString(R.string.ds_premium_price_trial_year, price, trial)
+            else getString(R.string.ds_premium_price_year, price)
     }
 
     private fun renderPlans() {
@@ -189,7 +213,13 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
             binding.spinCta.isVisible = false
         }
         binding.txtCta.text = ctaText(current, trial, price)
-        binding.txtPriceLine.text = priceLineText(current, trial, price)
+        binding.txtSingleTrial.isVisible = trial > 0
+        if (trial > 0) binding.txtSingleTrial.text = getString(R.string.ds_premium_cta_trial, trial)
+        val line = priceLineText(current, trial, price)
+        binding.txtPriceLine.text = SpannableString(line).apply {
+            val at = line.indexOf(price)
+            if (at >= 0) setSpan(ForegroundColorSpan(getColor(R.color.pw_brand)), at, at + price.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
     }
 
     private fun renderMissingPrice() {
@@ -252,13 +282,13 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
     private fun titleRes(plan: PlusOffer) = when (plan.kind) {
         PlusOffer.Kind.WEEKLY -> R.string.ds_premium_week
         PlusOffer.Kind.MONTHLY -> R.string.ds_premium_month
-        PlusOffer.Kind.LIFETIME -> R.string.ds_premium_lifetime
+        PlusOffer.Kind.YEARLY -> R.string.ds_premium_year
     }
 
     private fun periodRes(plan: PlusOffer) = when (plan.kind) {
         PlusOffer.Kind.WEEKLY -> R.string.ds_premium_per_week
         PlusOffer.Kind.MONTHLY -> R.string.ds_premium_per_week_billed_monthly
-        PlusOffer.Kind.LIFETIME -> R.string.ds_premium_one_time
+        PlusOffer.Kind.YEARLY -> R.string.ds_premium_per_year
     }
 
     private fun startCheckout() {
@@ -320,13 +350,16 @@ class PlusActivity : StageActivity<ScreenPremiumBinding>() {
         binding.spinCta.isVisible = busy
     }
 
-    private fun exitPaywall() {
-        if (isFinishing) return
-        when {
-            !fromIntro -> finish()
-            HomeStream.isOnboardingActive(this) -> HomeStream.advance(this)
-            else -> HomeStream.goHome(this)
-        }
+    // withInter: dismissed without buying → RC onboarding.premium decides whether an interstitial runs first
+    private fun exitPaywall(withInter: Boolean = false) {
+        if (isFinishing || leaving) return
+        if (!fromIntro) return finish()
+        val next = { if (HomeStream.isOnboardingActive(this)) HomeStream.advance(this) else HomeStream.goHome(this) }
+        if (!withInter) return next()
+        leaving = true
+        // skipping the paywall lifts the hold, so the exit inter and the onboarding ads after it show
+        SpotsLocker.getInstance(this).putBoolean(HomeSpotsProfile.PREMIUM_GATE_SEEN, false)
+        HomeSpotsProfile.execOnboardingInter(this, HomeSpotsProfile.OnboardScreen.PREMIUM) { next() }
     }
 
     private fun runCtaSweep() {

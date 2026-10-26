@@ -18,6 +18,14 @@ val lhBaseUrl: String = lhProps.getProperty("lighthouse.baseUrl", "")
 // Number-lookup API (contact-saver) key; the base URL comes from Remote Config `contacts_base_url`.
 val lookupApiKey: String = lhProps.getProperty("lookup.apiKey", "")
 
+// Release signing — read from local.properties (git-ignored). When absent, release stays unsigned
+// (or debug-signed with -PdebugSignRelease=true), so a build never fails for someone without the key.
+val releaseStoreFile: String = lhProps.getProperty("release.storeFile", "")
+val releaseStorePassword: String = lhProps.getProperty("release.storePassword", "")
+val releaseKeyAlias: String = lhProps.getProperty("release.keyAlias", "")
+val releaseKeyPassword: String = lhProps.getProperty("release.keyPassword", "")
+val hasReleaseKeystore: Boolean = releaseStoreFile.isNotEmpty() && rootProject.file(releaseStoreFile).exists()
+
 fun xorByteArrayLiteral(value: String, key: Int = 0x5A): String {
     if (value.isEmpty()) return "new byte[]{}"
     val parts = value.toByteArray(Charsets.UTF_8)
@@ -41,8 +49,8 @@ android {
         // and the launcher leans on API 25/26 LauncherApps shortcut + pinned-item APIs.
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 1
+        versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // LightHouse credentials → obfuscated BuildConfig byte[] (decoded at runtime by Muddle.s).
@@ -51,14 +59,28 @@ android {
         buildConfigField("byte[]", "LOOKUP_API_KEY", xorByteArrayLiteral(lookupApiKey))
     }
 
+    signingConfigs {
+        if (hasReleaseKeystore) {
+            create("release") {
+                storeFile = rootProject.file(releaseStoreFile)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            // `-PdebugSignRelease=true` signs a release build with the debug key so the minified
-            // build can be installed and smoke-tested on a device; never set for a store build.
-            if (project.findProperty("debugSignRelease") == "true") {
-                signingConfig = signingConfigs.getByName("debug")
+            // Store build: signed with the upload key from local.properties when present.
+            // Otherwise `-PdebugSignRelease=true` signs with the debug key for on-device smoke
+            // tests only; with neither, the release stays unsigned.
+            signingConfig = when {
+                hasReleaseKeystore -> signingConfigs.getByName("release")
+                project.findProperty("debugSignRelease") == "true" -> signingConfigs.getByName("debug")
+                else -> null
             }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -141,7 +163,6 @@ dependencies {
     implementation(libs.libphonenumber.carrier)
     implementation(libs.osmdroid)
 
-    // Premium (paywall 9c): weekly / monthly subscriptions and a lifetime purchase.
     implementation(libs.billing)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)

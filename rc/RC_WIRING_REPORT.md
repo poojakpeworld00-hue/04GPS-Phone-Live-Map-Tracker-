@@ -165,7 +165,7 @@ The two params share the same key set except where noted. The release blob carri
 | launcher_enabled | str | A:homeshell/HomeFlip.kt:14 (`!= "false"`, absent → on) | USED |
 | onboarding_home | str | A:induction/HomeStream.kt:85 (`== "app"`) | USED |
 | recent_playstore | bool | A:monetize/render/FreshSpotSentinel.kt:57 | USED |
-| recent_playstore_window_sec | int | FreshSpotSentinel.kt:58 | USED (MKT 6000 / ORG 180) |
+| recent_playstore_window_sec | int | FreshSpotSentinel.kt:58 | USED (6000 in all segments) |
 | placements | str(JSON) | HomeSeatSpots.kt:55 `PLACEMENTS_KEY`, `own()` (§2.9) | USED (partly ineffective, see §2.9) |
 | premium | str(JSON) | PlusProfile (§2.10) | USED |
 

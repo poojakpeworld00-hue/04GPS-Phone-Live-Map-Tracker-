@@ -50,13 +50,10 @@
     <string name="carrier_codes_detected_fmt">Ваш оператор: %1$s · SIM %2$d</string>
     <string name="carrier_codes_note">Коснитесь кода, чтобы открыть номеронабиратель. Коды устанавливает оператор, со временем они могут измениться.</string>
     <string name="ps_skip">Пропустить шаг</string>
-    <string name="ps_allow">Дать доступ</string>
-    <string name="ps_counter_total">/ %1$d</string>
+    <string name="ps_allow_fmt">Разрешить: %1$s</string>
+    <string name="ps_allowed">Разрешено</string>
+    <string name="ps_trust">Это можно изменить в любой момент в Настройках</string>
     <string name="ps_requesting">Запрашиваем…</string>
-    <string name="ps_already_allowed">На этом устройстве доступ уже выдан</string>
-    <string name="ps_allowed_moving_on">Доступ выдан: %1$s. Продолжаем…</string>
-    <string name="ps_allowed_done">Доступ выдан: %1$s.</string>
-    <string name="ps_not_allowed">Доступ не выдан: %1$s. Его можно включить позже в Настройки › Разрешения.</string>
     <string name="ps_notif_name">Оповещения</string>
     <string name="ps_notif_title">Разрешите оповещения</string>
     <string name="ps_notif_body">Узнавайте, когда поиск закончен и когда сохранённые номера обновились. Без навязчивой рекламы.</string>

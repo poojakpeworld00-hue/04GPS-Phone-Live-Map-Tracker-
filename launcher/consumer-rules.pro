@@ -1,3 +1,4 @@
+
 -keep class com.livemap.homedeck.entities.** { *; }
 -keep interface com.livemap.homedeck.ports.**Dao { *; }
 -keep class com.livemap.homedeck.applets.** { *; }

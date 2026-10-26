@@ -5,36 +5,43 @@ import android.content.pm.ApplicationInfo
 import android.os.Bundle
 import android.util.Log
 import com.google.android.gms.ads.AdValue
+import com.google.android.gms.ads.ResponseInfo
 import com.google.firebase.analytics.FirebaseAnalytics
-import  com.find.phone.gps.live.location.tracker.BuildConfig
+import com.find.phone.gps.live.location.tracker.BuildConfig
+import com.find.phone.gps.live.location.tracker.NavTracerCore
 
 const val TAG_EVENT = "AdEvents"
 
 object SpotIncomeGauge {
     private const val TAG = "SpotIncomeGauge"
 
-    fun recordPaidEvent(context: Context, adValue: AdValue?) {
-        if (adValue == null) {
-            Log.e(TAG, "🔥 REAL PAID EVENT → $adValue ")
-            return
+    fun recordPaidEvent(
+        context: Context,
+        adValue: AdValue?,
+        format: String,
+        unitId: String?,
+        info: ResponseInfo?,
+        placement: String = NavTracerCore.currentScreen(),
+    ) {
+        if (adValue == null) return
+        val source = info?.loadedAdapterResponseInfo?.adSourceName?.takeIf { it.isNotBlank() } ?: "AdMob"
+        val segment = if (SpotsLocker.getInstance(context).getBoolean("OnMaketing")) "paid" else "organic"
+        val params = Bundle().apply {
+            putString(FirebaseAnalytics.Param.AD_PLATFORM, "admob")
+            putString(FirebaseAnalytics.Param.AD_SOURCE, source)
+            putString(FirebaseAnalytics.Param.AD_FORMAT, format)
+            putString(FirebaseAnalytics.Param.AD_UNIT_NAME, unitId.orEmpty())
+            putDouble(FirebaseAnalytics.Param.VALUE, adValue.valueMicros / 1_000_000.0)
+            putString(FirebaseAnalytics.Param.CURRENCY, adValue.currencyCode.ifBlank { "USD" })
+            putInt("precision", adValue.precisionType)
+            putString("placement", placement)
+            putString("segment", segment)
         }
-        val revenue = adValue.valueMicros / 1_000_000.0
-        val currency = adValue.currencyCode ?: "USD"
-
-        context.recordAdRevenue(revenue, currency)
-
-        Log.e(TAG, "🔥 REAL PAID EVENT → $revenue $currency (${adValue.valueMicros})")
-    }
-
-    fun simulateDebugRevenue(context: Context) {
-        if (!BuildConfig.DEBUG) return
-
-        val revenue = 1.00
-        val currency = "USD"
-
-        context.recordAdRevenue(revenue, currency)
-
-        Log.e(TAG, "🧪 DEBUG SIM → $revenue $currency")
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "ad_impression → $params")
+        } else {
+            FirebaseAnalytics.getInstance(context).logEvent(FirebaseAnalytics.Event.AD_IMPRESSION, params)
+        }
     }
 
 }
@@ -110,20 +117,4 @@ fun Context.recordPermissionResult(permission: String, granted: Boolean) {
 
 fun Context.isDebuggable(): Boolean {
     return (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
-}
-
-fun Context.recordAdRevenue(revenue: Double, currency: String) {
-    val params = Bundle().apply {
-        putString(FirebaseAnalytics.Param.AD_PLATFORM, "admob")
-        putString(FirebaseAnalytics.Param.CURRENCY, currency)
-        putDouble(FirebaseAnalytics.Param.VALUE, revenue)
-    }
-
-    if (BuildConfig.DEBUG) {
-        Log.d("AdPaid", "🧪 DEBUG AD_IMPRESSION → $params")
-    } else {
-        FirebaseAnalytics.getInstance(this)
-            .logEvent(FirebaseAnalytics.Event.AD_IMPRESSION, params)
-    }
-
 }

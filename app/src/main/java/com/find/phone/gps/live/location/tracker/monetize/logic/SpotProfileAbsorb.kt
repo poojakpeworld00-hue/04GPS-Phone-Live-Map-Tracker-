@@ -75,6 +75,7 @@ object SpotProfileAbsorb {
                 "intro_display", "ScreenAds", "launcher_ads",
 
                 "premium",
+                "search_config",
 
                 "rewarded",
 
@@ -95,6 +96,7 @@ object SpotProfileAbsorb {
 
                 "Config_Sync_Hrs",
                 "recent_playstore_window_sec",
+                "recent_playstore_count",
 
                 "Inter_Loader_Ms"
             ).forEach { key -> if (root.has(key)) putInt(key, root.optInt(key, 0)) }

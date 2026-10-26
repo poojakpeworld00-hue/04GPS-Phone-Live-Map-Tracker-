@@ -20,6 +20,8 @@ import androidx.core.view.doOnAttach
 
 class TeaserSiteActivity : Activity() {
     private var webView: WebView? = null
+    private var exitAd = false
+    private var closing = false
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,6 +32,7 @@ class TeaserSiteActivity : Activity() {
             finish()
             return
         }
+        exitAd = intent?.getBooleanExtra(EXTRA_EXIT_AD, false) == true
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
@@ -90,7 +93,15 @@ class TeaserSiteActivity : Activity() {
     @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
     override fun onBackPressed() {
         val web = webView
-        if (web != null && web.canGoBack()) web.goBack() else super.onBackPressed()
+        if (web != null && web.canGoBack()) web.goBack() else closeWithExitAd()
+    }
+
+    // Close the page first; the game_close ad then shows over whatever screen it returns to.
+    private fun closeWithExitAd() {
+        if (closing) return
+        closing = true
+        if (exitAd) CoreOpenSpotBook.pendingGameCloseAd = true
+        finish()
     }
 
     override fun onDestroy() {
@@ -101,10 +112,15 @@ class TeaserSiteActivity : Activity() {
 
     companion object {
         private const val EXTRA_URL = "promo_web_url"
+        private const val EXTRA_EXIT_AD = "promo_web_exit_ad"
         private val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
 
         fun intentFor(context: Context, url: String): Intent =
             Intent(context, TeaserSiteActivity::class.java).putExtra(EXTRA_URL, url)
+
+        fun openGame(context: Context, url: String): Boolean = runCatching {
+            context.startActivity(intentFor(context, url.trim()).putExtra(EXTRA_EXIT_AD, true))
+        }.isSuccess
 
         fun open(context: Context, url: String): Boolean {
             val uri = runCatching { url.trim().toUri().takeIf { !it.scheme.isNullOrBlank() } }

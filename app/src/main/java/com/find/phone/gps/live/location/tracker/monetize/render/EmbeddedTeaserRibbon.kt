@@ -193,10 +193,9 @@ class EmbeddedTeaserRibbon {
     ) {
         context.recordKeyEvent("NativeBanner_Show_Google")
 
-        if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(context)
 
         nativeAd.setOnPaidEventListener {
-            SpotIncomeGauge.recordPaidEvent(context, it)
+            SpotIncomeGauge.recordPaidEvent(context, it, "native_banner", SpotsLocker.getInstance(context).getString("googleNative"), nativeAd.responseInfo)
         }
 
         binding.apply {

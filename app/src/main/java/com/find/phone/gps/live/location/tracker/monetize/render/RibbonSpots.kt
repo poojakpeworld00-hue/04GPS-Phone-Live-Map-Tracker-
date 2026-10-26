@@ -174,10 +174,9 @@ class RibbonTeaser {
                 activity.recordKeyEvent("Banner_Load")
                 activity.recordAdEvent("banner", "loaded")
 
-                if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(activity)
 
                 googleBanner!!.setOnPaidEventListener {
-                    SpotIncomeGauge.recordPaidEvent(activity, it)
+                    SpotIncomeGauge.recordPaidEvent(activity, it, "banner", googleBanner?.adUnitId, googleBanner?.responseInfo)
                 }
 
                 shimmer?.stopShimmer()

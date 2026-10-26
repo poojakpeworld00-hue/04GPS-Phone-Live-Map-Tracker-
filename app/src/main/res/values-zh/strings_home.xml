@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_title_short">实时地图追踪器</string>
-    <string name="home_go_pro">升级 PRO</string>
     <string name="home_quota_fmt">剩余 %1$d/%2$d 次免费搜索</string>
     <string name="home_chip_my_number">我的号码</string>
     <string name="home_chip_carrier">运营商代码</string>
     <string name="home_chip_dual_sim">双卡</string>
     <string name="home_cd_search">搜索位置</string>
+    <string name="home_go_pro">升级 PRO</string>
 </resources>

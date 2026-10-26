@@ -10,6 +10,8 @@ import com.find.phone.gps.live.location.tracker.monetize.logic.DisplayTeaserProf
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile
 import com.find.phone.gps.live.location.tracker.monetize.render.StraightHrefOpener
+import com.find.phone.gps.live.location.tracker.monetize.render.TeaserSiteActivity
+import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.render.EmbeddedTeaser
 import com.find.phone.gps.live.location.tracker.NavTracerCore
 import com.google.android.gms.ads.nativead.NativeAdView
@@ -99,7 +101,14 @@ class RingHomeSpots : HomeSpots {
     override fun openSponsored(activity: Activity, url: String) {
         val mode = StraightHrefOpener.modeOf(SpotsLocker.getInstance(activity).getString("link_open_in"))
             ?: StraightHrefOpener.Mode.WEBVIEW
-        StraightHrefOpener.open(activity, url, mode)
+        activity.recordKeyEvent("game_icon_click")
+        HomeSpotsProfile.execSurface(activity, HomeSpotsProfile.HomePlane.GAME_CLICK) {
+            if (mode == StraightHrefOpener.Mode.WEBVIEW && !StraightHrefOpener.isStoreLink(url)) {
+                TeaserSiteActivity.openGame(activity, url)
+            } else {
+                StraightHrefOpener.open(activity, url, mode)
+            }
+        }
     }
 
     private companion object {

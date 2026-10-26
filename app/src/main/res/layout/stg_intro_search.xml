@@ -131,7 +131,7 @@
               android:layout_height="wrap_content"
               android:layout_marginStart="8dp"
               android:fontFamily="@font/figtree_semibold"
-              android:text="Searching location…"
+              android:text="@string/mk_searching"
               android:textColor="@color/white"
               android:textSize="12sp" />
           </LinearLayout>
@@ -186,7 +186,7 @@
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:fontFamily="@font/figtree_bold"
-              android:text="Location found"
+              android:text="@string/ds_location_found"
               android:textColor="@color/ds_ink"
               android:textSize="14sp" />
             <TextView
@@ -224,7 +224,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:fontFamily="@font/figtree_medium"
-            android:text="Location"
+            android:text="@string/ps_location_name"
             android:textColor="@color/ds_muted"
             android:textSize="12sp" />
           <TextView
@@ -245,7 +245,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:fontFamily="@font/figtree_medium"
-            android:text="Carrier"
+            android:text="@string/ds_fact_carrier"
             android:textColor="@color/ds_muted"
             android:textSize="12sp" />
           <TextView
@@ -266,7 +266,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:fontFamily="@font/figtree_medium"
-            android:text="Time zone"
+            android:text="@string/mk_timezone"
             android:textColor="@color/ds_muted"
             android:textSize="12sp" />
           <TextView

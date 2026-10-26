@@ -238,6 +238,10 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         delay(leftUntil(holdMs * 3 / 10))
 
         val answer = pending.await()
+        if (!answer.serverReached) {
+            showLookupFailed()
+            return@launch
+        }
         outcomeDigest = answer
         persistFound(answer)
 
@@ -255,6 +259,21 @@ class PinpointingActivity : StageActivity<ScreenLocatingBinding>() {
         delay(leftUntil(holdMs))
 
         showVerdict(answer)
+    }
+
+    private fun showLookupFailed() {
+        if (isFinishing || isDestroyed) return
+        barAnim?.cancel()
+        LookupFailDrawer(this, onRetry = { retryLookup() }, onCancel = { finish() }).show()
+    }
+
+    private fun retryLookup() {
+        if (isFinishing || isDestroyed) return
+        barAnim?.cancel()
+        binding.prog.progress = 0
+        binding.txtPercent.text = getString(R.string.ds_locating_percent, 0)
+        binding.pillState.setText(R.string.ds_step_state)
+        runLookup(FREE_HOLD_MS)
     }
 
     private fun enterPhase(text: String, toPercent: Int, overMs: Long, phase: Phase) {

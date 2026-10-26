@@ -46,7 +46,7 @@
       android:paddingTop="8dp"
       android:paddingBottom="24dp"
       android:scrollbars="none"
-      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintBottom_toTopOf="@id/spotBannerDivider"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintTop_toBottomOf="@id/upperBar">
@@ -214,5 +214,20 @@
           app:drawableTint="@color/ds_primary" />
       </LinearLayout>
     </ScrollView>
+    <View
+      android:id="@+id/spotBannerDivider"
+      style="@style/AdDivider"
+      android:layout_width="0dp"
+      android:background="@color/ds_hairline12"
+      app:layout_constraintBottom_toTopOf="@id/ribbonAdFrame"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent" />
+    <include
+      layout="@layout/part_bottom_banner"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent" />
   </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

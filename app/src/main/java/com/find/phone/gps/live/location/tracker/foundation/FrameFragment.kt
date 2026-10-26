@@ -76,7 +76,7 @@ abstract class FrameFragment<VB : ViewBinding> : Fragment() {
 
             shouldShowRequestPermissionRationale(permission) -> launcher.launch(permission)
 
-            else -> enterAppSettings()
+            else -> Unit
         }
     }
 
@@ -122,7 +122,7 @@ abstract class FrameFragment<VB : ViewBinding> : Fragment() {
                     chainLauncher.launch(permission)
                 }
 
-                else -> enterAppSettings()
+                else -> Unit
             }
             return
         }
@@ -132,16 +132,6 @@ abstract class FrameFragment<VB : ViewBinding> : Fragment() {
         done?.invoke()
     }
 
-    protected fun enterAppSettings() {
-        runCatching {
-            startActivity(
-                Intent(
-                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.fromParts("package", requireContext().packageName, null)
-                )
-            )
-        }
-    }
 
     private var pendingCallNumber: String? = null
 

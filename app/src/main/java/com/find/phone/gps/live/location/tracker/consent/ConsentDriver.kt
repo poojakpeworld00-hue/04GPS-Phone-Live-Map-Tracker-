@@ -2,6 +2,8 @@ package com.find.phone.gps.live.location.tracker.consent
 
 import android.app.Activity
 import android.content.Context
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.monetize.logic.recordPermissionResult
 import com.find.phone.gps.live.location.tracker.helpers.WardenRail
@@ -9,6 +11,8 @@ import java.lang.ref.WeakReference
 
 object ConsentDriver {
     private const val TAG = "ConsentDriver"
+
+    private const val RETRY_MS = 500L
 
     private val timer = ConsentTimer()
 
@@ -25,6 +29,9 @@ object ConsentDriver {
     }
 
     private fun Activity.isGoneOrGoing(): Boolean = isFinishing || isDestroyed
+
+    private fun Activity.isOnScreen(): Boolean =
+        (this as? LifecycleOwner)?.lifecycle?.currentState?.isAtLeast(Lifecycle.State.RESUMED) ?: true
 
     private fun shortPermName(spec: ConsentSchema): String = spec.androidPermission.substringAfterLast('.')
 
@@ -168,6 +175,12 @@ object ConsentDriver {
         }
         if (ConsentToolbox.isGranted(act, spec)) {
             advance(queue)
+            return
+        }
+
+        if (!act.isOnScreen()) {
+            // Home pressed mid-queue: hold the prompt until the app is back, never over the launcher
+            timer.schedule(RETRY_MS) { askNow(queue, rule, spec) }
             return
         }
 

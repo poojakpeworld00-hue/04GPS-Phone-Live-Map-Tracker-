@@ -50,13 +50,10 @@
     <string name="carrier_codes_detected_fmt">识别到的运营商：%1$s · SIM %2$d</string>
     <string name="carrier_codes_note">轻点代码即可打开拨号界面。代码由运营商提供，可能随时调整。</string>
     <string name="ps_skip">略过</string>
-    <string name="ps_allow">授权</string>
-    <string name="ps_counter_total">/ %1$d</string>
+    <string name="ps_allow_fmt">允许%1$s</string>
+    <string name="ps_allowed">已允许</string>
+    <string name="ps_trust">你可以随时在设置中更改</string>
     <string name="ps_requesting">正在请求…</string>
-    <string name="ps_already_allowed">本机已授予此权限</string>
-    <string name="ps_allowed_moving_on">%1$s已授权，正在进入下一步…</string>
-    <string name="ps_allowed_done">%1$s已授权。</string>
-    <string name="ps_not_allowed">%1$s未授权。之后可在“设置 › 权限”中随时打开。</string>
     <string name="ps_notif_name">消息通知</string>
     <string name="ps_notif_title">打开通知</string>
     <string name="ps_notif_body">查询结束或保存的号码有变动时通知你。不会推送任何广告。</string>

@@ -33,6 +33,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "GPS Phone Live Map Tracker"
+rootProject.name = "04 GPS Phone Live Map Tracker"
 include(":app")
 include(":launcher")

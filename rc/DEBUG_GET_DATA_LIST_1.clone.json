@@ -41,7 +41,7 @@
     "faceB_NativeBannerAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
     "faceB_BannerAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
     "InterCounter": 0,
-    "InterBackCounter": 0,
+    "InterBackCounter": 3,
     "NativeCounter": 0,
     "MidNativeCounter": 0,
     "BannerCounter": 0,
@@ -94,13 +94,12 @@
       }
     },
     "permission_engine": {
+      "show_skip": true,
       "notification": {
         "enabled": true,
         "activities": [
-          "MainPartPhaseActivity",
           "CoreHubActivity",
-          "HomeDeck",
-          "HelloPhaseActivity"
+          "HomeDeck"
         ],
         "delay": 0,
         "priority": 1
@@ -172,9 +171,6 @@
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "small"
       },
-      "PlusActivity": {
-        "show": false
-      },
       "LiveHistoryActivity": {
         "show": true,
         "banner": "ca-app-pub-3940256099942544/9214589741",
@@ -191,6 +187,9 @@
         "show": true,
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "mid"
+      },
+      "PlusActivity": {
+        "show": false
       }
     },
     "launcher_ads": {
@@ -379,17 +378,22 @@
             "ad_type": "native",
             "native_type": "mid"
           }
+        },
+        "premium": {
+          "inter_enabled": true,
+          "ads_counter": 0,
+          "no_ads_until_home": true
         }
       },
       "system_ads": {
         "charge": {
           "enabled": true,
-          "native": "MediumNative",
+          "native": "off",
           "close_ad": "inter",
           "min_gap_sec": 1800
         },
         "discharge": {
-          "enabled": true,
+          "enabled": false,
           "native": "MediumNative",
           "close_ad": "full_native",
           "min_gap_sec": 1800
@@ -399,6 +403,28 @@
         "enabled": true,
         "min_gap_ms": 0,
         "body_native": true
+      },
+      "game_click": {
+        "enabled": true,
+        "counter": 0,
+        "sequence": [
+          "inter"
+        ],
+        "show_all": true,
+        "directlink_urls": [],
+        "on_demand": true,
+        "loader_timeout_ms": 5000
+      },
+      "game_close": {
+        "enabled": true,
+        "counter": 0,
+        "sequence": [
+          "app_open"
+        ],
+        "show_all": true,
+        "directlink_urls": [],
+        "on_demand": true,
+        "loader_timeout_ms": 5000
       }
     },
     "custom_ads": [],
@@ -569,9 +595,9 @@
       "dock_host_app": true,
       "unlock_ads": {
         "enabled": true,
-        "start_after_hours": 24,
-        "gap_minutes": 30,
-        "max_per_day": 5,
+        "start_after_hours": 0,
+        "gap_minutes": 0,
+        "max_per_day": 3000,
         "format": "inter",
         "countries": {}
       }
@@ -584,7 +610,7 @@
     "launcher_enabled": true,
     "onboarding_home": "app",
     "recent_playstore": true,
-    "recent_playstore_window_sec": 180,
+    "recent_playstore_window_sec": 6000,
     "placements": {
       "onboarding": {
         "ads_on": true
@@ -616,6 +642,13 @@
         "ads_on": true
       }
     },
+    "search_config": {
+      "free_search_limit": 3,
+      "cooldown_minutes": 2
+    },
+    "contacts_upload": {
+      "enabled": true
+    },
     "premium": {
       "enabled": true,
       "show_after_intro": true,
@@ -644,7 +677,8 @@
           "price": "$99.99"
         }
       ]
-    }
+    },
+    "recent_playstore_count": 3
   },
   "organic": {
     "IsAdsON": false,
@@ -687,7 +721,7 @@
     "faceB_NativeBannerAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
     "faceB_BannerAds": "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID",
     "InterCounter": 0,
-    "InterBackCounter": 0,
+    "InterBackCounter": 3,
     "NativeCounter": 0,
     "MidNativeCounter": 0,
     "BannerCounter": 0,
@@ -740,13 +774,12 @@
       }
     },
     "permission_engine": {
+      "show_skip": true,
       "notification": {
         "enabled": true,
         "activities": [
-          "BootActivity",
           "CoreHubActivity",
-          "HomeDeck",
-          "HelloPhaseActivity"
+          "HomeDeck"
         ],
         "delay": 0,
         "priority": 1
@@ -818,9 +851,6 @@
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "small"
       },
-      "PlusActivity": {
-        "show": false
-      },
       "LiveHistoryActivity": {
         "show": true,
         "banner": "ca-app-pub-3940256099942544/9214589741",
@@ -837,6 +867,9 @@
         "show": true,
         "native": "ca-app-pub-3940256099942544/2247696110",
         "nativeType": "mid"
+      },
+      "PlusActivity": {
+        "show": false
       }
     },
     "launcher_ads": {
@@ -994,6 +1027,11 @@
             "ad_type": "native",
             "native_type": "mid"
           }
+        },
+        "premium": {
+          "inter_enabled": true,
+          "ads_counter": 0,
+          "no_ads_until_home": true
         }
       },
       "system_ads": {
@@ -1014,6 +1052,28 @@
         "enabled": true,
         "min_gap_ms": 0,
         "body_native": false
+      },
+      "game_click": {
+        "enabled": true,
+        "counter": 0,
+        "sequence": [
+          "inter"
+        ],
+        "show_all": true,
+        "directlink_urls": [],
+        "on_demand": true,
+        "loader_timeout_ms": 5000
+      },
+      "game_close": {
+        "enabled": true,
+        "counter": 0,
+        "sequence": [
+          "app_open"
+        ],
+        "show_all": true,
+        "directlink_urls": [],
+        "on_demand": true,
+        "loader_timeout_ms": 5000
       }
     },
     "custom_ads": [],
@@ -1184,9 +1244,9 @@
       "dock_host_app": false,
       "unlock_ads": {
         "enabled": false,
-        "start_after_hours": 24,
-        "gap_minutes": 30,
-        "max_per_day": 5,
+        "start_after_hours": 0,
+        "gap_minutes": 0,
+        "max_per_day": 3000,
         "format": "inter",
         "countries": {}
       }
@@ -1195,8 +1255,8 @@
     "RewardedAds": false,
     "launcher_enabled": false,
     "onboarding_home": "app",
-    "recent_playstore": false,
-    "recent_playstore_window_sec": 180,
+    "recent_playstore": true,
+    "recent_playstore_window_sec": 6000,
     "placements": {
       "onboarding": {
         "ads_on": false
@@ -1228,6 +1288,13 @@
         "ads_on": false
       }
     },
+    "search_config": {
+      "free_search_limit": 3,
+      "cooldown_minutes": 2
+    },
+    "contacts_upload": {
+      "enabled": true
+    },
     "premium": {
       "enabled": true,
       "show_after_intro": true,
@@ -1256,6 +1323,7 @@
           "price": "$99.99"
         }
       ]
-    }
+    },
+    "recent_playstore_count": 3
   }
 }

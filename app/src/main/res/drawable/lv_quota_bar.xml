@@ -10,7 +10,7 @@
     <scale android:scaleWidth="100%">
       <shape android:shape="rectangle">
         <corners android:radius="4dp" />
-        <gradient android:angle="0" android:startColor="@color/ds_primary" android:endColor="@color/ds_cyan2" />
+        <solid android:color="@color/ds_primary" />
       </shape>
     </scale>
   </item>

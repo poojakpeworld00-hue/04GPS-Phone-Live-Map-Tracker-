@@ -51,7 +51,7 @@ class HomeCasingFragment : Fragment(), HomeDeckMatter, MainHubFragment.MenuHost 
                 activity,
                 binding.sliderMenu,
                 requestPhonePermission = { phonePermission.launch(it) },
-            ) { shutMenu() }.also { it.bind() }
+            ) { shutMenu() }.also { it.bind(); it.watch(binding.deckDrawer) }
         }
     }
 

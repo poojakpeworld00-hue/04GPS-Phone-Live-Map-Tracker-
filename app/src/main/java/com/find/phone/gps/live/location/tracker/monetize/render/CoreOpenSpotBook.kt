@@ -30,6 +30,8 @@ object CoreOpenSpotBook {
 
     var skipNextAppOpenAd: Boolean = false
 
+    var pendingGameCloseAd: Boolean = false
+
     private var expectReturnAd: Boolean = false
 
     fun expectReturnAd() {
@@ -178,7 +180,7 @@ object CoreOpenSpotBook {
                     LOG_TAG, adError.message
                 )
                 try {
-                    activity.recordKeyEvent("appopen_ad_fail")
+                    activity.recordKeyEvent("appopen_ad_show_fail")
                 } catch (_: Exception) {
                 }
                 appOpenAd = null
@@ -199,10 +201,9 @@ object CoreOpenSpotBook {
 
         activity.recordKeyEvent("appopen_ad_shown")
 
-        if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(activity)
 
         appOpenAd!!.setOnPaidEventListener {
-            SpotIncomeGauge.recordPaidEvent(activity, it)
+            SpotIncomeGauge.recordPaidEvent(activity, it, "app_open", appOpenAd?.adUnitId, appOpenAd?.responseInfo)
         }
 
         isShowingAd = true

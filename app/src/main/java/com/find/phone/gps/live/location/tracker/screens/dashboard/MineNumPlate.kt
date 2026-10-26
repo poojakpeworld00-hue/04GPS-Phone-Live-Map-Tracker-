@@ -50,7 +50,7 @@ class MineNumPlate(
         views.actMyNumber.isVisible = !showing
 
         views.actManage.isVisible = showing
-        views.actMyNumber.setText(if (isPermanentlyDenied()) R.string.my_number_settings else R.string.my_number_show)
+        views.actMyNumber.setText(R.string.my_number_show)
 
         views.txtMyNumberSub.isVisible = !showing
         views.txtMyNumberSub.setText(R.string.my_number_sub)
@@ -83,21 +83,8 @@ class MineNumPlate(
         }
     }
 
-    private fun isPermanentlyDenied(): Boolean {
-        val permission = MineChipNums.PERMISSIONS.first()
-        return !MineChipNums.isGranted(activity) &&
-            prefs.hasRequestedPermission(permission) &&
-            !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
-    }
-
     private fun enterAppSettings(context: Context) {
         Toast.makeText(context, R.string.my_number_denied, Toast.LENGTH_LONG).show()
-        CoreOpenSpotBook.skipNextAppOpenAd = true
-        runCatching {
-            activity.startActivity(
-                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
-            )
-        }
     }
 
     private fun wireRow(inflater: LayoutInflater, context: Context, line: MineChipNums.SimLine) =

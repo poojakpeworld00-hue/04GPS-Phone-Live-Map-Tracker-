@@ -1,5 +1,6 @@
 package com.find.phone.gps.live.location.tracker.monetize.logic
 
+import com.find.phone.gps.live.location.tracker.induction.HomeStream
 import android.app.Activity
 import android.content.Context
 import android.util.Log
@@ -40,6 +41,10 @@ object HomeSpotsProfile {
         RECENT_CLICK("recent_click", "__launcher_recent_click_count", "__launcher_recent_click_ptr"),
 
         HOME_PRESS("home_press", "__launcher_home_press_count", "__launcher_home_press_ptr"),
+
+        GAME_CLICK("game_click", "__launcher_game_click_count", "__launcher_game_click_ptr"),
+
+        GAME_CLOSE("game_close", "__launcher_game_close_count", "__launcher_game_close_ptr"),
     }
 
     private fun surfaceBlock(context: Context, surface: HomePlane): JSONObject? {
@@ -54,6 +59,8 @@ object HomeSpotsProfile {
             HomePlane.HOME_BACK -> root.optJSONObject("home_back")
             HomePlane.RECENT_CLICK -> root.optJSONObject("recent_click")
             HomePlane.HOME_PRESS -> root.optJSONObject("home_press")
+            HomePlane.GAME_CLICK -> root.optJSONObject("game_click")
+            HomePlane.GAME_CLOSE -> root.optJSONObject("game_close")
         }
     }
 
@@ -105,7 +112,7 @@ object HomeSpotsProfile {
     }
 
     private val CLICK_SURFACES = setOf(
-        HomePlane.APP_CLICK, HomePlane.HOME_CLICK, HomePlane.DRAWER_CLICK,
+        HomePlane.APP_CLICK, HomePlane.HOME_CLICK, HomePlane.DRAWER_CLICK, HomePlane.GAME_CLICK,
     )
 
     fun prefetchLauncherAds(context: Context) {
@@ -565,7 +572,8 @@ object HomeSpotsProfile {
         INTRO("intro", true, "mid2"),
         LANGUAGE("language", true, "big"),
 
-        REMINDERS("reminders", false, "mid");
+        REMINDERS("reminders", false, "mid"),
+        PREMIUM("premium", true, "mid");
 
         val counterKey: String get() = "__launcher_ads_onboarding_${key}_count"
 
@@ -620,6 +628,15 @@ object HomeSpotsProfile {
         }
         log("onboarding.${screen.key}: showing interstitial")
         TakeoverStandard().presentInterAds(activity) { proceed() }
+    }
+
+    const val PREMIUM_GATE_SEEN = "__premium_gate_seen"
+
+    // while the user is on the onboarding paywall (cleared when they skip it), no ads until Home (RC onboarding.premium.no_ads_until_home)
+    fun adsHeldUntilHome(context: Context): Boolean {
+        if (HomeStream.wasOnboardingCompleted(context)) return false
+        if (!SpotsLocker.getInstance(context).getBoolean(PREMIUM_GATE_SEEN)) return false
+        return onboardingBlock(context, OnboardScreen.PREMIUM)?.optBoolean("no_ads_until_home", true) ?: true
     }
 
     fun onboardingOrder(context: Context): List<OnboardScreen> {

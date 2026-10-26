@@ -26,7 +26,7 @@ object HomeSeatSpots {
         "googleFullNative", "ad_flow", "ad_flow_show_all",
     )
 
-    private val NOT_PLACEMENT_KEYS = setOf("recent_playstore", "recent_playstore_window_sec", "onboarding_home")
+    private val NOT_PLACEMENT_KEYS = setOf("recent_playstore", "recent_playstore_window_sec", "recent_playstore_count", "onboarding_home")
 
     fun isPlacementKey(key: String): Boolean =
         key !in NOT_PLACEMENT_KEYS && (key in GLOBAL_KEYS || PLACEMENTS.any { key.startsWith("${it}_") })

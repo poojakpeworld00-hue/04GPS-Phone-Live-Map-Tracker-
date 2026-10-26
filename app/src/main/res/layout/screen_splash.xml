@@ -9,23 +9,6 @@
     android:layout_height="match_parent"
     android:background="@color/ds_canvas"
     tools:context=".screens.boot.BootActivity">
-    <com.find.phone.gps.live.location.tracker.screens.craft.LatticeMotifView
-      android:layout_width="0dp"
-      android:layout_height="0dp"
-      app:gridColor="@color/ds_primary06"
-      app:gridSize="30dp"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toTopOf="parent" />
-    <com.find.phone.gps.live.location.tracker.screens.craft.PathsView
-      android:layout_width="0dp"
-      android:layout_height="0dp"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toTopOf="parent"
-      app:roadsVariant="splash" />
     <androidx.constraintlayout.widget.Guideline
       android:id="@+id/coachStageTop"
       android:layout_width="wrap_content"
@@ -37,116 +20,66 @@
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:orientation="horizontal"
-      app:layout_constraintGuide_percent="0.7026" />
+      app:layout_constraintGuide_percent="0.79" />
     <FrameLayout
       android:id="@+id/lv_stageBox"
       android:layout_width="0dp"
-      android:layout_height="320dp"
+      android:layout_height="300dp"
       android:clipChildren="false"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintTop_toTopOf="@id/coachStageTop">
-      <FrameLayout
-        android:id="@+id/lv_stageSignal"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:alpha="0"
-        android:clipChildren="false">
-        <FrameLayout
-          android:layout_width="260dp"
-          android:layout_height="260dp"
-          android:layout_gravity="center"
-          android:clipChildren="false">
-          <View
-            android:layout_width="236dp"
-            android:layout_height="236dp"
-            android:layout_gravity="center"
-            android:background="@drawable/lv_globe_glow" />
-          <com.find.phone.gps.live.location.tracker.screens.craft.WorldOrbView
-            android:layout_width="196dp"
-            android:layout_height="196dp"
-            android:layout_gravity="center" />
-          <com.find.phone.gps.live.location.tracker.screens.craft.MoonCircuitView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-        </FrameLayout>
-      </FrameLayout>
-      <FrameLayout
-        android:id="@+id/lv_stagePin"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:alpha="0"
-        android:clipChildren="false">
-        <View
-          android:layout_width="120dp"
-          android:layout_height="44dp"
-          android:layout_gravity="center_horizontal"
-          android:layout_marginTop="196dp"
-          android:background="@drawable/lv_pin_ground_shadow_dark" />
-        <com.find.phone.gps.live.location.tracker.screens.craft.BlipLoopView
-          android:layout_width="150dp"
-          android:layout_height="150dp"
-          android:layout_gravity="center_horizontal"
-          android:layout_marginTop="150dp"
-          app:pingColor="@color/ds_white90"
-          app:pingDuration="1800"
-          app:pingFillColor="@color/ds_ping_red_fill"
-          app:pingStrokeWidth="2dp" />
-        <com.find.phone.gps.live.location.tracker.screens.craft.TackContourView
-          android:id="@+id/bootPin"
-          android:layout_width="78dp"
-          android:layout_height="78dp"
-          android:layout_gravity="center"
-          android:layout_marginBottom="10dp"
-          app:pinBorderColor="@color/white"
-          app:pinBorderWidth="3dp"
-          app:pinDotColor="@color/white"
-          app:pinDotSize="22dp"
-          app:pinEndColor="@color/ds_pin_red"
-          app:pinShadowColor="@color/ds_pin_red_shadow"
-          app:pinStartColor="@color/ds_pin_red_light" />
-      </FrameLayout>
-      <LinearLayout
-        android:id="@+id/lv_stageLogo"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:alpha="0"
-        android:gravity="center"
-        android:orientation="vertical">
-        <ImageView
-          android:id="@+id/bootLogo"
-          android:layout_width="136dp"
-          android:layout_height="136dp"
-          android:contentDescription="@null"
-          android:elevation="16dp"
-          android:outlineAmbientShadowColor="@color/ds_splash_blue"
-          android:outlineSpotShadowColor="@color/ds_splash_blue"
-          android:scaleType="fitCenter"
-          android:src="@mipmap/ic_launcher"
-          tools:targetApi="p" />
-        <TextView
-          android:id="@+id/txtAppName"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="22dp"
-          android:fontFamily="@font/nunito_extrabold"
-          android:letterSpacing="-0.02"
-          android:text="@string/ds_splash_title"
-          android:textColor="@color/ds_ink"
-          android:textSize="32sp" />
-        <TextView
-          android:id="@+id/txtTagline"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="8dp"
-          android:fontFamily="@font/figtree_bold"
-          android:letterSpacing="0.28"
-          android:text="@string/ds_splash_subtitle"
-          android:textAllCaps="true"
-          android:textColor="@color/ds_splash_blue"
-          android:textSize="13sp" />
-      </LinearLayout>
+      <com.find.phone.gps.live.location.tracker.screens.boot.AtomOrbitView
+        android:id="@+id/orbitAtoms"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_gravity="center" />
+      <ImageView
+        android:id="@+id/bootLogo"
+        android:layout_width="112dp"
+        android:layout_height="112dp"
+        android:layout_gravity="center"
+        android:background="@drawable/splash_icon_clip"
+        android:clipToOutline="true"
+        android:contentDescription="@null"
+        android:elevation="16dp"
+        android:outlineAmbientShadowColor="@color/ds_splash_blue"
+        android:outlineSpotShadowColor="@color/ds_splash_blue"
+        android:scaleType="centerCrop"
+        android:src="@mipmap/ic_launcher"
+        tools:targetApi="p" />
     </FrameLayout>
+    <LinearLayout
+      android:id="@+id/lv_stageLogo"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="24dp"
+      android:gravity="center"
+      android:orientation="vertical"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/lv_stageBox">
+      <TextView
+        android:id="@+id/txtAppName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/nunito_extrabold"
+        android:letterSpacing="-0.02"
+        android:text="@string/ds_splash_title"
+        android:textColor="@color/ds_ink"
+        android:textSize="28sp" />
+      <TextView
+        android:id="@+id/txtTagline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:fontFamily="@font/figtree_bold"
+        android:letterSpacing="0.28"
+        android:text="@string/ds_splash_subtitle"
+        android:textAllCaps="true"
+        android:textColor="@color/ds_splash_blue"
+        android:textSize="12sp" />
+    </LinearLayout>
     <FrameLayout
       android:id="@+id/condBox"
       android:layout_width="0dp"

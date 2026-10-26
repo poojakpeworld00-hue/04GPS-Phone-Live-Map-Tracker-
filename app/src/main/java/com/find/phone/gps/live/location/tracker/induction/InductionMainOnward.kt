@@ -1,5 +1,7 @@
 package com.find.phone.gps.live.location.tracker.induction
 
+import com.find.phone.gps.live.location.tracker.monetize.logic.HomeSpotsProfile
+import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import android.app.Activity
 import android.app.Application
 import android.content.BroadcastReceiver
@@ -66,6 +68,8 @@ object InductionMainOnward : Application.ActivityLifecycleCallbacks {
         }
         if (screen == PlusActivity::class.java.name) {
             clear(context)
+            // Home pressed on the paywall counts as skipping it, same as its close button
+            SpotsLocker.getInstance(context).putBoolean(HomeSpotsProfile.PREMIUM_GATE_SEEN, false)
             log("home on PlusActivity → resuming after step $step")
             return HomeStream.resumeScreen(context, step + 1)
         }

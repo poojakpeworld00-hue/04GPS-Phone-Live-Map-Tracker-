@@ -138,12 +138,7 @@ object PlusCheckout {
     fun fetchDetails(context: Context, plans: List<PlusOffer>, onLoaded: (Map<String, ProductDetails>) -> Unit) {
         withClient(context) { bc ->
             if (bc == null) return@withClient onLoaded(HashMap(details))
-            val byType = plans.groupBy { plan ->
-                when {
-                    plan.isSubscription -> BillingClient.ProductType.SUBS
-                    else -> BillingClient.ProductType.INAPP
-                }
-            }
+            val byType = mapOf(BillingClient.ProductType.SUBS to plans)
             val remaining = AtomicInteger(byType.size)
             byType.forEach { (type, group) ->
                 val query = QueryProductDetailsParams.newBuilder().setProductList(
@@ -182,10 +177,7 @@ object PlusCheckout {
 
     fun price(plan: PlusOffer): String? {
         val pd = cachedDetails(plan) ?: return null
-        return when (plan.isSubscription) {
-            true -> recurringPhase(pd)?.formattedPrice
-            false -> pd.oneTimePurchaseOfferDetails?.formattedPrice
-        }
+        return recurringPhase(pd)?.formattedPrice
     }
 
     fun weeklyPrice(plan: PlusOffer): String? {
@@ -202,7 +194,6 @@ object PlusCheckout {
     }
 
     fun trialDays(plan: PlusOffer): Int? {
-        if (!plan.isSubscription) return 0
         val pd = cachedDetails(plan) ?: return null
         val free = freeTrialOffer(pd)?.pricingPhases?.pricingPhaseList?.firstOrNull { it.priceAmountMicros == 0L }
             ?: return 0
@@ -238,11 +229,9 @@ object PlusCheckout {
     fun purchase(activity: Activity, plan: PlusOffer): Boolean {
         val pd = cachedDetails(plan) ?: return false
         val productParams = BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(pd)
-        if (plan.isSubscription) {
-            val offer = freeTrialOffer(pd) ?: defaultOffer(pd)
-            val token = offer?.offerToken ?: return false
-            productParams.setOfferToken(token)
-        }
+        val offer = freeTrialOffer(pd) ?: defaultOffer(pd)
+        val token = offer?.offerToken ?: return false
+        productParams.setOfferToken(token)
         val bc = client?.takeIf { it.isReady } ?: return false
         val flow = BillingFlowParams.newBuilder().setProductDetailsParamsList(listOf(productParams.build())).build()
         val result = bc.launchBillingFlow(activity, flow)

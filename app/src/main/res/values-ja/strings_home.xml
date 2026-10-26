@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_title_short">ライブマップトラッカー</string>
-    <string name="home_go_pro">PROにする</string>
     <string name="home_quota_fmt">無料検索 残り%1$d/%2$d回</string>
     <string name="home_chip_my_number">自分の番号</string>
     <string name="home_chip_carrier">キャリアコード</string>
     <string name="home_chip_dual_sim">デュアルSIM</string>
     <string name="home_cd_search">位置を検索</string>
+    <string name="home_go_pro">PROにする</string>
 </resources>

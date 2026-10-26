@@ -1,5 +1,6 @@
 package com.find.phone.gps.live.location.tracker.monetize.render.fullscreen
 
+import com.find.phone.gps.live.location.tracker.monetize.logic.SpotIncomeGauge
 import android.app.Activity
 import android.content.Context
 import android.util.Log
@@ -153,6 +154,10 @@ class TakeoverRear {
         }
         activity.safeLog("google_back_inter_show_attempt")
 
+        ad.setOnPaidEventListener {
+            SpotIncomeGauge.recordPaidEvent(activity, it, "back_interstitial", ad.adUnitId, ad.responseInfo)
+        }
+
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdShowedFullScreenContent() {
                 super.onAdShowedFullScreenContent()
@@ -169,6 +174,7 @@ class TakeoverRear {
             }
 
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                runCatching { activity.recordAdEvent("back_interstitial", "show_failed", errorCode = error.code) }
                 googleInterBack = null
                 processGoogleFail(activity, pref, safeClose)
                 fetchBackInterAds(activity)
@@ -215,11 +221,13 @@ class TakeoverRear {
         val fb = com.facebook.ads.InterstitialAd(context, fbId)
 
         if (context is Activity) WholeDisplayWheel.show(context, isLoader)
+        context.recordAdEvent("back_interstitial", "req", network = "facebook")
 
         fb.loadAd(
             fb.buildLoadAdConfig()
                 .withAdListener(object : InterstitialAdListener {
                     override fun onAdLoaded(ad: Ad?) {
+                        context.recordAdEvent("back_interstitial", "loaded", network = "facebook")
                         if (context is Activity) WholeDisplayWheel.hide()
                         try {
                             fb.show()
@@ -229,17 +237,20 @@ class TakeoverRear {
                     }
 
                     override fun onError(ad: Ad?, err: com.facebook.ads.AdError?) {
+                        context.recordAdLoadError("back_interstitial", err?.errorCode ?: -1, network = "facebook")
                         if (context is Activity) WholeDisplayWheel.hide()
                         onFail()
                     }
 
                     override fun onInterstitialDismissed(ad: Ad?) {
+                        context.recordAdEvent("back_interstitial", "close", network = "facebook")
                         if (context is Activity) WholeDisplayWheel.hide()
                         onDismiss()
                     }
 
                     override fun onLoggingImpression(ad: Ad?) {}
                     override fun onInterstitialDisplayed(ad: Ad?) {
+                        context.recordAdEvent("back_interstitial", "show", network = "facebook")
                         if (context is Activity) WholeDisplayWheel.hide()
                     }
 

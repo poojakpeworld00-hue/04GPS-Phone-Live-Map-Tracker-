@@ -50,13 +50,10 @@
     <string name="carrier_codes_detected_fmt">Tespit edilen operatör: %1$s · SIM %2$d</string>
     <string name="carrier_codes_note">Koda dokunduğunda tuş takımı açılır. Kodlar operatörün kontrolündedir ve zamanla değişebilir.</string>
     <string name="ps_skip">Geç</string>
-    <string name="ps_allow">İzin ver</string>
-    <string name="ps_counter_total">/ %1$d</string>
+    <string name="ps_allow_fmt">%1$s için izin ver</string>
+    <string name="ps_allowed">İzin verildi</string>
+    <string name="ps_trust">Bunu istediğiniz zaman Ayarlar\'dan değiştirebilirsiniz</string>
     <string name="ps_requesting">İzin isteniyor…</string>
-    <string name="ps_already_allowed">Bu cihazda izin önceden verilmiş</string>
-    <string name="ps_allowed_moving_on">%1$s erişimi açıldı. Sıradakine geçiliyor…</string>
-    <string name="ps_allowed_done">%1$s erişimi açıldı.</string>
-    <string name="ps_not_allowed">%1$s erişimi açılmadı. Dilediğinde Ayarlar › İzinler kısmından etkinleştirebilirsin.</string>
     <string name="ps_notif_name">Uyarılar</string>
     <string name="ps_notif_title">Bildirimlere izin ver</string>
     <string name="ps_notif_body">Sorgu sona erdiğinde ya da kayıtlı numaralarda değişiklik olduğunda haberin olsun. Reklam bildirimi gönderilmez.</string>

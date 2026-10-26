@@ -25,6 +25,8 @@ open class HomeBaseDeck : BaseSimpleActivity() {
 
     private var builtLocale: String? = null
 
+    private var recreateScheduled = false
+
     override fun attachBaseContext(newBase: Context) {
         HomeBook.ensure(newBase)
         val localized = HomeBook.bridge.localizeContext(newBase)
@@ -41,7 +43,12 @@ open class HomeBaseDeck : BaseSimpleActivity() {
 
         val now = HomeBook.bridge.localizeContext(applicationContext)
             .resources.configuration.locales[0]?.toString()
-        if (now != builtLocale) recreate()
+        if (now != builtLocale && !recreateScheduled) {
+            recreateScheduled = true
+            window.decorView.post {
+                if (!isFinishing && !isDestroyed) recreate()
+            }
+        }
     }
 
     override fun getPackageName(): String {

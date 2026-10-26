@@ -13,6 +13,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.telephony.PhoneNumberFormattingTextWatcher
 import android.view.LayoutInflater
@@ -49,7 +51,7 @@ import com.find.phone.gps.live.location.tracker.store.LockerBook
 import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
 import com.find.phone.gps.live.location.tracker.store.plus.PlusCheckout
 import com.find.phone.gps.live.location.tracker.store.plus.PlusProfile
-import com.find.phone.gps.live.location.tracker.store.plus.HuntRation
+import com.find.phone.gps.live.location.tracker.store.HuntRation
 import com.find.phone.gps.live.location.tracker.databinding.PaneHomeCoreBinding
 import com.find.phone.gps.live.location.tracker.screens.plus.PlusActivity
 import com.find.phone.gps.live.location.tracker.store.peoplesync.BuddyRelay
@@ -73,7 +75,6 @@ class MainHubFragment : Fragment() {
     private val liveAnims = mutableListOf<Animator>()
     private var searchGlow: Animator? = null
     private var chipShine: Animator? = null
-
     private var pickedIso: String = "US"
 
     private var digitGrouper: PhoneNumberFormattingTextWatcher? = null
@@ -88,7 +89,8 @@ class MainHubFragment : Fragment() {
 
     private var heldSearch: FreshHunt? = null
 
-    private var prepaidByAd = false
+    private val quotaHandler = Handler(Looper.getMainLooper())
+    private val quotaTick = Runnable { refreshQuota() }
 
     private val pickerContactsAsk = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         when (ok) {
@@ -168,6 +170,7 @@ class MainHubFragment : Fragment() {
 
     override fun onDestroyView() {
         chipShine = null
+        quotaHandler.removeCallbacks(quotaTick)
         CraftMovement.abortAll(liveAnims)
         searchGlow = null
         _binding = null
@@ -377,7 +380,6 @@ class MainHubFragment : Fragment() {
         val fieldBg = if (typing) R.drawable.home_field_focus else R.drawable.home_field_rest
         binding.lvPhoneField.setBackgroundResource(fieldBg)
         binding.lvFieldHalo.isInvisible = !typing
-        binding.lvPillGps.isVisible = !typing
         binding.txtHeadline.textSize = if (typing) 22f else 24f
     }
 
@@ -400,9 +402,6 @@ class MainHubFragment : Fragment() {
             pickerContactsAsk.launch(perm)
         } else {
             Toast.makeText(ctx, R.string.ds_contacts_denied, Toast.LENGTH_SHORT).show()
-            runCatching {
-                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", ctx.packageName, null)))
-            }
         }
     }
 
@@ -482,9 +481,8 @@ class MainHubFragment : Fragment() {
         requireContext().recordKeyEvent("search_limit_reached")
         HuntCeilingDrawer(
             requireActivity(),
-            onExtraSearch = {
+            onReady = {
                 refreshQuota()
-                prepaidByAd = true
                 submitSearch()
             },
             onPremium = { ceilingPaywall.launch(PlusActivity.intent(requireContext())) },
@@ -522,18 +520,24 @@ class MainHubFragment : Fragment() {
         }
 
         val unlockedEarlier = recentShelf.all().any { it.digits == query.digits && it.dial == query.dial && it.unlocked }
-        val skipUnlock = unlockedEarlier || (isNew && prepaidByAd)
-        if (isNew) prepaidByAd = false
-        locatingLauncher.launch(PinpointingActivity.intent(host, query, saved, skipUnlock))
+        locatingLauncher.launch(PinpointingActivity.intent(host, query, saved, unlockedEarlier))
     }
 
     private fun refreshQuota() {
         val b = _binding ?: return
         val ctx = requireContext()
+        quotaHandler.removeCallbacks(quotaTick)
         val unlimited = HuntRation.isUnlimited(ctx)
         b.rationRow.isVisible = !unlimited
         if (unlimited) return
         val cap = HuntRation.limit(ctx)
+        val cooldown = HuntRation.cooldownLeftMs(ctx)
+        if (cooldown > 0L) {
+            b.txtQuota.text = getString(R.string.ds_quota_cooldown, HuntRation.formatLeft(cooldown))
+            b.rationBar.progress = 0
+            quotaHandler.postDelayed(quotaTick, 1_000L)
+            return
+        }
         val remaining = HuntRation.remaining(ctx)
         b.txtQuota.text = getString(R.string.home_quota_fmt, remaining, cap)
         b.rationBar.progress = 100 * remaining.coerceAtMost(cap) / cap.coerceAtLeast(1)

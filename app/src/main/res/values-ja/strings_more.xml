@@ -50,13 +50,10 @@
     <string name="carrier_codes_detected_fmt">検出したキャリア: %1$s · SIM %2$d</string>
     <string name="carrier_codes_note">コードをタップするとダイヤル画面が開きます。コードはキャリアが決めているため、変わることがあります。</string>
     <string name="ps_skip">あとで</string>
-    <string name="ps_allow">許可する</string>
-    <string name="ps_counter_total">/ %1$d</string>
+    <string name="ps_allow_fmt">%1$s を許可</string>
+    <string name="ps_allowed">許可済み</string>
+    <string name="ps_trust">設定からいつでも変更できます</string>
     <string name="ps_requesting">許可を求めています…</string>
-    <string name="ps_already_allowed">この端末ではもう許可されています</string>
-    <string name="ps_allowed_moving_on">%1$sが許可されました。次に進みます…</string>
-    <string name="ps_allowed_done">%1$sが許可されました。</string>
-    <string name="ps_not_allowed">%1$sは許可されませんでした。設定 › 権限からいつでも有効にできます。</string>
     <string name="ps_notif_name">お知らせ</string>
     <string name="ps_notif_title">お知らせを有効にする</string>
     <string name="ps_notif_body">照会が終わったときや保存済みの番号に変化があったときにお知らせします。広告の通知は送りません。</string>

@@ -50,13 +50,10 @@
     <string name="carrier_codes_detected_fmt">Đã nhận diện nhà mạng: %1$s · SIM %2$d</string>
     <string name="carrier_codes_note">Nhấn vào một mã để mở bàn phím gọi. Các mã do nhà mạng đặt ra và có thể đổi.</string>
     <string name="ps_skip">Bỏ qua bước này</string>
-    <string name="ps_allow">Đồng ý</string>
-    <string name="ps_counter_total">/ %1$d</string>
+    <string name="ps_allow_fmt">Cho phép %1$s</string>
+    <string name="ps_allowed">Đã cho phép</string>
+    <string name="ps_trust">Bạn có thể đổi lại bất cứ lúc nào trong Cài đặt</string>
     <string name="ps_requesting">Đang xin quyền…</string>
-    <string name="ps_already_allowed">Điện thoại này đã cấp quyền</string>
-    <string name="ps_allowed_moving_on">Đã cấp quyền %1$s. Đang chuyển tiếp…</string>
-    <string name="ps_allowed_done">Đã cấp quyền %1$s.</string>
-    <string name="ps_not_allowed">Chưa cấp quyền %1$s. Bạn có thể bật lại lúc nào cũng được trong Cài đặt › Quyền.</string>
     <string name="ps_notif_name">Thông báo đẩy</string>
     <string name="ps_notif_title">Cho phép thông báo</string>
     <string name="ps_notif_body">Được báo khi tra cứu hoàn tất và khi số đã lưu có thay đổi. Không gửi quảng cáo rác.</string>

@@ -1,5 +1,6 @@
 package com.find.phone.gps.live.location.tracker.induction
 
+import com.find.phone.gps.live.location.tracker.screens.plus.PlusActivity
 import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
@@ -232,6 +233,7 @@ object HomeStream {
         OnboardScreen.INTRO -> BriefingActivity::class.java
         OnboardScreen.LANGUAGE -> TongueSelectorActivity::class.java
         OnboardScreen.REMINDERS -> MemoOpeningActivity::class.java
+        OnboardScreen.PREMIUM -> PlusActivity::class.java
     }
 
     private fun log(message: String) {

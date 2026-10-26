@@ -708,10 +708,9 @@ open class SpotBeaconActivity : AppCompatActivity() {
 
             activity.recordKeyEvent("AppOpen_Loaded")
 
-            if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(activity)
 
             appOpenAd?.setOnPaidEventListener {
-                SpotIncomeGauge.recordPaidEvent(activity, it)
+                SpotIncomeGauge.recordPaidEvent(activity, it, "app_open", ad.adUnitId, ad.responseInfo, "splash")
             }
             ad.show(activity)
         } ?: run {
@@ -759,10 +758,9 @@ open class SpotBeaconActivity : AppCompatActivity() {
 
             activity.recordKeyEvent("Interstitial_Splash_Loaded")
 
-            if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(activity)
 
             interstitialAd?.setOnPaidEventListener {
-                SpotIncomeGauge.recordPaidEvent(activity, it)
+                SpotIncomeGauge.recordPaidEvent(activity, it, "interstitial", ad.adUnitId, ad.responseInfo, "splash")
             }
             ad.show(activity)
         } ?: run { onDismissed?.invoke() }

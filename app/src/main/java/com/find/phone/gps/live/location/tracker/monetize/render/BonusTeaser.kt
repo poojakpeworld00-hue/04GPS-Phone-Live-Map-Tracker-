@@ -1,5 +1,6 @@
 package com.find.phone.gps.live.location.tracker.monetize.render
 
+import com.find.phone.gps.live.location.tracker.monetize.logic.SpotIncomeGauge
 import android.app.Activity
 import android.app.Dialog
 import android.content.Context
@@ -183,6 +184,10 @@ class BonusTeaser {
 
         loadedAd = null
         var earned = false
+
+        ad.setOnPaidEventListener {
+            SpotIncomeGauge.recordPaidEvent(activity, it, "rewarded", ad.adUnitId, ad.responseInfo)
+        }
 
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdShowedFullScreenContent() {

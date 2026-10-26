@@ -50,13 +50,10 @@
     <string name="carrier_codes_detected_fmt">Operadora identificada: %1$s · SIM %2$d</string>
     <string name="carrier_codes_note">Ao tocar em um código, o discador é aberto. Quem define os códigos é a operadora, e eles podem mudar.</string>
     <string name="ps_skip">Ignorar</string>
-    <string name="ps_allow">Autorizar</string>
-    <string name="ps_counter_total">/ %1$d</string>
+    <string name="ps_allow_fmt">Permitir %1$s</string>
+    <string name="ps_allowed">Permitido</string>
+    <string name="ps_trust">Você pode mudar isso a qualquer momento nas Configurações</string>
     <string name="ps_requesting">Pedindo permissão…</string>
-    <string name="ps_already_allowed">Este aparelho já tem essa permissão</string>
-    <string name="ps_allowed_moving_on">%1$s autorizado. Seguindo em frente…</string>
-    <string name="ps_allowed_done">%1$s autorizado.</string>
-    <string name="ps_not_allowed">%1$s não foi autorizado. Você pode ativar a qualquer momento em Configurações › Permissões.</string>
     <string name="ps_notif_name">Avisos</string>
     <string name="ps_notif_title">Ligue os avisos</string>
     <string name="ps_notif_body">Seja avisado quando uma consulta ficar pronta ou um número salvo mudar. Nada de propaganda.</string>

@@ -104,6 +104,11 @@ object InstantProfileSentinel {
         return (if (hours > 0) hours.toLong() else DEFAULT_STALE_HOURS) * 60L * 60L * 1000L
     }
 
+    fun applyPushed(context: Context, version: String) {
+        WardenRail.log(TAG, "rc_sync push, rc_v=$version")
+        apply(context.applicationContext)
+    }
+
     private fun apply(context: Context) {
         val (blobKey, raw) = SpotProfileAbsorb.pullBlob(FirebaseRemoteConfig.getInstance())
         if (raw.isBlank()) {

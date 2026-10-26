@@ -100,6 +100,8 @@ class RingHomeGateway : HomeGateway {
         NavTracerCore.appContext.recordKeyEvent(name)
     }
 
+    override fun localizeContext(base: Context): Context = LingoBook.localized(base)
+
     override fun isOrganicAudience(): Boolean =
         !SpotsLocker.getInstance(NavTracerCore.appContext).getBoolean("OnMaketing")
 

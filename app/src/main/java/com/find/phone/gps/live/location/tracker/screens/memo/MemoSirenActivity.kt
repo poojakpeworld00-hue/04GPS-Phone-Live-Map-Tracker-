@@ -188,7 +188,7 @@ class MemoSirenActivity : AppCompatActivity() {
     }
 
     private fun openMemoList() {
-        recordKeyEvent("Reminder_Alert_Open")
+        recordKeyEvent("Reminder_Alert_Open_List_Click")
         whenUnlocked {
             startActivity(MemoListActivity.intent(this).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             finishAndRemoveTask()

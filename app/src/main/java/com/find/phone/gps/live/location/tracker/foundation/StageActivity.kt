@@ -112,20 +112,10 @@ abstract class StageActivity<DB : ViewDataBinding> : SpotBeaconActivity() {
             }
             ActivityCompat.shouldShowRequestPermissionRationale(this, permission) ->
                 launcher.launch(permission)
-            else -> enterAppSettings()
+            else -> Unit
         }
     }
 
-    protected fun enterAppSettings() {
-        runCatching {
-            startActivity(
-                Intent(
-                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.fromParts("package", packageName, null)
-                )
-            )
-        }
-    }
 
     private var pendingCallNumber: String? = null
 

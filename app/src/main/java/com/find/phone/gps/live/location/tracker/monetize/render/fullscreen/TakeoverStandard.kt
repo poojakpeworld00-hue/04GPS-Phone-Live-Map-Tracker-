@@ -343,10 +343,9 @@ class TakeoverStandard {
 
         activity.recordKeyEvent("google_inter_show_attempt")
 
-        if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(activity)
 
         inter.setOnPaidEventListener {
-            SpotIncomeGauge.recordPaidEvent(activity, it)
+            SpotIncomeGauge.recordPaidEvent(activity, it, "interstitial", inter.adUnitId, inter.responseInfo)
         }
 
         inter.fullScreenContentCallback = object : FullScreenContentCallback() {

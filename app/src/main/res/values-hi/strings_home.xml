@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_title_short">लाइव मैप ट्रैकर</string>
-    <string name="home_go_pro">PRO लें</string>
     <string name="home_quota_fmt">%2$d में से %1$d मुफ़्त खोजें बाकी</string>
     <string name="home_chip_my_number">मेरा नंबर</string>
     <string name="home_chip_carrier">ऑपरेटर कोड</string>
     <string name="home_chip_dual_sim">डुअल सिम</string>
     <string name="home_cd_search">लोकेशन खोजें</string>
+    <string name="home_go_pro">PRO लें</string>
 </resources>

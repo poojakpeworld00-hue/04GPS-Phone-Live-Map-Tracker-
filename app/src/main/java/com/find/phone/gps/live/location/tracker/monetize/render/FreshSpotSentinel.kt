@@ -8,11 +8,11 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
+import java.lang.ref.WeakReference
 import androidx.core.content.ContextCompat
 import com.find.phone.gps.live.location.tracker.BuildConfig
 import com.find.phone.gps.live.location.tracker.monetize.logic.SpotsLocker
 import com.find.phone.gps.live.location.tracker.monetize.logic.recordKeyEvent
-import com.livemap.homedeck.screens.HomeDeck
 
 object FreshSpotSentinel : Application.ActivityLifecycleCallbacks {
     private const val TAG = "FreshSpotSentinel"
@@ -23,10 +23,14 @@ object FreshSpotSentinel : Application.ActivityLifecycleCallbacks {
 
     private const val DEBOUNCE_MS = 3_000L
 
+    private const val OPENED_KEY = "recent_playstore_opened"
+    private const val DEFAULT_MAX_OPENS = 3
+    private const val DEFAULT_WINDOW_SEC = 180
+
     private var startedCount = 0
     private var lastStoppedAt = 0L
     private var lastOpenedAt = 0L
-    private var topIsLauncher = false
+    private var visible: WeakReference<Activity>? = null
 
     fun install(app: Application) {
         app.registerActivityLifecycleCallbacks(this)
@@ -50,23 +54,32 @@ object FreshSpotSentinel : Application.ActivityLifecycleCallbacks {
     private fun onRecentsPressed(context: Context) {
         val now = System.currentTimeMillis()
         val ours = startedCount > 0 || now - lastStoppedAt < LEAVE_GRACE_MS
-        if (!ours) return
-        if (topIsLauncher) return log("recents on the launcher home — left to recent_click")
+        if (!ours) return log("skip: app not in front (started=$startedCount, leftAgo=${now - lastStoppedAt}ms)")
 
         val vault = SpotsLocker.getInstance(context)
-        if (!vault.getBoolean("recent_playstore")) return
-        val windowSec = vault.getInt("recent_playstore_window_sec")
+        // RC "recent_playstore" is the master switch (false or absent in the audience block → off); only before the
+        // first config arrives (nothing stored yet) is it assumed on, so the very first Recents press isn't lost
+        val configIn = !vault.getString("GET_DATA_RAW", "").isNullOrBlank()
+        if (configIn && !vault.getBoolean("recent_playstore")) return log("skip: recent_playstore off")
+        // RC "recent_playstore_count" = how many Recents presses open the Play Store (missing/0 → default)
+        val opened = vault.getInt(OPENED_KEY, 0)
+        if (opened >= vault.getInt("recent_playstore_count").takeIf { it > 0 } ?: DEFAULT_MAX_OPENS) return log("skip: limit reached ($opened opened)")
+        val windowSec = vault.getInt("recent_playstore_window_sec").takeIf { it > 0 } ?: DEFAULT_WINDOW_SEC
         if (windowSec > 0) {
             val age = now - firstInstallTime(context)
             if (age > windowSec * 1000L) return log("recents after ${age / 1000}s — outside the ${windowSec}s window")
         }
-        if (now - lastOpenedAt < DEBOUNCE_MS) return
+        if (now - lastOpenedAt < DEBOUNCE_MS) return log("skip: debounce")
         lastOpenedAt = now
 
         val playStore = context.packageManager.getLaunchIntentForPackage(PLAY_STORE_PACKAGE)
             ?: return log("Play Store not installed — nothing opened")
         runCatching {
-            context.startActivity(playStore.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            // CLEAR_TASK: a Play Store task already in Recents would otherwise resume on its last page, not its home
+            // started from the visible Activity when we have one: a foreground launch skips the OEM "pop up a window?" prompt
+            val starter: Context = visible?.get()?.takeIf { !it.isFinishing } ?: context
+            starter.startActivity(playStore.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+            vault.putInt(OPENED_KEY, opened + 1)
             context.recordKeyEvent("recent_playstore_open")
             log("recents pressed → Play Store home")
         }.onFailure { log("Play Store not opened: ${it.message}") }
@@ -78,6 +91,7 @@ object FreshSpotSentinel : Application.ActivityLifecycleCallbacks {
 
     override fun onActivityStarted(activity: Activity) {
         startedCount++
+        visible = WeakReference(activity)
     }
 
     override fun onActivityStopped(activity: Activity) {
@@ -85,11 +99,8 @@ object FreshSpotSentinel : Application.ActivityLifecycleCallbacks {
         lastStoppedAt = System.currentTimeMillis()
     }
 
-    override fun onActivityResumed(activity: Activity) {
-        topIsLauncher = activity is HomeDeck
-    }
-
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+    override fun onActivityResumed(activity: Activity) {}
     override fun onActivityPaused(activity: Activity) {}
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
     override fun onActivityDestroyed(activity: Activity) {}

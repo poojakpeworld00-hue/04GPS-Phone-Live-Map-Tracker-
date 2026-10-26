@@ -43,9 +43,10 @@ data class NumDigest(
 
     val serverReached: Boolean,
     val pin: TerraTack?,
+    val mapPrecision: SectorExactness? = null,
 ) : Serializable {
     val precision: SectorExactness
-        get() = when {
+        get() = mapPrecision ?: when {
             !pincode.isNullOrBlank() -> SectorExactness.PINCODE
             !city.isNullOrBlank() -> SectorExactness.CITY
             !state.isNullOrBlank() -> SectorExactness.STATE
@@ -76,8 +77,10 @@ object NumInquiry {
         val province = region?.state.nonBlank() ?: offline.area
         val postal = region?.pincode.nonBlank()
 
-        val point = SectorPlaceCoder.locate(appCtx, postal, town, province, nation)
-        Log.i(TAG, "report: place=[${listOfNotNull(town, province, postal, nation).joinToString()}], pin=${point ?: "none"}")
+        val exact = SectorPlaceCoder.locate(appCtx, postal, town, province, nation)
+        val anchor = if (exact == null) ZoneAnchors.fallback(offline.iso2, town, province) else null
+        val point = exact ?: anchor?.first
+        Log.i(TAG, "report: place=[${listOfNotNull(town, province, postal, nation).joinToString()}], pin=${point ?: "none"}${anchor?.let { " (anchor ${it.second})" } ?: ""}")
 
         val reached = when {
             reply == null -> false
@@ -102,6 +105,7 @@ object NumInquiry {
             spam = payload?.isSpam == true,
             serverReached = reached,
             pin = point,
+            mapPrecision = anchor?.second,
         )
     }
 

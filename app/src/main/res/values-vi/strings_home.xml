@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_title_short">Theo dõi bản đồ trực tiếp</string>
-    <string name="home_go_pro">Lên PRO</string>
     <string name="home_quota_fmt">Còn %1$d/%2$d lượt tìm miễn phí</string>
     <string name="home_chip_my_number">Số của tôi</string>
     <string name="home_chip_carrier">Mã nhà mạng</string>
     <string name="home_chip_dual_sim">Hai SIM</string>
     <string name="home_cd_search">Tìm vị trí</string>
+    <string name="home_go_pro">Lên PRO</string>
 </resources>

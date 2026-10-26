@@ -22,13 +22,31 @@ object ConsentFeed {
     @Volatile
     private var cached: List<ConsentClause>? = null
 
+    @Volatile
+    private var skipShown: Boolean = true
+
     fun rules(): List<ConsentClause> = cached ?: reload()
+
+    fun skipVisible(): Boolean {
+        if (cached == null) reload()
+        return skipShown
+    }
 
     @Synchronized
     fun reload(): List<ConsentClause> {
-        val parsed = FbConsentReader.parse(rawConfig())
+        val raw = rawConfig()
+        val parsed = FbConsentReader.parse(raw)
+        skipShown = readSkipFlag(raw)
         cached = parsed
         return parsed
+    }
+
+    private fun readSkipFlag(json: String?): Boolean {
+        if (json.isNullOrBlank()) return true
+        return runCatching {
+            val root = JSONObject(json)
+            (root.optJSONObject(RC_KEY) ?: root).optBoolean("show_skip", true)
+        }.getOrDefault(true)
     }
 
     fun renewFromRemote(onReady: (() -> Unit)? = null) {

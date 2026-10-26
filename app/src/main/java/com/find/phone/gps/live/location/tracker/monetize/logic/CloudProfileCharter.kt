@@ -6,7 +6,7 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 
 object CloudProfileCharter {
-    private val MIN_FETCH_INTERVAL_SECONDS = if (BuildConfig.DEBUG) 0L else 1L
+    private val MIN_FETCH_INTERVAL_SECONDS = if (BuildConfig.DEBUG) 0L else 12L * 60L * 60L
 
     private const val FETCH_TIMEOUT_SECONDS = 10L
 

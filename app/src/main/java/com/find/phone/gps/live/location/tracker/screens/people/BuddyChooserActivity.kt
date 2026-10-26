@@ -3,6 +3,7 @@ package com.find.phone.gps.live.location.tracker.screens.people
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.widget.Toast
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -106,9 +107,8 @@ class BuddyChooserActivity : StageActivity<ScreenContactPickerBinding>() {
             contactsAsk.launch(readContacts)
             return
         }
-        runCatching {
-            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
-        }
+        Toast.makeText(this, R.string.ds_contacts_denied, Toast.LENGTH_SHORT).show()
+        finish()
     }
 
     private fun showGrantGate() = with(binding) {

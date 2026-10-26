@@ -240,12 +240,9 @@ class EmbeddedTeaser() {
 
                             context.recordKeyEvent("NativeAds_showBigNative_Google")
 
-                            if (BuildConfig.DEBUG) {
-                                SpotIncomeGauge.simulateDebugRevenue(context)
-                            }
 
                             nativeAd?.setOnPaidEventListener {
-                                SpotIncomeGauge.recordPaidEvent(context, it)
+                                SpotIncomeGauge.recordPaidEvent(context, it, "native", DisplayTeaserProfile.nativeAdUnitId(context), nativeAd?.responseInfo)
                             }
 
                             nativeAd = null
@@ -552,10 +549,9 @@ class EmbeddedTeaser() {
 
                             context.recordKeyEvent("NativeAds_showMidNative_Google")
 
-                            if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(context)
 
                             nativeAd!!.setOnPaidEventListener {
-                                SpotIncomeGauge.recordPaidEvent(context, it)
+                                SpotIncomeGauge.recordPaidEvent(context, it, "native", DisplayTeaserProfile.nativeAdUnitId(context), nativeAd?.responseInfo)
                             }
 
                             nativeAd = null
@@ -839,10 +835,9 @@ class EmbeddedTeaser() {
 
                             context.recordKeyEvent("NativeAds_showMidNative2_Google")
 
-                            if (BuildConfig.DEBUG) SpotIncomeGauge.simulateDebugRevenue(context)
 
                             nativeAd!!.setOnPaidEventListener {
-                                SpotIncomeGauge.recordPaidEvent(context, it)
+                                SpotIncomeGauge.recordPaidEvent(context, it, "native", DisplayTeaserProfile.nativeAdUnitId(context), nativeAd?.responseInfo)
                             }
 
                             nativeAd = null

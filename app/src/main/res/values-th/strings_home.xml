@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_title_short">ติดตามแผนที่สด</string>
-    <string name="home_go_pro">อัปเป็น PRO</string>
     <string name="home_quota_fmt">เหลือค้นหาฟรี %1$d จาก %2$d ครั้ง</string>
     <string name="home_chip_my_number">เบอร์ของฉัน</string>
     <string name="home_chip_carrier">รหัสผู้ให้บริการ</string>
     <string name="home_chip_dual_sim">สองซิม</string>
     <string name="home_cd_search">ค้นหาตำแหน่ง</string>
+    <string name="home_go_pro">อัปเป็น PRO</string>
 </resources>

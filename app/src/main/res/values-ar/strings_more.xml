@@ -50,13 +50,10 @@
     <string name="carrier_codes_detected_fmt">المشغّل الذي تم التعرف عليه: %1$s · SIM %2$d</string>
     <string name="carrier_codes_note">النقر على أي كود يفتح لوحة الاتصال. يضع المشغّل هذه الأكواد وقد يعدّلها.</string>
     <string name="ps_skip">تجاوز</string>
-    <string name="ps_allow">منح الإذن</string>
-    <string name="ps_counter_total">/ %1$d</string>
+    <string name="ps_allow_fmt">السماح بـ %1$s</string>
+    <string name="ps_allowed">تم السماح</string>
+    <string name="ps_trust">يمكنك تغيير ذلك في أي وقت من الإعدادات</string>
     <string name="ps_requesting">جارٍ طلب الإذن…</string>
-    <string name="ps_already_allowed">الإذن ممنوح مسبقًا على هذا الجهاز</string>
-    <string name="ps_allowed_moving_on">تم منح إذن %1$s. ننتقل للخطوة التالية…</string>
-    <string name="ps_allowed_done">تم منح إذن %1$s.</string>
-    <string name="ps_not_allowed">لم يُمنح إذن %1$s. بإمكانك تشغيله لاحقًا من الإعدادات › الأذونات.</string>
     <string name="ps_notif_name">التنبيهات</string>
     <string name="ps_notif_title">شغّل التنبيهات</string>
     <string name="ps_notif_body">نُعلمك فور انتهاء البحث وعند حدوث تغيير في أرقامك المحفوظة. لا إعلانات مزعجة على الإطلاق.</string>

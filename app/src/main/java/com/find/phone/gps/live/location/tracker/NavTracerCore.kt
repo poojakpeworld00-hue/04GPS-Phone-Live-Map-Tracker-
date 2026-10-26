@@ -25,6 +25,8 @@ import com.find.phone.gps.live.location.tracker.monetize.render.CoreOpenSpotBook
 import com.find.phone.gps.live.location.tracker.monetize.render.FreshSpotSentinel
 import com.find.phone.gps.live.location.tracker.induction.InductionMainOnward
 import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverStandard
+import com.find.phone.gps.live.location.tracker.monetize.render.fullscreen.TakeoverRear
+import com.find.phone.gps.live.location.tracker.monetize.render.TeaserSiteActivity
 import com.find.phone.gps.live.location.tracker.store.peoplesync.BuddyRelay
 import com.find.phone.gps.live.location.tracker.store.plus.PlusCheckout
 import com.find.phone.gps.live.location.tracker.homeshell.RingHomeSpots
@@ -59,6 +61,10 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
     companion object {
         lateinit var appContext: Context
             private set
+
+        fun currentScreen(): String =
+            if (::appContext.isInitialized) (appContext as? NavTracerCore)?.currentActivity?.javaClass?.simpleName ?: "unknown"
+            else "unknown"
     }
 
     override fun onCreate() {
@@ -115,6 +121,7 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
                 baseUrl = Muddle.s(BuildConfig.LH_BASE_URL),
                 attributionWaitMs = SpotBeaconActivity.ATTRIBUTION_WAIT_MS,
                 richPushActivity = CoreHubActivity::class.java,
+                onRemoteConfigSync = { version -> InstantProfileSentinel.applyPushed(this, version) },
             ),
         )
 
@@ -172,6 +179,18 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
         WardenRail.log("AppOpen", "Activity = ${activity::class.java.simpleName}")
         if (activity.isFinishing || activity.isDestroyed) {
             WardenRail.log("AppOpen", "❌ Activity invalid")
+            return
+        }
+
+        if (TakeoverStandard.isInterShow || TakeoverRear.isInterBAckShow) {
+            WardenRail.log("AppOpen", "⛔ Interstitial showing — skip app-open")
+            return
+        }
+        val foregroundClass = activity.javaClass.name
+        if (foregroundClass == "com.google.android.gms.ads.AdActivity" ||
+            foregroundClass == "com.facebook.ads.AudienceNetworkActivity"
+        ) {
+            WardenRail.log("AppOpen", "⛔ Ad activity in foreground — skip app-open")
             return
         }
 
@@ -247,6 +266,10 @@ class NavTracerCore : Application(), Application.ActivityLifecycleCallbacks, Lif
 
     override fun onActivityResumed(activity: Activity) {
         currentActivity = activity
+        if (CoreOpenSpotBook.pendingGameCloseAd && activity !is TeaserSiteActivity) {
+            CoreOpenSpotBook.pendingGameCloseAd = false
+            HomeSpotsProfile.execSurface(activity, HomeSpotsProfile.HomePlane.GAME_CLOSE) {}
+        }
     }
 
     override fun onActivityDestroyed(activity: Activity) {

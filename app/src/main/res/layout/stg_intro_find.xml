@@ -77,19 +77,9 @@
             android:layout_marginStart="5dp"
             android:layout_weight="1"
             android:fontFamily="@font/nunito_extrabold"
-            android:text="GPS Phone Tracker"
+            android:text="@string/home_title_short"
             android:textColor="@color/white"
             android:textSize="9sp" />
-          <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/lv_pill_gold"
-            android:fontFamily="@font/figtree_bold"
-            android:paddingHorizontal="4dp"
-            android:paddingVertical="1dp"
-            android:text="PRO"
-            android:textColor="#5A3A00"
-            android:textSize="6sp" />
         </LinearLayout>
         <TextView
           android:layout_width="wrap_content"
@@ -102,7 +92,7 @@
           android:gravity="center_vertical"
           android:paddingHorizontal="6dp"
           android:paddingVertical="2dp"
-          android:text="GPS ready"
+          android:text="@string/ds_chip_gps_ready"
           android:textColor="@color/white"
           android:textSize="6sp" />
         <TextView
@@ -111,7 +101,7 @@
           android:layout_marginTop="6dp"
           android:fontFamily="@font/nunito_extrabold"
           android:lineSpacingMultiplier="1.05"
-          android:text="Locate a phone number"
+          android:text="@string/ds_home_headline"
           android:textColor="@color/white"
           android:textSize="11sp" />
       </LinearLayout>
@@ -175,7 +165,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:fontFamily="@font/figtree_bold"
-            android:text="Search Location"
+            android:text="@string/ds_search_location"
             android:textColor="@color/white"
             android:textSize="7.5sp" />
         </LinearLayout>
@@ -186,7 +176,7 @@
         android:layout_marginStart="10dp"
         android:layout_marginTop="8dp"
         android:fontFamily="@font/figtree_bold"
-        android:text="Recent searches"
+        android:text="@string/ds_recent_searches"
         android:textColor="@color/ds_ink"
         android:textSize="7.5sp" />
       <LinearLayout
@@ -227,7 +217,7 @@
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:fontFamily="@font/figtree_medium"
-              android:text="United States · 2h ago"
+              android:text="@string/mk_meta_us"
               android:textColor="@color/ds_muted"
               android:textSize="5.5sp" />
           </LinearLayout>
@@ -266,7 +256,7 @@
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:fontFamily="@font/figtree_medium"
-              android:text="United Kingdom · Yesterday"
+              android:text="@string/mk_meta_uk"
               android:textColor="@color/ds_muted"
               android:textSize="5.5sp" />
           </LinearLayout>
@@ -347,7 +337,7 @@
       android:layout_height="wrap_content"
       android:layout_marginStart="6dp"
       android:fontFamily="@font/figtree_bold"
-      android:text="GPS ready"
+      android:text="@string/ds_chip_gps_ready"
       android:textColor="@color/ds_success"
       android:textSize="12sp" />
   </LinearLayout>

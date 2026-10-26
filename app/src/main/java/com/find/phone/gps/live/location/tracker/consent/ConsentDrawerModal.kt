@@ -6,6 +6,7 @@ import android.animation.ValueAnimator
 import android.content.pm.PackageManager
 import android.graphics.Outline
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -57,10 +58,10 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
     private var shownIdx = 0
     private var promptingIdx = -1
     private var slideAnim: ValueAnimator? = null
-    private val dotAnims = mutableListOf<ValueAnimator>()
 
     private var chainActive = false
     private var lastPrompted = -1
+    private var chainWaiting = false
     private val resumeChain = Runnable { stepChain(after = lastPrompted) }
 
     private val permLauncher = registerForActivityResult(
@@ -97,7 +98,8 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
 
         pager.post { matchPagerToTallest() }
 
-        buildDots(view.findViewById(R.id.marks))
+        buildBars(view.findViewById(R.id.progressBars))
+        buildSteps(view.findViewById(R.id.stepRow))
         view.findViewById<View>(R.id.actPrimary).apply {
             CraftMovement.pressScale(this)
             setOnClickListener { startChain() }
@@ -132,12 +134,15 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         val ctx = context ?: return
         for (i in pageStates.indices) promoteIfGranted(ctx, i)
         refreshUi(animate = false)
+        if (chainWaiting && chainActive) {
+            chainWaiting = false
+            root?.postDelayed(resumeChain, RESULT_HOLD_MS)
+        }
     }
 
     override fun onDestroyView() {
         root?.removeCallbacks(resumeChain)
         slideAnim?.cancel()
-        dotAnims.forEach { it.cancel() }
         if (::folioViews.isInitialized) {
             folioViews.forEachIndexed { i, v -> DrawerDrawings.stop(pages[i], v, liveAnims.getOrPut(i) { mutableListOf() }) }
         }
@@ -149,8 +154,6 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
     private fun buildFolioView(inflater: LayoutInflater, page: DrawerFolio): View {
         val v = inflater.inflate(R.layout.pmt_page, null, false)
         v.layoutParams = RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-        v.findViewById<TextView>(R.id.txtTitle).setText(page.title)
-        v.findViewById<TextView>(R.id.txtBody).setText(page.body)
         val host = v.findViewById<FrameLayout>(R.id.lv_illHost)
         val ill = inflater.inflate(page.illustration, host, false)
         host.addView(ill, 0)
@@ -197,6 +200,16 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         shownIdx = position
         promoteIfGranted(ctx, position)
         refreshUi(animate)
+        if (animate && !CraftMovement.animationsDisabled(ctx)) fadeInCopy()
+    }
+
+    private fun fadeInCopy() {
+        val view = root ?: return
+        listOf<View>(view.findViewById(R.id.txtTitle), view.findViewById(R.id.txtBody)).forEach { t ->
+            t.alpha = 0f
+            t.translationY = view.context.dp(6f)
+            t.animate().alpha(1f).translationY(0f).setDuration(220L).start()
+        }
     }
 
     private fun slideTo(target: Int) {
@@ -261,12 +274,17 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
     private fun stepChain(after: Int) {
         root?.removeCallbacks(resumeChain)
         if (!isAdded) return
+        if (!isResumed) return run { chainWaiting = true; lastPrompted = after }
         val next = nextAskable(after) ?: return wrapUpChain()
         lastPrompted = next
         if (next == shownIdx) return promptFor(next)
         slideTo(next)
 
-        root?.postDelayed({ if (isAdded && chainActive) promptFor(next) }, SLIDE_MS + 80L)
+        root?.postDelayed({
+            if (!isAdded || !chainActive) return@postDelayed
+            // app left mid-slide: ask on return, never over the launcher
+            if (isResumed) promptFor(next) else { chainWaiting = true; lastPrompted = next - 1 }
+        }, SLIDE_MS + 80L)
     }
 
     private fun wrapUpChain() {
@@ -312,7 +330,10 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         }
         if (i == shownIdx) {
             refreshUi(animate = true)
-            if (granted) bounceBadge(folioViews[i].findViewById(R.id.lv_checkBadge))
+            if (granted) {
+                bounceBadge(folioViews[i].findViewById(R.id.lv_checkBadge))
+                bounceStepTick(i)
+            }
         }
 
         root?.removeCallbacks(resumeChain)
@@ -333,10 +354,15 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         val page = pages[i]
         val status = pageStates[i]
 
-        view.findViewById<TextView>(R.id.txtCounterCurrent).text = (i + 1).toString()
-        view.findViewById<TextView>(R.id.txtCounterTotal).text = getString(R.string.ps_counter_total, pages.size)
-        view.findViewById<View>(R.id.actSkip).visibility = if (chainActive) View.INVISIBLE else View.VISIBLE
-        drawDots(view.findViewById(R.id.marks), animate)
+        view.findViewById<TextView>(R.id.txtTitle).setText(page.title)
+        view.findViewById<TextView>(R.id.txtBody).setText(page.body)
+        view.findViewById<View>(R.id.actSkip).visibility = when {
+            !ConsentFeed.skipVisible() -> View.GONE
+            chainActive -> View.INVISIBLE
+            else -> View.VISIBLE
+        }
+        paintBars(view.findViewById(R.id.progressBars))
+        paintSteps(view.findViewById(R.id.stepRow))
 
         folioViews.forEachIndexed { idx, pv ->
             val badge = pv.findViewById<View>(R.id.lv_checkBadge)
@@ -350,55 +376,20 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
             }
         }
 
-        val name = getString(page.shortName)
-        when (status) {
-            PageState.IDLE, PageState.REQUESTING -> showStatusChip(null)
-            PageState.ALLOWED -> showStatusChip(
-                BadgeTone.SUCCESS,
-                getString(if (nextAskable(i) != null) R.string.ps_allowed_moving_on else R.string.ps_allowed_done, name),
-            )
-            PageState.DENIED -> showStatusChip(BadgeTone.WARNING, getString(R.string.ps_not_allowed, name))
-            PageState.ALREADY -> showStatusChip(BadgeTone.INFO, getString(R.string.ps_already_allowed))
-        }
-
+        val granted = status == PageState.ALLOWED || status == PageState.ALREADY
         drawPrimary(
-            label = getString(if (chainActive) R.string.ps_requesting else R.string.ps_allow),
-            spinner = chainActive,
+            label = when {
+                chainActive && !granted -> getString(R.string.ps_requesting)
+                granted -> getString(R.string.ps_allowed)
+                else -> getString(R.string.ps_allow_fmt, getString(page.shortName))
+            },
+            spinner = chainActive && !granted,
+            done = granted,
             animate = animate && !CraftMovement.animationsDisabled(ctx),
         )
     }
 
-    private enum class BadgeTone(val bg: Int, val icon: Int, val iconTint: Int, val text: Int) {
-        SUCCESS(R.drawable.pmt_bg_status_success, R.drawable.pmt_ic_check, R.color.ps_success, R.color.ps_success_ink),
-        WARNING(R.drawable.pmt_bg_status_warning, R.drawable.pmt_ic_warning, R.color.ps_warning, R.color.ps_warning_ink),
-        INFO(R.drawable.pmt_bg_status_info, R.drawable.pmt_ic_check, R.color.ps_accent_ink, R.color.ps_info_ink),
-    }
-
-    private fun showStatusChip(kind: BadgeTone?, text: String? = null) {
-        val view = root ?: return
-        val chip = view.findViewById<LinearLayout>(R.id.condChip)
-        if (kind == null || text == null) { chip.isVisible = false; return }
-        val ctx = view.context
-        chip.setBackgroundResource(kind.bg)
-        view.findViewById<ImageView>(R.id.imgStatus).apply {
-            setImageResource(kind.icon)
-            imageTintList = ContextCompat.getColorStateList(ctx, kind.iconTint)
-        }
-        view.findViewById<TextView>(R.id.txtStatus).apply {
-            setTextColor(ContextCompat.getColor(ctx, kind.text))
-            this.text = text
-        }
-        if (!chip.isVisible) {
-            chip.isVisible = true
-            if (!CraftMovement.animationsDisabled(ctx)) {
-                chip.alpha = 0f
-                chip.translationY = ctx.dp(6f)
-                chip.animate().alpha(1f).translationY(0f).setDuration(200L).start()
-            }
-        }
-    }
-
-    private fun drawPrimary(label: String, spinner: Boolean, animate: Boolean) {
+    private fun drawPrimary(label: String, spinner: Boolean, done: Boolean, animate: Boolean) {
         val view = root ?: return
         val btn = view.findViewById<View>(R.id.actPrimary)
         val content = view.findViewById<View>(R.id.lv_primaryContent)
@@ -406,10 +397,12 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
         val apply = {
             tv.text = label
             view.findViewById<ProgressBar>(R.id.spinPrimary).isVisible = spinner
+            view.findViewById<ImageView>(R.id.imgPrimary).isVisible = done
+            btn.setBackgroundResource(if (done) R.drawable.pmt_bg_btn_ok else R.drawable.pmt_bg_btn_gradient)
         }
 
         btn.isEnabled = !spinner
-        btn.alpha = if (spinner) 0.8f else 1f
+        btn.alpha = if (spinner) 0.85f else 1f
         if (!animate || tv.text.isNullOrEmpty() || tv.text == label) {
             content.animate().cancel()
             content.alpha = 1f
@@ -419,53 +412,91 @@ class ConsentDrawerModal : BottomSheetDialogFragment() {
 
         content.animate().alpha(0f).setDuration(100L).withEndAction {
             apply()
-            content.animate().alpha(1f).setDuration(100L).start()
+            content.animate().alpha(1f).setDuration(120L).start()
         }.start()
     }
 
-    private fun buildDots(container: LinearLayout) {
+    private fun buildBars(container: LinearLayout) {
         val ctx = container.context
         container.removeAllViews()
         pages.indices.forEach { i ->
             container.addView(View(ctx).apply {
-                layoutParams = LinearLayout.LayoutParams(ctx.dp(6f).toInt(), ViewGroup.LayoutParams.MATCH_PARENT).apply {
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
                     if (i > 0) marginStart = ctx.dp(6f).toInt()
                 }
             })
         }
     }
 
-    private fun drawDots(container: LinearLayout, animate: Boolean) {
-        val ctx = container.context
-        val small = ctx.dp(6f).toInt()
-        val wide = ctx.dp(22f).toInt()
-        dotAnims.forEach { it.cancel() }
-        dotAnims.clear()
+    private fun paintBars(container: LinearLayout) {
         for (i in 0 until container.childCount) {
-            val dot = container.getChildAt(i)
-            if (i == shownIdx) {
-                dot.setBackgroundResource(R.drawable.pmt_bg_gradient_r3)
-                dot.backgroundTintList = null
-            } else {
-                dot.setBackgroundResource(R.drawable.pmt_bg_dot)
-                dot.backgroundTintList = ContextCompat.getColorStateList(
-                    ctx, if (i < shownIdx) R.color.ps_dot_past else R.color.ps_dot_future,
-                )
-            }
-            val target = if (i == shownIdx) wide else small
-            val from = dot.layoutParams.width
-            if (from == target) continue
-            if (!animate || CraftMovement.animationsDisabled(ctx)) {
-                dot.layoutParams = dot.layoutParams.apply { width = target }
-                continue
-            }
-            dotAnims += ValueAnimator.ofInt(from, target).apply {
-                duration = 250L
-                interpolator = CraftMovement.EASE
-                addUpdateListener { a -> dot.layoutParams = dot.layoutParams.apply { width = a.animatedValue as Int } }
-                start()
-            }
+            val filled = i <= shownIdx || pageStates[i] == PageState.ALLOWED || pageStates[i] == PageState.ALREADY
+            container.getChildAt(i).setBackgroundResource(
+                if (filled) R.drawable.pmt_bg_gradient_r3 else R.drawable.pmt_bg_bar_idle,
+            )
         }
+    }
+
+    private fun buildSteps(container: LinearLayout) {
+        val ctx = container.context
+        container.removeAllViews()
+        val tile = ctx.dp(40f).toInt()
+        pages.forEachIndexed { i, page ->
+            val cell = FrameLayout(ctx).apply {
+                layoutParams = LinearLayout.LayoutParams(tile, tile).apply {
+                    if (i > 0) marginStart = ctx.dp(10f).toInt()
+                }
+            }
+            cell.addView(ImageView(ctx).apply {
+                id = R.id.stepIcon
+                layoutParams = FrameLayout.LayoutParams(ctx.dp(18f).toInt(), ctx.dp(18f).toInt(), Gravity.CENTER)
+                setImageResource(page.stepIcon)
+                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            })
+            val tickSize = ctx.dp(15f).toInt()
+            cell.addView(FrameLayout(ctx).apply {
+                id = R.id.stepTick
+                layoutParams = FrameLayout.LayoutParams(tickSize, tickSize, Gravity.END or Gravity.BOTTOM)
+                background = ContextCompat.getDrawable(ctx, R.drawable.pmt_bg_step_tick)
+                elevation = ctx.dp(2f)
+                visibility = View.GONE
+                addView(ImageView(ctx).apply {
+                    layoutParams = FrameLayout.LayoutParams(ctx.dp(8f).toInt(), ctx.dp(8f).toInt(), Gravity.CENTER)
+                    setImageResource(R.drawable.pmt_ic_check)
+                    imageTintList = ContextCompat.getColorStateList(ctx, android.R.color.white)
+                })
+            })
+            container.addView(cell)
+        }
+    }
+
+    private fun paintSteps(container: LinearLayout) {
+        val ctx = container.context
+        for (i in 0 until container.childCount) {
+            val cell = container.getChildAt(i) as FrameLayout
+            val icon = cell.findViewById<ImageView>(R.id.stepIcon)
+            val tick = cell.findViewById<View>(R.id.stepTick)
+            val done = pageStates[i] == PageState.ALLOWED || pageStates[i] == PageState.ALREADY
+            val (bg, tint) = when {
+                done -> R.drawable.pmt_bg_step_done to R.color.ps_success
+                i == shownIdx -> R.drawable.pmt_bg_step_now to android.R.color.white
+                else -> R.drawable.pmt_bg_step_idle to R.color.ps_dot_past
+            }
+            cell.setBackgroundResource(bg)
+            icon.imageTintList = ContextCompat.getColorStateList(ctx, tint)
+            if (!done) tick.visibility = View.GONE
+            else if (tick.visibility != View.VISIBLE) { tick.visibility = View.VISIBLE; tick.scaleX = 1f; tick.scaleY = 1f }
+        }
+    }
+
+    private fun bounceStepTick(index: Int) {
+        val row = root?.findViewById<LinearLayout>(R.id.stepRow) ?: return
+        val tick = (row.getChildAt(index) as? FrameLayout)?.findViewById<View>(R.id.stepTick) ?: return
+        tick.visibility = View.VISIBLE
+        if (CraftMovement.animationsDisabled(tick.context)) return
+        tick.scaleX = 0f
+        tick.scaleY = 0f
+        tick.animate().scaleX(1f).scaleY(1f).setDuration(420L).setInterpolator(OvershootInterpolator(3f)).start()
     }
 
     private fun bounceBadge(badge: View) {

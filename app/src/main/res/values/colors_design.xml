@@ -80,7 +80,6 @@
     <color name="ds_warn12">#1FE5920A</color>
     <color name="ds_gold_start">#FFD466</color>
     <color name="ds_gold_end">#F5A524</color>
-    <color name="ds_gold_ink">#5A3A00</color>
     <color name="ds_surface">#FFFFFF</color>
     <color name="ds_card_glass">#EBFFFFFF</color>
     <color name="ds_hint_row_bg">#F1F8FC</color>
@@ -107,4 +106,5 @@
     <color name="ds_step_pill_text">#2448E0</color>
     <color name="ds_step_pill_bg">#E8EDFF</color>
     <color name="ds_step_track">#DCE7EE</color>
+    <color name="ds_gold_ink">#5A3A00</color>
 </resources>

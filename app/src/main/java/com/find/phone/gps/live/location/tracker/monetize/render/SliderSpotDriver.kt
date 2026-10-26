@@ -1,5 +1,6 @@
 package com.find.phone.gps.live.location.tracker.monetize.render
 
+import com.find.phone.gps.live.location.tracker.monetize.logic.SpotIncomeGauge
 import android.app.Activity
 import android.app.Application
 import android.app.Dialog
@@ -210,6 +211,9 @@ object SliderSpotDriver {
 
     private fun presentInter(activity: Activity, unitId: String, onShown: () -> Unit, onFailed: () -> Unit) {
         val ad = interAds.remove(unitId) ?: return onFailed()
+        ad.setOnPaidEventListener {
+            SpotIncomeGauge.recordPaidEvent(activity, it, "interstitial", unitId, ad.responseInfo)
+        }
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
                 fetchInter(activity, unitId)
@@ -246,6 +250,9 @@ object SliderSpotDriver {
 
     private fun presentAppOpen(activity: Activity, unitId: String, onShown: () -> Unit, onFailed: () -> Unit) {
         val ad = appOpenAds.remove(unitId) ?: return onFailed()
+        ad.setOnPaidEventListener {
+            SpotIncomeGauge.recordPaidEvent(activity, it, "app_open", unitId, ad.responseInfo)
+        }
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
                 fetchAppOpen(activity, unitId)
@@ -282,6 +289,9 @@ object SliderSpotDriver {
 
     private fun presentRewarded(activity: Activity, unitId: String, onShown: () -> Unit, onFailed: () -> Unit) {
         val ad = rewardedAds.remove(unitId) ?: return onFailed()
+        ad.setOnPaidEventListener {
+            SpotIncomeGauge.recordPaidEvent(activity, it, "rewarded", unitId, ad.responseInfo)
+        }
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
                 fetchRewarded(activity, unitId)
@@ -300,6 +310,9 @@ object SliderSpotDriver {
         if (unitId.isBlank() || nativeAds.containsKey(unitId) || !loading.add("native:$unitId")) return
         AdLoader.Builder(context, unitId)
             .forNativeAd { ad ->
+                ad.setOnPaidEventListener {
+                    SpotIncomeGauge.recordPaidEvent(context.applicationContext, it, "native", unitId, ad.responseInfo)
+                }
                 nativeAds.put(unitId, ad)?.destroy()
                 loading.remove("native:$unitId")
                 settle("native:$unitId", true)

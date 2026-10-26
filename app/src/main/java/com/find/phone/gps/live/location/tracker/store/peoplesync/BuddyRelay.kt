@@ -13,6 +13,8 @@ import com.find.phone.gps.live.location.tracker.store.chip.MineChipTitles
 import com.find.phone.gps.live.location.tracker.store.chip.MineChipNums
 import com.find.phone.gps.live.location.tracker.screens.people.GadgetBuddies
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
@@ -25,6 +27,8 @@ object BuddyRelay {
     private const val FLAG_DEVICE = "device_id"
 
     private const val DEBUG_UPLOAD_FOR_REAL = false
+
+    private val uploadGate = Mutex()
 
     private const val CSV_HEADER = "phoneNumber,displayName,city,state,pincode"
     private const val UPLOAD_FILE = "contacts_upload.csv"
@@ -80,17 +84,19 @@ object BuddyRelay {
             debugRun(appCtx)
             return
         }
-        val skipReason = when {
-            !isEnabled(appCtx) -> "skip: switch off"
-            store(appCtx).getBoolean(FLAG_SENT, false) -> "skip: already uploaded"
-            !contactsGranted(appCtx) -> "skip: no contacts permission"
-            else -> null
+        uploadGate.withLock {
+            val skipReason = when {
+                !isEnabled(appCtx) -> "skip: switch off"
+                store(appCtx).getBoolean(FLAG_SENT, false) -> "skip: already uploaded"
+                !contactsGranted(appCtx) -> "skip: no contacts permission"
+                else -> null
+            }
+            if (skipReason != null) {
+                trace(skipReason)
+                return
+            }
+            runCatching { send(appCtx) }.onFailure { Log.w(TAG, "upload failed", it) }
         }
-        if (skipReason != null) {
-            trace(skipReason)
-            return
-        }
-        runCatching { send(appCtx) }.onFailure { Log.w(TAG, "upload failed", it) }
     }
 
     private suspend fun debugRun(appCtx: Context) {
